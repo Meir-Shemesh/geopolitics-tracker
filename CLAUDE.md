@@ -8,23 +8,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## מבנה הקבצים המרכזיים
 
-- `src/ingestion/` - משיכת PDF-ים מטלגרם.
-- `src/extraction/` - חילוץ טקסט מה-PDF.
-- `src/analysis/` - סיווג וניתוח באמצעות Claude API.
-- `src/reporting/` - הפקת דוחות PDF+HTML בשתי שפות.
-- `src/publishing/` - פרסום ל-GitHub Pages.
+- `src/common/db.py` - מודול ה-DB המשותף לכל שלבי ה-Pipeline (`data/processed/tracker.db`). הסכמה מוצהרת פעם אחת ב-`TABLE_COLUMNS`; `init_db()` יוצר טבלאות חסרות **וגם** מוסיף עמודות חסרות לטבלאות קיימות (`PRAGMA table_info` + `ALTER TABLE`). ראו "החלטות ארכיטקטוניות קבועות".
+- `src/ingestion/fetch.py` - משיכת PDF-ים מערוץ הטלגרם `demagazinesharing` (telethon), מסנן רק קבצים שמזוהים כאחד מ-4 העיתונים של ה-MVP.
+- `src/extraction/extract.py` - חילוץ טקסט גולמי מה-PDF (pdfplumber) לעמוד, גם ל-DB וגם לעותק טקסט תחת `data/processed/extracted/` (לא נכנס ל-git).
+- `src/analysis/` - סיווג וניתוח באמצעות Claude API, בשני שלבים עצמאיים: `screen.py` (סינון רחב) ו-`analyze.py` (ניתוח מעמיק). ראו "החלטות ארכיטקטוניות קבועות".
+- `src/reporting/` - הפקת דוחות PDF+HTML בשתי שפות (טרם מומש).
+- `src/publishing/` - פרסום ל-GitHub Pages (טרם מומש).
 - `data/raw/` - PDF-ים גולמיים (לא נכנס ל-git).
-- `data/processed/` - נתונים מעובדים.
+- `data/processed/` - `tracker.db` (מצב כל ה-Pipeline) ו-`extracted/` (עותקי טקסט) - שניהם לא נכנסים ל-git.
 - `reports/he/`, `reports/en/` - דוחות מתפרסמים לפי שפה.
 - `tests/` - טסטים.
-- `requirements.txt` - רשימת תלויות (טרם הותקנו).
+- `requirements.txt` - רשימת תלויות (telethon, python-dotenv, pdfplumber, anthropic, weasyprint) - מותקנות ב-venv מקומי.
 
 ## כללי עבודה קבועים
 
 - מקורות ל-MVP: The Guardian, The Daily Telegraph (אנגלית), Süddeutsche Zeitung, Die Welt (גרמנית).
 - כל התקשורת וההסברים עם המשתמש בעברית. כל הקוד, שמות המשתנים, הפונקציות וההערות בקוד באנגלית.
 - ניהול תלויות באמצעות `venv`.
-- בתחילת סשן חדש או לאחר מעבר למחשב אחר, יש להפעיל את `/resume-project` (סקיל ידני בלבד, ללא הפעלה אוטומטית) כדי לשחזר את מצב הפרויקט מ-CLAUDE.md ו-HANDOFF.md.
+- בתחילת סשן חדש או לאחר מעבר למחשב אחר, יש להפעיל את `/resume-project` (סקיל ידני בלבד, ללא הפעלה אוטומטית) - מבצע `git pull` תחילה (עוצר אם יש קונפליקט/שינויים לא-committed), ואז משחזר מצב מ-CLAUDE.md, HANDOFF.md, ומ-PROJECT_LOG.md (אם קיים).
+- בסיום סשן יש להפעיל את `/handoff` (סקיל ידני בלבד) - מעדכן CLAUDE.md/HANDOFF.md ולעיתים PROJECT_LOG.md, ואז מבצע רצף git חצי-אוטומטי: `git add .` אוטומטי, בדיקת קבצים חשודים, הצעת הודעת commit, ו-commit+push **רק** אחרי אישור מפורש מהמשתמש.
+- סודות (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `ANTHROPIC_API_KEY`) נשמרים ב-`.env` בשורש הפרויקט (לא נכנס ל-git) ונטענים באמצעות `python-dotenv`. `.env.example` מתעד את שמות המשתנים הנדרשים בלי ערכים.
 
 ## מגבלות והעדפות
 
@@ -33,7 +36,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## פקודות הפעלה ובדיקה
 
-אין עדיין - הפרויקט בשלב שלד בלבד, ללא קוד לוגי, ללא build/lint/test מוגדרים.
+אין build/lint/test מוגדרים - הפעלה היא הרצת סקריפטים חד-פעמיים ישירות (כולם דורשים venv פעיל):
+
+- `python -m src.ingestion.fetch` - משיכת PDF-ים חדשים מטלגרם.
+- `python -m src.extraction.extract` - חילוץ טקסט מקבצים שהורדו וטרם חולצו.
+- `python -m src.analysis.screen` - שלב א' של Analysis (סינון רחב, Haiku). אופציונלי: `--file <מחרוזת בשם הקובץ>` להגבלה לקובץ יחיד לצורך בדיקה.
+- `python -m src.analysis.analyze` - שלב ב' של Analysis (ניתוח מעמיק, Sonnet). אופציונלי: `--file-id <int>` להגבלה לקובץ יחיד לצורך בדיקה.
 
 ## החלטות ארכיטקטוניות קבועות
 
@@ -42,3 +50,9 @@ Pipeline בן 5 שלבים עוקבים, כל שלב בתת-תיקייה נפר�
 Ingestion -> Extraction -> Analysis -> Reporting -> Publishing
 
 שלב ה-Reporting מייצר משתי גרסאות שפה (עברית ואנגלית) לכל דוח, ובשני פורמטים (PDF + HTML) - זהו חלק קבוע מהארכיטקטורה ולא הרחבה עתידית. Python 3 + SQLite הם הבסיס הטכנולוגי הקבוע.
+
+שלב ה-Analysis בנוי כשני תתי-שלבים עצמאיים ונפרדים (כל אחד ניתן להרצה ולבדיקה בלי השני):
+1. **סינון רחב** (`screen.py`, Claude Haiku) - שאלה בינארית זולה על כל עמוד: "האם ייתכן שיש כאן תוכן גאופוליטי?". מכוון להיות רשת רחבה מתוך כוונה - במקרה ספק מסמן רלוונטי, כדי לא לפספס תוכן. התוצאה נשמרת ב-`page_screening`.
+2. **ניתוח מעמיק** (`analyze.py`, Claude Sonnet) - רק על עמודים שסומנו רלוונטיים בשלב א', מזהה מאמרים בודדים ומחלץ מהם שדות מובנים (כותרת/מחבר/נושא/עמדה/ציטוט) לטבלת `articles`.
+
+`src/common/db.py` הוא מקור האמת היחיד לסכמת ה-DB: הוספת עמודה/טבלה חדשה נעשית **רק** ע"י עריכת `TABLE_COLUMNS`/`TABLE_CONSTRAINTS` שם - `init_db()` מזהה ומוסיף את מה שחסר אוטומטית בכל הרצה, גם על `tracker.db` קיים. אין לכתוב הצהרות `CREATE TABLE`/`ALTER TABLE` ידניות בקבצים אחרים.
