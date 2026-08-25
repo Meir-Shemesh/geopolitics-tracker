@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from telethon import TelegramClient
 from telethon.tl.types import DocumentAttributeFilename
 
-from .db import get_connection, init_db, is_downloaded, mark_downloaded
+from src.common.db import get_connection, init_db, is_downloaded, mark_downloaded
 
 CHANNEL = "demagazinesharing"
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
