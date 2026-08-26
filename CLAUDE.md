@@ -14,10 +14,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `src/analysis/` - סיווג וניתוח באמצעות Claude API, בשני שלבים עצמאיים: `screen.py` (סינון רחב) ו-`analyze.py` (ניתוח מעמיק). ראו "החלטות ארכיטקטוניות קבועות".
 - `src/reporting/synthesize.py` - שלב א' של Reporting: קריאת Sonnet יחידה ליום, מקבצת את מאמרי היום לפי נושא אמיתי (לא לפי `region_topic` הגולמי) לטבלאות `reports`/`report_sections`/`report_section_articles`, כולל רשת ביטחון כפולה (fallback section דטרמיניסטי + retry מבוסס-יחס) שמבטיחה כיסוי מלא של כל מאמר. ראו "החלטות ארכיטקטוניות קבועות".
 - `src/reporting/render.py` - שלב ב' של Reporting: הופך שורות `report_sections` ל-4 קבצים (HTML+PDF × עברית+אנגלית) תחת `reports/{he,en}/`, כולל קידוד צבעוני לפי `category` וגופן Heebo מוטמע מקומית (`src/reporting/assets/fonts/`, מועתק אוטומטית גם ל-`reports/assets/fonts/` לשימוש הדפים המתפרסמים).
-- `src/publishing/` - פרסום ל-GitHub Pages (טרם מומש).
+- `src/publishing/publish.py` - שלב Publishing: בונה `docs/` (מקור ה-GitHub Pages) מתוך `reports/` - מעתיק HTML/PDF וגופן Heebo, יוצר עמוד ארכיון כרונולוגי (`index.html`) לכל שפה + עותק-שורש מותאם-נתיבים בעברית (`docs/index.html`, כברירת מחדל). תמיד דורס, בלי `--force` (כמו `render.py`).
 - `data/raw/` - PDF-ים גולמיים (לא נכנס ל-git).
 - `data/processed/` - `tracker.db` (מצב כל ה-Pipeline) ו-`extracted/` (עותקי טקסט) - שניהם לא נכנסים ל-git.
-- `reports/he/`, `reports/en/` - דוחות מתפרסמים לפי שפה.
+- `reports/he/`, `reports/en/` - דוחות שנוצרים ע"י `render.py` (מקור אמת). `docs/` - נבנה מהם ע"י `publish.py`; זהו המיקום שממנו GitHub Pages מגיש בפועל (כולל `docs/CNAME` לדומיין המותאם `geopolitics.meirshemesh.com`) - **אין לערוך קבצים בתוך `docs/` ידנית**, הם נדרסים בכל הרצת `publish.py`.
 - `tests/` - טסטים.
 - `requirements.txt` - רשימת תלויות (telethon, python-dotenv, pdfplumber, anthropic, weasyprint) - מותקנות ב-venv מקומי.
 
@@ -30,6 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - בסיום סשן יש להפעיל את `/handoff` (סקיל ידני בלבד) - מעדכן CLAUDE.md/HANDOFF.md ולעיתים PROJECT_LOG.md, ואז מבצע רצף git חצי-אוטומטי: `git add .` אוטומטי, בדיקת קבצים חשודים, הצעת הודעת commit, ו-commit+push **רק** אחרי אישור מפורש מהמשתמש.
 - סודות (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `ANTHROPIC_API_KEY`) נשמרים ב-`.env` בשורש הפרויקט (לא נכנס ל-git) ונטענים באמצעות `python-dotenv`. `.env.example` מתעד את שמות המשתנים הנדרשים בלי ערכים.
 - WeasyPrint (הפקת PDF) דורש גם GTK3 Runtime ברמת מערכת ההפעלה, לא רק `pip install weasyprint` - ב-Windows: `winget install tschoonj.GTKForWindows`. בלעדיו `import weasyprint` נכשל; `render.py` מזהה זאת אוטומטית ומדלג רק על שלב ה-PDF (קובצי ה-HTML עדיין נוצרים כרגיל).
+- הגדרות GitHub Pages/דומיין (כמו `docs/CNAME`) עלולות להיערך ישירות בממשק ה-Web של GitHub, לא רק דרך git מקומי - לפני `push` אחרי עבודה על `docs/`/הגדרות פרסום, שווה `git pull` מקדים גם באמצע סשן, לא רק בתחילתו (ראו PROJECT_LOG 4.13 למקרה קונפליקט אמיתי שקרה כך).
 
 ## מגבלות והעדפות
 
@@ -46,6 +47,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `python -m src.analysis.analyze` - שלב ב' של Analysis (ניתוח מעמיק, Sonnet). אופציונלי: `--file-id <int>` להגבלה לקובץ יחיד לצורך בדיקה.
 - `python -m src.reporting.synthesize --date <YYYY-MM-DD>` - שלב א' של Reporting. אופציונלי: `--force` למחיקה ובנייה מחדש של דוח קיים לאותו תאריך.
 - `python -m src.reporting.render --date <YYYY-MM-DD>` - שלב ב' של Reporting, מפיק 4 קבצים (HTML+PDF × עברית+אנגלית) מתוך דוח שכבר נבנה ע"י `synthesize.py`.
+- `python -m src.publishing.publish` - שלב Publishing, בונה/מעדכן את `docs/` מתוך כל התאריכים הקיימים ב-`reports/`. בלי דגלים, תמיד דורס.
 
 ## החלטות ארכיטקטוניות קבועות
 
@@ -64,3 +66,5 @@ Ingestion -> Extraction -> Analysis -> Reporting -> Publishing
 שמות עיתונים בכל תוצר (דוחות, פרומפטים ל-Claude) משתמשים תמיד במיפוי קבוע יחיד `NEWSPAPER_DISPLAY_NAMES` (בלי הפרדה ל-HE/EN) בכתיב הלטיני המקורי - "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt" - לעולם לא תעתיק/תרגום עברי, גם בתוך טקסט עברי וגם בתוך הנחיות לפרומפט עצמו.
 
 עיקרון מנחה שחזר פעמיים בפרויקט: כשמתגלה כשל חוזר ולא-תלוי-הקשר בהתנהגות מודל (למשל שגיאות רשת חולפות ב-Analysis, השמטת article_id-ים ב-Synthesis) - הפתרון הוא רשת-ביטחון גנרית ברמת הקוד (טיפול שגיאות ברמת-יחידה + retry, fallback דטרמיניסטי), לא רדיפה אחרי כל מקרה בנפרד דרך שינויי פרומפט נקודתיים.
+
+`report_sections.category` הוא מיפוי קבוע של 8 קטגוריות (security_conflict/diplomacy_international/trade_economics/domestic_politics/migration_society/society_culture/technology_media/energy_environment) שהמודל בוחר בעצמו באותה קריאת `synthesize.py`, פלוס ערך שמור `additional_coverage` שלעולם לא מוצע למודל - הוא מסמן section שנוצר ע"י מנגנון ה-fallback ולא ע"י המודל. שינוי ברשימת הקטגוריות דורש עדכון גם ב-`synthesize.py` (ה-enum בסכמת הכלי) וגם ב-`render.py` (`CATEGORY_LABELS`/`CATEGORY_STYLES`).

@@ -2,7 +2,7 @@
 
 ## מצב הפרויקט הנוכחי
 
-**כל חמשת שלבי ה-Pipeline עובדים מקצה לקצה על נתונים אמיתיים**: Ingestion → Extraction → Analysis → Reporting (Synthesis+Render) → Publishing. 17 קבצי PDF נמשכו מטלגרם, 795 עמודים חולצו וסוננו, 308 מאמרים נותחו לעומק, כל 5 התאריכים שיש להם לפחות מאמר מנותח אחד (2026-08-20 עד 2026-08-24) עברו Reporting מלא - 20 קבצים ב-`reports/{he,en}/`. שלב ה-Publishing (`src/publishing/publish.py`) בונה מהם `docs/` (מבנה זהה + עמודי ארכיון + ניווט), והריפו פורסם כציבורי ב-GitHub Pages. **האתר חי ואומת בפועל**: https://meir-shemesh.github.io/geopolitics-tracker/. venv מוגדר ומותקן (`telethon`, `python-dotenv`, `pdfplumber`, `anthropic`, `weasyprint` - כולל GTK3 Runtime ברמת מערכת ההפעלה, נבדק בפועל על מחשב זה). קוד ה-Pipeline עד Analysis מ-commit `7bbde2c`; שינויי הסשן הנוכחי (Reporting + Publishing המלאים) ממתינים ל-commit+push בסיום ריצת `/handoff`.
+**כל חמשת שלבי ה-Pipeline עובדים מקצה לקצה על נתונים אמיתיים**: Ingestion → Extraction → Analysis → Reporting (Synthesis+Render) → Publishing. הארכיון כולל **7 תאריכים** (2026-08-20 עד 2026-08-26) - 28 קבצים ב-`reports/{he,en}/` ובאותו מבנה תחת `docs/{he,en}/`. שלב ה-Publishing (`src/publishing/publish.py`) בונה `docs/` מתוך `reports/`, והריפו פורסם כציבורי ב-GitHub Pages. **האתר חי ואומת בפועל**: https://meir-shemesh.github.io/geopolitics-tracker/ - כולל `docs/CNAME` לדומיין מותאם עתידי (`geopolitics.meirshemesh.com`; צד ה-GitHub Pages מוכן, רשומת ה-DNS ב-GoDaddy טרם אומתה). venv מוגדר ומותקן (`telethon`, `python-dotenv`, `pdfplumber`, `anthropic`, `weasyprint` - כולל GTK3 Runtime ברמת מערכת ההפעלה, נבדק בפועל על מחשב זה). כל קוד וקבצי הדוחות של הסשן הזה כבר ב-git ופורסמו (`fa1bb85`); רק עדכון מסמכי ההמשכיות הזה ממתין ל-commit+push.
 
 ## מה הושלם
 
@@ -32,6 +32,8 @@
 - **`src/publishing/publish.py`** (שלב Publishing, חדש) - בונה `docs/` (מיקום GitHub Pages): מעתיק קבצי `report_*.html/pdf` וגופן Heebo מ-`reports/` ל-`docs/`, בונה עמוד ארכיון כרונולוגי (`index.html`) לכל שפה (גם עותק ב-`reports/{he,en}/` לנוחות מקומית), ובונה עותק-שורש נפרד (`docs/index.html`, לא העתק בייטים - נתיבים מותאמים) כדי שהכתובת הבסיסית תיפתח כברירת מחדל לעברית. בלי `--force` (כמו `render.py` - זול, read-only, תמיד דורס).
 - **הריפו הוגדר כציבורי** - נדרש כדי לאפשר GitHub Pages בחשבון חינמי; ללא סיכון, כל סוד תמיד הוזן ידנית ל-`.env` בלבד ומעולם לא נכנס ל-git.
 - **האתר חי ואומת בפועל בדפדפן**: https://meir-shemesh.github.io/geopolitics-tracker/ - כתובת בסיסית פותחת לעברית כברירת מחדל, עמודי ארכיון בשתי השפות, ניווט דוח↔ארכיון ובחזרה, החלפת שפה, HTTPS תקין (אוטומטי מ-GitHub Pages).
+- **הורחב לתאריכים 2026-08-25/26 (2026-08-26)**: הורצו כל 5 שלבי ה-Pipeline (Ingestion→Extraction→Analysis→Reporting→Publishing) על שני תאריכים חדשים. 8 קבצי PDF נמשכו, 244 עמודים חולצו, 118 סומנו רלוונטיים (48%), 129 מאמרים זוהו, 78 sections נוצרו (45 ל-25.8 כולל 2 fallback, 33 ל-26.8 בלי fallback). 0 כשלים ב-Reporting/Publishing, 0 הפעלות retry. שני עמודים נוספים נכשלו ב-Analysis עם `KeyError: 'articles'` - אובחנו ישירות מול ה-API (`stop_reason=refusal`, `category=general_harms`), תואמים בדיוק לדפוס המתועד (עמוד "Court & Social" עם נקרולוגים ב-Telegraph, עמוד ביקורת-תקשורת ב-SZ שדן בפרטי רדיקליזציה של מבצע פיגוע טרור אמיתי) - תוקנו ידנית ל-`is_relevant=0` כמו במקרים הקודמים. הארכיון גדל מ-5 ל-**7 תאריכים** (28 קבצים).
+- **`docs/CNAME`** נוסף (`geopolitics.meirshemesh.com`) - צד GitHub Pages מוכן לדומיין מותאם; DNS ב-GoDaddy טרם הוגדר/אומת.
 - `.env`/`.env.example` (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `ANTHROPIC_API_KEY`) - `.env` מאומת כלא-נכנס ל-git.
 - תוקן באג בשם ה-frontmatter של סקיל `resume-project` (היה `name: Resume Project` עם רווח, לא תואם לשם התיקייה - מנע הפעלה כ-`/resume-project`; תוקן ל-`resume-project`).
 - **הורחבו סקילי ההמשכיות:** `resume-project` מבצע כעת `git pull` כצעד ראשון (עוצר אם יש קונפליקט/שינויים לא-committed) וקורא גם את `PROJECT_LOG.md` אם קיים. `handoff` מעדכן כעת גם `PROJECT_LOG.md` (מותנה - רק כשיש החלטה ארכיטקטונית/ממצא מדיד/שינוי אסטרטגי ב-action items), ובסיומו מבצע רצף git חצי-אוטומטי: `git add .` אוטומטי, בדיקת קבצים חשודים (PDF/session/.env), הצעת הודעת commit, ו-commit+push רק אחרי אישור מפורש.
@@ -53,7 +55,8 @@
 - `reports/he/report_<date>_he.{html,pdf}`, `reports/en/report_<date>_en.{html,pdf}` עבור `<date>` ∈ {2026-08-20, 2026-08-21, 2026-08-22, 2026-08-23, 2026-08-24} (חדשים - 20 קבצים בסה"כ, כל 5 התאריכים הקיימים ב-DB)
 - `src/publishing/__init__.py`, `src/publishing/publish.py` (חדשים) - הרחבת `db.py`: פונקציה `get_all_reports`
 - `reports/he/index.html`, `reports/en/index.html` (חדשים - עמוד ארכיון לכל שפה, לנוחות מקומית)
-- `docs/` (חדש, כולו) - `docs/index.html` (שורש, עברית ברירת מחדל), `docs/he/`, `docs/en/` (כל קבצי הדוחות + `index.html`), `docs/assets/fonts/Heebo-Variable.ttf` - 24 קבצים בסה"כ, זהו מיקום ה-GitHub Pages בפועל
+- `docs/` (חדש, כולו) - `docs/index.html` (שורש, עברית ברירת מחדל), `docs/he/`, `docs/en/` (כל קבצי הדוחות + `index.html`), `docs/assets/fonts/Heebo-Variable.ttf`, `docs/CNAME` (דומיין מותאם) - זהו מיקום ה-GitHub Pages בפועל
+- `reports/he/report_2026-08-25_he.{html,pdf}`, `reports/en/report_2026-08-25_en.{html,pdf}`, ואותם קבצים ל-2026-08-26 (חדשים), + עותקיהם המתאימים תחת `docs/{he,en}/`
 
 ## החלטות שהתקבלו
 
@@ -76,7 +79,7 @@
 
 ## עבודה שטרם הושלמה
 
-- חיבור דומיין מותאם מ-GoDaddy (`meirshemesh.com`) לכתובת ה-GitHub Pages דרך DNS - טרם בוצע, ממתין להחלטה אם בכלל רוצים כתובת מותאמת.
+- חיבור דומיין מותאם - `docs/CNAME` (`geopolitics.meirshemesh.com`) כבר נוצר וצד GitHub Pages מוכן, אך יש לוודא שגם רשומת ה-DNS המתאימה הוגדרה ב-GoDaddy (CNAME record מצביע ל-`meir-shemesh.github.io`) כדי שהכתובת בפועל תעבוד - לא אומת עדיין.
 - footer עם קישור מוחלט לאתר בתוך ה-PDF - ממתין להחלטת כתובת אתר סופית (ראו "בעיות ידועות"/החלטה 4.12 ב-PROJECT_LOG).
 - `tests/` - עדיין ריק, אין טסטים.
 - כיול פרומפט `screen.py` נגד false positive על עמודי נוסטלגיה/היסטוריה (ראו "בעיות ידועות") - שינוי מוצע, טרם בוצע.
@@ -102,12 +105,12 @@
 
 ## הצעד הבא המומלץ
 
-כל 5 שלבי ה-Pipeline עובדים מקצה לקצה והאתר חי - הפרויקט הגיע ל-MVP מלא. כמה כיוונים פתוחים, לא סותרים: (1) להפעיל Prompt Caching (בעדיפות גבוהה, ראו PROJECT_LOG 4.7.3/6) לפני שהריצה היומית הופכת קבועה; (2) להקים GitHub Actions להרצה יומית אוטומטית; (3) להמשיך למשוך ולעבד ימים חדשים מטלגרם כדי שהארכיון יגדל באופן שוטף. שווה גם לשלב את כיול פרומפט `screen.py` המוצע (נוסטלגיה/היסטוריה) לפני ריצת ingestion/analysis הבאה על תוכן חדש.
+כל 5 שלבי ה-Pipeline עובדים מקצה לקצה, האתר חי, והארכיון כולל 7 תאריכים - הפרויקט הגיע ל-MVP מלא ופעיל. כמה כיוונים פתוחים, לא סותרים: (1) להפעיל Prompt Caching (בעדיפות גבוהה, ראו PROJECT_LOG 4.7.3/6) לפני שהריצה היומית הופכת קבועה; (2) להקים GitHub Actions להרצה יומית אוטומטית; (3) להמשיך למשוך ולעבד ימים חדשים מטלגרם כדי שהארכיון יגדל באופן שוטף; (4) לוודא רשומת ה-DNS ב-GoDaddy אם רוצים שהדומיין המותאם (`geopolitics.meirshemesh.com`) יעבוד בפועל. שווה גם לשלב את כיול פרומפט `screen.py` המוצע (נוסטלגיה/היסטוריה) לפני ריצת ingestion/analysis הבאה על תוכן חדש.
 
 ## סשן אחרון
 
 **תאריך:** 2026-08-26
 
-**תיאור:** נבנה, נבדק ואומת מקצה לקצה שלב ה-Reporting המלא (שני תתי-שלבים): `synthesize.py` (Claude Sonnet, קריאה בודדת ליום - קיבוץ לפי נושא אמיתי, מיזוג כפילויות טיזר/כתבה-מלאה, השוואה דו-לשונית, קטגוריזציה ל-8 קטגוריות קבועות) ו-`render.py` (הפקת 4 קבצים - HTML+PDF × עברית+אנגלית - ממסמך HTML משותף אחד לכל שפה, קידוד צבעוני, גופן Heebo מוטמע מקומית). נבנתה רשת ביטחון כפול-שכבתית ב-`synthesize.py` (fallback section דטרמיניסטי + retry מבוסס-יחס) אחרי שהתגלתה תנודתיות אמיתית בציות המודל להוראת הכיסוי המלא. הורצה בדיקה מלאה ראשונה על תאריך אמיתי (24.8.2026) - כולל גילוי ותיקון שני באגי איכות תוכן שנמצאו רק בקריאה ידנית של ה-PDF הסופי (לא ב-DB): שמות עיתונים משובשים/מעורבבי-כתב, ותיאום מגדרי שגוי בעברית. התגלתה גם תלות סביבתית לא-מתועדת קודם: WeasyPrint דורש GTK3 Runtime ברמת מערכת ההפעלה, הותקן ואומת. ההרצה הורחבה לכל 5 התאריכים הקיימים ב-DB (20 קבצים, 0 כשלים). בהמשך הסשן נבנה שלב ה-Publishing (`src/publishing/publish.py`): פס ניווט נוסף ל-`render.py` (מוצג ב-HTML, מוסתר במפורש ב-PDF אחרי הכרעה דו-צדדית מתועדת - PROJECT_LOG 4.12), עמודי ארכיון כרונולוגיים לכל שפה, ותיקיית `docs/` שהריפו (שהוגדר ציבורי) מגיש ממנה. **האתר פורסם ואומת חי בדפדפן**: https://meir-shemesh.github.io/geopolitics-tracker/ - כל הבדיקות (ברירת-מחדל עברית, ארכיונים, ניווט, החלפת שפה, HTTPS) עברו בהצלחה. תועד גם ממצא נוסף (לא תוקן בכוונה): מספור עמודים הפוך ב-PDF העברי ("14/1" במקום "1/14", כנראה bidi reordering).
+**תיאור:** סשן ארוך שהשלים את הפרויקט מ-Reporting חלקי ל-MVP מלא ופעיל בפרודקשן. נבנה, נבדק ואומת מקצה לקצה שלב ה-Reporting המלא (`synthesize.py`+`render.py`) עם רשת ביטחון כפול-שכבתית (fallback section דטרמיניסטי + retry מבוסס-יחס), ותוקנו שני באגי איכות תוכן שנמצאו רק בקריאה ידנית של ה-PDF (שמות עיתונים משובשים, תיאום מגדרי עברי). נבנה שלב ה-Publishing (`src/publishing/publish.py`): פס ניווט ב-`render.py` (גלוי ב-HTML, מוסתר במפורש ב-PDF אחרי הכרעה דו-צדדית מתועדת - PROJECT_LOG 4.12), עמודי ארכיון כרונולוגיים, ותיקיית `docs/` שממנה GitHub Pages מגיש בפועל. **האתר פורסם ואומת חי**: https://meir-shemesh.github.io/geopolitics-tracker/. הארכיון הורחב פעמיים: תחילה לכל 5 התאריכים שהיו קיימים אז (20 קבצים), ולאחר מכן שוב - לאחר הרצת Pipeline מלאה מ-Ingestion ועד Publishing על 2026-08-25/26 - לסה"כ **7 תאריכים, 28 קבצים** (כולל שני עמודים נוספים שנכשלו ב-Analysis באותו דפוס refusal מוכר, תוקנו ידנית). נוסף `docs/CNAME` לדומיין מותאם עתידי (צד GitHub Pages מוכן, DNS ב-GoDaddy טרם אומת). תועדו שני ממצאים חדשים ולא-תוקנים בכוונה: מספור עמודים הפוך ב-PDF העברי (bidi reordering), ו"סקשן רפאים" ריק שיוצר `synthesize.py` לעיתים כשהוא ממזג תוכן סקשן לסקשן אחר. לקראת סוף הסשן, `git push` נדחה כי `docs/CNAME` נוצר גם ישירות בממשק ה-Web של GitHub (כנראה כחלק מהגדרת custom domain) - קונפליקט add/add שנפתר בהצלחה (תוכן זהה); תועד כלקח על פער-כיסוי אמיתי ב-`resume-project` (רק בתחילת סשן, לא באמצעו) בסעיף 4.13 ב-PROJECT_LOG.
 
 **קבצים ששונו:** ראו "קבצים שנוצרו או שונו" למעלה - רשימה מלאה ומעודכנת, לא כפולה כאן.
