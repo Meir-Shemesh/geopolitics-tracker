@@ -353,6 +353,12 @@ def get_report(conn: sqlite3.Connection, report_date: str):
     ).fetchone()
 
 
+def get_all_reports(conn: sqlite3.Connection):
+    return conn.execute(
+        "SELECT report_date, sources_included FROM reports ORDER BY report_date DESC"
+    ).fetchall()
+
+
 def get_report_sections_for_date(conn: sqlite3.Connection, report_date: str):
     return conn.execute(
         """

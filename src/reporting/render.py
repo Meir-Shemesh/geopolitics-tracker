@@ -69,6 +69,10 @@ CATEGORY_STYLES = {
     FALLBACK_CATEGORY:         ("#6b6560", "#efece6", "#a89f91", "#2a2620"),
 }
 
+OTHER_LANG = {"he": "en", "en": "he"}
+LANG_LABEL = {"he": "עברית", "en": "English"}
+BACK_LABEL = {"he": "← לכל הדוחות", "en": "← All reports"}
+
 HE_WEEKDAYS = ["יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת", "יום ראשון"]
 HE_MONTHS = [
     "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
@@ -106,6 +110,16 @@ def _category_css() -> str:
 
 def esc(text: str) -> str:
     return html.escape(text)
+
+
+def build_nav_html(report_date: str, lang: str) -> str:
+    other = OTHER_LANG[lang]
+    other_href = f"../{other}/report_{report_date}_{other}.html"
+    return f"""
+  <nav class="top-nav">
+    <a class="top-nav-link" href="index.html">{esc(BACK_LABEL[lang])}</a>
+    <a class="top-nav-link" href="{esc(other_href)}">{esc(LANG_LABEL[other])}</a>
+  </nav>"""
 
 
 def _render_section(section: dict, lang: str, show_sources: bool) -> str:
@@ -224,6 +238,26 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     line-height: 1.7;
   }}
 
+  .top-nav {{
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-link {{
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }}
+  .top-nav-link:hover {{
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }}
+
   .masthead {{
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -302,10 +336,12 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
       @bottom-center {{ content: counter(page) " / " counter(pages); font-size: 9px; color: #888; }}
     }}
     body {{ background: #fff; }}
+    .top-nav {{ display: none; }}
   }}
 </style>
 </head>
 <body>
+{build_nav_html(report_date, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
