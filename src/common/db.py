@@ -55,12 +55,33 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "key_excerpt": "TEXT NOT NULL",
         "analyzed_at": "TEXT NOT NULL",
     },
+    "reports": {
+        "report_date": "TEXT PRIMARY KEY",
+        "sources_included": "TEXT NOT NULL",
+        "created_at": "TEXT NOT NULL",
+    },
+    "report_sections": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "report_date": "TEXT NOT NULL REFERENCES reports(report_date)",
+        "topic_label_he": "TEXT NOT NULL",
+        "topic_label_en": "TEXT NOT NULL",
+        "comparison_text_he": "TEXT NOT NULL",
+        "comparison_text_en": "TEXT NOT NULL",
+        "category": "TEXT NOT NULL DEFAULT 'other'",
+        "created_at": "TEXT NOT NULL",
+    },
+    "report_section_articles": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "section_id": "INTEGER NOT NULL REFERENCES report_sections(id)",
+        "article_id": "INTEGER NOT NULL REFERENCES articles(id)",
+    },
 }
 
 TABLE_CONSTRAINTS: dict[str, list[str]] = {
     "downloaded_files": ["UNIQUE(channel, message_id)"],
     "extracted_pages": ["UNIQUE(file_id, page_number)"],
     "page_screening": ["UNIQUE(file_id, page_number)"],
+    "report_section_articles": ["UNIQUE(section_id, article_id)"],
 }
 
 
@@ -251,3 +272,107 @@ def insert_article(
         ),
     )
     conn.commit()
+
+
+def get_articles_for_date(conn: sqlite3.Connection, report_date: str):
+    query = """
+        SELECT a.id, a.newspaper, a.headline, a.region_topic, a.stance_summary, a.key_excerpt
+        FROM articles a
+        JOIN downloaded_files df ON df.id = a.file_id
+        WHERE date(df.published_at) = ?
+        ORDER BY a.newspaper, a.id
+    """
+    return conn.execute(query, (report_date,)).fetchall()
+
+
+def get_sources_for_date(conn: sqlite3.Connection, report_date: str) -> list[str]:
+    query = "SELECT DISTINCT newspaper FROM downloaded_files WHERE date(published_at) = ? ORDER BY newspaper"
+    return [row["newspaper"] for row in conn.execute(query, (report_date,)).fetchall()]
+
+
+def report_exists(conn: sqlite3.Connection, report_date: str) -> bool:
+    cursor = conn.execute("SELECT 1 FROM reports WHERE report_date = ?", (report_date,))
+    return cursor.fetchone() is not None
+
+
+def delete_report(conn: sqlite3.Connection, report_date: str) -> None:
+    conn.execute(
+        """
+        DELETE FROM report_section_articles
+        WHERE section_id IN (SELECT id FROM report_sections WHERE report_date = ?)
+        """,
+        (report_date,),
+    )
+    conn.execute("DELETE FROM report_sections WHERE report_date = ?", (report_date,))
+    conn.execute("DELETE FROM reports WHERE report_date = ?", (report_date,))
+    conn.commit()
+
+
+def insert_report(conn: sqlite3.Connection, report_date: str, sources_included: str, created_at: str) -> None:
+    conn.execute(
+        "INSERT INTO reports (report_date, sources_included, created_at) VALUES (?, ?, ?)",
+        (report_date, sources_included, created_at),
+    )
+    conn.commit()
+
+
+def insert_report_section(
+    conn: sqlite3.Connection,
+    report_date: str,
+    topic_label_he: str,
+    topic_label_en: str,
+    comparison_text_he: str,
+    comparison_text_en: str,
+    category: str,
+    created_at: str,
+) -> int:
+    cursor = conn.execute(
+        """
+        INSERT INTO report_sections
+            (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category, created_at),
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
+def link_section_article(conn: sqlite3.Connection, section_id: int, article_id: int) -> None:
+    conn.execute(
+        "INSERT INTO report_section_articles (section_id, article_id) VALUES (?, ?)",
+        (section_id, article_id),
+    )
+    conn.commit()
+
+
+def get_report(conn: sqlite3.Connection, report_date: str):
+    return conn.execute(
+        "SELECT report_date, sources_included, created_at FROM reports WHERE report_date = ?",
+        (report_date,),
+    ).fetchone()
+
+
+def get_report_sections_for_date(conn: sqlite3.Connection, report_date: str):
+    return conn.execute(
+        """
+        SELECT id, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category
+        FROM report_sections
+        WHERE report_date = ?
+        ORDER BY id
+        """,
+        (report_date,),
+    ).fetchall()
+
+
+def get_section_articles(conn: sqlite3.Connection, section_id: int):
+    return conn.execute(
+        """
+        SELECT DISTINCT a.newspaper
+        FROM articles a
+        JOIN report_section_articles rsa ON rsa.article_id = a.id
+        WHERE rsa.section_id = ?
+        ORDER BY a.newspaper
+        """,
+        (section_id,),
+    ).fetchall()

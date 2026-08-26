@@ -12,7 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `src/ingestion/fetch.py` - משיכת PDF-ים מערוץ הטלגרם `demagazinesharing` (telethon), מסנן רק קבצים שמזוהים כאחד מ-4 העיתונים של ה-MVP.
 - `src/extraction/extract.py` - חילוץ טקסט גולמי מה-PDF (pdfplumber) לעמוד, גם ל-DB וגם לעותק טקסט תחת `data/processed/extracted/` (לא נכנס ל-git).
 - `src/analysis/` - סיווג וניתוח באמצעות Claude API, בשני שלבים עצמאיים: `screen.py` (סינון רחב) ו-`analyze.py` (ניתוח מעמיק). ראו "החלטות ארכיטקטוניות קבועות".
-- `src/reporting/` - הפקת דוחות PDF+HTML בשתי שפות (טרם מומש).
+- `src/reporting/synthesize.py` - שלב א' של Reporting: קריאת Sonnet יחידה ליום, מקבצת את מאמרי היום לפי נושא אמיתי (לא לפי `region_topic` הגולמי) לטבלאות `reports`/`report_sections`/`report_section_articles`, כולל רשת ביטחון כפולה (fallback section דטרמיניסטי + retry מבוסס-יחס) שמבטיחה כיסוי מלא של כל מאמר. ראו "החלטות ארכיטקטוניות קבועות".
+- `src/reporting/render.py` - שלב ב' של Reporting: הופך שורות `report_sections` ל-4 קבצים (HTML+PDF × עברית+אנגלית) תחת `reports/{he,en}/`, כולל קידוד צבעוני לפי `category` וגופן Heebo מוטמע מקומית (`src/reporting/assets/fonts/`, מועתק אוטומטית גם ל-`reports/assets/fonts/` לשימוש הדפים המתפרסמים).
 - `src/publishing/` - פרסום ל-GitHub Pages (טרם מומש).
 - `data/raw/` - PDF-ים גולמיים (לא נכנס ל-git).
 - `data/processed/` - `tracker.db` (מצב כל ה-Pipeline) ו-`extracted/` (עותקי טקסט) - שניהם לא נכנסים ל-git.
@@ -28,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - בתחילת סשן חדש או לאחר מעבר למחשב אחר, יש להפעיל את `/resume-project` (סקיל ידני בלבד, ללא הפעלה אוטומטית) - מבצע `git pull` תחילה (עוצר אם יש קונפליקט/שינויים לא-committed), ואז משחזר מצב מ-CLAUDE.md, HANDOFF.md, ומ-PROJECT_LOG.md (אם קיים).
 - בסיום סשן יש להפעיל את `/handoff` (סקיל ידני בלבד) - מעדכן CLAUDE.md/HANDOFF.md ולעיתים PROJECT_LOG.md, ואז מבצע רצף git חצי-אוטומטי: `git add .` אוטומטי, בדיקת קבצים חשודים, הצעת הודעת commit, ו-commit+push **רק** אחרי אישור מפורש מהמשתמש.
 - סודות (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `ANTHROPIC_API_KEY`) נשמרים ב-`.env` בשורש הפרויקט (לא נכנס ל-git) ונטענים באמצעות `python-dotenv`. `.env.example` מתעד את שמות המשתנים הנדרשים בלי ערכים.
+- WeasyPrint (הפקת PDF) דורש גם GTK3 Runtime ברמת מערכת ההפעלה, לא רק `pip install weasyprint` - ב-Windows: `winget install tschoonj.GTKForWindows`. בלעדיו `import weasyprint` נכשל; `render.py` מזהה זאת אוטומטית ומדלג רק על שלב ה-PDF (קובצי ה-HTML עדיין נוצרים כרגיל).
 
 ## מגבלות והעדפות
 
@@ -42,6 +44,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `python -m src.extraction.extract` - חילוץ טקסט מקבצים שהורדו וטרם חולצו.
 - `python -m src.analysis.screen` - שלב א' של Analysis (סינון רחב, Haiku). אופציונלי: `--file <מחרוזת בשם הקובץ>` להגבלה לקובץ יחיד לצורך בדיקה.
 - `python -m src.analysis.analyze` - שלב ב' של Analysis (ניתוח מעמיק, Sonnet). אופציונלי: `--file-id <int>` להגבלה לקובץ יחיד לצורך בדיקה.
+- `python -m src.reporting.synthesize --date <YYYY-MM-DD>` - שלב א' של Reporting. אופציונלי: `--force` למחיקה ובנייה מחדש של דוח קיים לאותו תאריך.
+- `python -m src.reporting.render --date <YYYY-MM-DD>` - שלב ב' של Reporting, מפיק 4 קבצים (HTML+PDF × עברית+אנגלית) מתוך דוח שכבר נבנה ע"י `synthesize.py`.
 
 ## החלטות ארכיטקטוניות קבועות
 
@@ -56,3 +60,7 @@ Ingestion -> Extraction -> Analysis -> Reporting -> Publishing
 2. **ניתוח מעמיק** (`analyze.py`, Claude Sonnet) - רק על עמודים שסומנו רלוונטיים בשלב א', מזהה מאמרים בודדים ומחלץ מהם שדות מובנים (כותרת/מחבר/נושא/עמדה/ציטוט) לטבלת `articles`.
 
 `src/common/db.py` הוא מקור האמת היחיד לסכמת ה-DB: הוספת עמודה/טבלה חדשה נעשית **רק** ע"י עריכת `TABLE_COLUMNS`/`TABLE_CONSTRAINTS` שם - `init_db()` מזהה ומוסיף את מה שחסר אוטומטית בכל הרצה, גם על `tracker.db` קיים. אין לכתוב הצהרות `CREATE TABLE`/`ALTER TABLE` ידניות בקבצים אחרים.
+
+שמות עיתונים בכל תוצר (דוחות, פרומפטים ל-Claude) משתמשים תמיד במיפוי קבוע יחיד `NEWSPAPER_DISPLAY_NAMES` (בלי הפרדה ל-HE/EN) בכתיב הלטיני המקורי - "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt" - לעולם לא תעתיק/תרגום עברי, גם בתוך טקסט עברי וגם בתוך הנחיות לפרומפט עצמו.
+
+עיקרון מנחה שחזר פעמיים בפרויקט: כשמתגלה כשל חוזר ולא-תלוי-הקשר בהתנהגות מודל (למשל שגיאות רשת חולפות ב-Analysis, השמטת article_id-ים ב-Synthesis) - הפתרון הוא רשת-ביטחון גנרית ברמת הקוד (טיפול שגיאות ברמת-יחידה + retry, fallback דטרמיניסטי), לא רדיפה אחרי כל מקרה בנפרד דרך שינויי פרומפט נקודתיים.
