@@ -17,6 +17,7 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src.common.about_content import CONTENT, render_sections_html
 from src.common.db import (
     get_all_reports,
     get_connection,
@@ -30,6 +31,7 @@ from src.reporting.render import (
     LANG_LABEL,
     NEWSPAPER_DISPLAY_NAMES,
     OTHER_LANG,
+    build_nav_html,
     esc,
     format_date_en,
     format_date_he,
@@ -38,6 +40,7 @@ from src.reporting.render import (
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
 FONT_SOURCE_PATH = REPORTS_DIR / "assets" / "fonts" / "Heebo-Variable.ttf"
+LOGO_SOURCE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "assets" / "MS_Logo.png"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
 
 
@@ -196,6 +199,172 @@ def build_index_html(
 """
 
 
+def build_about_html(lang: str) -> str:
+    is_he = lang == "he"
+    dir_attr = "rtl" if is_he else "ltr"
+    other = OTHER_LANG[lang]
+    content = CONTENT[lang]
+
+    page_title = "אודות הפרויקט - גאופוליטיקה יומי" if is_he else "About the Project - Daily Geopolitics"
+    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
+    heading = "אודות הפרויקט" if is_he else "About the Project"
+
+    sections_html = render_sections_html(content["sections"])
+
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(page_title)}</title>
+<style>
+  @font-face {{
+    font-family: "Heebo";
+    src: url("../assets/fonts/Heebo-Variable.ttf") format("truetype-variations");
+    font-weight: 100 900;
+  }}
+
+  :root {{
+    --bg: #f3efe8;
+    --bg-elevated: #fffdfa;
+    --text: #221f1b;
+    --text-muted: #6d675e;
+    --border: #e4ddd0;
+    --masthead-accent: #7a2e2a;
+  }}
+
+  @media (prefers-color-scheme: dark) {{
+    :root:not([data-theme="light"]) {{
+      --bg: #16140f;
+      --bg-elevated: #211e18;
+      --text: #ece7dd;
+      --text-muted: #a89f91;
+      --border: #3a352b;
+      --masthead-accent: #d68b86;
+    }}
+  }}
+  :root[data-theme="dark"] {{
+    --bg: #16140f;
+    --bg-elevated: #211e18;
+    --text: #ece7dd;
+    --text-muted: #a89f91;
+    --border: #3a352b;
+    --masthead-accent: #d68b86;
+  }}
+
+  * {{ box-sizing: border-box; }}
+
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Heebo", system-ui, sans-serif;
+    line-height: 1.7;
+  }}
+
+  .top-nav {{
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-link {{
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }}
+  .top-nav-link:hover {{
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }}
+
+  .masthead {{
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }}
+  .masthead-inner {{ max-width: 44rem; margin: 0 auto; }}
+  .eyebrow {{
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }}
+  .report-title {{ margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }}
+
+  .about-body {{ max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }}
+
+  .about-intro-title {{ margin: 0 0 .75rem; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; }}
+  .about-intro-subtitle {{ margin: 0 0 2rem; font-size: 1rem; font-style: italic; color: var(--text-muted); }}
+
+  .about-content p {{ margin: 0 0 1.1rem; font-size: 1rem; }}
+  .about-content h2 {{
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin: 1.9rem 0 1.1rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--masthead-accent);
+    white-space: nowrap;
+  }}
+  .about-content h2::after {{
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }}
+  .about-content ul {{ margin: 0 0 1.1rem; padding-inline-start: 1.4rem; }}
+  .about-content ul li {{ margin-bottom: .6rem; font-size: 1rem; }}
+
+  .about-author {{
+    margin-top: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.4rem;
+  }}
+  .about-author img {{ height: 56px; width: auto; flex: 0 0 auto; }}
+  .about-author-name {{ margin: 0; font-weight: 800; }}
+  .about-author-role {{ margin: 0; font-size: .85rem; color: var(--text-muted); }}
+</style>
+</head>
+<body>
+{build_nav_html("index.html", f"../{other}/about.html", lang)}
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">{esc(eyebrow)}</p>
+      <h1 class="report-title">{esc(heading)}</h1>
+    </div>
+  </header>
+  <main class="about-body">
+    <h2 class="about-intro-title">{content['title']}</h2>
+    <p class="about-intro-subtitle">{content['subtitle']}</p>
+    <div class="about-content">
+{sections_html}
+    </div>
+    <div class="about-author">
+      <img src="../assets/images/MS_Logo.png" alt="">
+      <div>
+        <p class="about-author-name">{esc(content['identity_name'])}</p>
+        <p class="about-author-role">{esc(content['identity_role'])}</p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
+"""
+
+
 def _copy_reports_to_docs() -> None:
     for lang in ("he", "en"):
         src_dir = REPORTS_DIR / lang
@@ -210,6 +379,13 @@ def _copy_font() -> None:
     dest = DOCS_DIR / "assets" / "fonts" / FONT_SOURCE_PATH.name
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(FONT_SOURCE_PATH, dest)
+
+
+def _copy_logo() -> None:
+    for base_dir in (DOCS_DIR, REPORTS_DIR):
+        dest = base_dir / "assets" / "images" / LOGO_SOURCE_PATH.name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(LOGO_SOURCE_PATH, dest)
 
 
 def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
@@ -300,6 +476,7 @@ def run() -> None:
         return
 
     _copy_font()
+    _copy_logo()
     _copy_reports_to_docs()
 
     for lang in ("he", "en"):
@@ -314,6 +491,12 @@ def run() -> None:
             out_dir.mkdir(parents=True, exist_ok=True)
             (out_dir / "index.html").write_text(html_str, encoding="utf-8")
         print(f"  wrote index.html for '{lang}' ({len(entries)} report date(s))")
+
+        about_html = build_about_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "about.html").write_text(about_html, encoding="utf-8")
+        print(f"  wrote about.html for '{lang}'")
 
     root_html = build_index_html(
         entries,

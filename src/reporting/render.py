@@ -112,13 +112,12 @@ def esc(text: str) -> str:
     return html.escape(text)
 
 
-def build_nav_html(report_date: str, lang: str) -> str:
+def build_nav_html(back_href: str, other_lang_href: str, lang: str) -> str:
     other = OTHER_LANG[lang]
-    other_href = f"../{other}/report_{report_date}_{other}.html"
     return f"""
   <nav class="top-nav">
-    <a class="top-nav-link" href="index.html">{esc(BACK_LABEL[lang])}</a>
-    <a class="top-nav-link" href="{esc(other_href)}">{esc(LANG_LABEL[other])}</a>
+    <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>
+    <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>
   </nav>"""
 
 
@@ -341,7 +340,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
 </style>
 </head>
 <body>
-{build_nav_html(report_date, lang)}
+{build_nav_html("index.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
