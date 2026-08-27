@@ -90,7 +90,7 @@ def format_date_en(report_date: str) -> str:
     return d.strftime("%A, %B %d, %Y")
 
 
-def _category_css() -> str:
+def category_css() -> str:
     root_light, root_dark = [], []
     selectors = []
     for key, (color, bg, dark_color, dark_bg) in CATEGORY_STYLES.items():
@@ -188,7 +188,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     font-weight: 100 900;
   }}
 
-  {_category_css()}
+  {category_css()}
 
   :root {{
     --bg: #f3efe8;
@@ -340,7 +340,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
 </style>
 </head>
 <body>
-{build_nav_html("index.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang)}
+{build_nav_html("archive.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>

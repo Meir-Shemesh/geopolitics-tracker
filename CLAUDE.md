@@ -33,6 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - סודות (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `ANTHROPIC_API_KEY`) נשמרים ב-`.env` בשורש הפרויקט (לא נכנס ל-git) ונטענים באמצעות `python-dotenv`. `.env.example` מתעד את שמות המשתנים הנדרשים בלי ערכים.
 - WeasyPrint (הפקת PDF) דורש גם GTK3 Runtime ברמת מערכת ההפעלה, לא רק `pip install weasyprint` - ב-Windows: `winget install tschoonj.GTKForWindows`. בלעדיו `import weasyprint` נכשל; `render.py` מזהה זאת אוטומטית ומדלג רק על שלב ה-PDF (קובצי ה-HTML עדיין נוצרים כרגיל).
 - הגדרות GitHub Pages/דומיין (כמו `docs/CNAME`) עלולות להיערך ישירות בממשק ה-Web של GitHub, לא רק דרך git מקומי - לפני `push` אחרי עבודה על `docs/`/הגדרות פרסום, שווה `git pull` מקדים גם באמצע סשן, לא רק בתחילתו (ראו PROJECT_LOG 4.13 למקרה קונפליקט אמיתי שקרה כך).
+- **כל שינוי במבנה/נתיבי-פלט של `render.py` או `publish.py`** (שמות קבצים, קישורים פנימיים, מבנה HTML) **מחייב regeneration מלא של כל התאריכים הקיימים בארכיון** (לא רק תאריך בדיקה בודד) **+ `git status` מפורש לפני commit** - כדי לוודא שאין קבצים ישנים שנשארו "תקועים" עם המבנה הקודם. הדפוס הזה נתפס שוב ושוב רק ברגע האחרון: תיוג גיאוגרפי (backfill נדרש למאמרים קיימים), עוגני `section-id` (נכתבו בקוד אך לא נאפו לקבצים קיימים), והעברת הארכיון ל-`archive.html` (קישורי "חזרה" בדוחות קיימים המשיכו להצביע על `index.html` הישן). לפני שמכריזים על שינוי כזה "גמור" - להריץ מחדש את `render.py` על כל תאריך קיים ואת `publish.py`, ורק אז לבדוק `git status`.
 
 ## מגבלות והעדפות
 
