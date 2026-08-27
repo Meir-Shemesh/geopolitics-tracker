@@ -169,7 +169,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     date_str = format_date_he(report_date) if is_he else format_date_en(report_date)
     page_title = f"דוח יומי - {date_str}" if is_he else f"Daily Geopolitics Report - {date_str}"
     eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
-    sources_label = "עיתונים שסיקרו היום:" if is_he else "Sources covering today:"
+    sources_label = "עיתונים שנסקרו היום:" if is_he else "Sources covering today:"
 
     source_pills = "".join(f"<li>{esc(NEWSPAPER_DISPLAY_NAMES.get(s, s))}</li>" for s in sources)
 

@@ -299,7 +299,13 @@ def get_articles_for_date(conn: sqlite3.Connection, report_date: str):
 
 
 def get_sources_for_date(conn: sqlite3.Connection, report_date: str) -> list[str]:
-    query = "SELECT DISTINCT newspaper FROM downloaded_files WHERE date(published_at) = ? ORDER BY newspaper"
+    query = """
+        SELECT DISTINCT df.newspaper
+        FROM downloaded_files df
+        JOIN articles a ON a.file_id = df.id
+        WHERE date(df.published_at) = ?
+        ORDER BY df.newspaper
+    """
     return [row["newspaper"] for row in conn.execute(query, (report_date,)).fetchall()]
 
 
