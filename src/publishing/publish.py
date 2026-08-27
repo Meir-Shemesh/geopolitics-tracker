@@ -14,9 +14,18 @@ same convention as render.py.
 
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
-from src.common.db import get_all_reports, get_connection, init_db
+from src.common.db import (
+    get_all_reports,
+    get_connection,
+    get_geo_tags_for_section,
+    get_report_sections_for_date,
+    get_section_articles,
+    init_db,
+)
+from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION
 from src.reporting.render import (
     LANG_LABEL,
     NEWSPAPER_DISPLAY_NAMES,
@@ -29,6 +38,7 @@ from src.reporting.render import (
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
 FONT_SOURCE_PATH = REPORTS_DIR / "assets" / "fonts" / "Heebo-Variable.ttf"
+MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
 
 
 def build_index_html(
@@ -202,13 +212,90 @@ def _copy_font() -> None:
     shutil.copy2(FONT_SOURCE_PATH, dest)
 
 
+def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
+    """Build the static geo/timeline manifest consumed by the future homepage.
+
+    `sections` is the source of truth; `countries`/`conflict_zones`/`dates` are
+    just section_id indexes over it (only entries that actually have at least
+    one section - an index has no use for an empty row), never a copy of the
+    full closed taxonomy or of comparison_text.
+    """
+    sections: dict[int, dict] = {}
+    countries_index: dict[str, list[int]] = {}
+    conflict_zones_index: dict[str, list[int]] = {}
+    dates_index: dict[str, dict] = {}
+
+    for report_date, sources in entries:
+        section_ids_for_date = []
+        for s in get_report_sections_for_date(conn, report_date):
+            section_id = s["id"]
+            section_ids_for_date.append(section_id)
+
+            newspapers = [r["newspaper"] for r in get_section_articles(conn, section_id)]
+            geo = get_geo_tags_for_section(conn, section_id)
+
+            sections[section_id] = {
+                "date": report_date,
+                "category": s["category"],
+                "topic_he": s["topic_label_he"],
+                "topic_en": s["topic_label_en"],
+                "sources": newspapers,
+                "countries": geo["countries"],
+                "conflict_zones": geo["conflict_zones"],
+                "href_he": f"he/report_{report_date}_he.html#section-{section_id}",
+                "href_en": f"en/report_{report_date}_en.html#section-{section_id}",
+            }
+
+            for code in geo["countries"]:
+                countries_index.setdefault(code, []).append(section_id)
+            for zone in geo["conflict_zones"]:
+                conflict_zones_index.setdefault(zone, []).append(section_id)
+
+        dates_index[report_date] = {"sources": sources, "section_ids": section_ids_for_date}
+
+    countries_out = {
+        code: {
+            "name_he": COUNTRY_LIST[code]["name_he"],
+            "name_en": COUNTRY_LIST[code]["name_en"],
+            "region": COUNTRY_TO_REGION[code],
+            "section_ids": ids,
+        }
+        for code, ids in countries_index.items()
+    }
+    conflict_zones_out = {
+        zone: {
+            "name_he": CONFLICT_ZONE_LABELS[zone]["name_he"],
+            "name_en": CONFLICT_ZONE_LABELS[zone]["name_en"],
+            "section_ids": ids,
+        }
+        for zone, ids in conflict_zones_index.items()
+    }
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "latest_date": entries[0][0] if entries else None,
+        "sections": sections,
+        "countries": countries_out,
+        "conflict_zones": conflict_zones_out,
+        "dates": dates_index,
+    }
+
+
+def _write_manifest(manifest: dict) -> None:
+    manifest_json = json.dumps(manifest, ensure_ascii=False)
+    for base_dir in (DOCS_DIR, REPORTS_DIR):
+        dest = base_dir / MANIFEST_RELATIVE_PATH
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(manifest_json, encoding="utf-8")
+
+
 def run() -> None:
     conn = get_connection()
     init_db(conn)
     entries = [(r["report_date"], json.loads(r["sources_included"])) for r in get_all_reports(conn)]
-    conn.close()
 
     if not entries:
+        conn.close()
         print("No reports found in DB - nothing to publish.")
         return
 
@@ -237,6 +324,11 @@ def run() -> None:
     )
     (DOCS_DIR / "index.html").write_text(root_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'index.html'} (root, Hebrew default)")
+
+    manifest = build_manifest(conn, entries)
+    conn.close()
+    _write_manifest(manifest)
+    print(f"  wrote manifest.json ({len(manifest['sections'])} section(s), {len(manifest['countries'])} countrie(s))")
 
     print(f"\nPublish complete: {len(entries)} report date(s) -> {DOCS_DIR}")
 

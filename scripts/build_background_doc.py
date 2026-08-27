@@ -2,9 +2,11 @@
 
 Not part of the Ingestion->Extraction->Analysis->Reporting->Publishing pipeline -
 this produces a single standalone bilingual-brand document (Hebrew, RTL), reusing
-the same rendering approach as src/reporting/render.py (WeasyPrint, locally embedded
-Heebo variable font, the site's base light-theme color tokens) so the document reads
-as part of the same brand family as the live reports/site. Source content is the
+the same rendering approach as src/reporting/render.py (WeasyPrint, a locally
+embedded variable font, the site's base light-theme color tokens) so the document
+reads as part of the same brand family as the live reports/site, while using a
+more elegant, modern screen-friendly typeface (Assistant) suited to a
+principles/one-pager document rather than the site's own Heebo. Source content is the
 approved text from geopolitics-tracker-v3.pdf, reproduced verbatim; a handful of
 embedded Latin/mixed-script phrases (the product name, "Claude API", "PDF + HTML",
 the domain) are written in their correct logical reading order rather than copied
@@ -19,7 +21,7 @@ from pathlib import Path
 from weasyprint import HTML as WeasyHTML
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FONT_PATH = REPO_ROOT / "src" / "reporting" / "assets" / "fonts" / "Heebo-Variable.ttf"
+FONT_PATH = REPO_ROOT / "scripts" / "assets" / "Assistant-Variable.ttf"
 LOGO_PATH = REPO_ROOT / "scripts" / "assets" / "MS_Logo.png"
 OUTPUT_DIR = REPO_ROOT / "scripts" / "output"
 
@@ -81,9 +83,9 @@ def build_html() -> str:
 <title>geopolitics-tracker - מסמך רקע</title>
 <style>
   @font-face {{
-    font-family: "Heebo";
+    font-family: "Assistant";
     src: url("data:font/ttf;base64,{font_b64}") format("truetype-variations");
-    font-weight: 100 900;
+    font-weight: 200 800;
   }}
 
   :root {{
@@ -101,7 +103,7 @@ def build_html() -> str:
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Heebo", system-ui, sans-serif;
+    font-family: "Assistant", system-ui, sans-serif;
     line-height: 1.7;
   }}
 
@@ -109,12 +111,12 @@ def build_html() -> str:
 
   .header {{ direction: ltr; text-align: left; margin-bottom: 2rem; }}
 
-  .letterhead {{ display: flex; align-items: center; margin-bottom: 1.5rem; }}
-  .identity {{ flex: 1; }}
-  .identity-name {{ font-size: 1.3rem; font-weight: 800; margin: 0; }}
-  .identity-tagline {{ font-size: 0.85rem; color: var(--text-muted); margin: .15rem 0 0; }}
-  .logo {{ flex: 0 0 auto; height: 56px; width: auto; margin: 0 1.5rem; }}
-  .letterhead-spacer {{ flex: 1; }}
+  .letterhead {{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }}
+  .identity-line {{ direction: rtl; text-align: right; font-size: 1.15rem; margin: 0; white-space: nowrap; }}
+  .identity-name {{ font-weight: 800; color: var(--text); }}
+  .identity-sep {{ color: var(--text-muted); }}
+  .identity-role {{ font-weight: 400; color: var(--text-muted); }}
+  .logo {{ flex: 0 0 auto; height: 76px; width: auto; margin-inline-start: 1.5rem; }}
 
   .header-bottom-rule {{ border-bottom: 3px solid var(--masthead-accent); padding-bottom: 1.6rem; }}
 
@@ -131,6 +133,8 @@ def build_html() -> str:
     letter-spacing: -0.01em;
   }}
   .doc-subtitle {{
+    direction: rtl;
+    text-align: right;
     margin: 0;
     font-size: 1rem;
     font-style: italic;
@@ -173,12 +177,12 @@ def build_html() -> str:
     <div class="header">
       <div class="header-bottom-rule">
         <div class="letterhead">
-          <div class="identity">
-            <p class="identity-name">מאיר שמש</p>
-            <p class="identity-tagline">ייעוץ וניהול טכנולוגיות</p>
-          </div>
+          <p class="identity-line">
+            <span class="identity-name">מאיר שמש</span>
+            <span class="identity-sep">-</span>
+            <span class="identity-role">ייעוץ וניהול טכנולוגיות</span>
+          </p>
           <img class="logo" src="data:image/png;base64,{logo_b64}" alt="">
-          <div class="letterhead-spacer"></div>
         </div>
         <p class="doc-meta">מסמך רקע &middot; אוגוסט 2026</p>
         <h1 class="doc-title">GEOPOLITICS-TRACKER</h1>

@@ -134,7 +134,7 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
         sources_html = f'<p class="section-sources">{sources_label}: <b>{names}</b></p>'
 
     return f"""
-      <section class="topic-section" data-category="{esc(section['category'])}">
+      <section class="topic-section" id="section-{section['id']}" data-category="{esc(section['category'])}">
         <div class="topic-meta">
           <span class="category-dot"></span>
           <span class="category-label">{esc(label)}</span>
@@ -386,6 +386,7 @@ def render_report(conn, report_date: str) -> None:
         newspapers = [r["newspaper"] for r in get_section_articles(conn, s["id"])]
         sections.append(
             {
+                "id": s["id"],
                 "topic_label_he": s["topic_label_he"],
                 "topic_label_en": s["topic_label_en"],
                 "comparison_text_he": s["comparison_text_he"],

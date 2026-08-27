@@ -431,6 +431,33 @@ def get_conflict_zones_for_article(conn: sqlite3.Connection, article_id: int) ->
     return [r["conflict_zone"] for r in rows]
 
 
+def get_geo_tags_for_section(conn: sqlite3.Connection, section_id: int) -> dict:
+    countries = conn.execute(
+        """
+        SELECT DISTINCT ac.country_code
+        FROM report_section_articles rsa
+        JOIN article_countries ac ON ac.article_id = rsa.article_id
+        WHERE rsa.section_id = ?
+        ORDER BY ac.country_code
+        """,
+        (section_id,),
+    ).fetchall()
+    zones = conn.execute(
+        """
+        SELECT DISTINCT acz.conflict_zone
+        FROM report_section_articles rsa
+        JOIN article_conflict_zones acz ON acz.article_id = rsa.article_id
+        WHERE rsa.section_id = ?
+        ORDER BY acz.conflict_zone
+        """,
+        (section_id,),
+    ).fetchall()
+    return {
+        "countries": [r["country_code"] for r in countries],
+        "conflict_zones": [r["conflict_zone"] for r in zones],
+    }
+
+
 def get_articles_without_geo_tags(conn: sqlite3.Connection, report_date: str | None = None):
     query = """
         SELECT a.id, a.headline, a.region_topic, a.stance_summary
