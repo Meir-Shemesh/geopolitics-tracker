@@ -55,6 +55,16 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "key_excerpt": "TEXT NOT NULL",
         "analyzed_at": "TEXT NOT NULL",
     },
+    "article_countries": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "article_id": "INTEGER NOT NULL REFERENCES articles(id)",
+        "country_code": "TEXT NOT NULL",
+    },
+    "article_conflict_zones": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "article_id": "INTEGER NOT NULL REFERENCES articles(id)",
+        "conflict_zone": "TEXT NOT NULL",
+    },
     "reports": {
         "report_date": "TEXT PRIMARY KEY",
         "sources_included": "TEXT NOT NULL",
@@ -82,6 +92,8 @@ TABLE_CONSTRAINTS: dict[str, list[str]] = {
     "extracted_pages": ["UNIQUE(file_id, page_number)"],
     "page_screening": ["UNIQUE(file_id, page_number)"],
     "report_section_articles": ["UNIQUE(section_id, article_id)"],
+    "article_countries": ["UNIQUE(article_id, country_code)"],
+    "article_conflict_zones": ["UNIQUE(article_id, conflict_zone)"],
 }
 
 
@@ -250,8 +262,8 @@ def insert_article(
     stance_summary: str,
     key_excerpt: str,
     analyzed_at: str,
-) -> None:
-    conn.execute(
+) -> int:
+    cursor = conn.execute(
         """
         INSERT INTO articles
             (file_id, page_number, newspaper, language, headline, author,
@@ -272,6 +284,7 @@ def insert_article(
         ),
     )
     conn.commit()
+    return cursor.lastrowid
 
 
 def get_articles_for_date(conn: sqlite3.Connection, report_date: str):
@@ -382,3 +395,54 @@ def get_section_articles(conn: sqlite3.Connection, section_id: int):
         """,
         (section_id,),
     ).fetchall()
+
+
+def insert_article_countries(conn: sqlite3.Connection, article_id: int, country_codes: list[str]) -> None:
+    for code in country_codes:
+        conn.execute(
+            "INSERT OR IGNORE INTO article_countries (article_id, country_code) VALUES (?, ?)",
+            (article_id, code),
+        )
+    conn.commit()
+
+
+def insert_article_conflict_zones(conn: sqlite3.Connection, article_id: int, conflict_zones: list[str]) -> None:
+    for zone in conflict_zones:
+        conn.execute(
+            "INSERT OR IGNORE INTO article_conflict_zones (article_id, conflict_zone) VALUES (?, ?)",
+            (article_id, zone),
+        )
+    conn.commit()
+
+
+def get_countries_for_article(conn: sqlite3.Connection, article_id: int) -> list[str]:
+    rows = conn.execute(
+        "SELECT country_code FROM article_countries WHERE article_id = ? ORDER BY country_code",
+        (article_id,),
+    ).fetchall()
+    return [r["country_code"] for r in rows]
+
+
+def get_conflict_zones_for_article(conn: sqlite3.Connection, article_id: int) -> list[str]:
+    rows = conn.execute(
+        "SELECT conflict_zone FROM article_conflict_zones WHERE article_id = ? ORDER BY conflict_zone",
+        (article_id,),
+    ).fetchall()
+    return [r["conflict_zone"] for r in rows]
+
+
+def get_articles_without_geo_tags(conn: sqlite3.Connection, report_date: str | None = None):
+    query = """
+        SELECT a.id, a.headline, a.region_topic, a.stance_summary
+        FROM articles a
+        LEFT JOIN article_countries ac ON ac.article_id = a.id
+        LEFT JOIN article_conflict_zones acz ON acz.article_id = a.id
+    """
+    conditions = ["ac.id IS NULL", "acz.id IS NULL"]
+    params: list = []
+    if report_date is not None:
+        query += " JOIN downloaded_files df ON df.id = a.file_id"
+        conditions.append("date(df.published_at) = ?")
+        params.append(report_date)
+    query += " WHERE " + " AND ".join(conditions) + " ORDER BY a.id"
+    return conn.execute(query, params).fetchall()

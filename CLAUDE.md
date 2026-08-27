@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## מטרת הפרויקט
 
-סקירה יומית של מאמרי פרשנות גאופוליטית מתוך PDF-ים של עיתונים מובילים באנגלית וגרמנית, ניתוח דגש ומגמות לאורך זמן, והפקת דוחות יומיים/שבועיים/חודשיים (PDF + HTML אינטראקטיבי), המתפרסמים באתר ב-GitHub Pages. כל דוח וכן האתר עצמו זמינים בשתי גרסאות שפה מלאות - עברית ואנגלית, עם מעבר שפה באתר.
+סקירה יומית של מאמרי פרשנות גאופוליטית מתוך PDF-ים של עיתונים מובילים באנגלית וגרמנית, ניתוח דגש ומגמות לאורך זמן, והפקת דוחות יומיים/שבועיים/חודשיים (PDF + HTML אינטראקטיבי), המתפרסמים באתר ב-GitHub Pages. כל דוח וכן האתר עצמו זמינים בשתי גרסאות שפה מלאות - עברית ואנגלית, עם מעבר שפה באתר. הרחבה עתידית מתוכננת: תצוגה גיאוגרפית (מפה) וטיימליין, שכבר נתמכת מבחינת נתונים (תיוג מדינה/קונפליקט לכל מאמר - ראו `src/common/geo_taxonomy.py`) גם אם ה-UI עצמו טרם נבנה.
 
 ## מבנה הקבצים המרכזיים
 
 - `src/common/db.py` - מודול ה-DB המשותף לכל שלבי ה-Pipeline (`data/processed/tracker.db`). הסכמה מוצהרת פעם אחת ב-`TABLE_COLUMNS`; `init_db()` יוצר טבלאות חסרות **וגם** מוסיף עמודות חסרות לטבלאות קיימות (`PRAGMA table_info` + `ALTER TABLE`). ראו "החלטות ארכיטקטוניות קבועות".
 - `src/ingestion/fetch.py` - משיכת PDF-ים מערוץ הטלגרם `demagazinesharing` (telethon), מסנן רק קבצים שמזוהים כאחד מ-4 העיתונים של ה-MVP.
 - `src/extraction/extract.py` - חילוץ טקסט גולמי מה-PDF (pdfplumber) לעמוד, גם ל-DB וגם לעותק טקסט תחת `data/processed/extracted/` (לא נכנס ל-git).
-- `src/analysis/` - סיווג וניתוח באמצעות Claude API, בשני שלבים עצמאיים: `screen.py` (סינון רחב) ו-`analyze.py` (ניתוח מעמיק). ראו "החלטות ארכיטקטוניות קבועות".
+- `src/analysis/` - סיווג וניתוח באמצעות Claude API, בשני שלבים עצמאיים: `screen.py` (סינון רחב) ו-`analyze.py` (ניתוח מעמיק, כולל תיוג country_codes/conflict_zones - ראו "החלטות ארכיטקטוניות קבועות"). `geo_tag_backfill.py` - כלי-עזר קבוע (לא חד-פעמי) שמתייג בדיעבד מאמרים שנותחו לפני שהתיוג הגיאוגרפי נוסף, בקבוצות (batch) עם Haiku זול - לא קורא מחדש את כל שלב ה-Analysis.
+- `src/common/geo_taxonomy.py` - שלושה מיפויים קבועים לתיוג גיאוגרפי: `COUNTRY_LIST` (רשימת מדינות סגורה, קוד ISO + שם עברי/אנגלי), `COUNTRY_TO_REGION` (מדינה → אחד מ-8 אזורים קבועים), `CONFLICT_ZONE_LABELS` (3 קונפליקטים סגורים). באותה רוח כמו `NEWSPAPER_DISPLAY_NAMES` - מיפוי קבוע מוזרק לפרומפט, לא ניחוש חופשי.
 - `src/reporting/synthesize.py` - שלב א' של Reporting: קריאת Sonnet יחידה ליום, מקבצת את מאמרי היום לפי נושא אמיתי (לא לפי `region_topic` הגולמי) לטבלאות `reports`/`report_sections`/`report_section_articles`, כולל רשת ביטחון כפולה (fallback section דטרמיניסטי + retry מבוסס-יחס) שמבטיחה כיסוי מלא של כל מאמר. ראו "החלטות ארכיטקטוניות קבועות".
 - `src/reporting/render.py` - שלב ב' של Reporting: הופך שורות `report_sections` ל-4 קבצים (HTML+PDF × עברית+אנגלית) תחת `reports/{he,en}/`, כולל קידוד צבעוני לפי `category` וגופן Heebo מוטמע מקומית (`src/reporting/assets/fonts/`, מועתק אוטומטית גם ל-`reports/assets/fonts/` לשימוש הדפים המתפרסמים).
 - `src/publishing/publish.py` - שלב Publishing: בונה `docs/` (מקור ה-GitHub Pages) מתוך `reports/` - מעתיק HTML/PDF וגופן Heebo, יוצר עמוד ארכיון כרונולוגי (`index.html`) לכל שפה + עותק-שורש מותאם-נתיבים בעברית (`docs/index.html`, כברירת מחדל). תמיד דורס, בלי `--force` (כמו `render.py`).
@@ -44,7 +45,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `python -m src.ingestion.fetch` - משיכת PDF-ים חדשים מטלגרם.
 - `python -m src.extraction.extract` - חילוץ טקסט מקבצים שהורדו וטרם חולצו.
 - `python -m src.analysis.screen` - שלב א' של Analysis (סינון רחב, Haiku). אופציונלי: `--file <מחרוזת בשם הקובץ>` להגבלה לקובץ יחיד לצורך בדיקה.
-- `python -m src.analysis.analyze` - שלב ב' של Analysis (ניתוח מעמיק, Sonnet). אופציונלי: `--file-id <int>` להגבלה לקובץ יחיד לצורך בדיקה.
+- `python -m src.analysis.analyze` - שלב ב' של Analysis (ניתוח מעמיק, Sonnet, כולל תיוג גיאוגרפי). אופציונלי: `--file-id <int>` להגבלה לקובץ יחיד לצורך בדיקה.
+- `python -m src.analysis.geo_tag_backfill` - מתייג בדיעבד מאמרים קיימים שחסר להם תיוג גיאוגרפי (בקבוצות, Haiku זול). אופציונלי: `--date <YYYY-MM-DD>` להגבלה לתאריך יחיד לצורך בדיקה. בטוח להרצה חוזרת - מאמר שכבר תויג לא מתעבד שוב.
 - `python -m src.reporting.synthesize --date <YYYY-MM-DD>` - שלב א' של Reporting. אופציונלי: `--force` למחיקה ובנייה מחדש של דוח קיים לאותו תאריך.
 - `python -m src.reporting.render --date <YYYY-MM-DD>` - שלב ב' של Reporting, מפיק 4 קבצים (HTML+PDF × עברית+אנגלית) מתוך דוח שכבר נבנה ע"י `synthesize.py`.
 - `python -m src.publishing.publish` - שלב Publishing, בונה/מעדכן את `docs/` מתוך כל התאריכים הקיימים ב-`reports/`. בלי דגלים, תמיד דורס.
@@ -68,3 +70,7 @@ Ingestion -> Extraction -> Analysis -> Reporting -> Publishing
 עיקרון מנחה שחזר פעמיים בפרויקט: כשמתגלה כשל חוזר ולא-תלוי-הקשר בהתנהגות מודל (למשל שגיאות רשת חולפות ב-Analysis, השמטת article_id-ים ב-Synthesis) - הפתרון הוא רשת-ביטחון גנרית ברמת הקוד (טיפול שגיאות ברמת-יחידה + retry, fallback דטרמיניסטי), לא רדיפה אחרי כל מקרה בנפרד דרך שינויי פרומפט נקודתיים.
 
 `report_sections.category` הוא מיפוי קבוע של 8 קטגוריות (security_conflict/diplomacy_international/trade_economics/domestic_politics/migration_society/society_culture/technology_media/energy_environment) שהמודל בוחר בעצמו באותה קריאת `synthesize.py`, פלוס ערך שמור `additional_coverage` שלעולם לא מוצע למודל - הוא מסמן section שנוצר ע"י מנגנון ה-fallback ולא ע"י המודל. שינוי ברשימת הקטגוריות דורש עדכון גם ב-`synthesize.py` (ה-enum בסכמת הכלי) וגם ב-`render.py` (`CATEGORY_LABELS`/`CATEGORY_STYLES`).
+
+תיוג גיאוגרפי (`article_countries`/`article_conflict_zones`, many-to-many כי מאמר יכול לגעת ביותר ממדינה/קונפליקט אחד) נכתב ע"י `analyze.py` באותה קריאת API הקיימת שכבר מפיקה headline/region_topic/וכו' - לא קריאה נפרדת. `articles.region_topic` (טקסט חופשי) נשאר כמו שהוא לצדו, לא מוחלף. **חשוב לפרשנות עתידית של הנתונים**: מאמר בלי אף שורה לא ב-`article_countries` ולא ב-`article_conflict_zones` יכול להיות גם מאמר שטרם עבר תיוג וגם מאמר שתויג ונמצא נכון שאין לו מדינה/קונפליקט רלוונטיים (המקרה השני קורה בפועל, לא נדיר) - שני המצבים נראים זהים ב-DB. אין להניח "0 שורות = טרם עובד".
+
+הרחבת רשימת המדינות ב-`geo_taxonomy.py` (`COUNTRY_LIST`/`COUNTRY_TO_REGION`) בעתיד היא ציפייה מובנית, לא חריגה - הרשימה ההתחלתית (94 מדינות) נבנתה מכיסוי אמיתי שכבר נצפה, לא מכסה את כל 195 מדינות העולם בכוונה.

@@ -19,8 +19,11 @@ from src.common.db import (
     get_pages_pending_analysis,
     init_db,
     insert_article,
+    insert_article_conflict_zones,
+    insert_article_countries,
     set_analysis_status,
 )
+from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, country_codes, country_list_prompt_text
 
 MODEL = "claude-sonnet-5"
 
@@ -41,10 +44,12 @@ For every distinct piece of geopolitical opinion, analysis, or commentary you ca
 - region_topic: the primary geopolitical region or topic the piece concerns (e.g. "Russia-Ukraine war", "US-China trade relations", "Middle East / Gaza").
 - stance_summary: 1-2 sentences summarizing the author's central argument or position - not a neutral topic description, the actual stance taken.
 - key_excerpt: one short verbatim quotation (under 40 words) from the text that best represents the piece's core claim.
+- country_codes: zero or more ISO country codes from this closed list that the article substantively concerns (not just a passing mention) - {country_list}. A piece about US-Iran policy should include both "US" and "IR". If no specific country from this list applies, leave empty.
+- conflict_zones: zero or more of israel_palestine_conflict, iran_west_conflict, russia_ukraine_conflict - ONLY if the article substantively concerns that specific conflict. Most articles concern none of these; do not force a match.
 
 A piece qualifies as "geopolitical" only if it concerns international relations, foreign policy, cross-border conflicts, diplomacy, sanctions, geopolitical economics, or a similar international/cross-border dimension. Exclude opinion pieces about purely domestic policy that have no such dimension, even if they are legitimate, substantive political commentary - for example, exclude an op-ed arguing about a domestic pension reform, or one about retail workers' wages and unionization, if neither has an international angle. Also exclude news-brief items, factual reporting without an opinion angle, and content unrelated to geopolitics (culture, sport, lifestyle, etc.).
 
-If nothing on the page qualifies, call record_articles with an empty articles list."""
+If nothing on the page qualifies, call record_articles with an empty articles list.""".format(country_list=country_list_prompt_text())
 
 ANALYZE_TOOL = {
     "name": "record_articles",
@@ -62,8 +67,21 @@ ANALYZE_TOOL = {
                         "region_topic": {"type": "string"},
                         "stance_summary": {"type": "string"},
                         "key_excerpt": {"type": "string"},
+                        "country_codes": {"type": "array", "items": {"type": "string", "enum": country_codes()}},
+                        "conflict_zones": {
+                            "type": "array",
+                            "items": {"type": "string", "enum": list(CONFLICT_ZONE_LABELS.keys())},
+                        },
                     },
-                    "required": ["headline", "author", "region_topic", "stance_summary", "key_excerpt"],
+                    "required": [
+                        "headline",
+                        "author",
+                        "region_topic",
+                        "stance_summary",
+                        "key_excerpt",
+                        "country_codes",
+                        "conflict_zones",
+                    ],
                     "additionalProperties": False,
                 },
             },
@@ -116,7 +134,7 @@ def run(file_id: int | None = None) -> None:
 
         now = datetime.now(timezone.utc).isoformat()
         for article in articles:
-            insert_article(
+            article_id = insert_article(
                 conn,
                 page["file_id"],
                 page["page_number"],
@@ -129,6 +147,8 @@ def run(file_id: int | None = None) -> None:
                 article["key_excerpt"],
                 now,
             )
+            insert_article_countries(conn, article_id, article["country_codes"])
+            insert_article_conflict_zones(conn, article_id, article["conflict_zones"])
 
         set_analysis_status(conn, page["file_id"], page["page_number"], "completed")
         pages_analyzed += 1
