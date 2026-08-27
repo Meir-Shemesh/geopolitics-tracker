@@ -1,6 +1,6 @@
 """Publishing stage: build docs/ (the GitHub Pages source) from reports/.
 
-Copies every generated report (HTML+PDF, both languages) and the shared Heebo font
+Copies every generated report (HTML+PDF, both languages) and the shared site font
 from reports/ into docs/, and builds a chronological archive index.html per
 language listing every report currently in the DB. The same index content is also
 written back into reports/{he,en}/ for local convenience (so navigation links work
@@ -30,19 +30,22 @@ from src.common.db import (
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION
 from src.reporting.render import (
     CATEGORY_LABELS,
+    FONT_FAMILY,
+    FONT_FILENAME,
     LANG_LABEL,
     NEWSPAPER_DISPLAY_NAMES,
     OTHER_LANG,
     build_nav_html,
     category_css,
     esc,
+    font_face_css,
     format_date_en,
     format_date_he,
 )
 
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
-FONT_SOURCE_PATH = REPORTS_DIR / "assets" / "fonts" / "Heebo-Variable.ttf"
+FONT_SOURCE_PATH = REPORTS_DIR / "assets" / "fonts" / FONT_FILENAME
 LOGO_SOURCE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "assets" / "MS_Logo.png"
 MAP_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "map" / "world.svg"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
@@ -80,11 +83,7 @@ def build_index_html(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
 <style>
-  @font-face {{
-    font-family: "Heebo";
-    src: url("{font_relative_path}") format("truetype-variations");
-    font-weight: 100 900;
-  }}
+  {font_face_css(font_relative_path)}
 
   :root {{
     --bg: #f3efe8;
@@ -120,7 +119,7 @@ def build_index_html(
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Heebo", system-ui, sans-serif;
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
     line-height: 1.7;
   }}
 
@@ -222,11 +221,7 @@ def build_about_html(lang: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
 <style>
-  @font-face {{
-    font-family: "Heebo";
-    src: url("../assets/fonts/Heebo-Variable.ttf") format("truetype-variations");
-    font-weight: 100 900;
-  }}
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
   :root {{
     --bg: #f3efe8;
@@ -262,7 +257,7 @@ def build_about_html(lang: str) -> str:
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Heebo", system-ui, sans-serif;
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
     line-height: 1.7;
   }}
 
@@ -605,11 +600,7 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
 <style>
-  @font-face {{
-    font-family: "Heebo";
-    src: url("{asset_prefix}assets/fonts/Heebo-Variable.ttf") format("truetype-variations");
-    font-weight: 100 900;
-  }}
+  {font_face_css(f"{asset_prefix}assets/fonts/{FONT_FILENAME}")}
 
   {category_css()}
 
@@ -647,7 +638,7 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Heebo", system-ui, sans-serif;
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
     line-height: 1.7;
   }}
 
@@ -974,7 +965,7 @@ def run() -> None:
             lang,
             report_link_prefix="",
             other_lang_href=f"../{OTHER_LANG[lang]}/archive.html",
-            font_relative_path="../assets/fonts/Heebo-Variable.ttf",
+            font_relative_path=f"../assets/fonts/{FONT_FILENAME}",
         )
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -996,7 +987,7 @@ def run() -> None:
         "he",
         report_link_prefix="he/",
         other_lang_href="en/archive.html",
-        font_relative_path="assets/fonts/Heebo-Variable.ttf",
+        font_relative_path=f"assets/fonts/{FONT_FILENAME}",
     )
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")

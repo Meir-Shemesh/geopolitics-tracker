@@ -30,8 +30,23 @@ except Exception:
     WEASYPRINT_AVAILABLE = False
 
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
-FONT_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "fonts" / "Heebo-Variable.ttf"
-FONT_RELATIVE_PATH = "../assets/fonts/Heebo-Variable.ttf"
+
+# Single source of truth for the site-wide font (everything under render.py/publish.py -
+# NOT scripts/build_background_doc.py, which deliberately uses Assistant too but as its
+# own separate, independently-managed asset for a standalone document).
+FONT_FAMILY = "Assistant"
+FONT_WEIGHT_RANGE = "200 800"
+FONT_FILENAME = "Assistant-Variable.ttf"
+FONT_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "fonts" / FONT_FILENAME
+FONT_RELATIVE_PATH = f"../assets/fonts/{FONT_FILENAME}"
+
+
+def font_face_css(relative_path: str) -> str:
+    return f"""@font-face {{
+    font-family: "{FONT_FAMILY}";
+    src: url("{relative_path}") format("truetype-variations");
+    font-weight: {FONT_WEIGHT_RANGE};
+  }}"""
 
 FALLBACK_CATEGORY = "additional_coverage"
 
@@ -182,11 +197,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
 <style>
-  @font-face {{
-    font-family: "Heebo";
-    src: url("{FONT_RELATIVE_PATH}") format("truetype-variations");
-    font-weight: 100 900;
-  }}
+  {font_face_css(FONT_RELATIVE_PATH)}
 
   {category_css()}
 
@@ -233,7 +244,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Heebo", system-ui, sans-serif;
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
     line-height: 1.7;
   }}
 
