@@ -20,6 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `data/processed/` - `tracker.db` (מצב כל ה-Pipeline) ו-`extracted/` (עותקי טקסט) - שניהם לא נכנסים ל-git.
 - `reports/he/`, `reports/en/` - דוחות שנוצרים ע"י `render.py` (מקור אמת). `docs/` - נבנה מהם ע"י `publish.py`; זהו המיקום שממנו GitHub Pages מגיש בפועל (כולל `docs/CNAME` לדומיין המותאם `geopolitics.meirshemesh.com`) - **אין לערוך קבצים בתוך `docs/` ידנית**, הם נדרסים בכל הרצת `publish.py`.
 - `tests/` - טסטים.
+- `scripts/` - סקריפטים חד-פעמיים, מחוץ ל-5 שלבי ה-Pipeline הראשי (כל אחד עומד בפני עצמו, לא מורץ שוטף). למשל `build_background_doc.py` - מפיק מסמך רקע/מותג עצמאי (PDF+HTML) בעיצוב תואם לאתר (גופן Heebo, פלטת הצבעים הבסיסית מ-`render.py`), עם נכסי המקור שלו תחת `scripts/assets/` (למשל `MS_Logo.png`). תוצרי ה-build עצמם (`scripts/output/*.pdf`, `*.html`) לא נכנסים ל-git - נבנים מחדש מהסקריפט, כמו `docs/`/`reports/`.
 - `requirements.txt` - רשימת תלויות (telethon, python-dotenv, pdfplumber, anthropic, weasyprint) - מותקנות ב-venv מקומי.
 
 ## כללי עבודה קבועים
