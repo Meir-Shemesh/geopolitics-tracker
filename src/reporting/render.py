@@ -131,8 +131,11 @@ def build_nav_html(back_href: str, other_lang_href: str, lang: str) -> str:
     other = OTHER_LANG[lang]
     return f"""
   <nav class="top-nav">
-    <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>
-    <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>
+    <a class="top-nav-logo-link" href="../index.html"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>
+      <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>
+    </div>
   </nav>"""
 
 
@@ -258,6 +261,9 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     font-size: 0.82rem;
     border-bottom: 1px solid var(--border);
   }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
   .top-nav-link {{
     color: var(--text-muted);
     text-decoration: none;

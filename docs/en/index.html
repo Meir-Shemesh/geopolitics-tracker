@@ -130,7 +130,7 @@
     align-items: center;
     border-bottom: 1px solid var(--border);
   }
-  .home-logo { height: 32px; width: auto; display: block; }
+  .home-logo { height: 56px; width: auto; display: block; }
   .home-top-bar a {
     color: var(--text-muted);
     text-decoration: none;
@@ -160,14 +160,14 @@
 
   .home-main { max-width: 60rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }
 
-  .home-grid {
+  .home-top-row {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 1.25rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
   }
   @media (max-width: 860px) {
-    .home-grid { grid-template-columns: minmax(0, 1fr); }
+    .home-top-row { grid-template-columns: minmax(0, 1fr); }
   }
 
   .home-module {
@@ -180,19 +180,39 @@
     flex-direction: column;
     min-height: 260px;
   }
-  .module-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .85rem; }
-  .module-title { margin: 0; font-size: 1rem; font-weight: 700; }
   .module-link { font-size: .78rem; color: var(--masthead-accent); text-decoration: none; white-space: nowrap; }
   .module-link:hover { text-decoration: underline; }
 
+  .map-module { margin-bottom: 1.25rem; }
   .map-module svg#world-map { width: 100%; height: auto; display: block; }
   .oceanxx { fill: var(--bg); stroke: var(--border); stroke-width: 0.5; }
   .landxx, .limitxx, .antxx { fill: var(--border); stroke: var(--bg-elevated); stroke-width: 0.5; fill-rule: evenodd; }
   .circlexx, .subxx, .noxx, .unxx { opacity: 0; }
   .landxx.has-coverage { fill: var(--masthead-accent); cursor: pointer; }
   .landxx.has-coverage:hover { opacity: .8; }
-  .landxx.is-selected { stroke: var(--masthead-accent); stroke-width: 2; }
+  .landxx.is-selected { stroke: #f4b942; stroke-width: 2.5; }
 
+  .region-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: 1.1rem;
+  }
+  .region-chip {
+    font-family: inherit;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .35rem .9rem;
+    cursor: pointer;
+  }
+  .region-chip:hover { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+  .region-chip.is-selected { background: var(--masthead-accent); border-color: var(--masthead-accent); color: #fff; }
+
+  .timeline-top { display: flex; justify-content: flex-end; margin-bottom: .6rem; }
   .timeline-track {
     display: flex;
     gap: .5rem;
@@ -214,11 +234,18 @@
   }
   .timeline-cell.is-selected { border-color: var(--masthead-accent); border-width: 2px; font-weight: 700; }
 
-  .latest-card { display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; }
+  .latest-card { display: flex; flex-direction: column; gap: .6rem; flex: 1; justify-content: center; }
   .latest-card a { text-decoration: none; color: inherit; }
-  .latest-card-date { margin: 0; font-size: 1.05rem; font-weight: 700; }
-  .latest-card-sources { margin: 0; font-size: .8rem; color: var(--text-muted); }
-  .latest-card-cta { margin: .5rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
+  .latest-card-number { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }
+  .latest-card-preview {
+    margin: 0;
+    font-size: .95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .latest-card-cta { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
 
   .results-heading { font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }
   .result-item {
@@ -261,12 +288,19 @@
     </div>
   </header>
   <main class="home-main">
-    <div class="home-grid">
-      <section class="home-module map-module">
-        <div class="module-header">
-          <h2 class="module-title">Map</h2>
+    <div class="home-top-row">
+      <section class="home-module timeline-module">
+        <div class="timeline-top">
+          <a class="module-link" href="archive.html">Full archive →</a>
         </div>
-        <svg id="world-map" viewBox="-35.8 80 2776 1163.1" xmlns="http://www.w3.org/2000/svg">
+        <div class="timeline-track" id="timeline-track"></div>
+      </section>
+      <section class="home-module latest-module">
+        <div class="latest-card" id="latest-card"></div>
+      </section>
+    </div>
+    <section class="home-module map-module">
+      <svg id="world-map" viewBox="-35.8 80 2776 1163.1" xmlns="http://www.w3.org/2000/svg">
   <defs
      id="defs2913" />
   <title
@@ -8620,21 +8654,8 @@
   </g>
 </svg>
 
-      </section>
-      <section class="home-module timeline-module">
-        <div class="module-header">
-          <h2 class="module-title">Timeline</h2>
-          <a class="module-link" href="archive.html">Full archive →</a>
-        </div>
-        <div class="timeline-track" id="timeline-track"></div>
-      </section>
-      <section class="home-module latest-module">
-        <div class="module-header">
-          <h2 class="module-title">By Text</h2>
-        </div>
-        <div class="latest-card" id="latest-card"></div>
-      </section>
-    </div>
+      <div class="region-chips" id="region-chips"></div>
+    </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
   <script>
@@ -8651,6 +8672,7 @@
     renderMap(manifest);
     renderTimeline(manifest);
     renderLatestCard(manifest);
+    renderRegionChips(manifest);
     if (manifest.latest_date) {
       selectDate(manifest, manifest.latest_date);
     }
@@ -8719,22 +8741,39 @@
     var link = document.createElement("a");
     link.href = section ? hrefFor(section) : "#";
 
-    var dateEl = document.createElement("p");
-    dateEl.className = "latest-card-date";
-    dateEl.textContent = formatLongDate(manifest.latest_date);
+    var numberEl = document.createElement("p");
+    numberEl.className = "latest-card-number";
+    numberEl.textContent = formatShortDate(manifest.latest_date);
 
-    var sourcesEl = document.createElement("p");
-    sourcesEl.className = "latest-card-sources";
-    sourcesEl.textContent = dateInfo.sources.join(", ");
+    var previewEl = document.createElement("p");
+    previewEl.className = "latest-card-preview";
+    previewEl.textContent = section ? topicFor(section) : "";
 
     var cta = document.createElement("p");
     cta.className = "latest-card-cta";
     cta.textContent = LANG === "he" ? "לדוח המלא ←" : "Full report →";
 
-    link.appendChild(dateEl);
-    link.appendChild(sourcesEl);
+    link.appendChild(numberEl);
+    link.appendChild(previewEl);
     link.appendChild(cta);
     card.appendChild(link);
+  }
+
+  function renderRegionChips(manifest) {
+    var container = document.getElementById("region-chips");
+    if (!container || !manifest.regions) return;
+    Object.keys(manifest.regions).forEach(function (key) {
+      var region = manifest.regions[key];
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "region-chip";
+      chip.dataset.region = key;
+      chip.textContent = LANG === "he" ? region.name_he : region.name_en;
+      chip.addEventListener("click", function () {
+        selectRegion(manifest, key);
+      });
+      container.appendChild(chip);
+    });
   }
 
   function selectCountry(manifest, code) {
@@ -8754,6 +8793,20 @@
       cell.scrollIntoView({ inline: "center", block: "nearest" });
     }
     renderResults(manifest, manifest.dates[date].section_ids, formatLongDate(date));
+  }
+
+  function selectRegion(manifest, regionKey) {
+    clearSelection();
+    var region = manifest.regions[regionKey];
+    if (!region) return;
+    var chip = document.querySelector('.region-chip[data-region="' + regionKey + '"]');
+    if (chip) chip.classList.add("is-selected");
+    region.country_codes.forEach(function (code) {
+      var el = document.getElementById(code.toLowerCase());
+      if (el) el.classList.add("is-selected");
+    });
+    var name = LANG === "he" ? region.name_he : region.name_en;
+    renderResults(manifest, region.section_ids, name);
   }
 
   function clearSelection() {

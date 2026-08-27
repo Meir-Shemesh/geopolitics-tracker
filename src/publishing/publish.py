@@ -27,7 +27,7 @@ from src.common.db import (
     get_section_articles,
     init_db,
 )
-from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION
+from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION, REGION_LABELS
 from src.reporting.render import (
     CATEGORY_LABELS,
     FONT_FAMILY,
@@ -57,6 +57,7 @@ def build_index_html(
     report_link_prefix: str,
     other_lang_href: str,
     font_relative_path: str,
+    asset_prefix: str,
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
@@ -128,11 +129,14 @@ def build_index_html(
     margin: 0 auto;
     padding: 0.65rem 1.5rem;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     font-size: 0.82rem;
     border-bottom: 1px solid var(--border);
   }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
   .top-nav-link {{
     color: var(--text-muted);
     text-decoration: none;
@@ -186,7 +190,10 @@ def build_index_html(
 </head>
 <body>
   <nav class="top-nav">
-    <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[OTHER_LANG[lang]])}</a>
+    <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[OTHER_LANG[lang]])}</a>
+    </div>
   </nav>
   <header class="masthead">
     <div class="masthead-inner">
@@ -271,6 +278,9 @@ def build_about_html(lang: str) -> str:
     font-size: 0.82rem;
     border-bottom: 1px solid var(--border);
   }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
   .top-nav-link {{
     color: var(--text-muted);
     text-decoration: none;
@@ -332,7 +342,7 @@ def build_about_html(lang: str) -> str:
     border-radius: .9rem;
     padding: 1.1rem 1.4rem;
   }}
-  .about-author img {{ height: 56px; width: auto; flex: 0 0 auto; }}
+  .about-author img {{ height: 96px; width: auto; flex: 0 0 auto; }}
   .about-author-name {{ margin: 0; font-weight: 800; }}
   .about-author-role {{ margin: 0; font-size: .85rem; color: var(--text-muted); }}
 </style>
@@ -380,6 +390,7 @@ _HOMEPAGE_JS_TEMPLATE = """
     renderMap(manifest);
     renderTimeline(manifest);
     renderLatestCard(manifest);
+    renderRegionChips(manifest);
     if (manifest.latest_date) {
       selectDate(manifest, manifest.latest_date);
     }
@@ -448,22 +459,39 @@ _HOMEPAGE_JS_TEMPLATE = """
     var link = document.createElement("a");
     link.href = section ? hrefFor(section) : "#";
 
-    var dateEl = document.createElement("p");
-    dateEl.className = "latest-card-date";
-    dateEl.textContent = formatLongDate(manifest.latest_date);
+    var numberEl = document.createElement("p");
+    numberEl.className = "latest-card-number";
+    numberEl.textContent = formatShortDate(manifest.latest_date);
 
-    var sourcesEl = document.createElement("p");
-    sourcesEl.className = "latest-card-sources";
-    sourcesEl.textContent = dateInfo.sources.join(", ");
+    var previewEl = document.createElement("p");
+    previewEl.className = "latest-card-preview";
+    previewEl.textContent = section ? topicFor(section) : "";
 
     var cta = document.createElement("p");
     cta.className = "latest-card-cta";
     cta.textContent = LANG === "he" ? "לדוח המלא ←" : "Full report →";
 
-    link.appendChild(dateEl);
-    link.appendChild(sourcesEl);
+    link.appendChild(numberEl);
+    link.appendChild(previewEl);
     link.appendChild(cta);
     card.appendChild(link);
+  }
+
+  function renderRegionChips(manifest) {
+    var container = document.getElementById("region-chips");
+    if (!container || !manifest.regions) return;
+    Object.keys(manifest.regions).forEach(function (key) {
+      var region = manifest.regions[key];
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "region-chip";
+      chip.dataset.region = key;
+      chip.textContent = LANG === "he" ? region.name_he : region.name_en;
+      chip.addEventListener("click", function () {
+        selectRegion(manifest, key);
+      });
+      container.appendChild(chip);
+    });
   }
 
   function selectCountry(manifest, code) {
@@ -483,6 +511,20 @@ _HOMEPAGE_JS_TEMPLATE = """
       cell.scrollIntoView({ inline: "center", block: "nearest" });
     }
     renderResults(manifest, manifest.dates[date].section_ids, formatLongDate(date));
+  }
+
+  function selectRegion(manifest, regionKey) {
+    clearSelection();
+    var region = manifest.regions[regionKey];
+    if (!region) return;
+    var chip = document.querySelector('.region-chip[data-region="' + regionKey + '"]');
+    if (chip) chip.classList.add("is-selected");
+    region.country_codes.forEach(function (code) {
+      var el = document.getElementById(code.toLowerCase());
+      if (el) el.classList.add("is-selected");
+    });
+    var name = LANG === "he" ? region.name_he : region.name_en;
+    renderResults(manifest, region.section_ids, name);
   }
 
   function clearSelection() {
@@ -573,7 +615,6 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
             "זוויות המבט השונות."
         )
         story_link_label = "עוד על הפרויקט ←"
-        map_title, timeline_title, latest_title = "מפה", "ציר זמן", "לפי טקסט"
         archive_link_label = "לארכיון המלא ←"
     else:
         story_text = (
@@ -585,7 +626,6 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
             "who's right, but to illuminate the different points of view."
         )
         story_link_label = "More about the project →"
-        map_title, timeline_title, latest_title = "Map", "Timeline", "By Text"
         archive_link_label = "Full archive →"
 
     map_svg = _load_map_svg_inline()
@@ -651,7 +691,7 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
     align-items: center;
     border-bottom: 1px solid var(--border);
   }}
-  .home-logo {{ height: 32px; width: auto; display: block; }}
+  .home-logo {{ height: 56px; width: auto; display: block; }}
   .home-top-bar a {{
     color: var(--text-muted);
     text-decoration: none;
@@ -681,14 +721,14 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
 
   .home-main {{ max-width: 60rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }}
 
-  .home-grid {{
+  .home-top-row {{
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 1.25rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.25rem;
   }}
   @media (max-width: 860px) {{
-    .home-grid {{ grid-template-columns: minmax(0, 1fr); }}
+    .home-top-row {{ grid-template-columns: minmax(0, 1fr); }}
   }}
 
   .home-module {{
@@ -701,19 +741,39 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
     flex-direction: column;
     min-height: 260px;
   }}
-  .module-header {{ display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .85rem; }}
-  .module-title {{ margin: 0; font-size: 1rem; font-weight: 700; }}
   .module-link {{ font-size: .78rem; color: var(--masthead-accent); text-decoration: none; white-space: nowrap; }}
   .module-link:hover {{ text-decoration: underline; }}
 
+  .map-module {{ margin-bottom: 1.25rem; }}
   .map-module svg#world-map {{ width: 100%; height: auto; display: block; }}
   .oceanxx {{ fill: var(--bg); stroke: var(--border); stroke-width: 0.5; }}
   .landxx, .limitxx, .antxx {{ fill: var(--border); stroke: var(--bg-elevated); stroke-width: 0.5; fill-rule: evenodd; }}
   .circlexx, .subxx, .noxx, .unxx {{ opacity: 0; }}
   .landxx.has-coverage {{ fill: var(--masthead-accent); cursor: pointer; }}
   .landxx.has-coverage:hover {{ opacity: .8; }}
-  .landxx.is-selected {{ stroke: var(--masthead-accent); stroke-width: 2; }}
+  .landxx.is-selected {{ stroke: #f4b942; stroke-width: 2.5; }}
 
+  .region-chips {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: 1.1rem;
+  }}
+  .region-chip {{
+    font-family: inherit;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .35rem .9rem;
+    cursor: pointer;
+  }}
+  .region-chip:hover {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
+  .region-chip.is-selected {{ background: var(--masthead-accent); border-color: var(--masthead-accent); color: #fff; }}
+
+  .timeline-top {{ display: flex; justify-content: flex-end; margin-bottom: .6rem; }}
   .timeline-track {{
     display: flex;
     gap: .5rem;
@@ -735,11 +795,18 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
   }}
   .timeline-cell.is-selected {{ border-color: var(--masthead-accent); border-width: 2px; font-weight: 700; }}
 
-  .latest-card {{ display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; }}
+  .latest-card {{ display: flex; flex-direction: column; gap: .6rem; flex: 1; justify-content: center; }}
   .latest-card a {{ text-decoration: none; color: inherit; }}
-  .latest-card-date {{ margin: 0; font-size: 1.05rem; font-weight: 700; }}
-  .latest-card-sources {{ margin: 0; font-size: .8rem; color: var(--text-muted); }}
-  .latest-card-cta {{ margin: .5rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
+  .latest-card-number {{ margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }}
+  .latest-card-preview {{
+    margin: 0;
+    font-size: .95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }}
+  .latest-card-cta {{ margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
   .results-heading {{ font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }}
   .result-item {{
@@ -782,27 +849,21 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
     </div>
   </header>
   <main class="home-main">
-    <div class="home-grid">
-      <section class="home-module map-module">
-        <div class="module-header">
-          <h2 class="module-title">{esc(map_title)}</h2>
-        </div>
-        {map_svg}
-      </section>
+    <div class="home-top-row">
       <section class="home-module timeline-module">
-        <div class="module-header">
-          <h2 class="module-title">{esc(timeline_title)}</h2>
+        <div class="timeline-top">
           <a class="module-link" href="archive.html">{esc(archive_link_label)}</a>
         </div>
         <div class="timeline-track" id="timeline-track"></div>
       </section>
       <section class="home-module latest-module">
-        <div class="module-header">
-          <h2 class="module-title">{esc(latest_title)}</h2>
-        </div>
         <div class="latest-card" id="latest-card"></div>
       </section>
     </div>
+    <section class="home-module map-module">
+      {map_svg}
+      <div class="region-chips" id="region-chips"></div>
+    </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
   <script>{js_code}</script>
@@ -925,6 +986,23 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
         code: {"name_he": labels["he"], "name_en": labels["en"]} for code, labels in CATEGORY_LABELS.items()
     }
 
+    region_country_codes: dict[str, list[str]] = {}
+    for code, region_key in COUNTRY_TO_REGION.items():
+        region_country_codes.setdefault(region_key, []).append(code)
+
+    regions_out = {}
+    for region_key, codes in region_country_codes.items():
+        ids: set[int] = set()
+        for code in codes:
+            ids.update(countries_index.get(code, []))
+        if ids:
+            regions_out[region_key] = {
+                "name_he": REGION_LABELS[region_key]["name_he"],
+                "name_en": REGION_LABELS[region_key]["name_en"],
+                "country_codes": sorted(codes),
+                "section_ids": sorted(ids),
+            }
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "latest_date": entries[0][0] if entries else None,
@@ -933,6 +1011,7 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
         "conflict_zones": conflict_zones_out,
         "dates": dates_index,
         "categories": categories_out,
+        "regions": regions_out,
     }
 
 
@@ -966,6 +1045,7 @@ def run() -> None:
             report_link_prefix="",
             other_lang_href=f"../{OTHER_LANG[lang]}/archive.html",
             font_relative_path=f"../assets/fonts/{FONT_FILENAME}",
+            asset_prefix="../",
         )
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -988,6 +1068,7 @@ def run() -> None:
         report_link_prefix="he/",
         other_lang_href="en/archive.html",
         font_relative_path=f"assets/fonts/{FONT_FILENAME}",
+        asset_prefix="",
     )
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")

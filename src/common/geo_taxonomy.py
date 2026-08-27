@@ -145,6 +145,17 @@ COUNTRY_TO_REGION = {
     "MU": "africa",
 }
 
+REGION_LABELS = {
+    "north_america": {"name_en": "North America", "name_he": "צפון אמריקה"},
+    "south_america": {"name_en": "South & Central America", "name_he": "דרום ומרכז אמריקה"},
+    "europe": {"name_en": "Europe", "name_he": "אירופה"},
+    "middle_east": {"name_en": "Middle East", "name_he": "המזרח התיכון"},
+    "eurasia": {"name_en": "Eurasia", "name_he": "אירואסיה"},
+    "far_east": {"name_en": "Far East", "name_he": "המזרח הרחוק"},
+    "oceania": {"name_en": "Oceania", "name_he": "אוקיאניה"},
+    "africa": {"name_en": "Africa", "name_he": "אפריקה"},
+}
+
 CONFLICT_ZONE_LABELS = {
     "israel_palestine_conflict": {
         "name_en": "Israel-Palestine Conflict",
