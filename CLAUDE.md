@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## מבנה הקבצים המרכזיים
 
 - `src/common/db.py` - מודול ה-DB המשותף לכל שלבי ה-Pipeline (`data/processed/tracker.db`). הסכמה מוצהרת פעם אחת ב-`TABLE_COLUMNS`; `init_db()` יוצר טבלאות חסרות **וגם** מוסיף עמודות חסרות לטבלאות קיימות (`PRAGMA table_info` + `ALTER TABLE`). ראו "החלטות ארכיטקטוניות קבועות".
-- `src/ingestion/fetch.py` - משיכת PDF-ים מערוץ הטלגרם `demagazinesharing` (telethon), מסנן רק קבצים שמזוהים כאחד מ-4 העיתונים של ה-MVP.
+- `src/ingestion/fetch.py` - משיכת PDF-ים מערוץ הטלגרם `demagazinesharing` (telethon), מסנן רק קבצים שמזוהים כאחד מ-10 העיתונים של ה-MVP (`guess_newspaper()` - מנרמל `_`/`-` לרווח לפני ההשוואה, כדי שתבניות-שם שונות מאותו מקור לא יפספסו; כולל הבחנה מפורשת בין מהדורות דומות-בשם, כמו NYT International מול NYT הביתי).
 - `src/extraction/extract.py` - חילוץ טקסט גולמי מה-PDF (pdfplumber) לעמוד, גם ל-DB וגם לעותק טקסט תחת `data/processed/extracted/` (לא נכנס ל-git).
 - `src/analysis/` - סיווג וניתוח באמצעות Claude API, בשני שלבים עצמאיים: `screen.py` (סינון רחב) ו-`analyze.py` (ניתוח מעמיק, כולל תיוג country_codes/conflict_zones - ראו "החלטות ארכיטקטוניות קבועות"). `geo_tag_backfill.py` - כלי-עזר קבוע (לא חד-פעמי) שמתייג בדיעבד מאמרים שנותחו לפני שהתיוג הגיאוגרפי נוסף, בקבוצות (batch) עם Haiku זול - לא קורא מחדש את כל שלב ה-Analysis.
 - `src/common/geo_taxonomy.py` - שלושה מיפויים קבועים לתיוג גיאוגרפי: `COUNTRY_LIST` (רשימת מדינות סגורה, קוד ISO + שם עברי/אנגלי), `COUNTRY_TO_REGION` (מדינה → אחד מ-8 אזורים קבועים), `CONFLICT_ZONE_LABELS` (3 קונפליקטים סגורים). באותה רוח כמו `NEWSPAPER_DISPLAY_NAMES` - מיפוי קבוע מוזרק לפרומפט, לא ניחוש חופשי.
@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## כללי עבודה קבועים
 
-- מקורות ל-MVP: The Guardian, The Daily Telegraph (אנגלית), Süddeutsche Zeitung, Die Welt (גרמנית).
+- מקורות ל-MVP (10 בסה"כ): The Guardian, The Daily Telegraph (בריטיה); The New York Times International, The Wall Street Journal, Los Angeles Times, USA Today, The Economist (ארה"ב/בינלאומי); Süddeutsche Zeitung, Die Welt, Der Spiegel (גרמניה). ראו PROJECT_LOG לנימוק האיזון הפוליטי המכוון, בפרט הזירה האמריקאית (4 גוונים, לא זוג פשוט).
 - כל התקשורת וההסברים עם המשתמש בעברית. כל הקוד, שמות המשתנים, הפונקציות וההערות בקוד באנגלית.
 - ניהול תלויות באמצעות `venv`.
 - בתחילת סשן חדש או לאחר מעבר למחשב אחר, יש להפעיל את `/resume-project` (סקיל ידני בלבד, ללא הפעלה אוטומטית) - מבצע `git pull` תחילה (עוצר אם יש קונפליקט/שינויים לא-committed), ואז משחזר מצב מ-CLAUDE.md, HANDOFF.md, ומ-PROJECT_LOG.md (אם קיים).
@@ -68,7 +68,7 @@ Ingestion -> Extraction -> Analysis -> Reporting -> Publishing
 
 `src/common/db.py` הוא מקור האמת היחיד לסכמת ה-DB: הוספת עמודה/טבלה חדשה נעשית **רק** ע"י עריכת `TABLE_COLUMNS`/`TABLE_CONSTRAINTS` שם - `init_db()` מזהה ומוסיף את מה שחסר אוטומטית בכל הרצה, גם על `tracker.db` קיים. אין לכתוב הצהרות `CREATE TABLE`/`ALTER TABLE` ידניות בקבצים אחרים.
 
-שמות עיתונים בכל תוצר (דוחות, פרומפטים ל-Claude) משתמשים תמיד במיפוי קבוע יחיד `NEWSPAPER_DISPLAY_NAMES` (בלי הפרדה ל-HE/EN) בכתיב הלטיני המקורי - "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt" - לעולם לא תעתיק/תרגום עברי, גם בתוך טקסט עברי וגם בתוך הנחיות לפרומפט עצמו.
+שמות עיתונים בכל תוצר (דוחות, פרומפטים ל-Claude) משתמשים תמיד במיפוי קבוע יחיד `NEWSPAPER_DISPLAY_NAMES` (בלי הפרדה ל-HE/EN) בכתיב הלטיני המקורי - כל 10 מקורות ה-MVP (ראו "כללי עבודה קבועים") - לעולם לא תעתיק/תרגום עברי, גם בתוך טקסט עברי וגם בתוך הנחיות לפרומפט עצמו. המפתח הפנימי הנשמר ב-DB (`downloaded_files.newspaper`, גם מה שמחזיר `guess_newspaper()`) הוא הצורה הקצרה-בלי-"The" (כמו `NEWSPAPER_DISPLAY_NAMES` הקיים כבר עשה ל-Guardian/Daily Telegraph); `NEWSPAPER_DISPLAY_NAMES` מוסיף "The"/"Der" רק כשזה חלק אמיתי מהשם הרשמי (למשל "The Wall Street Journal", "The Economist"), לא כשזה סתם תווית-גנרית (Los Angeles Times/USA Today נשארים בלי "The").
 
 עיקרון מנחה שחזר פעמיים בפרויקט: כשמתגלה כשל חוזר ולא-תלוי-הקשר בהתנהגות מודל (למשל שגיאות רשת חולפות ב-Analysis, השמטת article_id-ים ב-Synthesis) - הפתרון הוא רשת-ביטחון גנרית ברמת הקוד (טיפול שגיאות ברמת-יחידה + retry, fallback דטרמיניסטי), לא רדיפה אחרי כל מקרה בנפרד דרך שינויי פרומפט נקודתיים.
 

@@ -1,7 +1,7 @@
 """Fetch PDF attachments from the @demagazinesharing Telegram channel into data/raw/.
 
 Requires TELEGRAM_API_ID and TELEGRAM_API_HASH to be set (see .env.example).
-Only PDFs recognized as one of the four MVP newspapers are downloaded; everything
+Only PDFs recognized as one of the ten MVP newspapers are downloaded; everything
 else is skipped without ever fetching its bytes. Already-downloaded messages are
 skipped via the tracking DB in db.py. One-shot run - not a long-running daemon.
 """
@@ -35,30 +35,69 @@ def _file_name(document, message_id: int) -> str:
 
 
 def guess_newspaper(file_name: str) -> str | None:
-    """Identify one of the four MVP newspapers from a file name, or None."""
+    """Identify one of the ten MVP newspapers from a file name, or None."""
     lowered = file_name.lower()
+    # Collapse "_"/"-" to spaces before matching, so "usa_today"/"la-times"/
+    # "wsj_2708" match the same as "usa today"/"la times"/"wsj 2708" - the
+    # actual separator convention varies per source and isn't worth hardcoding.
+    # The Economist's "TE-YYYY-MM-DD" check below is matched against the
+    # original `lowered` instead, since it relies on literal hyphens.
+    normalized = re.sub(r"[_-]+", " ", lowered)
 
-    if "guardian" in lowered:
+    if "guardian" in normalized:
         return "Guardian"
-    if "telegraph" in lowered:
+    if "telegraph" in normalized:
         return "Daily Telegraph"
-    if "sueddeutsche" in lowered or "süddeutsche" in lowered or re.search(r"\bsz\b", lowered):
+    if "sueddeutsche" in normalized or "süddeutsche" in normalized or re.search(r"\bsz\b", normalized):
         return "Süddeutsche Zeitung"
-    if "welt" in lowered and "sonntag" not in lowered:
+    if "welt" in normalized and "sonntag" not in normalized:
         return "Die Welt"
+    if re.search(r"\bnyt\b", normalized) or "new york times" in normalized:
+        # The channel carries both the international and the domestic US home
+        # edition under near-identical names ("NYT International" vs. plain
+        # "NYT") - only the former is our MVP source, so require it explicitly
+        # rather than matching "NYT"/"New York Times" alone.
+        if "international" in normalized:
+            return "New York Times International"
+        return None
+    if "wall street journal" in normalized or re.search(r"\bwsj\b", normalized):
+        return "Wall Street Journal"
+    if "los angeles times" in normalized or re.search(r"\bla\s*times\b", normalized):
+        # Must require "Los Angeles" (or "LA") explicitly - "The Times UK" also
+        # contains "times" alone and must not match here.
+        return "Los Angeles Times"
+    if "usa today" in normalized:
+        return "USA Today"
+    if "economist" in normalized or re.match(r"te-\d{4}-\d{2}-\d{2}", lowered):
+        # The Economist's weekly PDF also circulates as "TE-YYYY-MM-DD-..." -
+        # the same channel post's companion DOCX/EPUB/MOBI files are already
+        # excluded upstream by _is_pdf(), so this only needs to guard against
+        # matching more than one distinct PDF for the same week.
+        return "Economist"
+    if "spiegel" in normalized:
+        return "Der Spiegel"
     return None
 
 
 async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int = 200) -> dict:
+    print(f"  connecting to {channel}...", flush=True)
     entity = await client.get_entity(channel)
+    print(f"  connected, scanning up to {limit} messages...", flush=True)
     channel_dir = RAW_DIR / channel
 
     found = 0
     skipped_not_mvp = 0
     skipped_existing = 0
     downloaded = 0
+    scanned = 0
 
     async for message in client.iter_messages(entity, limit=limit):
+        scanned += 1
+        if scanned % 20 == 0:
+            # TEMPORARY diagnostic: pinpoint where a stalled/slow run is stuck,
+            # since this loop had gone silent for 5+ minutes with no visible
+            # progress. Remove once the network-stall investigation is done.
+            print(f"  ...scanned {scanned}/{limit} messages ({found} PDF(s) found so far)", flush=True)
         if not _is_pdf(message.document):
             continue
         found += 1
@@ -88,7 +127,7 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
             str(local_path),
         )
         downloaded += 1
-        print(f"  downloaded: {file_name} ({newspaper})")
+        print(f"  downloaded: {file_name} ({newspaper})", flush=True)
 
     return {
         "found": found,

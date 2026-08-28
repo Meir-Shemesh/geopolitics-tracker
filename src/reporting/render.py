@@ -55,6 +55,12 @@ NEWSPAPER_DISPLAY_NAMES = {
     "Daily Telegraph": "The Daily Telegraph",
     "Süddeutsche Zeitung": "Süddeutsche Zeitung",
     "Die Welt": "Die Welt",
+    "New York Times International": "The New York Times International",
+    "Wall Street Journal": "The Wall Street Journal",
+    "Los Angeles Times": "Los Angeles Times",
+    "USA Today": "USA Today",
+    "Economist": "The Economist",
+    "Der Spiegel": "Der Spiegel",
 }
 
 CATEGORY_LABELS = {
