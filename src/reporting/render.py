@@ -12,6 +12,7 @@ import argparse
 import html
 import json
 import shutil
+import sys
 from datetime import date as date_cls
 from pathlib import Path
 
@@ -28,6 +29,11 @@ try:
     WEASYPRINT_AVAILABLE = True
 except Exception:
     WEASYPRINT_AVAILABLE = False
+
+# Windows defaults stdout to the cp1252 console codepage even when redirected
+# to a file, which raises UnicodeEncodeError on any print() containing a
+# character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
+sys.stdout.reconfigure(encoding="utf-8")
 
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
 

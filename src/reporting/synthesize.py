@@ -12,6 +12,7 @@ separate, not-yet-implemented script that will read these tables.
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 
 import anthropic
@@ -28,6 +29,11 @@ from src.common.db import (
     link_section_article,
     report_exists,
 )
+
+# Windows defaults stdout to the cp1252 console codepage even when redirected
+# to a file, which raises UnicodeEncodeError on any print() containing a
+# character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
+sys.stdout.reconfigure(encoding="utf-8")
 
 MODEL = "claude-sonnet-5"
 
@@ -143,9 +149,13 @@ def compute_missing_ids(sections, valid_ids: set) -> set:
 
 def synthesize_day(client: anthropic.Anthropic, articles) -> list[dict]:
     articles_text = format_articles_for_prompt(articles)
-    response = client.messages.create(
+    # max_tokens raised from 16000 - with 9+ sources / 250+ articles (vs. the ~4
+    # sources / ~100 articles this was tuned for) a single call can need more room
+    # than that to finish; streaming is required by the SDK once max_tokens is
+    # this high (non-streaming calls this large risk exceeding its 10-minute cap).
+    with client.messages.stream(
         model=MODEL,
-        max_tokens=16000,
+        max_tokens=32000,
         thinking={"type": "adaptive"},
         output_config={"effort": "medium"},
         system=SYSTEM_PROMPT,
@@ -157,9 +167,22 @@ def synthesize_day(client: anthropic.Anthropic, articles) -> list[dict]:
                 "content": f"Today's articles ({len(articles)} total):\n\n{articles_text}",
             }
         ],
-    )
+    ) as stream:
+        response = stream.get_final_message()
+
     tool_use = next(b for b in response.content if b.type == "tool_use")
-    return tool_use.input["sections"]
+    sections = tool_use.input.get("sections")
+    if not isinstance(sections, list):
+        # A completely malformed/truncated response (e.g. max_tokens hit before any
+        # tool arguments were emitted) - treat as zero sections produced rather than
+        # crash. run()'s existing fallback-ratio check already treats "no articles
+        # assigned" as needing a retry, so this needs no separate handling there.
+        print(
+            f"  warning: malformed synthesis response (stop_reason={response.stop_reason}, "
+            f"no valid 'sections' list) - treating as 0 sections."
+        )
+        return []
+    return sections
 
 
 def run(report_date: str, force: bool = False) -> None:

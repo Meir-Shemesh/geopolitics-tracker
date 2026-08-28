@@ -133,7 +133,21 @@ def run(file_id: int | None = None) -> None:
 
         try:
             articles = analyze_page(client, newspaper, page["raw_text"])
+            if not isinstance(articles, list):
+                raise TypeError(f"expected a list of articles, got {type(articles).__name__}")
+            required_keys = {
+                "headline", "author", "region_topic", "stance_summary",
+                "key_excerpt", "country_codes", "conflict_zones",
+            }
+            for article in articles:
+                if not isinstance(article, dict):
+                    raise TypeError(f"expected an article dict, got {type(article).__name__}")
+                if not required_keys.issubset(article):
+                    raise ValueError(f"article missing required key(s): {required_keys - article.keys()}")
         except Exception as exc:
+            # Validate the whole response shape before any DB write starts (below) -
+            # a page-level failure here must leave zero rows written, so a retry via
+            # the pending-queue never risks inserting the same article twice.
             pages_failed += 1
             print(f"  failed: file_id={page['file_id']} page={page['page_number']} ({exc})")
             continue
