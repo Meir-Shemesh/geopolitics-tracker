@@ -9,6 +9,7 @@ output. One-shot run - not a long-running daemon.
 """
 
 import argparse
+import sys
 from datetime import datetime, timezone
 
 import anthropic
@@ -24,6 +25,11 @@ from src.common.db import (
     set_analysis_status,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, country_codes, country_list_prompt_text
+
+# Windows defaults stdout to the cp1252 console codepage even when redirected
+# to a file, which raises UnicodeEncodeError on any print() containing a
+# character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
+sys.stdout.reconfigure(encoding="utf-8")
 
 MODEL = "claude-sonnet-5"
 

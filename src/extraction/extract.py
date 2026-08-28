@@ -7,6 +7,7 @@ No article segmentation or classification happens here - that's Analysis.
 One-shot run - not a long-running daemon.
 """
 
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,6 +20,11 @@ from src.common.db import (
     insert_extracted_page,
     set_extraction_result,
 )
+
+# Windows defaults stdout to the cp1252 console codepage even when redirected
+# to a file, which raises UnicodeEncodeError on any print() containing a
+# character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
+sys.stdout.reconfigure(encoding="utf-8")
 
 EXTRACTED_DIR = Path(__file__).resolve().parents[2] / "data" / "processed" / "extracted"
 FAILED_PAGE_MARKER = "[EXTRACTION FAILED]"

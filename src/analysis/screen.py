@@ -9,12 +9,18 @@ One-shot run - not a long-running daemon.
 """
 
 import argparse
+import sys
 from datetime import datetime, timezone
 
 import anthropic
 from dotenv import load_dotenv
 
 from src.common.db import get_connection, get_unscreened_pages, init_db, insert_page_screening
+
+# Windows defaults stdout to the cp1252 console codepage even when redirected
+# to a file, which raises UnicodeEncodeError on any print() containing a
+# character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
+sys.stdout.reconfigure(encoding="utf-8")
 
 MODEL = "claude-haiku-4-5-20251001"
 

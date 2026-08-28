@@ -9,6 +9,7 @@ skipped via the tracking DB in db.py. One-shot run - not a long-running daemon.
 import asyncio
 import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -17,6 +18,11 @@ from telethon import TelegramClient
 from telethon.tl.types import DocumentAttributeFilename
 
 from src.common.db import get_connection, init_db, is_downloaded, mark_downloaded
+
+# Windows defaults stdout to the cp1252 console codepage even when redirected
+# to a file, which raises UnicodeEncodeError on any print() containing a
+# character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
+sys.stdout.reconfigure(encoding="utf-8")
 
 CHANNEL = "demagazinesharing"
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
