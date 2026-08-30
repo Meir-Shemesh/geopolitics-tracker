@@ -219,6 +219,56 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
+  .citations-row { position: relative; margin-top: .6rem; }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .citations-toggle:hover { color: var(--masthead-accent); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
   .appendix { display: flex; flex-direction: column; gap: 1rem; }
   .appendix-title { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }
   .appendix .topic-section { padding: 1.1rem 1.3rem 1.2rem; }
@@ -232,6 +282,7 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
+    .citations-row { display: none; }
   }
 </style>
 </head>
@@ -242,6 +293,7 @@
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← לכל הדוחות</a>
       <a class="top-nav-link" href="../en/report_2026-08-22_en.html">English</a>
+      <a class="top-nav-link" href="report_2026-08-22_he.pdf">⬇ הורד PDF</a>
     </div>
   </nav>
   <header class="masthead">
@@ -264,6 +316,16 @@
         <h2 class="section-title">מעצר עמיר חאן בפקיסטן</h2>
         <p class="comparison-text">גם The Daily Telegraph וגם The Guardian מדווחים על טענות משפחתו ותומכיו של ראש הממשלה לשעבר עמיר חאן, לפיהן מעצרו והתעללות נטענת בו הם מניפולציה פוליטית של הצבא הפקיסטני. The Daily Telegraph מתמקד בטענות דרמטיות של אחותו על עינויים וכליאה בעיניים מכוסות, בעוד The Guardian מדגיש את מצבו הבריאותי המידרדר ואת הכחשת הממשלה לטענות.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-337">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-337" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 13</li>
+            <li>The Guardian, 22.8.2026, עמ' 33</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-338" data-category="security_conflict">
@@ -274,6 +336,16 @@
         <h2 class="section-title">הרשעת פעילי טיאננמן בהונג קונג</h2>
         <p class="comparison-text">The Daily Telegraph וה-Guardian מדווחים באופן דומה על הרשעת פעילים פרו-דמוקרטיים בהונג קונג בגין ציון טבח טיאננמן, ומציגים זאת כחלק מדיכוי סיני שיטתי של חופש הביטוי. The Guardian מרחיב יותר בקריאות לבריטניה לנקוט עמדה תקיפה יותר מול סין, ואילו The Daily Telegraph מדגיש את ההקשר ההיסטורי של הטבח עצמו ואת גזר הדין הצפוי.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-338">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-338" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 13</li>
+            <li>The Guardian, 22.8.2026, עמ' 31</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-339" data-category="security_conflict">
@@ -284,6 +356,16 @@
         <h2 class="section-title">התיישבות ישראלית והתנחלויות בגדה המערבית</h2>
         <p class="comparison-text">The Guardian ו-Süddeutsche Zeitung מציגים שני דיווחים חופפים המתעדים ומגנים בחריפות את התרחבות המאחזים ואת אלימות המתנחלים בגדה המערבית, תוך ציטוט דוחות זכויות אדם המתארים זאת כ&#x27;טיהור אתני&#x27; שיטתי הנתמך על ידי המדינה. שני העיתונים מציגים את הצבא והממשלה הישראליים כמתירניים או תומכים, ללא איזון משמעותי מנקודת המבט הישראלית.</p>
         <p class="section-sources">מקורות: <b>The Guardian, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-339">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-339" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 32</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-340" data-category="migration_society">
@@ -294,6 +376,24 @@
         <h2 class="section-title">מדיניות הגירה אירופית ומשבר סאוטה</h2>
         <p class="comparison-text">נושא ההגירה מקבל טיפול נרחב ומגוון בעיתונות: The Daily Telegraph מתאר את הקו הקשוח של מלוני נגד ספרד כ&#x27;שער עצמי&#x27; שגרם למדינות אחרות להחמיר גם הן מול איטליה. Süddeutsche Zeitung מפרסם שפע של מכתבים למערכת המציגים עמדות סותרות - חלקם מגנים מדיניות הרתעה כצבועה ומשווים אותה ל-AfD, אחרים מגנים את ספרד כמגיבה כהלכה למחסור בכוח עבודה, ואילו אחרים מזכירים כי מובלעות קולוניאליות כמו סאוטה הן שורש הבעיה. הטון הכללי בגרמניה ביקורתי כלפי מדיניות ההרתעה האירופית, בניגוד לפריימינג הבריטי המתמקד בדינמיקה הפוליטית הפנים-אירופית.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-340">מראי מקום (10) ▾</button>
+          <div class="citations-popup" id="citations-340" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 12</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Nicht besser als die AfD”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Wo ist der liberale Geist der…”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Unfaire Stimmungsmache”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Mitgefühl passé”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Millionen Klimaflüchtlinge”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Reste des Kolonialismus”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Moralischer Rigorismus”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Lebensgefährliches Risiko”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 12 — “Unsinnige Exklave”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-341" data-category="security_conflict">
@@ -304,6 +404,18 @@
         <h2 class="section-title">מלחמת רוסיה-אוקראינה: תקיפות על קייב וחזית הים</h2>
         <p class="comparison-text">The Guardian מפרסם שתי כתבות המתמזגות לקול אחד, המתארות את התקפות הטילים והרחפנים המחריפות על קייב כמשבר הומניטרי גובר עם זמני אזעקה מתקצרים ומלאי מוגבל של מיירטי פטריוט, תוך ביקורת מרומזת על אי-מספיק התמיכה המערבית. במקביל, The Daily Telegraph מתמקד בהיבט הימי, ומתאר את נסיגת הצי הרוסי מהים התיכון כסימן לחולשה וכתוצאה מהמלחמה, תוך הצעת פתרונות טכנולוגיים בריטיים למעקב אחר צוללות רוסיות.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-341">מראי מקום (4) ▾</button>
+          <div class="citations-popup" id="citations-341" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 14 — “Russian fleet abandons the Mediterranean”</li>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 14 — “How every British ship could keep…”</li>
+            <li>The Guardian, 22.8.2026, עמ' 30 — “‘You have no time to pack’:…”</li>
+            <li>The Guardian, 22.8.2026, עמ' 31 — “Ukraine&#x27;s Kyiv faces escalating Russian strikes…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-342" data-category="security_conflict">
@@ -314,6 +426,17 @@
         <h2 class="section-title">ריגול וחבלה רוסיים בגרמניה</h2>
         <p class="comparison-text">Süddeutsche Zeitung מציג שני דיווחים חופפים על תגליות מודיעין גרמני - מטמון נשק ליד ברלין המיועד לפעולות &#x27;קינטיות&#x27; של סוכני רוסיה, וכן פרשת חשוד אוקראיני בפיצוץ נורד סטרים העומד להיות מוסגר מקרואטיה. שני הדיווחים ממוסגרים כחלק מאיום היברידי רוסי הולך ומחריף נגד גרמניה ואירופה.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-342">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-342" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 1 — “Waffenversteck entdeckt”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 6 — “Brisanter Waffenfund am Rand von Berlin”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 6 — “Verdächtiger in U-Haft: Kroatien bereitet Auslieferung…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-343" data-category="diplomacy_international">
@@ -324,6 +447,16 @@
         <h2 class="section-title">ביקורת אמריקאית-רוסית על באארבוק באו״ם</h2>
         <p class="comparison-text">Süddeutsche Zeitung מפרסם שתי כתבות חופפות המדווחות כי גם ארה״ב וגם רוסיה מבקרות בחריפות את נשיאת העצרת הכללית של האו״ם אנלנה באארבוק על התערבות נטענת בסמכויות מועצת הביטחון בנוגע לבחירת המזכ״ל הבא, ומציגות זאת כמאבק סמכויות מוסדי רחב יותר באו״ם.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-343">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-343" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 1 — “USA und Russland kritisieren Baerbock”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 7 — “USA kritisieren Amtsführung von Baerbock scharf”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-344" data-category="domestic_politics">
@@ -334,6 +467,19 @@
         <h2 class="section-title">ה-AfD, הימין הקיצוני והפוליטיקה הפנים-גרמנית</h2>
         <p class="comparison-text">Süddeutsche Zeitung מקדיש מספר כתבות ומאמרי דעה לעליית ה-AfD: אחת בוחנת את מדיניות האנרגיה של המפלגה כמונעת מרטוריקה לאומנית-רגשית, אחרת מנתחת כלים משפטיים-כספיים להגבלת ממשלת מדינה בראשות AfD, שלישית מתארת את מועמד AfD אולריך זיגמונד כ&#x27;סוכן&#x27; מהוקצע בסגנון טראמפי, רביעית מבקרת את המרכז הפוליטי על היעדר חזון מול ה-AfD, וחמישית קוראת להתבוננות מורכבת יותר על מזרח גרמניה מעבר לנתוני הצבעה. המכלול משדר דאגה עיתונאית עמוקה מהתחזקות הימין הקיצוני, לצד קריאה לתגובה פוליטית ותרבותית מעמיקה יותר ולא רק הדרה.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-344">מראי מקום (5) ▾</button>
+          <div class="citations-popup" id="citations-344" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 2 — “Wo sich der Wind bald drehen…”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 2 — “Gelder kürzen, Zwang anwenden”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 4 — “Das Parfüm”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 5 — “Visionen, ja klar”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 13 — “Herzland”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-345" data-category="domestic_politics">
@@ -344,6 +490,16 @@
         <h2 class="section-title">עתיד הממשלה הגרמנית בקואליציה של מרץ</h2>
         <p class="comparison-text">Süddeutsche Zeitung מפרסם שני זוויות שונות על ממשלת מרץ: כתבה אחת מתארת קואליציה מוחלשת עם אמון ציבורי נמוך ומאבקי רפורמה בלתי פתורים לקראת הסתיו, ואילו טור דעה נגדי מגן על חופשת הקיץ הארוכה של מרץ כצורך לגיטימי ולא כסימן לחולשה מנהיגותית.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-345">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-345" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 1 — “Angeschlagen in den Herbst”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 19 — “Mehr Ruhe: Kann Friedrich Merz von…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-346" data-category="diplomacy_international">
@@ -354,6 +510,15 @@
         <h2 class="section-title">סנקציות על איראן והשלכותיהן</h2>
         <p class="comparison-text">Süddeutsche Zeitung מציג עמדה ביקורתית כלפי מדיניות הסנקציות האמריקאית על איראן, בטענה שהיא פוגעת בעיקר באזרחים רגילים ולא במשטר, וכי בידוד כלכלי אמיתי דורש נסיגה סינית מטהרן - תרחיש לא סביר ומעורר שאלות מוסריות.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-346">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-346" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-347" data-category="diplomacy_international">
@@ -364,6 +529,15 @@
         <h2 class="section-title">מתיחות ישראל-טורקיה בסוריה</h2>
         <p class="comparison-text">Süddeutsche Zeitung מתאר כיצד המלחמה נגד איראן החלישה את מעמדה של ישראל, בעוד טורקיה בהנהגת ארדואן מרחיבה את השפעתה בסוריה, מה שיוצר עימות גיאופוליטי גובר בין שתי המדינות על מעמדן האזורי.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-347">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-347" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-348" data-category="security_conflict">
@@ -374,6 +548,15 @@
         <h2 class="section-title">אלימות משטרתית בסוריה שלאחר אסד</h2>
         <p class="comparison-text">The Guardian מדווח על מותו האלים של אדם במעצר בסוריה, ומציג זאת כעדות לכך שהתעללות של כוחות הביטחון נמשכת גם לאחר נפילת אסד, בניגוד לתקוות לרפורמה.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-348">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-348" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 41</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-349" data-category="energy_environment">
@@ -384,6 +567,17 @@
         <h2 class="section-title">קידוחי נפט וגז בים הצפוני מול מדיניות אקלים</h2>
         <p class="comparison-text">The Guardian מציג שלוש זוויות דעה חופפות (ממקורות בריטיים שונים המצוטטים בו) על החלטת ראש הממשלה ברנהאם באשר לרישיונות קידוח חדשים בים הצפוני: אחת רואה בכך סתירה בין דאגה מוצהרת לאקלים לבין מדיניות בפועל, שנייה תומכת בהרחבת הייצור המקומי כדי להימנע מייבוא &#x27;מזהם יותר&#x27;, ושלישית מנתחת זאת כמהלך פוליטי-כלכלי לשימור יחסים טובים עם וושינגטון ותדמית תעשייתית. יחד הן מציגות תמונה של ממשלה נקרעת בין מחויבות אקלימית לבין שיקולים כלכליים ופוליטיים.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-349">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-349" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 41 — “Andy Burnham and the climate crisis…”</li>
+            <li>The Guardian, 22.8.2026, עמ' 41 — “Editorial, the Times”</li>
+            <li>The Guardian, 22.8.2026, עמ' 41 — “Brian Taylor, the Herald”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-350" data-category="energy_environment">
@@ -394,6 +588,18 @@
         <h2 class="section-title">משבר האקלים: שיטפונות, בצורת ושריפות</h2>
         <p class="comparison-text">The Guardian ו-Süddeutsche Zeitung מציגים ביקורת דומה על חוסר פעולה פוליטית נוכח משבר האקלים המחריף: The Guardian מתמקד בגלי החום בבריטניה ובחוסר נכונות המפלגות להעלות את הנושא לראש סדר היום מחשש לבוחרים, וכן מדווח על תחזיות להתגברות שריפות ברחבי אירופה. Süddeutsche Zeitung מציג ניתוח דומה על הנזק הכלכלי הממשי לגרמניה מבצורת וחום, וכן חושף אסטרטגיית תעמולה מכוונת של תעשיית הדלק המכחישה שינוי אקלים - שתי הכתבות מבטאות תסכול עיתונאי מהפער בין הראיות המדעיות לתגובה הפוליטית.</p>
         <p class="section-sources">מקורות: <b>The Guardian, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-350">מראי מקום (4) ▾</button>
+          <div class="citations-popup" id="citations-350" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 6 — “Why are politicians not talking about…”</li>
+            <li>The Guardian, 22.8.2026, עמ' 41 — “Fires will increase &#x27;even in best-case…”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 19 — “Hitze, Dürre und trockene Flüsse zeigen,…”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 34 — “Wer keine Argumente hat”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-351" data-category="technology_media">
@@ -404,6 +610,17 @@
         <h2 class="section-title">תשתיות בינה מלאכותית והשפעתן על האקלים והתרבות</h2>
         <p class="comparison-text">The Guardian ו-Süddeutsche Zeitung בוחנים היבטים שונים של עוצמת הבינה המלאכותית: The Guardian מתמקד בטביעת הרגל הפחמנית העצומה של מרכזי נתונים בבריטניה ובסתירה למחויבויות האקלים, ובביקורת נרחבת יותר (בסקירת ספר) על ריכוז כוח לא-דמוקרטי בידי חברות טכנולוגיה. Süddeutsche Zeitung מתמקד בהיבט התרבותי-כלכלי, בטענה שתעשיית הבידור האירופית עלולה להפוך לספקית גרידא עבור ענקיות טכנולוגיה אמריקאיות וסיניות אלא אם תבנה תשתית ורגולציה משלה.</p>
         <p class="section-sources">מקורות: <b>The Guardian, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-351">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-351" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 8 — “Datacentre&#x27;s annual emissions would amount to…”</li>
+            <li>The Guardian, 22.8.2026, עמ' 158 — “The Rise and Fall of the…”</li>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-352" data-category="technology_media">
@@ -414,6 +631,15 @@
         <h2 class="section-title">סיכוני בינה מלאכותית מתקדמת</h2>
         <p class="comparison-text">The Guardian מפרסם טור דעה החוזה כי המרוץ לעבר בינה-על מלאכותית מהווה סיכון קטסטרופלי, וטוען שלא תחרות תאגידית ולא יריבות גיאופוליטית בין ארה״ב לסין יאפשרו לאנושות לתאם אמצעי הגנה יעילים אפילו לאחר אסון גדול.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-352">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-352" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 59</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-353" data-category="trade_economics">
@@ -424,6 +650,17 @@
         <h2 class="section-title">מדיניות חוב ותקציב בריטניה</h2>
         <p class="comparison-text">The Daily Telegraph מפרסם שלוש כתבות דעה המתמזגות לעמדה מערכתית אחידה, הקוראות לראש הממשלה ברנהאם להתמודד באומץ עם החוב הלאומי הבלתי-בר-קיימא של בריטניה במקום מדיניות פופוליסטית, ומזהירות מפני ניסיון להעביר סמכויות מהאוצר למרכז שלטון חלופי במנצ&#x27;סטר, תוך היקש היסטורי לכישלון תוכנית וילסון.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-353">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-353" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 15 — “Burnham must confront the welfare bill”</li>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 15 — “The Government has a duty to…”</li>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 16 — “Of all Burnham&#x27;s promises, No 10…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-354" data-category="trade_economics">
@@ -434,6 +671,15 @@
         <h2 class="section-title">מדיניות מס ותחרותיות כלכלית בבריטניה</h2>
         <p class="comparison-text">The Daily Telegraph מזהיר כי הסתמכות ממשלת בריטניה על העלאות מס ואי-הצמדת מדרגות מס עלולה לפגוע בצמיחה הכלכלית ולדחוף עסקים לחו״ל, ומציג זאת כביטוי ל&#x27;התמכרות&#x27; לגבייה גבוהה שאינה בת-קיימא.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-354">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-354" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 31</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-355" data-category="trade_economics">
@@ -444,6 +690,16 @@
         <h2 class="section-title">מדיניות פיסקלית אמריקאית ושוקי האג״ח</h2>
         <p class="comparison-text">The Daily Telegraph מפרסם שתי כתבות המציגות עמדה ביקורתית כלפי מדיניות שר האוצר בסנט: האחת טוענת כי אפילו סוחר מיומן כמוהו אינו יכול לפתור בכוחות עצמו את בעיית הגירעון האמריקאי ללא משמעת פיסקלית אמיתית, והשנייה מדווחת כי התערבות הממשל בשוק האג״ח פוגעת באמון בדולר ומדרבנת משקיעים לזהב וביטקוין, תוך השוואה למסלול היפני של פיחות מטבע.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-355">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-355" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 30 — “Even skilled trader Bessent can’t beat…”</li>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 31 — “Bitcoin and gold surge as US…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-356" data-category="trade_economics">
@@ -454,6 +710,15 @@
         <h2 class="section-title">מדיניות ESG בממשל טראמפ</h2>
         <p class="comparison-text">The Daily Telegraph מדווח על צעד ממשל טראמפ לאסור השקעות ESG בחשבונות חיסכון לילדים הנתמכים על ידי הממשלה, במסגרת דחיפה רחבה יותר נגד אג&#x27;נדת ESG.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-356">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-356" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 31</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-357" data-category="diplomacy_international">
@@ -464,6 +729,15 @@
         <h2 class="section-title">סיוע חוץ בריטי ומדיניות הגירה</h2>
         <p class="comparison-text">The Daily Telegraph מדווח על לחץ מצד חברי פרלמנט של לייבור על ברנהאם להשיב את יעד הסיוע החוץ ל-0.7%, תוך ציון התנגדות רפורם יו-קיי המעדיפים הוצאה מקומית - כתבה זו נבדלת ממאמרים אחרים על מדיניות פנים בכך שהיא ממוקדת ביחסי בריטניה עם העולם.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-357">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-357" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-358" data-category="diplomacy_international">
@@ -474,6 +748,15 @@
         <h2 class="section-title">בריטניה ואפגניסטן</h2>
         <p class="comparison-text">The Daily Telegraph מפרסם טור דעה הטוען כי בריטניה צריכה להתבייש במיוחד על כך שעוררה תקוות בקרב נשים אפגניות במשך 20 שנה ולאחר מכן זנחה אותן, תוך דחיית השוואות בין מורשת בריטניה בביטול העבדות לבין נטישתה את אפגניסטן.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-358">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-358" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-359" data-category="diplomacy_international">
@@ -484,6 +767,15 @@
         <h2 class="section-title">מיליבנד וישראל</h2>
         <p class="comparison-text">The Daily Telegraph מבקר את שר החוץ הבריטי אד מיליבנד על כך שהוא מטיל את האשמה על ישראל בסיכון פתרון שתי המדינות, תוך התעלמות מדחיית ההנהגה הפלסטינית והאלימות לאורך עשורים, וטוען כי עמדה זו מחלישה את השפעת בריטניה ומשרתת שנאת ישראל.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-359">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-359" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-360" data-category="domestic_politics">
@@ -494,6 +786,15 @@
         <h2 class="section-title">חסרי בית ומדיניות דיור</h2>
         <p class="comparison-text">The Daily Telegraph מפרסם טור דעה הטוען כי גישות &#x27;דיור תחילה&#x27; הפשטניות נכשלות כי הן מתעלמות מבעיות מורכבות של התמכרות ומחלת נפש, ומצביע על ארה״ב כדוגמה לכישלון מדיניות דומה.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-360">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-360" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 17</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-361" data-category="trade_economics">
@@ -504,6 +805,15 @@
         <h2 class="section-title">מדיניות חקלאות בריטית</h2>
         <p class="comparison-text">The Daily Telegraph טוען כי ממשלת לייבור מזניחה את החקלאים הבריטיים באמצעות מיסוי ירושה, מימון בצורת לא מספק ואג&#x27;נדת אקלים הפוגעת בחקלאות המסורתית.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-361">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-361" hidden>
+            <ul>
+            <li>The Daily Telegraph, 22.8.2026, עמ' 21</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-362" data-category="domestic_politics">
@@ -514,6 +824,15 @@
         <h2 class="section-title">שם ספינת חיל הים האמריקאי ופולמוס טראמפ</h2>
         <p class="comparison-text">The Guardian מדווח על ביקורת כלפי ממשל טראמפ בשל כוונה נטענת לשנות את שם נושאת מטוסים המוקדשת לגיבור מלחמת העולם השנייה השחור דוריס מילר ולקרוא לה על שם טראמפ, ומציג זאת כפגיעה במורשתו של החייל.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-362">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-362" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 32</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-363" data-category="trade_economics">
@@ -524,6 +843,15 @@
         <h2 class="section-title">גשר מיצר מסינה באיטליה</h2>
         <p class="comparison-text">The Guardian סוקר את הפרויקט המושהה של גשר מיצר מסינה, ומדגיש ספקנות של מהנדסים, פעילי סביבה ותושבים מקומיים בנוגע להיתכנות הטכנית, הסייסמית והכלכלית של התוכנית לאחר עשרות שנות הבטחות פוליטיות.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-363">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-363" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 35</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-364" data-category="energy_environment">
@@ -534,6 +862,15 @@
         <h2 class="section-title">רישוי ציד ציפורי טרף בבריטניה</h2>
         <p class="comparison-text">The Guardian מדווח בעמדה תומכת על יוזמת ה-RSPB לרישוי ציד פסיונים ותרנגולי בר כדי לצמצם רדיפה בלתי חוקית של עופות דורסים, ומציג זאת כפתרון מידתי ולא כאיסור גורף.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-364">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-364" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 25</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-365" data-category="migration_society">
@@ -544,6 +881,15 @@
         <h2 class="section-title">הגירה וקורבנות סחר בני אדם מאלבניה</h2>
         <p class="comparison-text">The Guardian מדווח באופן ביקורתי על פסיקת בית משפט הקובעת כי גירוש קורבנות סחר אלבנים חזרה לאלבניה מסכן אותם מחדש, ומטיל ספק בטענת משרד הפנים כי אלבניה בטוחה.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-365">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-365" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 19</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-366" data-category="migration_society">
@@ -554,6 +900,15 @@
         <h2 class="section-title">גזענות וימין קיצוני בבריטניה</h2>
         <p class="comparison-text">The Guardian מפרסם קטע מתוך ספרה של מרים מרגוליס הטוען כי בעיות בריטניה מיוחסות בטעות למהגרים, ומתחקה אחר שורשי הפשיזם הבריטי מאנוק פאוול ועד נייג&#x27;ל פראז&#x27; כיום, תוך קריאה להתנגדות באמצעות סאטירה וסולידריות.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-366">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-366" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 135</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-367" data-category="society_culture">
@@ -564,6 +919,15 @@
         <h2 class="section-title">אמנות ותרבות במלחמת אוקראינה</h2>
         <p class="comparison-text">The Guardian סוקר את ספרה של שרלוט היגינס, המתאר כיצד אמנים אוקראינים הפכו לבלתי נפרדים מהמלחמה, כשהיצירה האמנותית משמשת הן כהתנגדות והן כעדות לזוועות.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-367">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-367" hidden>
+            <ul>
+            <li>The Guardian, 22.8.2026, עמ' 156</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-368" data-category="society_culture">
@@ -574,6 +938,15 @@
         <h2 class="section-title">תרבות שנוי במחלוקת בקוריאה הדרומית</h2>
         <p class="comparison-text">Süddeutsche Zeitung מתאר את חרם הסטארבקס בקוריאה הדרומית כביטוי למאבק אידיאולוגי רחב יותר, בו ימין קיצוני צעיר ואנטי-פמיניסטי מנסה להמעיט בערך מורשת מרד גוואנג&#x27;ו של 1980, בעוד פעילים וחוקרים מתעקשים לזכור את הקרבנות.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-368">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-368" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-369" data-category="domestic_politics">
@@ -584,6 +957,15 @@
         <h2 class="section-title">פערי הון מזרח-מערב גרמניה</h2>
         <p class="comparison-text">Süddeutsche Zeitung טוען כי למרות התכנסות בשכר ובפנסיות, פער ההון בין מזרח למערב גרמניה נותר עצום, ומציע כי דווקא פער זה - ולא סטריאוטיפים מערביים - מסביר טוב יותר את תחושת ההזנחה ואת אכזבת המזרח-גרמנים מהדמוקרטיה.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-369">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-369" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 20</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-370" data-category="energy_environment">
@@ -594,6 +976,15 @@
         <h2 class="section-title">אבטחת אספקת גז לגרמניה בחורף</h2>
         <p class="comparison-text">Süddeutsche Zeitung מזהיר כי בניגוד להרגעות הממשלה, קיים סיכון ממשי למחסור בגז בחורף הקרוב עקב מלאי אחסון נמוך, מחירים עולים על רקע העימות באיראן, והיערכות גרמנית לא מספקת מול איומים כמו פגיעה בצינורות או קרח בים הבלטי.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-370">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-370" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 21</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-371" data-category="society_culture">
@@ -604,6 +995,15 @@
         <h2 class="section-title">סקנדל אקדמי בקיימברידג&#x27; ופוליטיקת זהויות</h2>
         <p class="comparison-text">Süddeutsche Zeitung טוען כי פרשת ג&#x27;ייסון ארדיי בקיימברידג&#x27; חושפת משבר עצמי-מיוצר באקדמיה: פוליטיקת זהויות וטאבו על ביקורת כלפי חוקרים ממיעוטים אפשרו זיוף ופלגיאט להימשך שנים ללא בקרה, ופגעו ביושרה המדעית יותר מכל תקיפה חיצונית מהימין.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-371">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-371" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 27</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-372" data-category="society_culture">
@@ -614,6 +1014,15 @@
         <h2 class="section-title">תקשורת והדרת הימין הקיצוני</h2>
         <p class="comparison-text">Süddeutsche Zeitung טוען כי אובססיה תקשורתית מתמדת עם דמויות הימין הקיצוני בצרפת, הולנד, אוסטריה, בריטניה, ארה״ב וגרמניה מזיקה לחברה הפתוחה פעמיים: היא מעניקה להם רלוונטיות רק דרך החשיפה, ומדיחה נושאים פוליטיים אחרים מסדר היום.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-372">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-372" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 35</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-373" data-category="society_culture">
@@ -624,6 +1033,15 @@
         <h2 class="section-title">זיכרון היסטורי גרמני ומורשת הנאצים</h2>
         <p class="comparison-text">Süddeutsche Zeitung טוען כי גרמנים אינם יכולים ואינם צריכים לברוח מההתמודדות עם עברם הנאצי, תוך שימוש בזיכרון אישי ובתיעוד חדש שנחשף כדי להזהיר מפני רטוריקה לאומנית של ה-AfD המהדהדת אידיאולוגיה נאצית.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-373">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-373" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 40</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-374" data-category="society_culture">
@@ -634,6 +1052,15 @@
         <h2 class="section-title">בריטניה: אלימות סמויה מתחת לפני השטח המנומסים</h2>
         <p class="comparison-text">Süddeutsche Zeitung, בטור אישי, טוען כי החברה הבריטית מגלמת פרדוקס בין נימוס קיצוני לבין זרם תחתי מקובל של אלימות אקראית וגזענות, ומצביע על מגמות לאומניות ואנטי-הגירה עולות בעקבות ברקזיט.</p>
         <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-374">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-374" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 10</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="appendix">
@@ -647,8 +1074,42 @@
         <h2 class="section-title">Alpine tourism / mountain safety (limited geopolitical relevance)</h2>
         <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): Not geopolitical - excluded. ציטוט מרכזי: &quot;&quot;</p>
         
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-375">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-375" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, 22.8.2026, עמ' 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
       </section>
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+      }
+    });
+  </script>
 </body>
 </html>

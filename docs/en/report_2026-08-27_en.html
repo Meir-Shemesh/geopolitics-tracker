@@ -219,6 +219,56 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
+  .citations-row { position: relative; margin-top: .6rem; }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .citations-toggle:hover { color: var(--masthead-accent); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
   .appendix { display: flex; flex-direction: column; gap: 1rem; }
   .appendix-title { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }
   .appendix .topic-section { padding: 1.1rem 1.3rem 1.2rem; }
@@ -232,6 +282,7 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
+    .citations-row { display: none; }
   }
 </style>
 </head>
@@ -242,6 +293,7 @@
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← All reports</a>
       <a class="top-nav-link" href="../he/report_2026-08-27_he.html">עברית</a>
+      <a class="top-nav-link" href="report_2026-08-27_en.pdf">⬇ Download PDF</a>
     </div>
   </nav>
   <header class="masthead">
@@ -264,6 +316,16 @@
         <h2 class="section-title">Labour splits over trade ban on Israeli settlements</h2>
         <p class="comparison-text">The Daily Telegraph runs two pieces that together stake out a firmly critical stance toward any UK trade restrictions on Israeli settlements: one frames the policy as a Labour-splitting mistake harmful to UK-Israel relations, while the other attacks Andy Burnham&#x27;s push for sanctions as dangerously naive given Britain&#x27;s reliance on Israeli intelligence against Iran. Both underscore the same underlying argument that picking a fight with Israel now is strategically unwise.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-470">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-470" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 4 — "PM risks Labour split with trade…"</li>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 14 — "Burnham&#x27;s attacks on Israel are dangerously…"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-471" data-category="migration_society">
@@ -274,6 +336,16 @@
         <h2 class="section-title">Migration, policing and extremism in Germany</h2>
         <p class="comparison-text">The Daily Telegraph focuses on a practical symptom - Berlin police struggling to recruit due to migrant-background applicants&#x27; German-language failures - and notes how the AfD exploits such stories. Die Welt goes deeper with an interview with a migration researcher exposing how the AfD publicly plays by legal rules while privately promoting radical &#x27;remigration&#x27; concepts rooted in ethnic-separation ideology, offering a sharper critique of the party&#x27;s duplicity.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-471">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-471" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 12</li>
+            <li>Die Welt, Aug 27, 2026, p. 2</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-472" data-category="technology_media">
@@ -284,6 +356,15 @@
         <h2 class="section-title">UK telecoms and consumer regulation</h2>
         <p class="comparison-text">A Daily Telegraph opinion piece criticizes giant corporations like BT and OpenReach for replacing human accountability with faceless systems, warning of dangerous outcomes for vulnerable customers during the UK&#x27;s landline switch-off.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-472">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-472" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-473" data-category="diplomacy_international">
@@ -294,6 +375,15 @@
         <h2 class="section-title">Trump&#x27;s global impact on conservatism</h2>
         <p class="comparison-text">A Daily Telegraph opinion column argues Trump&#x27;s aggressive foreign policy - tariffs and territorial threats against Canada and Greenland/Denmark - is poisoning pro-American conservative parties worldwide, contrasting his treatment of allies with his notably softer rhetoric toward Putin.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-473">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-473" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-474" data-category="energy_environment">
@@ -304,6 +394,19 @@
         <h2 class="section-title">Energy costs and climate policy debates in the UK and Germany</h2>
         <p class="comparison-text">The Daily Telegraph publishes an editorial and a letter blaming Labour&#x27;s net zero policies for rising UK energy costs and calling for North Sea drilling. In Germany, Die Welt makes an analogous conservative-leaning argument that Merz&#x27;s climate strategy confuses climate nationalism with effective climate policy, whereas Süddeutsche Zeitung takes the opposite view, arguing geopolitical shocks - not climate policy - drive high prices, and that renewables actually dampen costs; Süddeutsche Zeitung also carries Green party criticism of the Merz government&#x27;s inadequate response to heat waves.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-474">Citations (5) ▾</button>
+          <div class="citations-popup" id="citations-474" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 14 — "Rising energy bills / Labour can&#x27;t…"</li>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 14 — "End green subsidies to fix energy…"</li>
+            <li>Die Welt, Aug 27, 2026, p. 1</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 2 — "Grüne fordern eine Million neue Bäume…"</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 16 — "Wie teuer ist Klimaschutz?"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-475" data-category="diplomacy_international">
@@ -314,6 +417,15 @@
         <h2 class="section-title">The future of the Chagos Islands</h2>
         <p class="comparison-text">A Daily Telegraph piece argues Mauritius never legitimately owned the Chagos archipelago, that the Chagossians themselves prefer continued British sovereignty, and that ceding control would open the door to Chinese influence in the Indian Ocean - urging Trump to veto the deal.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-475">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-475" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-476" data-category="trade_economics">
@@ -324,6 +436,16 @@
         <h2 class="section-title">US bond markets, fiscal policy and Bitcoin</h2>
         <p class="comparison-text">Two Daily Telegraph columns examine the fallout of US fiscal policy: one defends Treasury Secretary Bessent&#x27;s controversial bond-market interventions as a sophisticated attempt to correct structural distortions, while the other argues eroding trust in Washington&#x27;s fiscal and monetary management is driving a combined rally in bitcoin and gold as hedges against dollar debasement.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-476">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-476" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 20 — "Bessent’s bond moves may not be…"</li>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 20 — "Why Bitcoin has joined gold in…"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-477" data-category="diplomacy_international">
@@ -334,6 +456,15 @@
         <h2 class="section-title">CIA chief&#x27;s Moscow visit and US-Russia relations</h2>
         <p class="comparison-text">Die Welt analyzes the unusual visit of CIA director John Ratcliffe to Moscow, weighing theories ranging from a warning over Ukraine escalation to links with the Iran crisis or a step toward improved relations, while noting the Kremlin plays down any breakthrough.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-477">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-477" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 1</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-478" data-category="security_conflict">
@@ -344,6 +475,16 @@
         <h2 class="section-title">Russia-Ukraine war: the Donbas front and German arms deliveries</h2>
         <p class="comparison-text">Die Welt runs two connected pieces: a frontline report on Russia&#x27;s grinding, costly advance toward the last Ukrainian-held Donbas fortress cities, with experts warning Moscow&#x27;s ambitions extend well beyond the region, and a companion piece pressuring Chancellor Merz over his refusal to deliver Taurus missiles to Ukraine, contrasting this with Britain and France&#x27;s new initiative letting Ukraine produce its own SCALP/Storm Shadow missiles.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-478">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-478" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 5 — "Kampf um die letzten Festungen"</li>
+            <li>Die Welt, Aug 27, 2026, p. 5 — "Neuer Druck auf den Kanzler beim…"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-479" data-category="domestic_politics">
@@ -354,6 +495,18 @@
         <h2 class="section-title">German domestic politics: the Greens, the AfD, and election-year maneuvering</h2>
         <p class="comparison-text">Die Welt criticizes Green politicians for using alarmist anti-AfD rhetoric to distract from their own policy failures, while Süddeutsche Zeitung, across two pieces, takes a different angle - highlighting the gap between the Merz-Klingbeil coalition&#x27;s optimistic reform rhetoric and actual delivery, a gap it says fuels AfD support, and separately arguing public broadcaster MDR must abandon false neutrality and actively defend its own existence against the AfD&#x27;s efforts to abolish it.</p>
         <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-479">Citations (4) ▾</button>
+          <div class="citations-popup" id="citations-479" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 2</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 2 — "Wette auf das „Deutschland von morgen“"</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 4 — "Tat und Gefühl"</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 4 — "Zu lange still gewesen – und…"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-480" data-category="security_conflict">
@@ -364,6 +517,15 @@
         <h2 class="section-title">German conscription debate amid the Russian threat</h2>
         <p class="comparison-text">Die Welt publishes an interview with a historian drawing parallels between today&#x27;s conscription debate and that of the 1950s under the Soviet threat, while cautioning that Russia, though dangerous, remains strategically far from a direct attack on NATO.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-480">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-480" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-481" data-category="energy_environment">
@@ -374,6 +536,15 @@
         <h2 class="section-title">France&#x27;s climate disaster and its political fallout</h2>
         <p class="comparison-text">Die Welt describes a catastrophic French summer of wildfires, drought and floods exposing the political establishment&#x27;s failure to act, with only the radical left gaining politically while Macron&#x27;s government and the far right offer only weak responses, amid fears of a water-scarcity-driven social uprising.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-481">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-481" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-482" data-category="domestic_politics">
@@ -384,6 +555,16 @@
         <h2 class="section-title">German police union deputy, the AfD, and his East German past</h2>
         <p class="comparison-text">Die Welt and Süddeutsche Zeitung both cover the same controversy - GdP deputy Sven Hüber&#x27;s call for police to resist a possible AfD government - but from opposing angles: Die Welt sharply exposes his troubled past as an East German border officer to undermine his credibility and neutrality, while Süddeutsche Zeitung covers the dispute in a more neutral, domestic-politics framing.</p>
         <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-482">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-482" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 7</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-483" data-category="domestic_politics">
@@ -394,6 +575,15 @@
         <h2 class="section-title">BSW rhetoric against Washington and Germany-Russia ties</h2>
         <p class="comparison-text">A Die Welt opinion piece mocks the BSW slogan &#x27;Less Washington, More Germany&#x27; as self-contradictory, criticizing the party&#x27;s call to revive municipal partnerships with Moscow as naive in light of Russia&#x27;s war of aggression against Ukraine.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-483">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-483" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-484" data-category="trade_economics">
@@ -404,6 +594,15 @@
         <h2 class="section-title">Putin&#x27;s economic control and industrial nationalism in Russia</h2>
         <p class="comparison-text">Die Welt warns that a Putin decree allowing temporary state takeover of infrastructure firms unable to defend against Ukrainian drone strikes could serve as a pretext for a new wave of nationalizations, prioritizing political loyalty over economic benefit.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-484">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-484" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 9</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-485" data-category="society_culture">
@@ -414,6 +613,15 @@
         <h2 class="section-title">The dispute over the Bauhaus legacy in Germany</h2>
         <p class="comparison-text">Die Welt criticizes the &#x27;Bauhaus Manifesto 2026&#x27; for historical distortion, arguing the school&#x27;s actual political legacy under Hannes Meyer was communist rather than the neutral progressive tradition claimed today, and also faults the AfD-vs-establishment fight over the Bauhaus&#x27;s legacy as resting on self-serving, selective narratives.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-485">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-485" hidden>
+            <ul>
+            <li>Die Welt, Aug 27, 2026, p. 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-486" data-category="domestic_politics">
@@ -424,6 +632,17 @@
         <h2 class="section-title">Germany and Israel: the law on denying Israel&#x27;s right to exist</h2>
         <p class="comparison-text">Süddeutsche Zeitung devotes three pieces to this topic - two news reports on the federal government&#x27;s decision to distance itself from a Bundesrat bill criminalizing denial of Israel&#x27;s right to exist over constitutional free-speech concerns, and an opinion column endorsing that stance and arguing the law should not be passed despite its good intentions.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-486">Citations (3) ▾</button>
+          <div class="citations-popup" id="citations-486" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 1 — "Kein eigener Paragraf für Israel (Bundesregierung…"</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 4 — "War gut gemeint"</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 6 — "Höfliche Absage"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-487" data-category="security_conflict">
@@ -434,6 +653,16 @@
         <h2 class="section-title">The Russian House in Berlin as an intelligence front</h2>
         <p class="comparison-text">Süddeutsche Zeitung publishes two investigative pieces (effectively one voice) arguing that the Russian cultural center in Berlin has historically served, and likely still serves, as a front for Russian intelligence espionage - from the KGB era to today - and warns of renewed hybrid threats to Germany following mass diplomat expulsions.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-487">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-487" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 1 — "Das Russische Haus in Berlin soll…"</li>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 5 — "Wie einst beim KGB"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-488" data-category="security_conflict">
@@ -444,6 +673,15 @@
         <h2 class="section-title">Persecution of FAZ journalist Michael Martens by Russia and Serbia</h2>
         <p class="comparison-text">Süddeutsche Zeitung offers a sympathetic profile of journalist Michael Martens as a principled figure targeted by Russian propaganda and legal harassment over his reporting on arms deliveries to Ukraine, framing Russia&#x27;s response as deliberate political persecution.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-488">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-488" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-489" data-category="diplomacy_international">
@@ -454,6 +692,15 @@
         <h2 class="section-title">Failed regional cooperation in South Asia (SAARC)</h2>
         <p class="comparison-text">Süddeutsche Zeitung argues the South Asian regional bloc SAARC has become largely symbolic and dysfunctional due to the enduring India-Pakistan rivalry, despite the substantial regional benefits functioning cooperation could bring.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-489">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-489" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-490" data-category="security_conflict">
@@ -464,6 +711,15 @@
         <h2 class="section-title">Dissolution of Kurdish SDF forces in Syria</h2>
         <p class="comparison-text">Süddeutsche Zeitung critically chronicles the dissolution and absorption of Kurdish-led SDF forces into the Syrian army, noting the Kurds received little in return for surrendering their autonomy and military strength, a development that worries other minorities.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-490">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-490" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-491" data-category="diplomacy_international">
@@ -474,6 +730,15 @@
         <h2 class="section-title">Turkey, human rights, and its geopolitical weight</h2>
         <p class="comparison-text">Süddeutsche Zeitung condemns Erdoğan&#x27;s Turkey for the unjust imprisonment of Osman Kavala despite European Court of Human Rights rulings, arguing Turkey&#x27;s growing geopolitical weight makes Western partners reluctant to press hard on its rule-of-law failures.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-491">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-491" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-492" data-category="trade_economics">
@@ -484,6 +749,15 @@
         <h2 class="section-title">Canada, the EU, and Trump&#x27;s trade policy</h2>
         <p class="comparison-text">Süddeutsche Zeitung argues that while Mark Carney&#x27;s confrontational stance against Trump looks admirable compared to von der Leyen&#x27;s conciliatory approach, Canada&#x27;s model is not viable for the EU, since a small controlled amount of pain is preferable to a full trade war - and China poses a far greater existential threat to European industry than Trump does.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-492">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-492" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-493" data-category="trade_economics">
@@ -494,6 +768,15 @@
         <h2 class="section-title">Intel&#x27;s cancelled chip plant in Magdeburg</h2>
         <p class="comparison-text">Süddeutsche Zeitung recounts the economic fallout from Intel&#x27;s cancellation of its planned Magdeburg chip factory, warning that a possible AfD election victory could further deter investors and worsen the region&#x27;s economic prospects.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-493">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-493" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-494" data-category="energy_environment">
@@ -504,6 +787,15 @@
         <h2 class="section-title">Air conditioning adoption in Germany vs. Asia amid warming</h2>
         <p class="comparison-text">Süddeutsche Zeitung criticizes Germany for lagging in air-conditioning adoption despite record heat, contrasting this with the more pragmatic, technology-embracing approach of Asian countries like Japan in dealing with global warming.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-494">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-494" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-495" data-category="migration_society">
@@ -514,6 +806,15 @@
         <h2 class="section-title">The migration crisis in Ceuta and Spain-Morocco tensions</h2>
         <p class="comparison-text">Süddeutsche Zeitung describes how the ongoing migration crisis in Ceuta remains unresolved and exposes lasting tension between Spain and Morocco, as Morocco raises territorial claims over Ceuta and Melilla that Spain firmly rejects.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-495">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-495" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-496" data-category="migration_society">
@@ -524,6 +825,15 @@
         <h2 class="section-title">Germany-Italy dispute over migrant returns</h2>
         <p class="comparison-text">Süddeutsche Zeitung argues that the loud dispute between Germany and Italy over Dublin-rules migrant returns is largely a manufactured conflict driven by Salvini&#x27;s domestic political calculations, since both governments actually pursue similarly restrictive migration policies.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-496">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-496" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 27, 2026, p. 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="appendix">
@@ -537,8 +847,42 @@
         <h2 class="section-title">UK domestic policy - crime and media bias</h2>
         <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): Domestic UK crime policy commentary without a substantive international/geopolitical dimension; excluded from geopolitical scope. Key excerpt: &quot;Radio Four’s reporting includes misrepresentations of me to which I have been given no chance to respond&quot;</p>
         
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-497">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-497" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 27, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
       </section>
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+      }
+    });
+  </script>
 </body>
 </html>

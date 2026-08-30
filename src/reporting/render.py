@@ -21,6 +21,7 @@ from src.common.db import (
     get_report,
     get_report_sections_for_date,
     get_section_articles,
+    get_section_citations,
     init_db,
 )
 
@@ -105,6 +106,9 @@ HE_MONTHS = [
     "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
     "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
 ]
+EN_MONTHS_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+CITATION_PAGE_LABEL = {"he": "עמ'", "en": "p."}
 
 
 def format_date_he(report_date: str) -> str:
@@ -115,6 +119,23 @@ def format_date_he(report_date: str) -> str:
 def format_date_en(report_date: str) -> str:
     d = date_cls.fromisoformat(report_date)
     return d.strftime("%A, %B %d, %Y")
+
+
+def format_citation_date_he(date_str: str) -> str:
+    d = date_cls.fromisoformat(date_str)
+    return f"{d.day}.{d.month}.{d.year}"
+
+
+def format_citation_date_en(date_str: str) -> str:
+    d = date_cls.fromisoformat(date_str)
+    return f"{EN_MONTHS_ABBR[d.month - 1]} {d.day}, {d.year}"
+
+
+def _truncate_headline(headline: str, max_words: int = 6) -> str:
+    words = headline.split()
+    if len(words) <= max_words:
+        return headline
+    return " ".join(words[:max_words]) + "…"
 
 
 def category_css() -> str:
@@ -139,16 +160,64 @@ def esc(text: str) -> str:
     return html.escape(text)
 
 
-def build_nav_html(back_href: str, other_lang_href: str, lang: str) -> str:
+def build_nav_html(back_href: str, other_lang_href: str, lang: str, pdf_href: str | None = None) -> str:
     other = OTHER_LANG[lang]
+    pdf_link = ""
+    if pdf_href is not None:
+        pdf_label = "⬇ הורד PDF" if lang == "he" else "⬇ Download PDF"
+        pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(pdf_label)}</a>'
     return f"""
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="../index.html"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>
-      <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>
+      <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>{pdf_link}
     </div>
   </nav>"""
+
+
+def _build_citations_html(citations: list, lang: str, section_id: int) -> str:
+    if not citations:
+        return ""
+
+    format_date = format_citation_date_he if lang == "he" else format_citation_date_en
+    page_label = CITATION_PAGE_LABEL[lang]
+    quote_marks = ("“", "”") if lang == "he" else ('"', '"')
+
+    # citations arrive pre-sorted by (newspaper, page_number) - group consecutive
+    # same-newspaper rows so we know, per group, whether a headline is needed to
+    # disambiguate (only when a newspaper contributes more than one article here).
+    groups: list[list] = []
+    for c in citations:
+        if groups and groups[-1][0]["newspaper"] == c["newspaper"]:
+            groups[-1].append(c)
+        else:
+            groups.append([c])
+
+    lines = []
+    for group in groups:
+        show_headline = len(group) > 1
+        for c in group:
+            display_name = esc(NEWSPAPER_DISPLAY_NAMES.get(c["newspaper"], c["newspaper"]))
+            date_str = esc(format_date(c["published_date"]))
+            line = f"{display_name}, {date_str}, {page_label} {c['page_number']}"
+            if show_headline:
+                snippet = esc(_truncate_headline(c["headline"]))
+                line += f" — {quote_marks[0]}{snippet}{quote_marks[1]}"
+            lines.append(f"            <li>{line}</li>")
+
+    toggle_label = "מראי מקום" if lang == "he" else "Citations"
+    popup_id = f"citations-{section_id}"
+    items_html = "\n".join(lines)
+    return f"""
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="{popup_id}">{esc(toggle_label)} ({len(citations)}) ▾</button>
+          <div class="citations-popup" id="{popup_id}" hidden>
+            <ul>
+{items_html}
+            </ul>
+          </div>
+        </div>"""
 
 
 def _render_section(section: dict, lang: str, show_sources: bool) -> str:
@@ -162,6 +231,8 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
         sources_label = "מקורות" if lang == "he" else "Sources"
         sources_html = f'<p class="section-sources">{sources_label}: <b>{names}</b></p>'
 
+    citations_html = _build_citations_html(section["citations"], lang, section["id"])
+
     return f"""
       <section class="topic-section" id="section-{section['id']}" data-category="{esc(section['category'])}">
         <div class="topic-meta">
@@ -171,6 +242,7 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
         <h2 class="section-title">{esc(topic)}</h2>
         <p class="comparison-text">{esc(text)}</p>
         {sources_html}
+        {citations_html}
       </section>"""
 
 
@@ -352,6 +424,56 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
   }}
   .section-sources b {{ color: var(--text); font-weight: 600; }}
 
+  .citations-row {{ position: relative; margin-top: .6rem; }}
+  .citations-toggle {{
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }}
+  .citations-toggle:hover {{ color: var(--masthead-accent); }}
+  .citations-popup {{
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }}
+  .citations-popup ul {{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }}
+  .citations-popup li {{ font-size: .8rem; color: var(--text); line-height: 1.5; }}
+
   .appendix {{ display: flex; flex-direction: column; gap: 1rem; }}
   .appendix-title {{ font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }}
   .appendix .topic-section {{ padding: 1.1rem 1.3rem 1.2rem; }}
@@ -365,11 +487,12 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     }}
     body {{ background: #fff; }}
     .top-nav {{ display: none; }}
+    .citations-row {{ display: none; }}
   }}
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang)}
+{build_nav_html("archive.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang, f"report_{report_date}_{lang}.pdf")}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
@@ -384,6 +507,31 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
 {main_html}
 {fallback_html}
   </main>
+  <script>
+    document.addEventListener('click', function (e) {{
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {{
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {{
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }}
+      }});
+      if (toggle) {{
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }}
+    }});
+    document.addEventListener('keydown', function (e) {{
+      if (e.key === 'Escape') {{
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {{
+          popup.hidden = true;
+        }});
+      }}
+    }});
+  </script>
 </body>
 </html>
 """
@@ -412,6 +560,7 @@ def render_report(conn, report_date: str) -> None:
     sections = []
     for s in raw_sections:
         newspapers = [r["newspaper"] for r in get_section_articles(conn, s["id"])]
+        citations = [dict(r) for r in get_section_citations(conn, s["id"])]
         sections.append(
             {
                 "id": s["id"],
@@ -421,6 +570,7 @@ def render_report(conn, report_date: str) -> None:
                 "comparison_text_en": s["comparison_text_en"],
                 "category": s["category"],
                 "newspapers": newspapers,
+                "citations": citations,
             }
         )
 

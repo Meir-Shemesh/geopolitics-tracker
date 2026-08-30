@@ -219,6 +219,56 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
+  .citations-row { position: relative; margin-top: .6rem; }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .citations-toggle:hover { color: var(--masthead-accent); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
   .appendix { display: flex; flex-direction: column; gap: 1rem; }
   .appendix-title { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }
   .appendix .topic-section { padding: 1.1rem 1.3rem 1.2rem; }
@@ -232,6 +282,7 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
+    .citations-row { display: none; }
   }
 </style>
 </head>
@@ -242,6 +293,7 @@
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← All reports</a>
       <a class="top-nav-link" href="../he/report_2026-08-25_he.html">עברית</a>
+      <a class="top-nav-link" href="report_2026-08-25_en.pdf">⬇ Download PDF</a>
     </div>
   </nav>
   <header class="masthead">
@@ -264,6 +316,18 @@
         <h2 class="section-title">Western aid to Ukraine and the air-defence gap</h2>
         <p class="comparison-text">The Daily Telegraph, Süddeutsche Zeitung, and Die Welt all cover fresh Western aid pledges to Ukraine, but The Daily Telegraph is most pointed in arguing that Andy Burnham&#x27;s Storm Shadow gift, however symbolically bold, misses Kyiv&#x27;s real need - Patriot interceptors only America can supply - while a companion piece praises Britain&#x27;s resolve. Süddeutsche Zeitung frames continued aid supportively while also calling for tougher sanctions, and Die Welt likewise flags the persistent Patriot shortfall while stressing that Putin shows no genuine interest in ending the war. All three broadly endorse continued support, differing mainly in emphasis between hardware gaps, sanctions, and Russian intent.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-392">Citations (4) ▾</button>
+          <div class="citations-popup" id="citations-392" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 4 — "What it really craves is Patriot"</li>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 15 — "Britain is right not to waver…"</li>
+            <li>Die Welt, Aug 25, 2026, p. 1</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 1</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-393" data-category="security_conflict">
@@ -274,6 +338,16 @@
         <h2 class="section-title">Tightening sanctions and Russia&#x27;s &#x27;shadow fleet&#x27;</h2>
         <p class="comparison-text">Two Süddeutsche Zeitung pieces jointly press the case for a tougher European crackdown on Russia&#x27;s sanctions-evading &#x27;shadow fleet&#x27; of uninsured tankers, criticizing European hesitancy to act despite the clear security and environmental risks.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-393">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-393" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 1 — "Europa könnte härter gegen Russlands Schattenflotte…"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 4 — "Stelle sich vor, auf Europas Straßen…"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-394" data-category="security_conflict">
@@ -284,6 +358,18 @@
         <h2 class="section-title">Genocide or self-defence: the framing of Gaza</h2>
         <p class="comparison-text">Gaza coverage splits sharply along source lines: The Daily Telegraph runs an opinion piece explicitly rejecting genocide accusations against Israel, citing Gaza&#x27;s population growth and Israel&#x27;s stated aim of defeating Hamas rather than annihilating a people. The Guardian, by contrast, covers a Venice-premiering documentary alleging a calculated system of mass killing of civilians, and separately reports on forensic audio work suggesting Israeli forces directly targeted aid workers - both Guardian pieces converge on an accusatory framing. Süddeutsche Zeitung takes yet another angle, arguing that Netanyahu&#x27;s long tenure has brutalized Israeli society and made peace politically taboo.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-394">Citations (4) ▾</button>
+          <div class="citations-popup" id="citations-394" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 15</li>
+            <li>The Guardian, Aug 25, 2026, p. 8 — "NAZA: new documentary on Israel&#x27;s bombing…"</li>
+            <li>The Guardian, Aug 25, 2026, p. 61 — "Earshot: sonic investigations into Belgrade protest…"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-395" data-category="domestic_politics">
@@ -294,6 +380,15 @@
         <h2 class="section-title">Israel: Eisenkot as political challenger to Netanyahu</h2>
         <p class="comparison-text">The Daily Telegraph profiles Gadi Eisenkot as Netanyahu&#x27;s most formidable emerging challenger, contrasting his integrity and push for an October 7 inquiry with Netanyahu&#x27;s corruption trial, while noting experts&#x27; doubts about his political inexperience and past leniency toward hostage-family pressure.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-395">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-395" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 11</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-396" data-category="migration_society">
@@ -304,6 +399,17 @@
         <h2 class="section-title">Channel and European migration crisis</h2>
         <p class="comparison-text">The Daily Telegraph runs an undercover investigation framing Channel crossings as a national security emergency ignored by weak leadership, and separately reports on an Italy-Germany row over rescue-boat migrant dumping and EU asylum-pact quotas. The Guardian instead cites an NGO report arguing that UK-funded French enforcement has made crossings more violent and dangerous without curbing them - a critique of the enforcement approach itself, the opposite framing from the Telegraph&#x27;s security-emergency angle.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-396">Citations (3) ▾</button>
+          <div class="citations-popup" id="citations-396" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 9 — "How I tricked my way aboard…"</li>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 12 — "Italy and Germany in tit-for-tat row…"</li>
+            <li>The Guardian, Aug 25, 2026, p. 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-397" data-category="technology_media">
@@ -314,6 +420,16 @@
         <h2 class="section-title">Cyber and tech mobilized for national security</h2>
         <p class="comparison-text">Die Welt reports on Germany&#x27;s intelligence agency recruiting gamers to build cyber-retaliation capacity against Russia, framed as historic reform of a once-restrained service. The Guardian covers a broadly similar theme - a UK-Ukraine deal using AI trained on battlefield data to protect British infrastructure - but adds a critical civil-liberties angle about the technology potentially being used against protesters.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-397">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-397" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 12</li>
+            <li>The Guardian, Aug 25, 2026, p. 5</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-398" data-category="society_culture">
@@ -324,6 +440,15 @@
         <h2 class="section-title">Anti-Parisian sentiment amid summer heatwaves</h2>
         <p class="comparison-text">The Daily Telegraph offers a culturally rooted, wry take on French resentment of Parisians, tracing this summer&#x27;s anti-tourist backlash amid heatwaves to a longstanding tradition of provincial disdain for the capital&#x27;s elite.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-398">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-398" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-399" data-category="diplomacy_international">
@@ -334,6 +459,15 @@
         <h2 class="section-title">Britain and the EU after Brexit</h2>
         <p class="comparison-text">The Daily Telegraph criticizes the Prime Minister for abandoning his campaign pledge to respect the Brexit referendum result by now advocating closer EU alignment, framing this as a breach of public trust.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-399">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-399" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-400" data-category="trade_economics">
@@ -344,6 +478,16 @@
         <h2 class="section-title">US economic pressure on Iran and China</h2>
         <p class="comparison-text">The Daily Telegraph reports the US Treasury&#x27;s aggressive new sanctions campaign against Iran largely as straight news framing it within Trump&#x27;s broader strategy. The Guardian covers the same sanctions push more skeptically, quoting experts who doubt the &#x27;economic strangulation&#x27; approach will succeed and stressing its toll on the global economy.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-400">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-400" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 17</li>
+            <li>The Guardian, Aug 25, 2026, p. 22</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-401" data-category="trade_economics">
@@ -354,6 +498,22 @@
         <h2 class="section-title">The US-Canada trade war</h2>
         <p class="comparison-text">This story receives extensive, varied treatment across all outlets. The Daily Telegraph runs two opinion pieces - one warning Canada&#x27;s economy will ultimately suffer most, another likening the trade rupture to a costly overreach the White House will regret amid American war-weariness. Die Welt reconstructs in detail how the near-finished deal collapsed at the last minute amid internal Trump administration power struggles, while Süddeutsche Zeitung focuses on the mutual damage to two deeply intertwined economies, calling the breakdown a needless political gamble ahead of midterms. The Guardian is most sympathetic to Canada: two opinion pieces praise Carney&#x27;s refusal to be bullied, a news piece frames the talks&#x27; collapse as a warning to the world, and another highlights the fight over Quebec&#x27;s French-language protections as the specific flashpoint.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, The Guardian, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-401">Citations (8) ▾</button>
+          <div class="citations-popup" id="citations-401" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 19 — "Canada to suffer as Carney takes…"</li>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 19 — "Just like Iran, the White House…"</li>
+            <li>Die Welt, Aug 25, 2026, p. 6</li>
+            <li>The Guardian, Aug 25, 2026, p. 29 — "US-Canada trade talks hit impasse over…"</li>
+            <li>The Guardian, Aug 25, 2026, p. 29 — "Collapse of negotiations is a warning…"</li>
+            <li>The Guardian, Aug 25, 2026, p. 41 — "Canadians do not seek a trade…"</li>
+            <li>The Guardian, Aug 25, 2026, p. 42 — "Canadians do not seek a trade…"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-402" data-category="trade_economics">
@@ -364,6 +524,15 @@
         <h2 class="section-title">UK productivity and tax policy</h2>
         <p class="comparison-text">The Daily Telegraph runs an opinion piece urging Britain&#x27;s Chancellor not to jeopardize a fragile productivity recovery driven by investment incentives through tax rises that would discourage business investment.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-402">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-402" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 21</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-403" data-category="trade_economics">
@@ -374,6 +543,15 @@
         <h2 class="section-title">UK pub and alcohol industry</h2>
         <p class="comparison-text">The Daily Telegraph defends moderate alcohol consumption and the pub industry as a significant net positive for the UK economy, arguing policy should target harmful drinking rather than responsible consumers.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-403">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-403" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 21</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-404" data-category="trade_economics">
@@ -384,6 +562,15 @@
         <h2 class="section-title">Shein&#x27;s Hong Kong listing</h2>
         <p class="comparison-text">The Daily Telegraph reports in largely news-style fashion on Shein&#x27;s shift from a planned London listing to a Hong Kong flotation, framed against human-rights allegations tied to Xinjiang cotton and UK retailer complaints over trade fairness.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-404">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-404" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 21</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-405" data-category="trade_economics">
@@ -394,6 +581,15 @@
         <h2 class="section-title">Nvidia&#x27;s AI financing risk</h2>
         <p class="comparison-text">The Daily Telegraph reports growing trader and analyst concern that Nvidia&#x27;s web of complex AI financing deals with major tech firms could trigger cascading losses and systemic risk across the sector.</p>
         <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-405">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-405" hidden>
+            <ul>
+            <li>The Daily Telegraph, Aug 25, 2026, p. 21</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-406" data-category="diplomacy_international">
@@ -404,6 +600,15 @@
         <h2 class="section-title">German development aid and geopolitical interests</h2>
         <p class="comparison-text">Die Welt takes a pragmatic, critical stance urging Germany to realign its development aid policy toward its own economic and geopolitical interests - such as securing raw materials and countering Chinese influence - rather than adhering strictly to &#x27;values-based&#x27; ideals.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-406">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-406" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 1</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-407" data-category="diplomacy_international">
@@ -414,6 +619,15 @@
         <h2 class="section-title">UN relevance and the case for reform</h2>
         <p class="comparison-text">Die Welt sharply criticizes UN Secretary-General Guterres and General Assembly President Baerbock for presiding over an organization increasingly ignored by major powers, calling for fundamental reform and stronger leadership.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-407">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-407" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 1</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-408" data-category="domestic_politics">
@@ -424,6 +638,22 @@
         <h2 class="section-title">The rise of the AfD in Germany</h2>
         <p class="comparison-text">Die Welt and Süddeutsche Zeitung both extensively cover the AfD&#x27;s rise but from different vantage points. Die Welt runs a cluster of pieces: one arguing the surge stems from genuine migration and deportation policy failures rather than mere sentiment; another defending Sachsen-Anhalt voters as rationally responding to establishment failure rather than acting foolishly; and two pieces reviewing Justus Bender&#x27;s speculative novel about a future AfD government, warning - somewhat wryly - about the erosion of the political &#x27;firewall.&#x27; Süddeutsche Zeitung takes a more critical tack throughout: one piece attacks AfD leader Chrupalla for climate-change denial, another profiles an activist trying to reclaim national symbols co-opted by the AfD, a social psychologist warns of the normalization of right-wing extremism, and a methodological piece cautions against misleading historical analogies comparing the AfD&#x27;s rise to past political shifts.</p>
         <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-408">Citations (8) ▾</button>
+          <div class="citations-popup" id="citations-408" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 2 — "Das große Migrations-Missverständnis"</li>
+            <li>Die Welt, Aug 25, 2026, p. 7 — "Sachsen-Anhalt ist kein Sündenfall des Wahlvolkes"</li>
+            <li>Die Welt, Aug 25, 2026, p. 14 — "Was mit Weidel und Spahn geschieht…"</li>
+            <li>Die Welt, Aug 25, 2026, p. 15 — "Deutschland 2033 (Rezension von Justus Benders…"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 4 — "Chrupallas kleine, heile Welt"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 6 — "„Schnappt euch eine Deutschlandfahne hier in…"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 9 — "Geschichte wiederholt sich eben nicht"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 11 — "„Entzauberung funktioniert nicht“"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-409" data-category="society_culture">
@@ -434,6 +664,15 @@
         <h2 class="section-title">Iran: everyday defiance versus regime repression</h2>
         <p class="comparison-text">Die Welt documents how ordinary Iranians increasingly defy regime restrictions on alcohol, music, dress and women riding motorcycles, even as the state responds with escalating repression and draconian new laws.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-409">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-409" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 5</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-410" data-category="security_conflict">
@@ -444,6 +683,15 @@
         <h2 class="section-title">Russia&#x27;s abduction of Ukrainian children</h2>
         <p class="comparison-text">Die Welt presents a forceful argument that Russia&#x27;s abduction and re-education of over 20,000 Ukrainian children amounts to a deliberate criminal attempt to erase the country&#x27;s future generations, calling for sustained international pressure.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-410">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-410" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 5</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-411" data-category="diplomacy_international">
@@ -454,6 +702,15 @@
         <h2 class="section-title">UK-Russia diplomatic rupture</h2>
         <p class="comparison-text">Die Welt reports on Russia&#x27;s withdrawal of its London ambassador in protest at British support for Ukraine, quoting harsh Russian accusations that Britain has become complicit in Kyiv&#x27;s &#x27;terror apparatus&#x27;.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-411">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-411" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 5</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-412" data-category="security_conflict">
@@ -464,6 +721,15 @@
         <h2 class="section-title">Russian hybrid warfare against the West</h2>
         <p class="comparison-text">Die Welt takes a balanced position: Russian hybrid warfare is a real, persistent challenge, but alarmist forecasts of an imminent large-scale attack on NATO by 2029 are exaggerated, driven more by a Western &#x27;fear industry&#x27; than by hard evidence of Russian intent.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-412">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-412" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-413" data-category="technology_media">
@@ -474,6 +740,15 @@
         <h2 class="section-title">Robotics and the tech-security race</h2>
         <p class="comparison-text">Die Welt urges Germany to invest heavily in humanoid robotics as a strategic national-security priority, warning that falling behind China and the US risks repeating the auto industry&#x27;s past failures.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-413">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-413" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-414" data-category="energy_environment">
@@ -484,6 +759,15 @@
         <h2 class="section-title">Europe&#x27;s looming winter gas prices</h2>
         <p class="comparison-text">Die Welt warns that the closure of the Strait of Hormuz and the collapse of US-Iran peace talks point to the most challenging heating season since the 2022 energy crisis, urging consumers to lock in price-guaranteed contracts promptly.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-414">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-414" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 9</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-415" data-category="migration_society">
@@ -494,6 +778,15 @@
         <h2 class="section-title">US internal migration: red states winning out</h2>
         <p class="comparison-text">Die Welt analyzes how business-friendly, low-tax Republican-led southern US states are absorbing massive investment and internal migration, while states like California lose residents and international immigration dries up under Trump-era enforcement.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-415">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-415" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 10</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-416" data-category="migration_society">
@@ -504,6 +797,15 @@
         <h2 class="section-title">Citizenship-by-investment programs</h2>
         <p class="comparison-text">Die Welt frames citizenship-by-investment schemes as a largely legitimate option for wealthy individuals seeking flexibility and protection from political risk, even as the EU pressures Caribbean states to rein in the practice over Schengen security concerns.</p>
         <p class="section-sources">Sources: <b>Die Welt</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-416">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-416" hidden>
+            <ul>
+            <li>Die Welt, Aug 25, 2026, p. 10</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-417" data-category="energy_environment">
@@ -514,6 +816,15 @@
         <h2 class="section-title">North Sea oil and gas versus the climate crisis</h2>
         <p class="comparison-text">The Guardian presents analysis arguing that expanding North Sea oil and gas production would cause far greater global economic damage from climate change than any benefit to the UK, undermining claims that new drilling serves the economy or energy security.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-417">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-417" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 2</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-418" data-category="energy_environment">
@@ -524,6 +835,15 @@
         <h2 class="section-title">Record ocean temperatures</h2>
         <p class="comparison-text">The Guardian warns that record ocean temperatures, intensified by El Niño and human-driven warming, are causing serious harm and calls for rapid reductions in fossil fuel emissions and protection of marine ecosystems.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-418">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-418" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 2</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-419" data-category="migration_society">
@@ -534,6 +854,15 @@
         <h2 class="section-title">Flaws in the UK&#x27;s digital eVisa system</h2>
         <p class="comparison-text">The Guardian reports on a flaw in the UK&#x27;s post-Brexit eVisa system that left a legally settled immigrant stranded in Spain, warning of a potential Windrush-style scandal.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-419">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-419" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-420" data-category="technology_media">
@@ -544,6 +873,15 @@
         <h2 class="section-title">Social media and the British far right</h2>
         <p class="comparison-text">The Guardian critically examines how X&#x27;s revenue-sharing scheme financially rewards Rupert Lowe&#x27;s divisive anti-immigration rhetoric, framing the platform as amplifying far-right political discourse.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-420">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-420" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-421" data-category="technology_media">
@@ -554,6 +892,15 @@
         <h2 class="section-title">Scottish opposition to datacentres and UK AI strategy</h2>
         <p class="comparison-text">The Guardian highlights growing Scottish public and political opposition to massive datacentre developments, framing them as environmentally and socially disruptive impositions from UK/US tech interests that threaten Britain&#x27;s AI strategy.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-421">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-421" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-422" data-category="technology_media">
@@ -564,6 +911,15 @@
         <h2 class="section-title">Washington Post columnist reinstatement and free speech</h2>
         <p class="comparison-text">The Guardian reports that an arbitrator found the Washington Post wrongly fired opinion columnist Karen Attiah over her comments on Charlie Kirk&#x27;s killing, ruling the dismissal disproportionate and a violation of her rights as an opinion journalist.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-422">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-422" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 23</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-423" data-category="domestic_politics">
@@ -574,6 +930,15 @@
         <h2 class="section-title">Trump and the IndyCar spectacle</h2>
         <p class="comparison-text">The Guardian offers a satirical account of Trump turning the IndyCar Grand Prix into a self-aggrandizing spectacle, contrasting his boasts of quick fixes with his inability to end the war in Ukraine.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-423">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-423" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 23</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-424" data-category="security_conflict">
@@ -584,6 +949,15 @@
         <h2 class="section-title">US strikes on alleged drug boats in the Pacific</h2>
         <p class="comparison-text">The Guardian critically examines the US military&#x27;s campaign of lethal strikes on alleged drug-trafficking vessels in Latin American waters, highlighting the lack of evidence and UN condemnation of the strikes as extrajudicial killings.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-424">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-424" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 23</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-425" data-category="society_culture">
@@ -594,6 +968,15 @@
         <h2 class="section-title">Ruffalo, Paramount, and accusations of antisemitism</h2>
         <p class="comparison-text">The Guardian defends actor Mark Ruffalo&#x27;s argument that scrutinizing Israel&#x27;s conduct in Gaza and Paramount&#x27;s corporate ties to Oracle and the Ellison family is legitimate criticism rather than antisemitism, while raising concerns about the Paramount-WBD merger and concentrated media influence.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-425">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-425" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 24</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-426" data-category="society_culture">
@@ -604,6 +987,16 @@
         <h2 class="section-title">Crisis in FIFA leadership</h2>
         <p class="comparison-text">The Guardian and Süddeutsche Zeitung both cover mounting pressure on Gianni Infantino but from different angles: The Guardian emphasizes players&#x27; demands for structural change and greater player/fan voice, while Süddeutsche Zeitung analyzes the organizational coalition (UEFA, AFC, Concacaf) pushing for a rotating presidency model, framing Ceferin&#x27;s decision not to run as paradoxically strengthening his position as opposition leader.</p>
         <p class="section-sources">Sources: <b>The Guardian, Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-426">Citations (2) ▾</button>
+          <div class="citations-popup" id="citations-426" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 40</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 22</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-427" data-category="diplomacy_international">
@@ -614,6 +1007,15 @@
         <h2 class="section-title">Hong Kong crackdown and Tiananmen memory</h2>
         <p class="comparison-text">The Guardian condemns the conviction of Hong Kong Alliance leaders for commemorating the Tiananmen massacre, framing it as part of a Communist Party effort to erase historical memory, and calls on Britain and others to support Hong Kong&#x27;s defenders of freedom.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-427">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-427" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 42</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-428" data-category="energy_environment">
@@ -624,6 +1026,15 @@
         <h2 class="section-title">UK climate-sceptic politicians</h2>
         <p class="comparison-text">The Guardian criticizes Conservative politicians who reject net-zero policy as too costly, describing their stance as willfully detached from the visible reality of the climate crisis.</p>
         <p class="section-sources">Sources: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-428">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-428" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 55</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-429" data-category="domestic_politics">
@@ -634,6 +1045,15 @@
         <h2 class="section-title">Ousting authoritarian leaders in Central Europe</h2>
         <p class="comparison-text">Süddeutsche Zeitung examines how Hungary, Poland, Slovakia and Czechia show that authoritarian populists can be voted out, but warns that dismantling the damage they leave behind is extremely difficult and can open the door to even more radical comebacks.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-429">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-429" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 7</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-430" data-category="domestic_politics">
@@ -644,6 +1064,15 @@
         <h2 class="section-title">German government communication and public disconnect</h2>
         <p class="comparison-text">Süddeutsche Zeitung argues that despite genuine reform efforts by the German government, poor public communication creates a disconnect from the public mood, contrasting this with citizens&#x27; actually privileged living conditions.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-430">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-430" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-431" data-category="migration_society">
@@ -654,6 +1083,15 @@
         <h2 class="section-title">US deportation crackdown and enforcement</h2>
         <p class="comparison-text">Süddeutsche Zeitung sharply criticizes the Trump administration&#x27;s aggressive deportation campaign against Haitians and other immigrants despite acknowledged dangers in Haiti, focusing on harsh ICE detention conditions and expanding, militarized enforcement.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-431">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-431" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 6</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-432" data-category="domestic_politics">
@@ -663,6 +1101,7 @@
         </div>
         <h2 class="section-title">Reclaiming the national flag from the AfD</h2>
         <p class="comparison-text">See the AfD rise section.</p>
+        
         
       </section>
 
@@ -674,6 +1113,15 @@
         <h2 class="section-title">Nazi-era business legacy - Kühne obituary</h2>
         <p class="comparison-text">Süddeutsche Zeitung publishes a critical obituary of billionaire Klaus-Michael Kühne, emphasizing that his company&#x27;s Nazi-era profiting from expropriated Jewish property and the forced ouster of a Jewish co-owner was never cleanly reckoned with publicly.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-433">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-433" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-434" data-category="energy_environment">
@@ -684,6 +1132,19 @@
         <h2 class="section-title">Climate costs and Germany&#x27;s energy transition</h2>
         <p class="comparison-text">Süddeutsche Zeitung runs a cluster of pieces on German energy policy: one argues the economic costs of climate neglect are now becoming visible and will hurt those clinging to fossil fuels; another criticizes the economy minister&#x27;s plan to build new water-intensive nuclear plants despite worsening water scarcity, advocating wind and solar instead; a third criticizes companies and politicians for failing to prepare for water shortages despite years of warnings; a fourth criticizes shifting freight from river to road as climate-damaging and attacks conservative politicians for opposing wind power; and a fifth takes the opposite view, calling for a 50% wind/solar and 50% nuclear mix and criticizing Germany&#x27;s nuclear phase-out as a mistake.</p>
         <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-434">Citations (5) ▾</button>
+          <div class="citations-popup" id="citations-434" hidden>
+            <ul>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 18 — "Wir bekommen die Rechnung"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 18 — "Die Ministerin auf Problemkurs"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 18 — "Mangelnde Vorsorge"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 18 — "Rückwärtsgewandt"</li>
+            <li>Süddeutsche Zeitung, Aug 25, 2026, p. 18 — "Für Atomkraft"</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="appendix">
@@ -697,6 +1158,15 @@
         <h2 class="section-title">Russia-Ukraine war / UK foreign policy</h2>
         <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The authors argue that Andy Burnham&#x27;s visit to Kyiv and the UK&#x27;s gift of Storm Shadow missile technology represent an important renewal of goodwill and diplomatic support for Ukraine, positioning Britain as a key ally that could serve as a useful bridge to Trump&#x27;s administration in future peace negotiations. Key excerpt: &quot;Your king is a valuable diplomatic tool and puts in a good word for us with Trump.&quot;</p>
         
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-435">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-435" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 5</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-436" data-category="additional_coverage">
@@ -707,8 +1177,42 @@
         <h2 class="section-title">Russia-Ukraine war</h2>
         <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The author argues that Ukraine&#x27;s growing ability to produce its own advanced weapons, aided by UK and European support, is reducing its dependence on Western allies and improving its military position, and that the West must hold firm and continue backing Kyiv rather than let Putin exploit division and delay. Key excerpt: &quot;War is a terrible thing, but what is the alternative? Moscow offers little evidence that territorial success would satisfy it.&quot;</p>
         
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-436">Citations (1) ▾</button>
+          <div class="citations-popup" id="citations-436" hidden>
+            <ul>
+            <li>The Guardian, Aug 25, 2026, p. 42</li>
+            </ul>
+          </div>
+        </div>
       </section>
       </section>
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+      }
+    });
+  </script>
 </body>
 </html>

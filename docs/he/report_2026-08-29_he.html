@@ -219,6 +219,56 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
+  .citations-row { position: relative; margin-top: .6rem; }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .citations-toggle:hover { color: var(--masthead-accent); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
   .appendix { display: flex; flex-direction: column; gap: 1rem; }
   .appendix-title { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }
   .appendix .topic-section { padding: 1.1rem 1.3rem 1.2rem; }
@@ -232,6 +282,7 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
+    .citations-row { display: none; }
   }
 </style>
 </head>
@@ -242,6 +293,7 @@
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← לכל הדוחות</a>
       <a class="top-nav-link" href="../en/report_2026-08-29_en.html">English</a>
+      <a class="top-nav-link" href="report_2026-08-29_he.pdf">⬇ הורד PDF</a>
     </div>
   </nav>
   <header class="masthead">
@@ -264,6 +316,30 @@
         <h2 class="section-title">מתיחות ארה&quot;ב-איראן וסנקציות</h2>
         <p class="comparison-text">הכיסוי של הנושא נשלט כמעט לחלוטין על ידי The Economist, שפרסם סדרה ארוכה של כתבות – למעשה גרסאות חוזרות ומתפתחות של אותה אנליזה – החוזרות ומדגישות כי הסנקציות והלחץ הכלכלי-פיננסי המחודש של טראמפ נגד איראן, כולל חסימת מיצרי הורמוז והאיום ב&quot;יום D-Day כלכלי&quot;, אינם צפויים להפיל את המשטר או לשנות את התנהגותו. לאורך הכתבות הללו מתפתח קו טיעון עקבי: איראן פיתחה עמידות וכלים לעקוף לחצים פיננסיים, סין וגורמים באיחוד האמירויות ממשיכים לסחור עמה חרף הסנקציות, וארה&quot;ב עצמה נמנעת מלהפעיל את הנשק החזק ביותר - סנקציות משניות נגד סין - מחשש לערער את המערכת הפיננסית הגלובלית ולהסלים את העימות עם בייג&#x27;ינג. חלק מהכתבות אף טוענות שהמדיניות עלולה לחזק דווקא את המשטר ואת משמרות המהפכה על חשבון האזרחים הפשוטים, שסובלים מאינפלציה וקריסת המטבע, ושהמהלך כולו הוא למעשה נסיגה מוסווית של טראמפ מעימות צבאי נוסף, המרחיקה עוד יותר סיכוי להסדר גרעיני. The Daily Telegraph מציג זווית שונה במקצת, וממסגר את המצב כ&quot;מלחמת התשה&quot; שבה שני הצדדים טעו בהערכותיהם ההדדיות: טראמפ ציפה לניצחון מהיר על איראן וטעה בהערכת יכולת העמידות שלה, ואילו איראן אולי טועה כעת בהערכת נחישותו של טראמפ, כשהאסטרטגיה האמריקאית עוברת לחנק כלכלי ארוך-טווח שנועד להחזיר את איראן לשולחן המשא ומתן בנוגע להורמוז. The Guardian, לעומת זאת, מתמקד בזווית פנימית-חברתית לחלוטין ולא בעימות עם ארה&quot;ב: הצעת חוק איראנית להפללת קשר עם תקשורת זרה, שלטענת ארגוני זכויות אדם המצוטטים בכתבה נועדה לנתק את החברה האיראנית כולה מהעולם ולא רק לפגוע בעיתונאים.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Economist, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-961">מראי מקום (16) ▾</button>
+          <div class="citations-popup" id="citations-961" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 16</li>
+            <li>The Economist, 29.8.2026, עמ' 15 — “America&#x27;s new sanctions are unlikely to…”</li>
+            <li>The Economist, 29.8.2026, עמ' 16 — “America’s new sanctions are unlikely to…”</li>
+            <li>The Economist, 29.8.2026, עמ' 28 — “Damp squib or cunning retreat?”</li>
+            <li>The Economist, 29.8.2026, עמ' 29 — “Operation Economic Outcast: the limits of…”</li>
+            <li>The Economist, 29.8.2026, עמ' 30 — “America&#x27;s new sanctions offensive on Iran”</li>
+            <li>The Economist, 29.8.2026, עמ' 31 — “Operation Economic Outcast: Trump&#x27;s Iran retreat”</li>
+            <li>The Economist, 29.8.2026, עמ' 32 — “America&#x27;s new sanctions are unlikely to…”</li>
+            <li>The Economist, 29.8.2026, עמ' 141 — “Iran will be able to shrug…”</li>
+            <li>The Economist, 29.8.2026, עמ' 142 — “Iran will be able to shrug…”</li>
+            <li>The Economist, 29.8.2026, עמ' 143 — “Operation Economic Outcast: Trump&#x27;s new Iran…”</li>
+            <li>The Economist, 29.8.2026, עמ' 144 — “America&#x27;s blockade of Hormuz squeezes Iran&#x27;s…”</li>
+            <li>The Economist, 29.8.2026, עמ' 145 — “Iran sanctions and the limits of…”</li>
+            <li>The Economist, 29.8.2026, עמ' 146 — “Iran&#x27;s economic warfare standoff with Trump”</li>
+            <li>The Economist, 29.8.2026, עמ' 147 — “Iran Will Be Able to Shrug…”</li>
+            <li>The Guardian, 29.8.2026, עמ' 40</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-962" data-category="diplomacy_international">
@@ -274,6 +350,15 @@
         <h2 class="section-title">יחסי בריטניה-ישראל סביב עזה והתנחלויות</h2>
         <p class="comparison-text">היות שמדובר בכתבה יחידה בנושא זה, The Daily Telegraph הוא המקור היחיד המסקר את המתיחות בין בריטניה לישראל. הכתבה מנוסחת כניתוח חדשותי המתמקד בעמדתה הרשמית של לונדון, המדגישה כי בריטניה נחושה להישאר חלק מגוף הפיקוח על הפסקת האש בעזה חרף איומי ישראל לגרש פקידים בריטים, על רקע חיכוכים סביב תוכניות ההתנחלות ועיצומים בריטיים. הדגש בכתבה הוא על נקודת המבט הבריטית - ניסיון להציג את השתתפות בריטניה כחיונית למאמץ המשותף (&quot;הסרת בריטניה או שותפים אחרים תפגע במאמצים המשותפים&quot;) - מבלי לספק זווית ישראלית מקבילה או תגובה נגדית מפורטת.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-962">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-962" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-963" data-category="diplomacy_international">
@@ -284,6 +369,16 @@
         <h2 class="section-title">ארה&quot;ב ובריטניה: הוצאות ביטחון נאט&quot;ו והריבונות על פוקלנד</h2>
         <p class="comparison-text">שני המאמרים מגיעים מה-Daily Telegraph בלבד, ומציגים למעשה שתי זוויות משלימות על אותה סוגיה. הכתבה הראשונה מסוקרת כידיעה חדשותית המדווחת כי וושינגטון משתמש בעמדתו הנייטרלית לגבי הריבונות על איי פוקלנד ככלי לחץ על בריטניה להגדיל את הוצאות הביטחון לעבר יעד 5% שקבע נאט&quot;ו, ומציבה זאת בהקשר רחב יותר של מעבר ל&quot;נאט&quot;ו 3.0&quot; שבו בעלות הברית האירופיות נדרשות לשאת באחריות רבה יותר להגנתן. המאמר השני, מאמר דעה, נוקט טון ביקורתי הרבה יותר כלפי הממשלה הבריטית עצמה: הוא תוקף את ראש הממשלה על דחיות חוזרות ונשנות בהעלאת הוצאות הביטחון ל-3% מהתמ&quot;ג חרף האיום הרוסי, וטוען שהיחלשות זו היא שעודדה את ארה&quot;ב לשקול לערער על תמיכתה בריבונות הבריטית על פוקלנד. כך, בעוד הידיעה החדשותית מתמקדת בלחץ האמריקאי כביטוי לשינוי אסטרטגי גלובלי, מאמר הדעה הופך את החץ פנימה ומטיל את האחריות על חולשת המנהיגות הבריטית עצמה, וקורא לפעולה נחרצת ומיידית.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-963">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-963" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 1 — “US threatens Falklands sovereignty stance over…”</li>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 17 — “The country has no time left…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-964" data-category="security_conflict">
@@ -294,6 +389,17 @@
         <h2 class="section-title">מתקפות סייבר איראניות ורוסיות על תשתיות מערביות</h2>
         <p class="comparison-text">הכיסוי של הנושא מתפצל לשתי זוויות שונות למדי. The Daily Telegraph מתמקד באירוע קונקרטי ומדאיג: גל מתואם של מתקפות סייבר המיוחסות לאיראן נגד מתקני מים וחשמל בבריטניה ובארצות הברית, תוך ציטוט אזהרת ה-NCSC על &quot;מיקוד גובר במערכות תפעוליות&quot; ברחבי העולם. הטון כאן דחוף ואזעקתי, ומציג את איראן כאיום מדינתי עוין וגובר על תשתיות קריטיות. The Economist, לעומת זאת, נוקט זווית אנליטית ומרגיעה יותר: הכתבה, המופיעה תחת שני תגי נושא (אבטחת סייבר ובינה מלאכותית, ואבטחת סייבר ותשתיות קריטיות) אך מייצגת בפועל קול אחד של אותו עיתון, טוענת שהחששות מ&quot;ארמגדון&quot; סייבר מבוססי בינה מלאכותית מוגזמים. לפי הניתוח, הבעיה האמיתית אינה כלים מתקדמים חדשים - לא של תוקפים איראניים ולא של בינה מלאכותית - אלא כשלי אבטחה בסיסיים וישנים, בעיקר במערכות מים ותשתיות דומות, שיישום עקרונות אבטחה פשוטים היה יכול לפתור. כך, בעוד ה-Telegraph ממסגר את הסיפור כאיום גיאופוליטי חיצוני דחוף המצדיק ערנות מיידית, The Economist ממסגר את אותה תופעה - חולשת תשתיות המים - כתוצאה של הזנחה מבנית פנימית, ומצנן את תחושת הפאניקה סביב מקורות האיום החדשים.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-964">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-964" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 6</li>
+            <li>The Economist, 29.8.2026, עמ' 46 — “Reboot your thinking: Fears of AI-induced…”</li>
+            <li>The Economist, 29.8.2026, עמ' 49 — “Fears of AI-induced armageddon are overdone”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-965" data-category="trade_economics">
@@ -304,6 +410,17 @@
         <h2 class="section-title">עסקת נפט ארה&quot;ב-ונצואלה</h2>
         <p class="comparison-text">שלושת המקורות מסקרים את אותה עסקה - השתלטות ארה&quot;ב על מאגרי הנפט של ונצואלה בעקבות נפילת מדורו - אך מציבים אותה באור שונה לגמרי. הדיילי טלגרף מאמץ את הטון הנלהב של וושינגטון עצמה, ומצטט התלהבות מהיקף העסקה כ&quot;ענקית&quot; ומדגיש את התועלת לביטחון האנרגטי האמריקאי לאחר שיבושי האספקה ממלחמת איראן. הוול סטריט ג&#x27;ורנל מספק סיקור מפורט ומעורך יותר: הוא מצטט את הכרזתו של טראמפ על שליטה אמריקאית ברוב מתוך יותר מ-65 מיליארד חביות נפט מוכחות &quot;ללא עלות למשלם המסים האמריקאי&quot;, אך גם מציין את המחלוקת המשפטית והפוליטית סביב חוקת ונצואלה והלחץ לקיים בחירות, ובכך משמר איזון בין הישג אסטרטגי לסוגיות לגיטימיות. לעומת זאת, הגארדיין הופך את הזרקור אל המבקרים: הוא מתעד את זעמם של גורמי אופוזיציה ונצואלית וכלכלנים המכנים את המהלך &quot;שוד טורפני&quot;, ומשווים את ארה&quot;ב הנוכחית לא לתוכנית מרשל אלא לכוח &quot;רעבתני ומאפיוני&quot; הפועל לטובת האינטרסים שלו ולא לטובת העם הוונצואלי. כך נוצר פער ברור: הדיילי טלגרף חוגג את העסקה כניצחון אנרגטי אמריקאי, הוול סטריט ג&#x27;ורנל מציג אותה כהישג עם הסתייגויות, והגארדיין מציב אותה כדוגמה לניצול אימפריאליסטי.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-965">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-965" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 30</li>
+            <li>The Guardian, 29.8.2026, עמ' 32</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 8</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-966" data-category="diplomacy_international">
@@ -314,6 +431,21 @@
         <h2 class="section-title">הדרום סיני והמזרח - סין ואיי האוקיינוס השקט</h2>
         <p class="comparison-text">רוב הכתבות בנושא זה מגיעות מ-The Economist, שמסקר בהרחבה - למעשה בכמה זוויות של אותו סיפור מרכזי - כיצד אוסטרליה בונה רשת הסכמי הגנה דו-צדדיים עם מדינות איי האוקיינוס השקט (ובראשן אמנת וייטאסיני) כדי לבלום את השפעת סין באזור. מרבית הכתבות הללו, שכולן משקפות אותה עמדה עיתונאית אחת בפועל, מציגות זאת כמערכת &quot;רכזת וחישורים&quot; שנועדה לנעול את סין מחוץ לסידורי הביטחון האזוריים, תוך שהיא מוצגת כלפי חוץ כשמירת הביטחון בתוך &quot;המשפחה הפסיפית&quot;. The Economist מוסיף גם זווית ביקורתית משלו - שהמעורבות ההולכת וגוברת של מדינות האי בברית עם אוסטרליה, בת בריתה של ארה&quot;ב, משמעה בפועל &quot;בחירת צד&quot; מול סין, נושא שלטענת הכתבה נמנעים ברובו מלדון בו בפומבי; וכן זווית נוספת המתארת כיצד ניסויי טילים בליסטיים סיניים באוקיינוס השקט הבהילו מנהיגים באזור, כמו פיג&#x27;י, וחיזקו את נטייתם להתקרב לאוסטרליה, תוך אזהרה מפני חזרה של יריבות מעצמות שתערער את יציבות האזור. לעומת המיקוד הפסיפי-אזורי הזה, The Daily Telegraph עוסק בזירה גיאוגרפית נפרדת לחלוטין - הים הסיני הדרומי - ומדווח על המשך בנייתה הצבאית של סין על איים שנויים במחלוקת, תוך ציטוט מומחים המזהירים כי תשתיות אלו מחזקות את תביעת הריבונות המנהלית של סין על השטח. כך, בעוד The Economist ממסגר את התחרות הסינית-אוסטרלית כמאבק על נאמנות פוליטית וביטחונית של מדינות איים ריבוניות, The Daily Telegraph ממסגר את ההתנהלות הסינית כהשתלטות פיזית-טריטוריאלית הדרגתית באזור סכסוך ימי אחר לגמרי.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-966">מראי מקום (7) ▾</button>
+          <div class="citations-popup" id="citations-966" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 15</li>
+            <li>The Economist, 29.8.2026, עמ' 68 — “Australia builds a Pacific alliance system…”</li>
+            <li>The Economist, 29.8.2026, עמ' 69 — “China&#x27;s missile test unsettles Pacific island…”</li>
+            <li>The Economist, 29.8.2026, עמ' 71 — “Australia builds a new Pacific alliance…”</li>
+            <li>The Economist, 29.8.2026, עמ' 72 — “Veitacini Treaty and Pacific security alliances”</li>
+            <li>The Economist, 29.8.2026, עמ' 73 — “Pacific island states choose sides as…”</li>
+            <li>The Economist, 29.8.2026, עמ' 74 — “Australia builds a Pacific alliance system…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-967" data-category="technology_media">
@@ -324,6 +456,16 @@
         <h2 class="section-title">תעמולה סינית נגד תשתיות בינה מלאכותית אמריקאיות</h2>
         <p class="comparison-text">שתי הכתבות עוסקות בהיבטים שונים של תחרות טכנולוגית ותעמולתית בין ארה&quot;ב לסין סביב בינה מלאכותית ורובוטיקה, אך מזוויות נפרדות לחלוטין. The Daily Telegraph מתמקד בחשד קונקרטי למבצע השפעה סמוי: הוא מדווח כי חברת X וגם OpenAI זיהו קמפיין בוטים סיני שנועד להטות את דעת הקהל האמריקאית נגד תשתיות בינה מלאכותית ומרכזי נתונים, ומציג זאת כמאמץ תעמולתי חשאי ועוין. לעומת זאת, The Guardian בוחן תופעה גלויה ולא סמויה - &quot;אולימפיאדת הרובוטים&quot; הסינית - וטוען שמדובר בהפגנת שרירים טכנולוגית מכוונת, שתוזמנה לקראת פסגה עם טראמפ, במטרה לשדר עוצמה. הכתבה בגרדיאן חורגת מדיווח על תעמולה גרידא ומעלה חשש עתידני רחב יותר בנוגע לשימושים צבאיים ומעקביים ברובוטים מתקדמים. כך, בעוד הטלגרף ממסגר את הנושא כסיפור של לוחמת מידע חשאית, הגרדיאן ממסגר אותו כתצוגת כוח פומבית עם השלכות ביטחוניות ארוכות טווח.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-967">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-967" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 30</li>
+            <li>The Guardian, 29.8.2026, עמ' 38</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-968" data-category="security_conflict">
@@ -334,6 +476,26 @@
         <h2 class="section-title">מלחמת רוסיה-אוקראינה</h2>
         <p class="comparison-text">הכיסוי של מלחמת רוסיה-אוקראינה מתפצל בין כמה זוויות נבדלות. הדיילי טלגרף מתמקד בממד האסטרטגי-ביטחוני מנקודת מבט מערבית: הוא מתאר את רוסיה כמדינה הנוקטת &quot;לוחמה היברידית&quot; וחבלה נגד נאט&quot;ו, ומזהיר מפני התלקחות בשוגג לעימות ישיר, תוך ציטוט מקורות מערביים ואסטוניים על כך שהצבא הרוסי מפסיד יותר חיילים משהוא מגייס - ולפי ראש המודיעין האסטוני יש לכנות זאת &quot;טרור בחסות המדינה&quot; ולא &quot;לוחמה היברידית&quot;, תוך קריאה להמשך השקעה בהרתעה. הגארדיין מציג את אותם נתוני אבדות רוסיים אך שם דגש שונה: הוא מדגיש כיצד ההיחלשות הרוסית מובילה להסלמת תקיפות על תשתיות אזרחיות ואיומים כלפי בריטניה, ומשלב זאת עם סיפור אנושי על זוג המתחתן בקרמטורסק כמעשה התרסה מול ההרס המתקדם, וכן עם ביקורת פוליטית חריפה - בסקירת ספרו של לוק הרדינג הגארדיין מאשים את טראמפ בבגידה באוקראינה ומטיל ספק אם הוא פועל כנכס רוסי. הלוס אנג&#x27;לס טיימס מתמקד בדיווח השוטף על התקפות הטילים והרחפנים הרוסיות על קייב ותגובת אוקראינה נגד מתקני נפט רוסיים, ומדגיש את האסטרטגיה הרוסית של &quot;נשק את החורף&quot; נגד האוכלוסייה האזרחית. האקונומיסט, לעומת זאת, מביא שתי זוויות ייחודיות משלו: מחד תיאור טכנולוגי-טקטי חיובי על שימוש אוקראיני חדשני בכדורים פורחים לתקיפת עומק ברוסיה, ומאידך סדרת ניתוחים כלכליים חוזרים ומודאגים על האיום המתחדש לשוק התבואה העולמי, כתוצאה מתקיפות הדדיות על נמלי ותשתיות דגן משני הצדדים - נושא שכלל שאר העיתונים כמעט אינם נוגעים בו.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Economist, The Guardian, Los Angeles Times</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-968">מראי מקום (12) ▾</button>
+          <div class="citations-popup" id="citations-968" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 6 — “Putin risks accidental clash with Nato…”</li>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 25 — “The Saturday Interview: Estonia&#x27;s spy chief…”</li>
+            <li>The Economist, 29.8.2026, עמ' 166 — “The renewed threat to global grain…”</li>
+            <li>The Economist, 29.8.2026, עמ' 167 — “Russia-Ukraine grain war escalation”</li>
+            <li>The Economist, 29.8.2026, עמ' 168 — “Russia-Ukraine war and the wheat trade”</li>
+            <li>The Economist, 29.8.2026, עמ' 170 — “Ukraine&#x27;s Grain Export Disruption”</li>
+            <li>The Economist, 29.8.2026, עמ' 171 — “The renewed threat to global grain…”</li>
+            <li>The Economist, 29.8.2026, עמ' 309 — “Ukrainian military balloons may spoil Russia&#x27;s…”</li>
+            <li>The Guardian, 29.8.2026, עמ' 10 — “Moscow losing more troops than it…”</li>
+            <li>The Guardian, 29.8.2026, עמ' 30 — “Couple chooses to wed in Kramatorsk”</li>
+            <li>The Guardian, 29.8.2026, עמ' 99 — “Betrayal: Trump, Putin and the New…”</li>
+            <li>Los Angeles Times, 29.8.2026, עמ' 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-969" data-category="trade_economics">
@@ -344,6 +506,17 @@
         <h2 class="section-title">כלכלת בריטניה: מסים ורגולציה עסקית</h2>
         <p class="comparison-text">שני העיתונים ניגשים לנושא כלכלת בריטניה מזוויות מנוגדות לחלוטין. The Daily Telegraph, בשתי כתבותיו, מאמץ את קול המגזר העסקי כביקורת ישירה על ממשלת הלייבור: הראשונה מצטטת את מנכ&quot;ל Asda שטוען כי מיסוי כבד ועלויות רגולציה חונקים את הצמיחה ואת ביטחון הצרכנים ומקרבים את בריטניה ל&quot;נקודת מפנה&quot;, והשנייה מאמצת בהתלהבות את תקיפתו של מייק אשלי את הממשלה כ&quot;אנטי-עסקית&quot; באופן חסר תקדים, וקוראת לעסקים להתאחד נגד המדיניות. שתי הכתבות חולקות מסגור זהה - הממשלה כאשם המרכזי בפגיעה בכלכלה ובעסקים. לעומת זאת, The Economist הופך את הזרקור מהממשלה אל מעמד העשירים הבריטי עצמו, ומשתמש דווקא בדמותו של מייק אשלי כסמל לסטגנציה: לטענתו, הון בריטי הוא במידה רבה לא-פרודוקטיבי ולא חדשני, ואפילו הנכסים היוקרתיים ביותר של המדינה כבר לא בהישג ידם של מיליארדרים בריטים אלא רק של מדינות נפט זרות ומיליארדרים אמריקאים - כלומר הבעיה עמוקה מבנית ולא רק תוצאה של מדיניות ממשלתית נוכחית.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-969">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-969" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 31 — “Asda boss: Labour is harming the…”</li>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 32 — “Mike Ashley is right to call…”</li>
+            <li>The Economist, 29.8.2026, עמ' 217</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-970" data-category="trade_economics">
@@ -354,6 +527,16 @@
         <h2 class="section-title">הפד ומדיניות ריבית תחת וורש</h2>
         <p class="comparison-text">שני העיתונים מתארים את יו&quot;ר הפד החדש קווין וורש כניצב על עמדה ניצית למרות לחצי טראמפ להורדת ריבית, אך ההדגשה שונה. The Daily Telegraph ממסגר את הנאום בעיקר כמהלך פוליטי-דרמטי - &quot;יו&quot;ר הפד מאותת שהוא עשוי לסרב לטראמפ&quot; - ומדגיש את המתח המוסדי בין הבנק המרכזי לנשיא, כשהשווקים קוראים את הדברים כסימן לריבית גבוהה יותר. לעומת זאת ה-Wall Street Journal, בטור פרשנות אוהד, משבח את וורש ודוחה במפורש טענות לפיהן הוא נכנע ללחץ הנשיאותי, ומציג את נאומו בג&#x27;קסון הול כהוכחה לכך שהפד ממשיך במלחמתו באינפלציה עד להשגת יעד 2%. כך, בעוד ה-Telegraph מתמקד בעימות הפוליטי, ה-Journal מתמקד בהצדקה הכלכלית והמקצועית של המדיניות ההדוקה.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-970">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-970" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 31</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-971" data-category="energy_environment">
@@ -364,6 +547,16 @@
         <h2 class="section-title">מחירי דלק ונפט בעקבות מלחמת איראן</h2>
         <p class="comparison-text">שני העיתונים בוחנים את השפעת מלחמת איראן על שוק הנפט, אך מכל זווית שונה לגמרי. The Daily Telegraph מתמקד בפגיעה המיידית בצרכן הבריטי: מחירי הבנזין זינקו לשיא של כמעט ארבע שנים, ובעיתון מדגישים כי מלחמת איראן היא שדחפה את מחירי הנפט למעלה, בשילוב עם תחרות חלשה בשוק הדלק המקומי, וזאת דווקא בסוף שבוע עמוס בנסיעות - כלומר סיפור צרכני-מקומי על עלות המחיה. לעומת זאת, The Wall Street Journal מציג תמונה גיאו-אסטרטגית רחבה בהרבה, ומראה כיצד סין, באמצעות מלאי אסטרטגי עצום של נפט ומעבר לאנרגיה מתחדשת, הצליחה למעשה לחסן את עצמה מפני הזעזועים שמלחמת איראן מייצרת בשוק הנפט העולמי. בעוד הטלגרף מתאר את המלחמה כגורם המזיק לצרכנים במערב, הוול סטריט ג&#x27;ורנל מציג את אותה מלחמה כהזדמנות שממנה סין דווקא מרוויחה עמדת כוח מול המערב, כולל לקראת עימותים עתידיים אפשריים כמו סביב טייוואן.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-971">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-971" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 31</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 8</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-972" data-category="technology_media">
@@ -374,6 +567,15 @@
         <h2 class="section-title">מדיניות בינה מלאכותית ורגולציה ממשלתית בארה&quot;ב</h2>
         <p class="comparison-text">בנושא זה מופיעה כתבה בודדת, של The Daily Telegraph, המתמקדת בפסיקת שופט אמריקאי לפיה החלטת ממשל טראמפ להטיל חרם על שימוש ממשלתי במוצרי חברת הבינה המלאכותית Anthropic הייתה מעשה תגמול פסול ובלתי חוקי בשל ביקורת החברה על הממשל. הכתבה מציגה את הפסיקה כחיזוק לטענה שהצעד הממשלתי היה מונע משיקולים פוליטיים ומהווה פגיעה בחופש הביטוי, תוך ציטוט קביעת בית המשפט כי מדובר בהפרה ברורה של התיקון הראשון לחוקה. מאחר שאין מקורות נוספים המכסים את הנושא, לא ניתן להצביע על זוויות מנוגדות או הבדלי דגש בין עיתונים.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-972">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-972" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 31</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-973" data-category="energy_environment">
@@ -384,6 +586,16 @@
         <h2 class="section-title">ניהול משאבי מים אירופיים</h2>
         <p class="comparison-text">שתי הכתבות מגיעות מה-Economist בלבד, ומהוות למעשה שני מכתבים משלימים באותו דיון על ניהול מים אירופי, כל אחד עם דגש שונה. הראשון מתמקד בממד הגיאופוליטי חוצה הגבולות: הוא מדגיש כי נהרות אירופה הם תשתית כלכלית ואסטרטגית קריטית, וכי החלטות שמתקבלות במעלה הזרם בעתות מחסור עלולות לגרום נזק חמור למדינות במורד הזרם, ולכן נדרשות השקעות חדשות באגירה ובניהול מים. הכתבה השנייה מצרה את הזווית למרכז אירופה וממסגרת את המים כהון טבעי אסטרטגי שיש לנהל בתבונה - בדומה לאופן שבו מדינות מפיקות נפט מנהלות את רזרבות הנפט שלהן - במקום להניח למים פשוט לזרום הלאה אל הים. כך, בעוד המכתב הראשון עוסק בסיכון הבינלאומי-דיפלומטי של תלות הדדית בין מדינות, השני מציע מסגרת מדיניות כלכלית-אסטרטגית פנימית למדינות מרכז אירופה עצמן.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-973">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-973" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 41 — “Letter: Europe&#x27;s rivers and the geopolitics…”</li>
+            <li>The Economist, 29.8.2026, עמ' 42 — “Water as strategic natural capital in…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-974" data-category="energy_environment">
@@ -394,6 +606,15 @@
         <h2 class="section-title">שריפות כבול באינדונזיה</h2>
         <p class="comparison-text">בנושא זה מופיע מקור יחיד, The Economist, ולכן אין השוואה בין כלי תקשורת שונים. הכתבה בולטת בזווית האנליטית והמתריעה שלה: היא דוחה את ההסבר המקובל לפיו שריפות הכבול והעשן באינדונזיה נגרמים מחקלאים זעירים השורפים שטחים בשיטת &quot;כרות ושרוף&quot;, וטוענת שהאשם האמיתי הוא ניקוז יבשות בקנה מידה תעשייתי של ביצות כבול לצורך נטיעת מטעי דקל שמן ועצי תאית. הניסוח החד - &quot;החקלאי הזעיר עם הגפרור אינו המצית. המחפרון הוא זה&quot; - משקף עמדה ברורה המפנה את האחריות מהפרט אל האינטרסים הכלכליים הגדולים, ומדגישה שרק שיקום יזום ומכוון של מערכות האקולוגיות של הכבול, ולא ענישת חקלאים, יכול למנוע שריפות עתידיות.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-974">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-974" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 42</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-975" data-category="migration_society">
@@ -404,6 +625,31 @@
         <h2 class="section-title">מדיניות הגירה של טראמפ וגירושים המוניים</h2>
         <p class="comparison-text">כל הכתבות בנושא זה מקורן ב-Economist, כך שאין כאן עימות בין כלי תקשורת שונים, אלא פריסה רב-זוויתית של אותו קו עריכתי ביקורתי, המתפרש על פני מאמרים רבים שבחנו היבטים שונים של מדיניות ההגירה. חלק מהכתבות מתמקדות בהיבט המוסרי והאנושי - טיפול אכזרי במעצרים, שימוש בכפפות מחשמלות, מותם של עצורים, וביטול מעמד ההגנה הזמנית (TPS) שחושף מהגרים מהאיטי ואל סלוודור לסכנת חיים. זווית אחרת עוסקת בשחיקת שלטון החוק, כאשר סוכנים מוסווים עורכים מעצרים ללא זיהוי ומערערים את אמון הציבור באכיפת החוק. זווית שלישית, כלכלית באופייה, חוזרת על עצמה במספר כתבות ומדגישה כיצד הגבלת ההגירה - הן הגירוש ההמוני והן הצמצום בהגירה מיומנת וסטודנטיאלית - מצמצמת את כוח העבודה, פוגעת בצמיחה ובחדשנות האמריקאית, ומעניקה יתרון תחרותי למדינות כמו סין, קנדה והאיחוד האירופי. יש גם כתבות המתמקדות בחומת הגבול, וטוענות כי למרות מטרותיה הסמליות והפוליטיות, השפעתה בפועל על הגירה בלתי חוקית תהיה מוגבלת, שכן ההיסטוריה מלמדת שמדיניות מקלט משפיעה יותר מחומות פיזיות. לבסוף, מספר כתבות עוקבות אחר השינוי בדעת הקהל, וטוענות שהתמיכה בקמפיין הגירושים נשחקת ככל שמתברר שהוא פוגע לא רק בעברייני קלטן היעד המקורי אלא גם במהגרים בעלי זיקה עמוקה לארה&quot;ב - ילדים, בני זוג של אזרחים ותושבים ותיקים. יחד, המאמרים מצטרפים לתמונה עקבית של ביקורת חדה כלפי מדיניותו של טראמפ, המוצגת כפוגענית, לא יעילה במידה מפתיעה, ומזיקה לטווח הארוך לכלכלה ולמעמדה הרך של אמריקה בעולם.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-975">מראי מקום (17) ▾</button>
+          <div class="citations-popup" id="citations-975" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 16 — “The Unwelcoming States of America”</li>
+            <li>The Economist, 29.8.2026, עמ' 17 — “The Unwelcoming States of America”</li>
+            <li>The Economist, 29.8.2026, עמ' 19 — “Trump&#x27;s Immigration Crackdown”</li>
+            <li>The Economist, 29.8.2026, עמ' 20 — “Trump&#x27;s immigration crackdown and America&#x27;s demographic…”</li>
+            <li>The Economist, 29.8.2026, עמ' 21 — “The Unwelcoming States of America”</li>
+            <li>The Economist, 29.8.2026, עמ' 50 — “Donald Trump is delivering the deportations…”</li>
+            <li>The Economist, 29.8.2026, עמ' 54 — “Trump&#x27;s mass deportations: the &#x27;shadow surge&#x27;”</li>
+            <li>The Economist, 29.8.2026, עמ' 55 — “Trump&#x27;s Deportation Campaign”</li>
+            <li>The Economist, 29.8.2026, עמ' 58 — “The end of Temporary Protected Status”</li>
+            <li>The Economist, 29.8.2026, עמ' 61 — “Trump&#x27;s mass-deportation campaign undermines the rule…”</li>
+            <li>The Economist, 29.8.2026, עמ' 66 — “Donald Trump is delivering the deportations…”</li>
+            <li>The Economist, 29.8.2026, עמ' 99 — “Donald Trump is at last building…”</li>
+            <li>The Economist, 29.8.2026, עמ' 100 — “The Smart Wall&#x27;s Limited Impact on…”</li>
+            <li>The Economist, 29.8.2026, עמ' 281 — “The economic costs of Donald Trump’s…”</li>
+            <li>The Economist, 29.8.2026, עמ' 282 — “Trump&#x27;s immigration crackdown and America&#x27;s economic…”</li>
+            <li>The Economist, 29.8.2026, עמ' 284 — “America&#x27;s Shrinking Labour Force”</li>
+            <li>The Economist, 29.8.2026, עמ' 288 — “The economic costs of Donald Trump&#x27;s…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-976" data-category="trade_economics">
@@ -414,6 +660,22 @@
         <h2 class="section-title">סבך משפטי בין ארה&quot;ב לסין עבור חברות בינלאומיות</h2>
         <p class="comparison-text">כל שמונה הכתבות בנושא הן למעשה קול אחד - של The Economist - המתפרש על פני שני מאמרים מקבילים ולא על פני מקורות מתחרים. סדרה אחת, המופיעה בכמה גרסאות תחת הכותרת &quot;When obeying an American law means breaking a Chinese one&quot;, מתמקדת בדילמת הציות של חברות רב-לאומיות: הן נלכדות בין דרישות אמריקאיות שקופות ומעוגנות בבתי משפט עצמאיים לבין חוק סיני מעורפל ונתון לשליטת המפלגה הקומוניסטית, ומסקנתה המעשית היא שעל חברות לבנות &quot;חוסן&quot; מול עולם של סתירות משפטיות והתפצלות הכלכלה הגלובלית לגושים יריבים. הסדרה השנייה, &quot;The long arm of the Chinese state&quot; (המכונה גם &quot;China&#x27;s Long Arm&quot; ו-&quot;China&#x27;s corporate weapons&quot;), משנה זווית ומתמקדת בסין עצמה: היא טוענת שבייג&#x27;ינג, שבעבר גינתה אקסטריטוריאליות קולוניאלית וסנקציות אמריקאיות, בונה כעת ביודעין ארסנל משפטי-כלכלי משלה - ריגול חוק, פיקוח על ייצוא וכלים נגד-סנקציות - בעקבות זעזוע ההנהגה הסינית ממעצר מנג וונג&#x27;ואו, במטרה לחזק שליטה פנימית ולעצב מחדש את הסדר הבינלאומי לפי רצון שי ג&#x27;ינפינג. כך, בעוד המאמר הראשון מציג את הבעיה מנקודת מבט של חברות הלכודות &quot;בין הפטיש לסדן&quot;, השני מציג אותה כביטוי אסטרטגי מכוון של שאיפות סיניות לעוצמה ולריבונות משפטית, ושתי הזוויות משלימות זו את זו בתוך אותו גוף עיתונאי בלבד.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-976">מראי מקום (8) ▾</button>
+          <div class="citations-popup" id="citations-976" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 16 — “When obeying an American law means…”</li>
+            <li>The Economist, 29.8.2026, עמ' 33 — “When obeying an American law means…”</li>
+            <li>The Economist, 29.8.2026, עמ' 34 — “China&#x27;s corporate weapons”</li>
+            <li>The Economist, 29.8.2026, עמ' 35 — “When obeying an American law means…”</li>
+            <li>The Economist, 29.8.2026, עמ' 87 — “The long arm of the Chinese…”</li>
+            <li>The Economist, 29.8.2026, עמ' 88 — “China&#x27;s Long Arm: The Rise of…”</li>
+            <li>The Economist, 29.8.2026, עמ' 89 — “China&#x27;s long arm: extraterritorial law as…”</li>
+            <li>The Economist, 29.8.2026, עמ' 90 — “The long arm of the Chinese…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-977" data-category="trade_economics">
@@ -426,6 +688,25 @@
 
 מול הקול הביקורתי החד-משמעי הזה, The Wall Street Journal מציג זווית מנוגדת לחלוטין: הוא יוצא להגנת האוצר, וטוען כי החלטות משרד האוצר על קצב והרכב הנפקת החוב הן חלק טבעי ובלתי נמנע מתהליך גיבוש המחירים בשוק, ולא עיוות שלו - תוך דחיית הביקורת של סטנלי דרוקנמילר. The Daily Telegraph, לעומת שני הפרסומים האחרים, נוקט טון מרוסן ומעשי יותר, ומתמקד בהשלכות הפרקטיות עבור משקיעים: הוא מכיר בתנודתיות בשווקי האג&quot;ח האמריקאי והבריטי אך קורא שלא להיכנס לפאניקה בשלב זה, תוך אזהרה שרק אם התשואות יטפסו מעבר לרף של כ-5.5-6 אחוזים תיתכן תזוזה משמעותית מהמניות ופגיעה בעלויות ההלוואות הבריטיות. בנוסף, The Economist מציג גם זווית רחבה יותר, גיאופוליטית, שמסבירה את עליית התשואות העולמית לא רק דרך בסנט אלא כתוצאה משילוב של אינפלציה מתמשכת, מלחמת איראן-ישראל-ארה&quot;ב שהעלתה מחירי נפט, ולוואי גובר של AI - הרחבה שאינה מופיעה כלל אצל שני הפרסומים האחרים.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Economist, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-977">מראי מקום (11) ▾</button>
+          <div class="citations-popup" id="citations-977" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 32</li>
+            <li>The Economist, 29.8.2026, עמ' 16 — “America will regret Scott Bessent’s bond-market…”</li>
+            <li>The Economist, 29.8.2026, עמ' 25 — “Blood and Treasuries: America will regret…”</li>
+            <li>The Economist, 29.8.2026, עמ' 26 — “Bessent&#x27;s bond-market meddling”</li>
+            <li>The Economist, 29.8.2026, עמ' 27 — “America will regret Scott Bessent&#x27;s bond-market…”</li>
+            <li>The Economist, 29.8.2026, עמ' 259 — “Scott Bessent takes on the bond…”</li>
+            <li>The Economist, 29.8.2026, עמ' 261 — “Rising Government Bond Yields”</li>
+            <li>The Economist, 29.8.2026, עמ' 262 — “Bessent&#x27;s Bond Buy-Backs and America&#x27;s Debt…”</li>
+            <li>The Economist, 29.8.2026, עמ' 263 — “Bessent&#x27;s Bond Buy-backs and the Politics…”</li>
+            <li>The Economist, 29.8.2026, עמ' 267 — “Scott Bessent takes on the bond…”</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-978" data-category="society_culture">
@@ -436,6 +717,15 @@
         <h2 class="section-title">קולנוע ותעמולה בסין</h2>
         <p class="comparison-text">בנושא זה מופיע מקור יחיד, The Economist, המנתח תופעה תרבותית ייחודית בסין: הצלחתו הבלתי צפויה של סרט זול וגרוטסקי בשם &quot;Niu Lai&quot; מול כישלונן של הפקות ענק הממומנות על ידי המדינה. הכתבה מציגה את הפער הזה כביטוי לביקורת שקטה של הקהל הסיני על מנגנון התעמולה הממלכתית - קהל שאינו יכול לבקר בגלוי סרטים מפוארים ובלתי נגישים לביקורת, ובמקום זאת מצביע ברגליו ובכספו לטובת יצירה חתרנית וחסרת יומרות. מאחר שאין מקורות נוספים המכסים את הנושא, לא ניתן לזהות זוויות מנוגדות או דגשים שונים בסיקור.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-978">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-978" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 92</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-979" data-category="domestic_politics">
@@ -446,6 +736,16 @@
         <h2 class="section-title">פוליטיקה במערב בנגל תחת ה-BJP</h2>
         <p class="comparison-text">שתי הכתבות מגיעות מה-Economist בלבד, כך שאין כאן עימות בין עיתונים שונים אלא שתי זוויות משלימות של אותו כתב עת על אותו נושא. הכתבה הראשונה מתמקדת בממד התרבותי-דתי: היא טוענת כי ה-BJP הצליח לשפר את היחסים בין מערב בנגל לדלהי, אך במקביל כופה על אוכלוסייה חילונית ומגוונת אג&#x27;נדה לאומנית-הינדית זרה לאופייה, למשל בסוגיות כמו אכילת בשר. הכתבה השנייה מרחיבה את הביקורת לממד הפוליטי-כלכלי, ומצביעה על טקטיקות אגרסיביות יותר: מדיניות מפלה כלפי מוסלמים, גיוס פוליטיקאים &quot;בוגדים&quot; מהמפלגה היריבה - חלקם מעורבים בשערוריות שחיתות - וניסיון להציג הישגים כלכליים מהירים לקראת הבחירות. שתי הכתבות חולקות טון ביקורתי דומה כלפי השלטון החדש, אך בעוד הראשונה מדגישה את העימות התרבותי עם הזהות הבנגלית המסורתית, השנייה מתמקדת בשאלה אם התרגילים הפוליטיים באמת ישכנעו בוחרים ומשקיעים שהמדינה השתנתה לטובה.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-979">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-979" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 80 — “West Bengal&#x27;s BJP Headache”</li>
+            <li>The Economist, 29.8.2026, עמ' 81 — “A hundred days of BJP shock…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-980" data-category="trade_economics">
@@ -460,6 +760,28 @@
 
 The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפוליטיקה הפנים-אמריקאית: הוא תוקף את הסלמת המכסים של טראמפ נגד קנדה כלא נחוצה ומזיקה מבחינה אסטרטגית, ומזהיר שהיא עלולה לפגוע במועמדי הסנאט הרפובליקנים במישיגן ובמיין שכלכלתם תלויה במסחר עם קנדה. מכתב קורא נוסף באותו עיתון מוסיף זווית עסקית טכנית, ומדגיש כי חוסר היציבות במדיניות המכסים פוגע ביחסי ספקים-קונים ומטיל עלויות נסתרות על עסקים אמריקאים - זווית שאינה מופיעה כלל אצל שני העיתונים האחרים.</p>
         <p class="section-sources">מקורות: <b>The Economist, The Guardian, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-980">מראי מקום (14) ▾</button>
+          <div class="citations-popup" id="citations-980" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 16 — “Mark Carney must beware an all-out…”</li>
+            <li>The Economist, 29.8.2026, עמ' 22 — “Mark Carney must beware an all-out…”</li>
+            <li>The Economist, 29.8.2026, עמ' 23 — “Canada&#x27;s trade war with Trump&#x27;s America”</li>
+            <li>The Economist, 29.8.2026, עמ' 24 — “Mark Carney must beware an all-out…”</li>
+            <li>The Economist, 29.8.2026, עמ' 125 — “The costs of defying Donald Trump…”</li>
+            <li>The Economist, 29.8.2026, עמ' 126 — “The costs of defying Donald Trump…”</li>
+            <li>The Economist, 29.8.2026, עמ' 127 — “Canada-US Trade War Escalates”</li>
+            <li>The Economist, 29.8.2026, עמ' 128 — “Canada&#x27;s energy dilemma amid Trump tariff…”</li>
+            <li>The Economist, 29.8.2026, עמ' 129 — “The costs of defying Donald Trump…”</li>
+            <li>The Guardian, 29.8.2026, עמ' 41 — “Donald Trump&#x27;s trade war with Canada”</li>
+            <li>The Guardian, 29.8.2026, עמ' 41 — “Donald Trump&#x27;s trade war with Canada”</li>
+            <li>The Guardian, 29.8.2026, עמ' 41 — “Donald Trump&#x27;s trade war with Canada”</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 14 — “And There Go the Michigan and…”</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 14 — “Letter on tariffs and supply chains”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-981" data-category="society_culture">
@@ -470,6 +792,16 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">אפליה נגד נשים בשוק העבודה הסיני</h2>
         <p class="comparison-text">שני הקטעים מקורם ב-Economist ולמעשה מהווים קול עיתונאי אחד המציג את אותה תזה מזוויות משלימות. הכתבה הראשונה מתמקדת בתרבות התעסוקה התחרותית והמפלה בסין - אפליה על רקע גיל, מגדר ומראה חיצוני - ומדגישה כיצד הלחץ הממשלתי על נשים ללדת מתנגש עם דרישות מקום העבודה ומדחיק נשים אחורה בקריירה. הכתבה השנייה מרחיבה את התמונה בנתונים כלכליים קשים: למרות עלייה בהישגים ההשכלתיים של נשים, שיעור השתתפותן בכוח העבודה ירד מכ-80% ב-1990 לפחות מ-70% כיום, פער השכר מול גברים גדל, ונשים כמעט נעדרות לחלוטין מדרגי ההנהגה הפוליטית והעסקית הבכירים. יחד, שתי הכתבות מצטרפות לכדי טיעון עקבי אחד של המקור - שהאפליה המגדרית בשוק העבודה הסיני אינה תופעה שולית אלא מגמה מחריפה, הנתמכת הן בתרבות הארגונית והן במדיניות האוכלוסין הממשלתית.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-981">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-981" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 94 — “Chinese women are falling behind in…”</li>
+            <li>The Economist, 29.8.2026, עמ' 95 — “Gender discrimination in China&#x27;s labour market”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-982" data-category="security_conflict">
@@ -480,6 +812,17 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מדיניות חיל הים של טראמפ</h2>
         <p class="comparison-text">כל שלוש הכתבות בנושא זה מקורן ב-Economist, ולמעשה מדובר בסיקור חוזר של אותו ניתוח - ביקורת נוקבת על התערבותו האישית של טראמפ בתכנון חיל הים האמריקאי. שלוש הגרסאות חוזרות על אותה טענה מרכזית: האובססיה של הנשיא לנוסטלגיה ימית, כמו דחיפתו להחזיר קטפולטות קיטור מיושנות במקום מערכות EMALS אלקטרומגנטיות מוכחות על נושאות המטוסים, ותוכניתו לספינות &quot;Golden Fleet&quot; ענקיות, הן החלטות יקרות ומוטעות מבחינה הנדסית ואסטרטגית. ההבדלים בין שלוש הגרסאות הם בעיקר בניסוח ובדגש - אחת מתמקדת יותר בהיבט העלות הכספית, אחרת בפער הטכנולוגי בין קיטור לאלקטרומגנטיות, והשלישית משלבת זאת עם התמונה הרחבה יותר של צי אמריקאי הנמתח יתר על המידה מבחינה אסטרטגית - אך כולן משקפות את אותו קול עיתונאי יחיד וביקורתי כלפי המדיניות.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-982">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-982" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 105 — “Full steam astern: From battleships to…”</li>
+            <li>The Economist, 29.8.2026, עמ' 106 — “Trump&#x27;s retrograde push to bring back…”</li>
+            <li>The Economist, 29.8.2026, עמ' 107 — “From battleships to catapults: Trump keeps…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-983" data-category="security_conflict">
@@ -490,6 +833,21 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">התרחבות צבאית אמריקאית בפנמה</h2>
         <p class="comparison-text">כל הכתבות בנושא מקורן ב-Economist בלבד, ולמעשה מדובר בכמה גרסאות ומאמרי המשך של אותה סקירה ביקורתית, ולכן אין כאן עימות בין נקודות מבט של עיתונים שונים אלא פיתוח הדרגתי של אותה עמדה. הקו המרכזי, החוזר בכל הגרסאות, הוא שהתרחבות הנוכחות הצבאית האמריקאית בפנמה בתקופת טראמפ אינה הגיונית מבחינה אסטרטגית ועלולה להזיק יותר משהיא מועילה: היא פוגעת במעמד הניטרליות שהגן היסטורית על התעלה, מנוגדת לרוח האמנות המסדירות אותה, ולא ברור אם היא בכלל תהיה יעילה מול האיומים האמיתיים. במסגרת אותו קו טיעון מציג ה-Economist כמה זוויות משלימות: מצד אחד תיאור סמלי-אסטרטגי של שיבת תרגיל &quot;פנמקס&quot; לשטח פנמה כביטוי לדאגה האמריקאית ההולכת וגוברת מפני תחרות גיאופוליטית באזור; מצד שני ניגוד בין תפיסת פנמה, הרואה בסחר הסמים את האיום המרכזי על התעלה, לבין עמדת ממשל טראמפ המדגישה דווקא את ההשפעה הסינית כסכנה העיקרית; ולבסוף אזהרה שהתמקדות בנוכחות צבאית מתעלמת מאיומים אמיתיים כמו התקפות סייבר וחבלה, ואף עלולה לדחוף את פנמה לחפש הגנות בינלאומיות על ניטרליותה כדי להתמודד עם מה שמתואר כלחץ ואיום אמריקאי.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-983">מראי מקום (7) ▾</button>
+          <div class="citations-popup" id="citations-983" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 125 — “Donald Trump&#x27;s military expansion in Panama…”</li>
+            <li>The Economist, 29.8.2026, עמ' 130 — “Donald Trump&#x27;s military expansion in Panama…”</li>
+            <li>The Economist, 29.8.2026, עמ' 131 — “Panamax military exercise returns to Panama”</li>
+            <li>The Economist, 29.8.2026, עמ' 133 — “The US military build-up around the…”</li>
+            <li>The Economist, 29.8.2026, עמ' 134 — “Panama Canal security: drug gangs vs…”</li>
+            <li>The Economist, 29.8.2026, עמ' 135 — “Reviving Jungle School: America&#x27;s Return to…”</li>
+            <li>The Economist, 29.8.2026, עמ' 136 — “Donald Trump&#x27;s military expansion in Panama…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-984" data-category="domestic_politics">
@@ -500,6 +858,19 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ג&#x27;ורג&#x27;יה מלוני ופוליטיקה איטלקית</h2>
         <p class="comparison-text">רוב הסיקור בנושא זה מגיע מה-Economist, שמפרסם למעשה ניתוח חוזר ומורחב באותה תזה מארבע זוויות: ג&#x27;ורג&#x27;יה מלוני שרדה והתחזקה בזכות שילוב של רטוריקה פופוליסטית עם פרגמטיזם בשלטון - מתינות ביחסי האיחוד האירופי, אוקראינה והגירה - יחד עם אופוזיציה מפוצלת ויריבה ימנית קיצונית יותר שמותירה אותה כאלטרנטיבה ה&quot;מתונה&quot;. במקביל, ה-Economist מוסיף גם נימת אזהרה: המפלגה ובני בריתה של מלוני מתקצנים, ורפורמות עתידיות עשויות להעניק לה ריכוז סמכויות אישי חסר תקדים מאז מוסוליני. The Guardian, לעומת זאת, אינו עוסק כלל בניתוח מדיניותה או יציבותה של מלוני, אלא מתמקד בזווית צדדית ובריטית: ריב פוליטי בין נייג&#x27;ל פאראג&#x27; לקמי בדנוך סביב טענות לגבי עצה שכביכול נתנה להם מלוני, תוך שהשניים מתחרים על חסותה - סיפור שממסגר את מלוני כמוקד כוח שהימין הבריטי משתוקק לקרבתו, ולא כמושא ניתוח מדיני עצמאי.</p>
         <p class="section-sources">מקורות: <b>The Economist, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-984">מראי מקום (5) ▾</button>
+          <div class="citations-popup" id="citations-984" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 162 — “Very stable genius: Giorgia Meloni is…”</li>
+            <li>The Economist, 29.8.2026, עמ' 163 — “Meloni&#x27;s political success and Italy&#x27;s shifting…”</li>
+            <li>The Economist, 29.8.2026, עמ' 164 — “The Meloni mix: how Italy&#x27;s PM…”</li>
+            <li>The Economist, 29.8.2026, עמ' 165 — “Giorgia Meloni is Italy&#x27;s steadiest postwar…”</li>
+            <li>The Guardian, 29.8.2026, עמ' 17</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-985" data-category="trade_economics">
@@ -510,6 +881,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">רגולציית אלכוהול באיחוד האירופי</h2>
         <p class="comparison-text">רק The Economist עוסק בנושא זה, ומציג זווית ניתוחית-מבנית: הכתבה בוחנת מדוע ניסיונה של בלגיה לקדם אזהרות ומגבלות פרסום מחמירות על אלכוהול נתקל בהתנגדות עזה ממדינות יין כמו צרפת ואיטליה. במקום לדווח על אירוע חדשותי בודד, The Economist ממסגר את הסוגיה כמאבק תרבותי-כלכלי מובנה בתוך האיחוד האירופי, ומשווה אותה במפורש למאבק נגד הטבק כדי להסביר מדוע הסכמה כלל-אירופית על אלכוהול נראית רחוקה בהרבה. בהיעדר מקורות נוספים המכסים את הנושא, אין אפשרות להצביע על מחלוקת בין עיתונים, אך ניכר שהכתבה בוחרת להדגיש את הפיצול הפוליטי והתרבותי כגורם המרכזי המעכב רגולציה, ולא את שיקולי בריאות הציבור כשלעצמם.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-985">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-985" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 177</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-986" data-category="security_conflict">
@@ -520,6 +900,19 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">החות&#x27;ים כבעל ברית איראני מרכזי בתימן</h2>
         <p class="comparison-text">כל חמש הכתבות בנושא זה מקורן ב-Economist בלבד, כך שאין כאן עימות בין נקודות מבט של עיתונים שונים אלא פיתוח הדרגתי של אותה תזה מרכזית: החות&#x27;ים הפכו לבן-הברית האזורי המסוכן והאפקטיבי ביותר של איראן. שלוש מהכתבות חולקות כותרת כמעט זהה ומהוות למעשה ניסוחים חוזרים של אותו טיעון - שהחות&#x27;ים בנו כוח צבאי עצמאי ובר-קיימא ששינה את מאזן הכוחות במזרח התיכון, ולכן יש להתייחס אליהן כקול אחד. מעבר לכך, ה-Economist מוסיף שתי זוויות משלימות: כתבה אחת מתמקדת בהיבט ההתקפי-אסטרטגי, בטענה שהחות&#x27;ים אינם רק מגינים מפני מתקפה סעודית אלא יוזמים בעצמם הרחבת שליטה על נמלים ושדות נפט תוך ניצול הפילוג בין יריביהם; כתבה נוספת מדגישה את החוסן הצבאי שלהם - היכולת לשקם מהר מאוד יכולות שנפגעו ולבסס עמדות הגנה בשטח קשה - ומזהירה כי כל ניסיון חיצוני להכניע אותם עלול להיות יקר במיוחד, בהתייחסות לתדמית תימן כ&quot;בית קברות לפולשים&quot;. יחד, הכתבות מצטרפות לתמונה עקבית אחת: איראן מחזיקה כיום בבעל ברית שהוא לא רק שלוח נאמן אלא כוח עצמאי, מיומן ומאיים על יציבות האזור ועל חופש השיט בים סוף.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-986">מראי מקום (5) ▾</button>
+          <div class="citations-popup" id="citations-986" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 141 — “How the Houthis have become the…”</li>
+            <li>The Economist, 29.8.2026, עמ' 148 — “How the Houthis have become the…”</li>
+            <li>The Economist, 29.8.2026, עמ' 150 — “Houthis Seize the Initiative in Yemen”</li>
+            <li>The Economist, 29.8.2026, עמ' 151 — “The Houthis&#x27; Growing Strength”</li>
+            <li>The Economist, 29.8.2026, עמ' 152 — “How the Houthis have become the…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-987" data-category="trade_economics">
@@ -530,6 +923,23 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מכסי סחר של טראמפ ותעשיית הייצור</h2>
         <p class="comparison-text">כל תשעת הכתבות בנושא זה מקורן ב-Economist בלבד, כך שאין כאן עימות בין מקורות שונים אלא פרישה רב-זוויתית ועקבית של אותה עמדה עורכתית ספקנית כלפי מדיניות תעשייתית ומכסים. ביחס לארצות הברית, הפרסום טוען שוב ושוב שה&quot;תחייה התעשייתית&quot; המיוחסת למכסי טראמפ היא במידה רבה אשליה: העלייה בייצור הרכב נובעת מהתאוששות שרשראות אספקה וביקוש ולא מהמכסים עצמם, וה&quot;רנסנס&quot; התעשייתי הרחב יותר מוסבר בהשקעות שמקורן עוד בתקופת ביידן ובבנייה סביב בינה מלאכותית, בעוד שהמכסים בפועל מעלים עלויות ולא יוצרים משרות משמעותיות. דוגמאות ספציפיות - מכסים על שרימפס מיובא ועל עגבניות מקסיקניות, לצד מגבלות הסוכר הוותיקות - משמשות להמחשת הפער בין כוונת ההגנה על יצרנים מקומיים לבין הנטל שהיא מטילה על הצרכן האמריקאי, כאשר במקרה השרימפס אף נטען שהמכסים לא יפתרו את בעיית התחרותיות המבנית של הענף. באופן דומה, בבחינת בריטניה, המגזין דוחה את הקריאות של פוליטיקאים כמו נייג&#x27;ל פראז&#x27; ואנדי ברנהאם להחיה תעשיית ייצור מקומית כ&quot;נוסטלגיה מסוכנת&quot; חסרת בסיס כלכלי, בטענה שיתרון יחסי קשה לשינוי ושבריטניה טובה יותר בשירותים עתירי ידע. לבסוף, בסוגיית מכסי הפלדה ההדדיים בין בריטניה לאיחוד האירופי, הפרסום מציג אותם כ&quot;טירוף הדדי&quot; שאינו פותר את בעיית עודף הייצור הסיני ומציע שיתוף פעולה חלופי. כך, למרות ריבוי הזוויות - רכב, מזון, תעשייה בריטית ופלדה - כל הכתבות חוזרות לאותו מסר מרכזי: מכסים והגנתנות תעשייתית משרתים לרוב אינטרסים צרים במחיר עלויות מפוזרות על הצרכנים והכלכלה הרחבה.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-987">מראי מקום (9) ▾</button>
+          <div class="citations-popup" id="citations-987" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 110 — “Trump&#x27;s Manufacturing Tariff Push and the…”</li>
+            <li>The Economist, 29.8.2026, עמ' 111 — “Manufacturing renaissance? The uneven truth behind…”</li>
+            <li>The Economist, 29.8.2026, עמ' 113 — “Pro-tariff crustaceans: Shrimpers are the latest…”</li>
+            <li>The Economist, 29.8.2026, עמ' 114 — “American shrimpers struggle against cheap imports”</li>
+            <li>The Economist, 29.8.2026, עמ' 116 — “Tariffs Raise Prices for American Consumers”</li>
+            <li>The Economist, 29.8.2026, עמ' 189 — “British politicians want a manufacturing jobs…”</li>
+            <li>The Economist, 29.8.2026, עמ' 191 — “Britain&#x27;s manufacturing nostalgia”</li>
+            <li>The Economist, 29.8.2026, עמ' 195 — “The false promise of reindustrialisation”</li>
+            <li>The Economist, 29.8.2026, עמ' 199 — “Steel tariffs: Britain and the EU&#x27;s…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-988" data-category="trade_economics">
@@ -540,6 +950,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מכסי פלדה בריטניה-האיחוד האירופי</h2>
         <p class="comparison-text">מקור יחיד – The Economist – מסקר את הנושא, ומציג זווית ניתוחית-ביקורתית: המאמר טוען כי הטלת מכסי הפלדה ההדדיים בין בריטניה לאיחוד האירופי היא צעד &quot;מטורף&quot; ומזיק לשני הצדדים, שכן הוא אינו פותר את בעיית עודף הייצור העולמי הנובעת מסין, ובמקום זאת קורא לשיתוף פעולה בסחר ובמעבר לפלדה ירוקה, כולל מעבר בריטי מכבשני בסבל לכורי קשת חשמליים המבוססים על גרוטאות מתכת. מאחר שמדובר במקור בודד, אין אפשרות להשוות בין עמדות שונות בעיתונות.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-988">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-988" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 199</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-989" data-category="diplomacy_international">
@@ -550,6 +969,17 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">סיורי מנהיגי האיחוד האירופי וכוח פוליטי</h2>
         <p class="comparison-text">כל שלוש הכתבות בנושא זה מקורן ב-Economist בלבד, ולמעשה מדובר בגרסאות שונות של אותה כתבה סאטירית, כך שקולו של העיתון על התופעה מוצג פעם אחת אך משלוש זוויות משלימות. המסגרת המרכזית, המופיעה בכל הגרסאות, היא ההשוואה בין &quot;הסיור הגדול&quot; (Grand Tour) ההיסטורי של ג&#x27;נטלמנים בריטים לבין המנהג העכשווי של פוליטיקאים אירופיים לסייר בבירות המדינות החברות. גרסה אחת מדגישה את הממד הצינית-פרפורמטיבי של המנהג - שהמטרה היא להראות מאמץ ומחויבות לאיחוד ולא ללמוד דבר של ממש, בדומה לטיולי העבר שהיו יקרים וגוזלי זמן אך בעיקר סמליים. הגרסה השנייה, לעומת זאת, מפיקה מאותה תופעה מסקנה פוליטית חדה יותר: היא טוענת שהחזרה של הסיורים הבין-בירתיים חושפת היכן נמצא הכוח האמיתי באיחוד האירופי - לא בביורוקרטיה הבריאסלית, כפי שטוענים האירוסקפטים, אלא בממשלות הלאומיות, שמכתיבות למנגנון הבריאסלי את סדר היום. כך, בעוד כל הטקסטים חולקים את אותה מסגרת סאטירית וההיסטורית, יש הבדל דק בדגש: האחד מתמקד בביקורת על ריקנות הטקס הדיפלומטי, והאחר מנתח את המשמעות המבנית-פוליטית שלו לגבי מפת הכוח באיחוד.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-989">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-989" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 184 — “Gallivanting EU politicians reveal where power…”</li>
+            <li>The Economist, 29.8.2026, עמ' 185 — “The Grand Tour 2.0”</li>
+            <li>The Economist, 29.8.2026, עמ' 187 — “Gallivanting EU politicians reveal where power…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-990" data-category="trade_economics">
@@ -560,6 +990,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">תמיכה בעסקים גדולים בארה&quot;ב</h2>
         <p class="comparison-text">בנושא זה מופיעה רק כתבה אחת, מתוך The Economist, כך שאין השוואה בין מקורות מדווחים. הכתבה נוקטת עמדה פרשנית ברורה בעד תאגידים גדולים, ומציגה מחקר חדש לפיו חברות ענק הן מנוע חיוני לשגשוג הכלכלי האמריקאי. המאמר משמש גם כמענה פוליטי לקריאות משמאל, ובהן קבוצות כמו ה-DSA, להגביל או להלאים עסקים גדולים, ומתמקד בהגנה על המודל העסקי הקיים מפני ביקורת רדיקלית.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-990">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-990" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 245</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-991" data-category="trade_economics">
@@ -570,6 +1009,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מדיניות מוניטרית של הודו ותוכנית פיקדונות תפוצה</h2>
         <p class="comparison-text">רק The Economist מתייחס לנושא זה, ומציג ניתוח כלכלי מפוכח על תוכנית ה-FCNR(B) של הבנק המרכזי ההודי (RBI) למשיכת פיקדונות מהתפוצה ההודית. הכתבה מדגישה את הפרדוקס שבמדיניות: הריבית המסובסדת שמציעה ה-RBI לתושבי חוץ הודים מהווה &quot;ארוחת חינם&quot; עבור המפקידים אך באה על חשבון הבנק המרכזי עצמו. עם זאת, המסקנה של הכתבה חיובית באופיה - התוכנית סייעה להודו לצבור זמן יקר מול לחצי יציאת הון וגירעון במאזן התשלומים, גם אם המחיר הפיסקלי ממשי. מאחר שאין מקורות נוספים המסקרים את הנושא, לא ניתן להצביע על מחלוקת או זוויות מנוגדות בסיקור.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-991">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-991" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 274</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-992" data-category="trade_economics">
@@ -580,6 +1028,17 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">החלשת הרובל הרוסי במכוון</h2>
         <p class="comparison-text">שלוש הכתבות מקורן כולן ב-Economist ועוסקות באותו ניתוח בדיוק - מדוע רוסיה מחלישה במכוון את הרובל - ולכן יש להתייחס אליהן כקול אחד ולא כשלוש נקודות מבט נפרדות. הניתוח המשותף טוען שהבנק המרכזי ומשרד האוצר הרוסיים בוחרים ביודעין להחליש את המטבע כדי לתמוך בהכנסות התקציב בעיצומה של המלחמה, שכן הכנסות הנפט נקובות בדולרים ורובל חלש יותר מתרגם אותן לסכומים גדולים יותר ברובלים. במקביל, הכתבות מדגישות שמדובר בפתרון קצר-טווח בעל מחיר: הוא מזין אינפלציה, מייקר יבוא ופוגע בהכנסה הריאלית של משקי הבית. מאחר שמדובר במקור יחיד המסקר את הנושא, אין כאן מחלוקת או זוויות מנוגדות אלא הצגה עקבית ומעמיקה של אותה טענה מכיוונים משלימים - החל מהמניע התקציבי ועד להשלכות הכלכליות הרחבות יותר על האוכלוסייה הרוסית.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-992">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-992" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 258 — “Why is Russia deliberately weakening its…”</li>
+            <li>The Economist, 29.8.2026, עמ' 268 — “Why is Russia deliberately weakening its…”</li>
+            <li>The Economist, 29.8.2026, עמ' 270 — “Why is Russia deliberately weakening its…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-993" data-category="technology_media">
@@ -590,6 +1049,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">נשק אוטונומי ובינה מלאכותית בשדה הקרב</h2>
         <p class="comparison-text">בנושא זה מופיע מקור יחיד — Los Angeles Times, המביא את עמדתם של מומחי בינה מלאכותית ואתיקה הטוענים כי &quot;הקו האדום המוסרי&quot; נגד מתן אפשרות למכונות למקד ולפגוע בבני אדם ללא בקרה אנושית כבר נחצה בפועל. הכתבה מדגישה את הפער בין ההתפתחות המהירה והזולה של מערכות נשק אוטונומיות לבין כשלונה של הרגולציה הבינלאומית להדביק את הקצב, ומציגה זווית ביקורתית-אזהרתית ולא עמדה ניטרלית של תיאור עובדתי בלבד.</p>
         <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-993">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-993" hidden>
+            <ul>
+            <li>Los Angeles Times, 29.8.2026, עמ' 4</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-994" data-category="diplomacy_international">
@@ -600,6 +1068,18 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">טראמפ כנשיא מוחלש אך מסוכן</h2>
         <p class="comparison-text">כל ארבע הכתבות בנושא זה מקורן ב-The Economist בלבד, וכולן חוזרות למעשה על אותה תזה מרכזית, כך שמדובר בקול עיתונאי אחד המנוסח בכמה גרסאות ומזוויות משלימות ולא בפולמוס בין מקורות. הטענה החוזרת היא שיש להימנע מהתפיסה הנוחה שנשיא &quot;ברווז צולע&quot; הוא נשיא חלש וניתן להתעלמות ממנו - להפך, טראמפ הנפגע והמושפל, בדימוי חוזר של גורילת כסף מזדקנת המגינה על מעמדה, צפוי להיות הרסני ובלתי צפוי יותר, הן כלפי בעלות ברית כפופות והן כלפי יריבים כמו סין ואיראן. שתי כתבות מתמקדות בניסוח הכללי של הטענה הזו ובאזהרה למדינות זרות שלא לשמוח לאיד על היחלשותו, בעוד כתבה שלישית מרחיבה את התזה להיסטוריה ומראה כיצד הגישה הזו כבר התממשה בפועל - במעבר ממדיניות &quot;אמריקה תחילה&quot; מבוססת-טינה לדוקטרינה של שאיפות טריטוריאליות מעין-אימפריאליסטיות, שליטה הֶמִיספרית ונקמנות אישית, תוך שהיא מצביעה על מעצרו של מנהיג ונצואלה ועל התקיפה באיראן כהוכחות מוחשיות. כך, ההבדל בין הכתבות הוא בעיקר בהיקף ובזווית - הצהרתית-כללית מול ניתוחית-היסטורית - ולא במחלוקת מהותית בעמדה.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-994">מראי מקום (4) ▾</button>
+          <div class="citations-popup" id="citations-994" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 227 — “As his presidency flounders, Trump is…”</li>
+            <li>The Economist, 29.8.2026, עמ' 228 — “Why foreign governments should fear a…”</li>
+            <li>The Economist, 29.8.2026, עמ' 229 — “Grievance, Dominance and Vengeance: The Making…”</li>
+            <li>The Economist, 29.8.2026, עמ' 230 — “As his presidency flounders, Trump is…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-995" data-category="technology_media">
@@ -610,6 +1090,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ריבונות בינה מלאכותית של דרום קוריאה</h2>
         <p class="comparison-text">הנושא מכוסה על ידי The Wall Street Journal בלבד, שמציג את יוזמת &quot;AI for All&quot; הקוריאנית כמהלך אסטרטגי של ריבונות טכנולוגית: הממשלה בסיאול מעניקה לאזרחים גישה חינם למודלים מקומיים כדי לצמצם את התלות במודלי בינה מלאכותית אמריקאיים וסיניים. מאחר שאין מקורות נוספים המתייחסים לנושא, לא ניתן להצביע על זוויות מנוגדות או דגשים שונים בסיקור.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-995">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-995" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 8</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-996" data-category="energy_environment">
@@ -620,6 +1109,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">עתודות נפט אסטרטגיות של סין</h2>
         <p class="comparison-text">הנושא מכוסה במקור יחיד - הוול סטריט ג&#x27;ורנל - כך שאין כאן עימות בין זוויות של עיתונים שונים. הכתבה מציגה ניתוח אסטרטגי לפיו סין בנתה עתודות נפט אדירות ואצה למעבר לאנרגיה מתחדשת, ובכך הפכה את מה שנחשב לפגיעות אנרגטית שלה לכלי הגנה מפני לחץ מערבי. לפי הכתבה, המהלך מבודד את הכלכלה הסינית מהשלכות מלחמת איראן ומעניק לבייג&#x27;ין יתרון אסטרטגי במקרה של עימות עתידי, למשל סביב טייוואן.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-996">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-996" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 8</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-997" data-category="trade_economics">
@@ -630,6 +1128,17 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מדיניות פיסקלית ומיסוי בסין</h2>
         <p class="comparison-text">כל שלוש הכתבות מקורן ב-Economist בלבד, כך שאין כאן ניגוד בין עיתונים שונים אלא שתי זוויות משלימות מאותו גוף עיתונאי, המצטרפות לטיעון כללי אחד. שתי כתבות (שכותרתן זהה, &quot;China should be loosening budgetary policy. It&#x27;s doing the opposite&quot;) דנות באותו אירוע-על: הבחירה של ממשלת סין להדק את המדיניות הפיסקלית דווקא כשהכלכלה סובלת מביקוש חלש, סיכון דפלציוני ומשבר נדל&quot;ן, בניגוד להמלצות כמו זו של קרן המטבע הבינלאומית - ולכן יש להתייחס אליהן כקול אחד, המדגיש כי הריסון הפיסקלי הוא טעות מאקרו-כלכלית, גם אם ניתן להצדיקו ברמה המיקרו-כלכלית, ומצביע במיוחד על ההימנעות מהרחבת הביטחון הסוציאלי, כמו קצבאות הפנסיה הכפריות, שמכבידה על העניים בכפרים. הכתבה השלישית, &quot;China&#x27;s tax crackdown widens&quot;, מוסיפה זווית משלימה וממוקדת יותר: היא בוחנת כיצד לחץ ההכנסות מניע את הממשלה לסגור פרצות מס הן במישור החוץ-ארצי (השקעות בהונג קונג, נאמנויות) והן בתוך סין עצמה, כולל כלפי חברות בשליטת המדינה, ומציגה זאת כביטוי קונקרטי לאותה מגמה רחבה של הידוק שליטה פיסקלית שתוארה בכתבות האחרות. יחד, שלוש הכתבות בונות תמונה עקבית אחת של Economist: ביקורת על מדיניות פיסקלית סינית שגויה בעיתוי שלה, המתבטאת הן בהעלאת מסים ואכיפתם המוגברת והן בהימנעות מהרחבת ההוצאה החברתית.</p>
         <p class="section-sources">מקורות: <b>The Economist</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-997">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-997" hidden>
+            <ul>
+            <li>The Economist, 29.8.2026, עמ' 276 — “China should be loosening budgetary policy.…”</li>
+            <li>The Economist, 29.8.2026, עמ' 277 — “China&#x27;s tax crackdown widens”</li>
+            <li>The Economist, 29.8.2026, עמ' 280 — “China should be loosening budgetary policy.…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-998" data-category="security_conflict">
@@ -640,6 +1149,18 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">תקציב הצי האמריקאי ומחסור בתחמושת</h2>
         <p class="comparison-text">כל ארבע הכתבות מגיעות משני עיתונים בלבד, ומצטיירת חלוקת עבודה ברורה ביניהם. The Wall Street Journal מוביל את הסיקור מזווית אסטרטגית-כלכלית: בשתי כתבות נפרדות הוא מתריע כי שליחת תחמושת יקרה - מיירטי פטריוט ואמצעים נוספים - למזרח התיכון לצורך עימות עם איראן מרוקנת מלאים קריטיים, ומחלישה את יכולת ארה&quot;ב להרתיע את סין ורוסיה ולתמוך באוקראינה, חרף הבטחות רשמיות שהמלאים מספיקים. באותה נשימה, בכתבה שלישית ונפרדת, העיתון פונה למשקיעים ומציג את המחסור הזה כהזדמנות עסקית: ירידת מניית L3Harris מתוארת כהזדמנות קנייה נוכח הביקוש הצפוי לשיקום מלאי הטילים. כלומר, ה-Wall Street Journal משלב אזהרה ביטחונית עם ניתוח שוקי, מבלי להתמקד בהיבט הפוליטי-פנימי של המשבר. לעומת זאת, The Guardian נוקט זווית ביקורתית יותר כלפי הממשל: הוא חושף כי המלחמה באיראן מייבשת את תקציב הצי האמריקאי עד כדי הסטת כספי שכר ותחזוקה למימון הלחימה, ומצביע על כך שמומחים ופקידים בכירים מסתירים במכוון את חומרת המצב משיקולים פוליטיים, כדי שהמלחמה לא תיראה כפגיעה במוכנות הצבאית. כך, בעוד ה-Wall Street Journal מתמקד בהשלכות הגלובליות-אסטרטגיות ובהזדמנויות הכלכליות הנובעות מהמחסור, The Guardian מדגיש את הממד הפוליטי-פנימי של הסתרת המשבר התקציבי מהציבור.</p>
         <p class="section-sources">מקורות: <b>The Guardian, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-998">מראי מקום (4) ▾</button>
+          <div class="citations-popup" id="citations-998" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 30</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 1 — “U.S. Arms Drain Increases Worries Over…”</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 10 — “War Drains Military Readiness”</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 28 — “L3Harris Shake-Up Is a Chance to…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-999" data-category="trade_economics">
@@ -650,6 +1171,16 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מדיניות מטבע יפן וסין</h2>
         <p class="comparison-text">שתי הכתבות מגיעות מה-Wall Street Journal בלבד, אך הן בוחנות שתי זוויות שונות של מדיניות מטבע באסיה. הכתבה הראשונה היא מאמר דעה תוקפני המתמקד בסין, הטוען שהיואן מוחזק באופן מלאכותי שפל וכי העודף המסחרי הסיני פוגע בבסיס התעשייתי של שותפות הסחר; היא קוראת לפעולה בין-לאומית מתואמת בסגנון הסכם פלאזה, מגובה במכסים, כדי לכפות על סין לייסף את מטבעה. הכתבה השנייה עוסקת ביפן ונוקטת גישה תיאורית ומפוכחת יותר, המדווחת כי ההתערבות המשותפת חסרת התקדים של יפן וארצות הברית לתמיכה בין נתקלה בהצלחה מוגבלת בלבד, שכן גורמים מבניים כמו מכירות ין על ידי משקיעים זרים ממשיכים להחליש את המטבע. כך, בעוד המאמר על סין דורש התערבות אגרסיבית יותר של מדינות בשווקי המטבע, הכתבה על יפן מציגה דווקא את מגבלותיהן של התערבויות כאלה בפועל, ומספקת מעין איזון סקפטי לקריאה הנחרצת יותר בנוגע לסין.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-999">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-999" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 2 — “World Should Act to Push Up…”</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 2 — “Japan Finds Little Gain With Yen…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1000" data-category="domestic_politics">
@@ -660,6 +1191,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">דמוקרטיה מבוימת ברוסיה בעת מלחמה</h2>
         <p class="comparison-text">בנושא זה מופיעה כתבה יחידה, מאת ה-Wall Street Journal, ולכן אין השוואה בין מקורות. הכתבה בוחנת משאל עם מקומי בנוגע להעברת פסל של פושקין ומציגה אותו כתחליף חלול לדיון דמוקרטי אמיתי ברוסיה. לפי הניתוח, השלטונות מעודדים עיסוק בסוגיות שוליות כמו מיקומו של פסל כדי ליצור מראית עין של מעורבות אזרחית, בעוד שדיון פוליטי של ממש - ובפרט על המלחמה באוקראינה - מודחק בשיטתיות, כפי שמעידה הסרתה של מפלגת יבלוקו, המפלגה היחידה שהתנגדה למלחמה, מרשימות הבחירות. הכתבה מסגרת את האירוע כסימפטום לניוון הדמוקרטיה הרוסית תחת המלחמה ולא כסימן לפתיחות פוליטית.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1000">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1000" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 10</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1001" data-category="diplomacy_international">
@@ -670,6 +1210,16 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">משאל עם באיסלנד על הצטרפות לאיחוד האירופי</h2>
         <p class="comparison-text">שני העיתונים מסקרים את משאל העם באיסלנד על חידוש שיחות ההצטרפות לאיחוד האירופי, אך מדגישים היבטים שונים. Wall Street Journal ממסגר את ההצבעה בעיקר כתוצר של דאגות גיאופוליטיות רחבות יותר - חרדה מהלחץ האמריקאי בנוגע לגרינלנד ומהתפוררות הסדר הרב-צדדי - ומצייר את החברה האיסלנדית כמפולגת בין מי שמבקש הגנה כלכלית וביטחונית באמצעות האיחוד לבין מי שחושש מאובדן שליטה על ענף הדיג. The Guardian, לעומת זאת, מתמקד יותר בשיח הפנימי-כלכלי: הוא מציג את חששות החקלאים והדייגים מפגיעה ברווחיות מול הטיעון שהצטרפות לאיחוד עשויה לחזק את הביטחון ולהוזיל את יוקר המחיה, ומביא ציטוט המנסח את הדילמה כניגוד בין ביטחון תזונתי לבין תלות. כך, בעוד ה-Wall Street Journal רואה במשאל בעיקר סימפטום למשבר הסדר הבינלאומי, The Guardian ממקד את הסיפור בשאלות הכלכליות והחברתיות היומיומיות של האיסלנדים.</p>
         <p class="section-sources">מקורות: <b>The Guardian, The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1001">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-1001" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 35</li>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 10</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1002" data-category="domestic_politics">
@@ -680,6 +1230,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">פוליטיקה פנימית אמריקאית - מרוץ הסנאט במישיגן</h2>
         <p class="comparison-text">נושא זה מסוקר במקור יחיד - The Wall Street Journal, במאמר המבוסס על ראיון עם המועמד הרפובליקני לסנאט ממישיגן, מייק רוג&#x27;רס. הכתבה מציגה את קמפיין רוג&#x27;רס באור אוהד, כמאבק הכרחי נגד המועמד הדמוקרטי-סוציאליסטי עבדול אל-סייד, המתואר כדמות קיצונית משמאל, אנטישמית ואנטי-ישראלית, שהתקדמותה הפוליטית מהווה איום לאומי רחב יותר על התפשטות הסוציאליזם הדמוקרטי בפוליטיקה האמריקאית. בהיעדר סיקור נוסף מעיתונים אחרים, לא ניתן להצביע על זוויות מנוגדות או השוואה בין מקורות בנוגע לנושא זה.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1002">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1002" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1003" data-category="society_culture">
@@ -690,6 +1249,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מחווה לדולי פרטון</h2>
         <p class="comparison-text">מדובר בסיקור בלעדי של הוול סטריט ג&#x27;ורנל, ללא מקורות נוספים לצורך השוואה. הכתבה היא מחווה חגיגית לדולי פרטון, המדגישה את כישרונה, נדיבותה ואופייה, ואינה נושאת אופי גיאופוליטי כלל אלא מהווה הספד תרבותי חם.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1003">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1003" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1004" data-category="domestic_politics">
@@ -700,6 +1268,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מכסי טראמפ וטקסס לקראת הבחירות</h2>
         <p class="comparison-text">בנושא זה מדווח מקור יחיד, ה-Wall Street Journal, המסגר את מדיניות המכסים של טראמפ כנטל פוליטי על הרפובליקנים בטקסס לקראת הבחירות. הכתבה מדגישה כיצד המכסים על מקסיקו וקנדה פוגעים בסחר המדינה ומעוררים התנגדות בקרב מצביעים היספנים, ומציגה זאת כסיכון אלקטורלי במרוצים תחרותיים. מאחר שאין מקורות נוספים המכסים את הזווית הזו, אין אפשרות להצביע על מחלוקת או הבדל בדגש בין כלי תקשורת שונים.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1004">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1004" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 14</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1005" data-category="trade_economics">
@@ -710,6 +1287,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">משבר מזון עולמי ושרשרת אספקת דשנים</h2>
         <p class="comparison-text">רק The Wall Street Journal מתייחס לנושא, במאמר דעה המזהיר מפני משבר מזון מתקרב בארצות הברית. הכתבה ממסגרת את הסוגיה כאיום על הביטחון הלאומי והכלכלי האמריקאי, ומצביעה על שילוב של גורמים: מניפולציה סינית בשוק הדשנים, מלחמת רוסיה-אוקראינה, והשליטה האיראנית במיצר הורמוז. בניגוד לניתוח כלכלי ניטרלי, הטון נוקט עמדה פוליטית ברורה בקוראו לממשלת ארה&quot;ב להתערב ולשוות תנאי תחרות בין חברות המדינה הסיניות לחקלאים אמריקאים, ובכך מציג את הסוגיה כקריאה לפעולה מדינית ולא רק כתיאור מגמות שוק.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1005">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1005" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1006" data-category="society_culture">
@@ -720,6 +1306,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">סיקור תקשורתי של טרור</h2>
         <p class="comparison-text">מקור יחיד עוסק בנושא זה: הדיילי טלגרף, בטור הסאטירי &quot;Way of the World&quot;, לועג למדיניות של השדרנית הקנדית CBC להימנע משימוש במילה &quot;טרור&quot; או &quot;מחבלים&quot; בתיאור פיגועי 11 בספטמבר. הכתבה מציגה זאת כדוגמה אבסורדית ל&quot;איזון עיתונאי&quot; מוגזם, בטענה שמדובר בפיגוע שאפילו אל-קאעידה עצמה הודתה בו בגאווה כמעשה טרור, כך שהימנעות מהמונח אינה ניטרליות אלא עיוות מגוחך של המציאות.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1006">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1006" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 18</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1007" data-category="domestic_politics">
@@ -730,6 +1325,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מדיניות אנטיטראסט אמריקאית וכרטוסי הופעות</h2>
         <p class="comparison-text">נושא זה מכוסה במקור יחיד בלבד - The Wall Street Journal - כך שאין כאן השוואה בין דיווחים מתחרים. הכתבה, שכתובה כטור דעה, נוקטת עמדה ביקורתית כלפי צעדי האנטיטראסט של הממשלה נגד Live Nation/Ticketmaster, ומשווה אותם לניסיונות התערבות כושלים מתקופת ניקסון. הכותב טוען שהאכיפה האנטיטראסטית אינה כלי מתאים להתמודדות עם תמחור כרטיסים גבוה, שכן הבעיה נובעת מביקוש עצום לאמנים פופולריים כמו טיילור סוויפט וברוס ספרינגסטין ולא מתמחור טורפני, וקורא לקונגרס לחשוב מחדש על דיני התחרות במקום להמשיך בהליכים משפטיים שלטענתו יהיו חסרי תוחלת.</p>
         <p class="section-sources">מקורות: <b>The Wall Street Journal</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1007">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1007" hidden>
+            <ul>
+            <li>The Wall Street Journal, 29.8.2026, עמ' 15</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1008" data-category="society_culture">
@@ -740,6 +1344,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מדיניות שפה צרפתית מול אנגלית עולמית</h2>
         <p class="comparison-text">בנושא זה מופיע מקור יחיד - הדיילי טלגרף - כך שאין השוואה בין-עיתונאית של ממש. הכתבה, מאת רוברטס, נוקטת טון סרקסטי כלפי הניסיונות החוזרים ונשנים של צרפת לחוקק הגנות על השפה הצרפתית מפני חדירת מילים אנגליות, ומציגה את המאמצים הללו כלאומנות לשונית מיושנת וכמאבק אבוד מול מעמדה של האנגלית כשפת התקשורת הגלובלית הבלתי מעורערת. הכותב טוען כי צרפת מסתכנת בכך שתישאר מאחור בשוק הבלשני העולמי אם תמשיך להיאחז בעמדתה.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1008">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1008" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 18</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1009" data-category="society_culture">
@@ -750,6 +1363,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">התדמית הציבורית של בני הזוג סאסקס</h2>
         <p class="comparison-text">רק The Daily Telegraph מתייחס לנושא זה, ומאמצת עמדה בוטה ונוקבת כלפי הנסיך הארי ומייגן מרקל. הכתבה טוענת שבני הזוג נוהגים בצביעות כאשר הם ממשיכים לבקר את המוסד המלכותי ובה בעת ממשיכים להחזיק בתאריהם המלכותיים ולהפיק מהם תועלת כלכלית ותדמיתית. מכיוון שאין מקורות נוספים המכסים את הנושא, אי אפשר להצביע על זוויות מנוגדות, אך הטון הביקורתי והתובעני של הפרסום בולט לעין - הכתבה דורשת מבני הזוג להכריע באופן חד-משמעי בין ויתור על התארים לבין ויתור על תלונותיהם כלפי הכתר.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1009">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1009" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 19</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1010" data-category="domestic_politics">
@@ -760,6 +1382,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">התפוררות חברתית בבריטניה</h2>
         <p class="comparison-text">רק The Daily Telegraph עוסק בנושא זה, ומציג זווית פרשנית חדה וטעונה אידאולוגית: הכתבה מתארת את מידלסברו כסמל להתפוררות חברתית רחבה יותר בבריטניה - עוני מדור לדור, פירוק המשפחה ופשיעת נוער &quot;פראית&quot; - וטוענת שהפוליטיקאים מתעלמים מהמצוקה הזו. הטון פולמוסי ומאשים את הממשלה בכשל מוסרי על שהיא מעדיפה לשלוח כספי סיוע חוץ ולקלוט מהגרים בהמוניהם במקום להשקיע בקהילות בריטיות שקורסות. מאחר שאין מקורות נוספים המכסים את הנושא, לא ניתן לזהות זוויות מנוגדות או השוואה בין דיווחים, אך עצם הבחירה של הטלגרף להעלות את הסוגיה במסגור כזה - המקשר בין מדיניות הגירה, סיוע חוץ והזנחה פנימית - משקפת עמדה שמרנית מובהקת בנוגע לסדר העדיפויות הלאומי.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1010">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1010" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 19</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1011" data-category="society_culture">
@@ -770,6 +1401,16 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">מורשת רדקו מלאדיץ&#x27; ומלחמת בוסניה</h2>
         <p class="comparison-text">שני העיתונים מתארים את רדקו מלאדיץ&#x27; באופן חד-משמעי כפושע מלחמה אחראי לרצח עם, אך כל אחד ניגש לנושא מזווית שונה. The Daily Telegraph מביא עדות אישית של מפקד לשעבר בכוח האו&quot;ם שהיה עד למצור על סרברניצה ולזוועות שביצע מלאדיץ&#x27;, ומדגיש חוויה אנושית-עדותית של מי שראה את הפשעים במו עיניו ואינו חש כל אהדה למותו. The Guardian, לעומת זאת, נוקט זווית רחבה ופוליטית יותר: הוא ממקם את מותו של מלאדיץ&#x27; בהקשר הנוכחי של הבלקן, ומזהיר מפני האדרתו המתמשכת בקרב לאומנים סרביים, תוך קריאה לזכור ולתעד את פשעיו ולא לאפשר את מחיקתם מהזיכרון הקולקטיבי. כך, בעוד הטלגרף מתמקד בעדות אישית ובזיכרון האירוע עצמו, הגארדיאן מרחיב את הדיון למאבק המתמשך על הזיכרון ההיסטורי ועל האופן שבו החברה הבלקנית מתמודדת עם מורשתו.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1011">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-1011" hidden>
+            <ul>
+            <li>The Daily Telegraph, 29.8.2026, עמ' 19</li>
+            <li>The Guardian, 29.8.2026, עמ' 33</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1012" data-category="domestic_politics">
@@ -780,6 +1421,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ביקורת נגד RFK Jr</h2>
         <p class="comparison-text">בנושא זה מדווח רק The Guardian, המתמקד בקריאתם של סנטורים דמוקרטים לפתוח בחקירה פלילית נגד שר הבריאות רוברט פ. קנדי הבן ואף לדרוש את התפטרותו, בעקבות מכתבים חדשים שלטענתם מוכיחים כי הטעה את הקונגרס בנוגע לנסיעתו לסמואה ולעמדותיו בנושא חיסונים. הכתבה מציגה נימה ביקורתית וחדה כלפי קנדי, תוך ציטוט האשמות בוטות לפיו &quot;הפלטפורמה שלו בנויה על שקרים ותרמיות שמותירות אחריהן שובל של ילדים מתים&quot;. מאחר שאין מקורות נוספים המסקרים את הנושא, אין אפשרות להצביע על זוויות סיקור מנוגדות או משלימות.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1012">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1012" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 35</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1013" data-category="diplomacy_international">
@@ -790,6 +1440,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ראיון עם גורדון בראון על הסדר העולמי</h2>
         <p class="comparison-text">מדובר בסיקור בלעדי של The Guardian, ללא מקבילה בעיתונים אחרים. הכתבה מציגה ראיון עם גורדון בראון, לשעבר ראש ממשלת בריטניה, המזהיר מפני התמוטטות הסדר הבינלאומי המבוסס על חוקים שנוצר אחרי מלחמת העולם השנייה. בראון טוען כי היעדר ריסון מוסרי מאפשר למנהיגים כמו פוטין, נתניהו וטראמפ לפעול על פי עקרון הכוח הגס בלבד, ללא זיקה לחוק הבינלאומי או לזכויות אדם, וקורא לחידוש המחויבות הגלובלית לשיתוף פעולה ולנורמות בינלאומיות כדי לבלום את גל הקיצוניות העולה. מאחר שאין כתבות מקבילות מעיתונים אחרים בנושא זה, לא ניתן להצביע על זוויות מנוגדות - הראיון עומד לבדו כניתוח פרשני-אישי המבטא את עמדתו של בראון עצמו.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1013">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1013" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 66</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1014" data-category="domestic_politics">
@@ -800,6 +1459,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ראיון עם גורדון בראון על בריטניה וסקוטלנד</h2>
         <p class="comparison-text">בנושא זה מופיע רק מקור אחד, The Guardian, המביא ראיון עם גורדון בראון. הכתבה מציגה את עמדותיו: הוא טוען שסקוטלנד עדיפה לה להישאר בתוך בריטניה המאוחדת ולא לבחור בעצמאות, צופה כי איחוד אירלנד יתרחש בסופו של דבר בדרך שלווה והסכמית, ומגן על המשך קידוחי נפט וגז בים הצפוני כמהלך שניתן לשלב עם מעבר הדרגתי לאנרגיות מתחדשות. מאחר שאין מקור נוסף המכסה את הנושא, לא ניתן להצביע על זוויות מנוגדות או הבדלי דגש בין עיתונים.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1014">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1014" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 67</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1015" data-category="migration_society">
@@ -810,6 +1478,16 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">תקשורת בריטית וקשרים לרפורם על הגירה</h2>
         <p class="comparison-text">שתי הכתבות מגיעות מ-The Guardian בלבד, ומכסות שני היבטים שונים של הקשר בין תקשורת/פוליטיקה בריטית לבין מפלגת רפורם וסוגיית ההגירה. הכתבה האחת עוסקת בזירה הפוליטית הבינלאומית - שיתוף הפעולה המתהווה בין הימין הקיצוני הצרפתי (הקבוצה הלאומית) לבין רפורם הבריטית, כפי שבא לידי ביטוי בהזמנתו של ז&#x27;ורדןברדלה לכנס המפלגה, ומציגה זאת כברית אידיאולוגית סביב מדיניות הגירה מחמירה. הכתבה השנייה מסיטה את הזרקור פנימה, אל התקשורת הבריטית עצמה, וחושפת ביקורת על כך שערוץ TalkTV הסתיר מהצופים את זיקתו של כתב לרפורם בעת הצגת תחקיר על חציית מהגרים בסירות, תוך שהיא מעלה חשש לעיתונאות מטעה ולערפול הגבולות בין דיווח חדשותי לתעמולה פוליטית. יחד, שתי הכתבות משרטטות תמונה של The Guardian כמבקר עקבי של האופן שבו רפורם ותומכיה - הן בזירה הבינלאומית והן בתקשורת הבריטית המקומית - פועלים להשפיע על השיח הציבורי סביב הגירה, לעיתים תוך חוסר שקיפות.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1015">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-1015" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 17 — “French far-right chief Bardella to speak…”</li>
+            <li>The Guardian, 29.8.2026, עמ' 17 — “TalkTV &#x27;misled viewers&#x27; over Reform links”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1016" data-category="diplomacy_international">
@@ -820,6 +1498,15 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ביקורת ספר: בגידה - טראמפ, פוטין וכיבוש חדש</h2>
         <p class="comparison-text">רק The Guardian מתייחס לספר &quot;בגידה: טראמפ, פוטין וכיבוש חדש&quot; מאת עמיתם לוק הרדינג, ומכיוון שמדובר במקור יחיד אין כאן השוואה בין נקודות מבט שונות. הביקורת נוקטת עמדה ברורה וביקורתית כלפי טראמפ, ומציגה את מדיניותו כלפי אוקראינה כ&quot;בגידה&quot; של ממש - טענה הנתמכת בתיאור הפער בין האשליות של טראמפ לגבי כוונותיו של פוטין לבין ההרס שהרדינג מתעד בשטח. הכתבה אף מעלה את השאלה אם טראמפ פועל בפועל כסוכן רוסי, תוך שהיא מציינת גם את סירובו העיקש של פוטין להתפשר.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1016">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1016" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 99</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-1017" data-category="society_culture">
@@ -830,8 +1517,42 @@ The Wall Street Journal, לעומתם, מתמקד כמעט אך ורק בפול�
         <h2 class="section-title">ביקורת ספר: פמיניזם אקולוגי</h2>
         <p class="comparison-text">מדובר בסיקור בלעדי של The Guardian, שאין לו הצלבה עם עיתונים אחרים בנושא. הביקורת מציגה בהתלהבות את ספרה של נטשה וולטר, המבקר את הפמיניזם ה&quot;תאגידי&quot; והאינדיבידואליסטי בסגנון &quot;גירלבוס&quot; ומקדם במקומו חזון של פמיניזם אקולוגי וסולידריות גלובלית. הכתבה שמה דגש על נשים בבנגלדש וברוז&#x27;אווה שנושאות בעול המשבר האקלימי והדיכוי הפוליטי, תוך שהיא מציגה אותן כמובילות התנגדות קולקטיבית. מכיוון שמדובר במקור יחיד, אין אפשרות להשוות זוויות סיקור מתחרות - אך ראוי לציין שהמסגור כולו נטוע במסורת הפרוגרסיבית האופיינית ל-The Guardian, המדגישה צדק חברתי-אקלימי גלובלי על פני נרטיבים של הצלחה אישית.</p>
         <p class="section-sources">מקורות: <b>The Guardian</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1017">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-1017" hidden>
+            <ul>
+            <li>The Guardian, 29.8.2026, עמ' 100</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+      }
+    });
+  </script>
 </body>
 </html>

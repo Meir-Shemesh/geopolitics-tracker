@@ -403,6 +403,20 @@ def get_section_articles(conn: sqlite3.Connection, section_id: int):
     ).fetchall()
 
 
+def get_section_citations(conn: sqlite3.Connection, section_id: int):
+    return conn.execute(
+        """
+        SELECT a.newspaper, a.page_number, a.headline, date(df.published_at) AS published_date
+        FROM articles a
+        JOIN report_section_articles rsa ON rsa.article_id = a.id
+        JOIN downloaded_files df ON df.id = a.file_id
+        WHERE rsa.section_id = ?
+        ORDER BY a.newspaper, a.page_number
+        """,
+        (section_id,),
+    ).fetchall()
+
+
 def insert_article_countries(conn: sqlite3.Connection, article_id: int, country_codes: list[str]) -> None:
     for code in country_codes:
         conn.execute(

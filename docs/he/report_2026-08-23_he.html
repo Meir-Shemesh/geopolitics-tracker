@@ -219,6 +219,56 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
+  .citations-row { position: relative; margin-top: .6rem; }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .citations-toggle:hover { color: var(--masthead-accent); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
   .appendix { display: flex; flex-direction: column; gap: 1rem; }
   .appendix-title { font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }
   .appendix .topic-section { padding: 1.1rem 1.3rem 1.2rem; }
@@ -232,6 +282,7 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
+    .citations-row { display: none; }
   }
 </style>
 </head>
@@ -242,6 +293,7 @@
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← לכל הדוחות</a>
       <a class="top-nav-link" href="../en/report_2026-08-23_en.html">English</a>
+      <a class="top-nav-link" href="report_2026-08-23_he.pdf">⬇ הורד PDF</a>
     </div>
   </nav>
   <header class="masthead">
@@ -264,6 +316,16 @@
         <h2 class="section-title">איום הסייבר האיראני על תשתיות בריטיות</h2>
         <p class="comparison-text">The Daily Telegraph מקדיש שתי כתבות לנושא: האחת מתארת בפירוט את המתקפה שהשביתה תחנת כוח בריטית וקושרת אותה להסלמה איראנית רחבה יותר מאז תחילת התקיפות האמריקאיות-ישראליות, והשנייה, מאמר דעה, משתמשת באירוע כקריאת השכמה למדיניות בריטית נוקשה יותר כלפי טהראן, בטענה שהממשלה גילתה שאננות מסוכנת מול האיום האיראני.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-376">מראי מקום (2) ▾</button>
+          <div class="citations-popup" id="citations-376" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 1 — “Iranian hackers shut UK power plant”</li>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 15 — “Britain&#x27;s wake-up call to the Iranian…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-377" data-category="security_conflict">
@@ -274,6 +336,15 @@
         <h2 class="section-title">חשש מריגול סיני דרך תעשיית הרכב</h2>
         <p class="comparison-text">The Daily Telegraph מביא אזהרות ממומחי מודיעין לפיהן מתקן רכב סיני הממוקם סמוך לאתרי בדיקה צבאיים בריטיים מהווה סיכון ריגול חמור, תוך הפניה לחוק המודיעין הלאומי הסיני המחייב שיתוף פעולה עם המדינה.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-377">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-377" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 10</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-378" data-category="trade_economics">
@@ -284,6 +355,15 @@
         <h2 class="section-title">מלחמת הסחר של טראמפ וההתנגדות הקנדית</h2>
         <p class="comparison-text">The Daily Telegraph מציג את החלטתו של מארק קארני לפרוש משיחות סחר עם טראמפ כמודל אמיץ להתנגדות, וטוען שמנהיגי אירופה עומדים כעת בפני בחירה בין חיקוי העמידה הקנדית לבין המשך ויתורים המעודדים את טראמפ.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-378">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-378" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 12</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-379" data-category="security_conflict">
@@ -294,6 +374,15 @@
         <h2 class="section-title">אלימות מתנחלים נגד נוצרים ופלסטינים בגדה המערבית</h2>
         <p class="comparison-text">The Daily Telegraph מתעד אלימות מתנחלים הולכת ומחריפה, כמעט ללא ענישה, נגד קהילות פלסטיניות ונוצריות, וטוען שצווי &#x27;אזור צבאי סגור&#x27; משמשים להגנה על המתנחלים ולהרחקת עיתונאים, תוך האשמת שרים קיצוניים בממשלה בקידום שאיפות טיהור אתני.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-379">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-379" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 13</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-380" data-category="security_conflict">
@@ -304,6 +393,15 @@
         <h2 class="section-title">נשים בקרבות אוקראינה מול רוסיה</h2>
         <p class="comparison-text">The Daily Telegraph טוען שמלחמת אוקראינה הוכיחה כי נשים מסוגלות לתפקד בקרבות ובתפקידי פיקוד באותה יעילות כמו גברים, ומאתגר סטריאוטיפים מגדריים מושרשים הן באוקראינה והן במערב.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-380">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-380" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 16</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-381" data-category="migration_society">
@@ -314,6 +412,15 @@
         <h2 class="section-title">מדיניות ההגירה והמקלט הבריטית - תוכנית רואנדה</h2>
         <p class="comparison-text">The Daily Telegraph טוען שמערכת המקלט הבריטית שבורה ובלתי מוסרית, מגן על תוכנית רואנדה כאמצעי הרתעה סביר שממשלת לייבור ביטלה בבזבזנות ומחדשת כעת בשקט, וקורא לקונצנזוס רב-מפלגתי סביב חוקי הגירה מחמירים יותר.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-381">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-381" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 17</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-382" data-category="domestic_politics">
@@ -324,6 +431,15 @@
         <h2 class="section-title">מדיניות כלכלית של לייבור והעסקים</h2>
         <p class="comparison-text">The Daily Telegraph טוען כי מסים גבוהים, רגולציית תעסוקה, מדיניות אפס-פחמן ורווחה נדיבה של לייבור מרחיקים יזמים ועסקים מבריטניה, ומציג את המפלגה השמרנית תחת בדנוך כחלופה הפרו-עסקית היחידה האמינה.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-382">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-382" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 17</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-383" data-category="diplomacy_international">
@@ -334,6 +450,15 @@
         <h2 class="section-title">עתיד בריטניה והאיחוד האירופי לאחר ברקזיט</h2>
         <p class="comparison-text">The Daily Telegraph מפרסם דעה הטוענת שהאיחוד האירופי הפך לגוף מנוון וביורוקרטי מאז ברקזיט, וקורא לבריטניה לחזור ולהוביל &#x27;אירופה חדשה&#x27; רפורמית ופרו-שוקית לצד מנהיגים ימניים עולים.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-383">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-383" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 17</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-384" data-category="trade_economics">
@@ -344,6 +469,17 @@
         <h2 class="section-title">משבר שוקי האג&quot;ח הגלובליים ומדיניות בנקים מרכזיים</h2>
         <p class="comparison-text">The Daily Telegraph מפרסם שלוש כתבות המתמקדות במשבר האג&quot;ח: אחת מזהירה מפני מלחמה בלתי-אפשרית של טראמפ ובסנט נגד &#x27;שומרי האג&quot;ח&#x27; בהקשר של חוב מתנפח בארה&quot;ב, בריטניה, צרפת ויפן; שנייה מתמקדת בטקטיקת בסנט של רכישת אג&quot;ח כדי לדכא תשואות ומדמה זאת ל&#x27;דיכוי פיננסי&#x27; של רפובליקות בננות; והשלישית מבקרת את מדיניות ההידוק הכמותי של בנק אנגליה כמזיקה במיוחד לכספי משלמי המסים. יחד הן מציגות תמונה עקבית של חשש עמוק מהתנהלות פיסקלית בלתי אחראית במערב.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-384">מראי מקום (3) ▾</button>
+          <div class="citations-popup" id="citations-384" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 18 — “After Iran, Trump launches another unwinnable…”</li>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 19 — “Bessent&#x27;s bond gamble: the nation&#x27;s top…”</li>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 22 — “The Bank of England in a…”</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-385" data-category="trade_economics">
@@ -354,6 +490,15 @@
         <h2 class="section-title">נטל הרווחה והחוב הציבורי בבריטניה</h2>
         <p class="comparison-text">The Daily Telegraph מזהיר שההוצאה התופחת על רווחה ותשלומי ריבית על החוב מדאיגה משקיעים גלובליים המממנים את הלוואות בריטניה, וקורא לרפורמת רווחה דחופה בהשראת Reform UK כדי למנוע משבר פיסקלי בסגנון שנות ה-70.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-385">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-385" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 22</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-386" data-category="technology_media">
@@ -364,6 +509,15 @@
         <h2 class="section-title">פיגור טכנולוגי-כלכלי של אירופה מול ארה&quot;ב</h2>
         <p class="comparison-text">The Daily Telegraph טוען שהערכות השווי העצומות של ענקיות טכנולוגיה אמריקאיות כמו Anthropic ו-SpaceX חושפות כיצד רגולציה, מסים גבוהים וממשל שונא-סיכון שיתקו את היזמות האירופית והותירו את היבשת מאחור בתחרות הטכנולוגית.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-386">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-386" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 22</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-387" data-category="energy_environment">
@@ -374,6 +528,15 @@
         <h2 class="section-title">מדיניות אנרגיית הרוח הצפה בבריטניה</h2>
         <p class="comparison-text">The Daily Telegraph בוחן בביקורתיות את דחיפת הממשלה הבריטית לאנרגיית רוח צפה, ומצביע על סבסוד יקר פי שלושה-ארבעה ממחיר השוק שיעלה את חשבונות הצרכנים ויפגע בדיג, בספנות ובקהילות חוף, תוך הטלת ספק בכדאיות הכלכלית של הפרויקט.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-387">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-387" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 23</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-388" data-category="security_conflict">
@@ -384,6 +547,15 @@
         <h2 class="section-title">טורפדו הפוסידון של רוסיה - איום או בלוף</h2>
         <p class="comparison-text">The Daily Telegraph מציג את צוללת הפוסידון הגרעינית החדשה של רוסיה בעיקר כאמצעי לחץ פסיכולוגי ודיפלומטי ולא כאיום התקפי אמיתי, בהתבסס על מומחים הטוענים שמוסקבה תיתקל בתגמול הרסני אם תשתמש בנשק.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-388">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-388" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 25</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-389" data-category="diplomacy_international">
@@ -394,6 +566,15 @@
         <h2 class="section-title">האם הלחץ הכלכלי האמריקאי ישבור את איראן</h2>
         <p class="comparison-text">The Daily Telegraph טוען שקמפיין הלחץ הכלכלי החדש של טראמפ נגד איראן, המכונה &#x27;D-Day כלכלי&#x27;, צפוי להיכשל, שכן משטר איראן שרד קשיים כלכליים חמורים בעבר ועשוי לפרש את הטקטיקה כסימן לכך שלארה&quot;ב אין עוד אפשרויות צבאיות.</p>
         <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-389">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-389" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 25</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="appendix">
@@ -407,6 +588,15 @@
         <h2 class="section-title">Language and grammar (non-geopolitical)</h2>
         <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): Not a geopolitical piece; excluded from analysis. ציטוט מרכזי: &quot;: }},{},},},style.&quot;</p>
         
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-390">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-390" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 16</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
       <section class="topic-section" id="section-391" data-category="additional_coverage">
@@ -417,8 +607,42 @@
         <h2 class="section-title">And Sino-Ukraine relations / broader</h2>
         <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): The West&#x27;s post-Cold War complacency and social-democinclination weakened defense of free-market capitalism, allowing the Left to claim moral high ground and enabling extremism on both sides; only reviving liberal democracy with genuine free-market capitalism can restore stability. ציטוט מרכזי: &quot;The combination of liberal democracy and free-market economics creates the best possible conditions for human beings to flourish.&quot;</p>
         
+        
+        <div class="citations-row">
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-391">מראי מקום (1) ▾</button>
+          <div class="citations-popup" id="citations-391" hidden>
+            <ul>
+            <li>The Daily Telegraph, 23.8.2026, עמ' 16</li>
+            </ul>
+          </div>
+        </div>
       </section>
       </section>
   </main>
+  <script>
+    document.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+      }
+    });
+  </script>
 </body>
 </html>
