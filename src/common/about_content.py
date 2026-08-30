@@ -59,9 +59,9 @@ CONTENT = {
                         "אירועים גאופוליטיים בדיוק. אף אדם אינו יכול לקרוא את כולם - וכל אחד "
                         "מאיתנו קורא זווית אחת או שתיים, לרוב אלה שהוא כבר מכיר, ומחמיץ את "
                         "השיחה המלאה שמתקיימת בין מקורות שונים. geopolitics-tracker הוא ניסיון "
-                        "לתת לקריאה הזו כלי: מערכת שעוקבת אחרי עיתונים מובילים באנגלית ובגרמנית "
-                        "- נבחרו במכוון על פני טווח פוליטי רחב - ובונה מהם תמונה יומית של מה "
-                        "שתפס את תשומת הלב, ואיך כל מקור בחר למסגר אותו.",
+                        "לתת לקריאה הזו כלי: מערכת שעוקבת אחרי עיתונים מובילים, מזהה בתוכם את "
+                        "מאמרי הפרשנות הגאופוליטית, ובונה מהם תמונה יומית של מה שתפס את תשומת "
+                        "הלב - ואיך כל מקור בחר למסגר אותו.",
                     ),
                 ],
             },
@@ -109,45 +109,58 @@ CONTENT = {
                     (
                         "p",
                         "המתודולוגיה בפועל: בנייה מודול-מודול, לא הכל בבת אחת, עם נקודת עצירה "
-                        "לאחר כל שלב עובד. סוכן כתיבת הקוד מציג תוכנית לפני מימוש וממתין "
-                        "לאישור - לא פועל על סמך שיקול דעת עצמאי מוחלט. כשמשהו “כמעט עבד” אך "
-                        "התברר כלא-מספיק, ההעדפה העקבית הייתה לבנות רשת-ביטחון גנרית ברמת "
-                        "הקוד שתופסת כל מקרה חריג מראש, ולא לרדוף אחרי כל מקרה בודד בנפרד.",
+                        "לאחר כל שלב עובד. כשמשהו “כמעט עבד” אך התברר כלא-מספיק, ההעדפה "
+                        "העקבית הייתה לבנות רשת-ביטחון גנרית ברמת הקוד שתופסת כל מקרה חריג "
+                        "מראש, ולא לרדוף אחרי כל מקרה בודד בנפרד - עיקרון שהוכיח את עצמו שוב "
+                        "ושוב, מהשלבים הראשונים ועד הרחבות מאוחרות יותר.",
                     ),
                 ],
             },
             {
-                "heading": "מה קיים היום: מהאנליזה לאתר חי",
+                "heading": "המקורות: מארבעה לעשרה",
                 "blocks": [
                     (
                         "p",
-                        "המערכת בנויה כתהליך עבודה של חמישה שלבים עוקבים - איסוף מהעיתונים, "
-                        "חילוץ טקסט, ניתוח וסיווג באמצעות Claude API, הפקת דוחות, ופרסום - "
-                        "וכולם פעילים על נתונים אמיתיים. כל דוח יומי מופק בשתי שפות מלאות "
-                        "(עברית ואנגלית) ובשני פורמטים (PDF + HTML אינטראקטיבי), עם השוואה "
-                        "בין-מקורית שמקבצת מאמרים לפי נושא אמיתי, לא תיוג מכני. האתר עצמו חי "
-                        "ונגיש: geopolitics.meirshemesh.com.",
+                        "הפרויקט התחיל, בימיו הראשונים, עם ארבעה מקורות בלבד - שני זוגות "
+                        "מאוזנים פוליטית, אחד בכל שפה: The Guardian מול The Daily Telegraph "
+                        "באנגלית, Süddeutsche Zeitung מול Die Welt בגרמנית. הבחירה בזוגות לא "
+                        "הייתה מקרית - היא נועדה למנוע מלכתחילה הטיה שיטתית לכיוון פוליטי "
+                        "אחד, ולוודא שכל יום מציג לפחות שתי זוויות מנוגדות.",
                     ),
                     (
-                        "ul_plain",
-                        [
-                            "7 ימי כיסוי מלאים בארכיון, 4 עיתונים, מעל 300 מאמרי פרשנות שנותחו "
-                            "לעומק.",
-                            "ארכיטקטורה דו-שלבית לניתוח: סינון רחב וזול, ואחריו ניתוח מעמיק - "
-                            "רק על מה שסונן פנימה.",
-                            "עלות מצטברת צנועה ביחס להיקף העיבוד - סביב עשרה דולרים בחודש "
-                            "בתקופת הפיתוח האינטנסיבית.",
-                        ],
+                        "p",
+                        "אחרי כמה ימי עבודה יציבים על הבסיס הזה, התברר פער בולט: הזירה "
+                        "העיתונאית העיקרית והמרכזית בעולם - האמריקאית - לא הייתה מיוצגת כלל. "
+                        "ההרחבה שבאה בעקבות זאת לא הסתפקה בהוספת זוג נוסף. במקום זאת נבחרו "
+                        "ארבעה עיתונים אמריקאים במכוון, כדי לפרוש בתוך הזירה האמריקאית עצמה "
+                        "טווח פוליטי רחב יותר משזוג יחיד יכול לתת: The New York Times "
+                        "(מהדורה בינלאומית) כקול מרכז-שמאל, The Wall Street Journal כקול "
+                        "ימני-ממסדי, Los Angeles Times כקול מרכז-שמאל נוסף בזווית "
+                        "חוף-מערבי, ו-USA Today כקול מרכזי-ניטרלי שאינו נושא זהות "
+                        "אידיאולוגית מובהקת.",
+                    ),
+                    (
+                        "p",
+                        "לצד ההרחבה היומית, נוספו שני שבועונים - The Economist ו-Der "
+                        "Spiegel - שמביאים סוג שונה של עומק: לא עוד זווית-יומית, אלא ניתוח "
+                        "מרוכז ומעמיק יותר שמשלים את קצב הכיסוי היומי, גם אם אינו זמין בכל "
+                        "יום בודד.",
+                    ),
+                    (
+                        "p",
+                        "היום המערכת עוקבת אחרי עשרה מקורות: ארבעת המקורות המקוריים, ארבעה "
+                        "עיתונים אמריקאים, ושני שבועונים - בשתי שפות (אנגלית וגרמנית) "
+                        "ובטווח פוליטי רחב בכל אחת מהזירות שהיא מכסה.",
                     ),
                 ],
             },
             {
-                "heading": "המסגרת החדשה: שלושה צירי תפיסה",
+                "heading": "המסגרת: שלושה צירי תפיסה",
                 "blocks": [
                     (
                         "p",
                         "גאופוליטיקה היא שילוב של כמה תפיסות חושיות שונות בתכלית: מרחבית, "
-                        "זמנית, וטקסטואלית. לכן דף הבית הבא נבנה סביב שלוש “עדשות” "
+                        "זמנית, וטקסטואלית. לכן דף הבית של הפרויקט נבנה סביב שלוש “עדשות” "
                         "שוות-מעמד על אותם נתונים - ציר גיאוגרפי (איפה), ציר זמן (מתי, ולאן "
                         "זה נוטה), וציר טקסטואלי (מה נכתב, ואיך כל מקור מיסגר אותו) - שלושתן "
                         "קוראות ממקור אמת אחד ומתעדכנות יחד.",
@@ -158,8 +171,36 @@ CONTENT = {
                         "מדינות ב-8 אזורים גאופוליטיים, ושלושה אזורי קונפליקט פעילים "
                         "המסוקרים בעקביות: הסכסוך הישראלי-פלסטיני, העימות איראן-מערב, "
                         "ומלחמת רוסיה-אוקראינה. התיוג נכנס לאותה קריאת מודל שכבר מפיקה את "
-                        "שאר פרטי המאמר, ללא עלות נוספת - וכל 437 המאמרים הקיימים תויגו "
-                        "למפרע.",
+                        "שאר פרטי המאמר.",
+                    ),
+                ],
+            },
+            {
+                "heading": "מה קיים היום",
+                "blocks": [
+                    (
+                        "p",
+                        "המערכת בנויה כתהליך עבודה של חמישה שלבים עוקבים - איסוף מהעיתונים, "
+                        "חילוץ טקסט, ניתוח וסיווג באמצעות Claude API, הפקת דוחות, ופרסום - "
+                        "וכולם פעילים על נתונים אמיתיים. כל דוח יומי מופק בשתי שפות מלאות "
+                        "(עברית ואנגלית) ובשני פורמטים (PDF ואתר אינטראקטיבי), עם השוואה "
+                        "בין-מקורית שמקבצת מאמרים לפי נושא אמיתי, לא תיוג מכני. האתר עצמו חי "
+                        "ונגיש: geopolitics.meirshemesh.com.",
+                    ),
+                    (
+                        "ul_plain",
+                        [
+                            "מעל תשעה ימי כיסוי מלאים בארכיון, עשרה מקורות, מאות מאמרי "
+                            "פרשנות שנותחו לעומק.",
+                            "ארכיטקטורה דו-שלבית לניתוח כל מאמר: סינון רחב וזול, ואחריו "
+                            "ניתוח מעמיק - רק על מה שסונן פנימה.",
+                            "הפקת ההשוואה היומית עצמה עברה לאחרונה שדרוג דומה: במקום קריאה "
+                            "בודדת שמנסה לקבץ ולכתוב את כל מאמרי היום בבת אחת - גישה "
+                            "שהתגלתה כלא-יציבה ככל שמספר המקורות גדל - היא מתבצעת כעת "
+                            "בשני שלבים נפרדים (קיבוץ לנושאים, ואז כתיבת השוואה לכל נושא "
+                            "בנפרד, במקביל), עם שיתוף-הקשר בין הקריאות שמוזיל את העלות "
+                            "משמעותית.",
+                        ],
                     ),
                 ],
             },
@@ -199,10 +240,10 @@ CONTENT = {
                         "usually the ones we already recognize, missing the fuller "
                         "conversation happening between different sources. "
                         "geopolitics-tracker is an attempt to give that reading a tool: a "
-                        "system that follows leading newspapers in English and German - "
-                        "deliberately chosen to span a wide political range - and builds "
-                        "from them a daily picture of what caught the world's attention, "
-                        "and how each source chose to frame it.",
+                        "system that follows leading newspapers, identifies their "
+                        "geopolitical opinion pieces, and builds from them a daily picture "
+                        "of what caught the world's attention - and how each source chose "
+                        "to frame it.",
                     ),
                 ],
             },
@@ -256,57 +297,72 @@ CONTENT = {
                     (
                         "p",
                         "The methodology in practice: building module by module, not all "
-                        "at once, with a checkpoint after each working stage. The coding "
-                        "agent presents a plan before implementation and waits for "
-                        "approval - it doesn't act on fully independent judgment. When "
+                        "at once, with a checkpoint after each working stage. When "
                         "something \"almost worked\" but turned out insufficient, the "
                         "consistent preference was to build a generic safety net at the "
                         "code level that catches any edge case in advance, rather than "
-                        "chasing each individual case separately.",
+                        "chasing each individual case separately - a principle that proved "
+                        "itself repeatedly, from the earliest stages through later "
+                        "expansions.",
                     ),
                 ],
             },
             {
-                "heading": "What exists today: from analysis to a live site",
+                "heading": "The sources: from four to ten",
                 "blocks": [
                     (
                         "p",
-                        "The system is built as a workflow of five sequential stages - "
-                        "collecting from newspapers, extracting text, analyzing and "
-                        "classifying via the Claude API, generating reports, and "
-                        "publishing - all active on real data. Every daily report is "
-                        "produced in two full languages (Hebrew and English) and two "
-                        "formats (PDF and interactive HTML), with a cross-source "
-                        "comparison that groups articles by real topic, not mechanical "
-                        "tagging. The site itself is live and accessible: "
-                        "geopolitics.meirshemesh.com.",
+                        "The project began, in its first days, with just four sources - "
+                        "two politically balanced pairs, one per language: The Guardian "
+                        "versus The Daily Telegraph in English, Süddeutsche Zeitung versus "
+                        "Die Welt in German. The choice of pairs was deliberate - meant to "
+                        "prevent systematic bias toward one political direction from the "
+                        "start, and to ensure every day presented at least two opposing "
+                        "angles.",
                     ),
                     (
-                        "ul_plain",
-                        [
-                            "7 full days of archive coverage, 4 newspapers, over 300 "
-                            "opinion pieces analyzed in depth.",
-                            "Two-stage analysis architecture: broad, cheap screening, "
-                            "followed by deep analysis - only on what passed through.",
-                            "Modest cumulative cost relative to processing volume - "
-                            "around ten dollars a month during the intensive development "
-                            "period.",
-                        ],
+                        "p",
+                        "After a few stable days of work on that foundation, a clear gap "
+                        "emerged: the world's primary and central press arena - the "
+                        "American one - wasn't represented at all. The expansion that "
+                        "followed didn't settle for adding one more pair. Instead, four "
+                        "American newspapers were chosen deliberately, to span a wider "
+                        "political range within the American arena itself than a single "
+                        "pair could offer: The New York Times (International Edition) as a "
+                        "center-left voice, The Wall Street Journal as an "
+                        "establishment-right voice, Los Angeles Times as an additional "
+                        "center-left voice with a West Coast angle, and USA Today as a "
+                        "centrist voice without a distinct ideological identity.",
+                    ),
+                    (
+                        "p",
+                        "Alongside the daily expansion, two weeklies were added - The "
+                        "Economist and Der Spiegel - bringing a different kind of depth: "
+                        "not another daily angle, but more concentrated, in-depth analysis "
+                        "that complements the pace of daily coverage, even when it isn't "
+                        "available every single day.",
+                    ),
+                    (
+                        "p",
+                        "Today the system follows ten sources: the four original ones, "
+                        "four American newspapers, and two weeklies - in two languages "
+                        "(English and German), and with a wide political range within "
+                        "each of the arenas it covers.",
                     ),
                 ],
             },
             {
-                "heading": "The new framework: three axes of perception",
+                "heading": "The framework: three axes of perception",
                 "blocks": [
                     (
                         "p",
                         "Geopolitics combines several fundamentally different senses of "
-                        "perception: spatial, temporal, and textual. That's why the next "
-                        "homepage is built around three equal-standing \"lenses\" on the "
-                        "same data - a geographic axis (where), a time axis (when, and "
-                        "where things are heading), and a textual axis (what was written, "
-                        "and how each source framed it) - all three reading from one "
-                        "source of truth and updating together.",
+                        "perception: spatial, temporal, and textual. That's why the "
+                        "project's homepage is built around three equal-standing "
+                        "\"lenses\" on the same data - a geographic axis (where), a time "
+                        "axis (when, and where things are heading), and a textual axis "
+                        "(what was written, and how each source framed it) - all three "
+                        "reading from one source of truth and updating together.",
                     ),
                     (
                         "p",
@@ -316,8 +372,42 @@ CONTENT = {
                         "in the press: the Israeli-Palestinian conflict, the Iran-West "
                         "confrontation, and the Russia-Ukraine war. The tagging is "
                         "produced in the same model call that already generates the rest "
-                        "of each article's details, at no added cost - and all 437 "
-                        "existing articles were tagged retroactively.",
+                        "of each article's details.",
+                    ),
+                ],
+            },
+            {
+                "heading": "What exists today",
+                "blocks": [
+                    (
+                        "p",
+                        "The system is built as a workflow of five sequential stages - "
+                        "collecting from newspapers, extracting text, analyzing and "
+                        "classifying via the Claude API, generating reports, and "
+                        "publishing - all active on real data. Every daily report is "
+                        "produced in two full languages (Hebrew and English) and two "
+                        "formats (PDF and an interactive website), with a cross-source "
+                        "comparison that groups articles by real topic, not mechanical "
+                        "tagging. The site itself is live and accessible: "
+                        "geopolitics.meirshemesh.com.",
+                    ),
+                    (
+                        "ul_plain",
+                        [
+                            "Over nine full days of archive coverage, ten sources, "
+                            "hundreds of opinion pieces analyzed in depth.",
+                            "A two-stage analysis architecture for every article: broad, "
+                            "cheap screening, followed by deep analysis - only on what "
+                            "passed through.",
+                            "The daily synthesis step itself recently underwent a similar "
+                            "upgrade: instead of a single call trying to group and write "
+                            "up all of a day's articles at once - an approach that proved "
+                            "unstable as the number of sources grew - it now runs in two "
+                            "separate stages (grouping into topics, then writing a "
+                            "comparison for each topic separately, in parallel), with "
+                            "shared context between the calls that significantly reduces "
+                            "the cost.",
+                        ],
                     ),
                 ],
             },
