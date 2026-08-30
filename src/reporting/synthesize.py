@@ -433,7 +433,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False) -> None:
             section["category"],
             now,
         )
-        for article_id in section["article_ids"]:
+        for article_id in dict.fromkeys(section["article_ids"]):
             if article_id not in valid_ids:
                 print(
                     f"  warning: section '{section['topic_label_en']}' references unknown "

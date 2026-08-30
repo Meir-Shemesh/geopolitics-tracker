@@ -74,11 +74,19 @@ def guess_newspaper(file_name: str) -> str | None:
         return "Los Angeles Times"
     if "usa today" in normalized:
         return "USA Today"
-    if "economist" in normalized or re.match(r"te-\d{4}-\d{2}-\d{2}", lowered):
-        # The Economist's weekly PDF also circulates as "TE-YYYY-MM-DD-..." -
-        # the same channel post's companion DOCX/EPUB/MOBI files are already
-        # excluded upstream by _is_pdf(), so this only needs to guard against
-        # matching more than one distinct PDF for the same week.
+    if "web" in normalized and (
+        "economist" in normalized or re.match(r"te-\d{4}-\d{2}-\d{2}", lowered)
+    ):
+        # The channel also carries several regional Economist editions (UK, EU,
+        # Asia Pacific, Middle East and Africa, plus an unlabelled "standard"
+        # one) under the same "Economist"/"TE-YYYY-MM-DD" naming - confirmed by
+        # content comparison (2026-08-29) to be either duplicates of each other
+        # (same cover story, different export/OCR quality) or affected by the
+        # tradingref.com scan-corruption pattern. The "Web Edition" is the one
+        # comprehensive edition combining every region's section in a single
+        # file, so only its name pattern ("... WEB..."/"...Web Edition...") is
+        # matched here - the others are skipped at download time rather than
+        # fetched and discarded afterward.
         return "Economist"
     if "spiegel" in normalized:
         return "Der Spiegel"
