@@ -248,6 +248,14 @@
   .latest-card-cta { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
 
   .results-heading { font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }
+  .results-full-link {
+    display: inline-block;
+    font-size: .85rem;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    margin: -0.6rem 0 1rem;
+  }
+  .results-full-link:hover { text-decoration: underline; }
   .result-item {
     display: flex;
     align-items: center;
@@ -8655,6 +8663,7 @@
 </svg>
 
       <div class="region-chips" id="region-chips"></div>
+      <div class="region-chips" id="conflict-chips"></div>
     </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
@@ -8662,6 +8671,7 @@
 (function () {
   var LANG = "he";
   var PREFIX = "../";
+  var TOPIC_PREFIX = "";
 
   fetch(PREFIX + "assets/data/manifest.json")
     .then(function (r) { return r.json(); })
@@ -8673,6 +8683,7 @@
     renderTimeline(manifest);
     renderLatestCard(manifest);
     renderRegionChips(manifest);
+    renderConflictChips(manifest);
     if (manifest.latest_date) {
       selectDate(manifest, manifest.latest_date);
     }
@@ -8776,6 +8787,23 @@
     });
   }
 
+  function renderConflictChips(manifest) {
+    var container = document.getElementById("conflict-chips");
+    if (!container || !manifest.conflict_zones) return;
+    Object.keys(manifest.conflict_zones).forEach(function (key) {
+      var zone = manifest.conflict_zones[key];
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "region-chip";
+      chip.dataset.conflict = key;
+      chip.textContent = LANG === "he" ? zone.name_he : zone.name_en;
+      chip.addEventListener("click", function () {
+        window.location.href = TOPIC_PREFIX + "topic.html?conflict=" + encodeURIComponent(key);
+      });
+      container.appendChild(chip);
+    });
+  }
+
   function selectCountry(manifest, code) {
     clearSelection();
     var el = document.getElementById(code.toLowerCase());
@@ -8806,7 +8834,8 @@
       if (el) el.classList.add("is-selected");
     });
     var name = LANG === "he" ? region.name_he : region.name_en;
-    renderResults(manifest, region.section_ids, name);
+    var fullReportHref = TOPIC_PREFIX + "topic.html?region=" + encodeURIComponent(regionKey);
+    renderResults(manifest, region.section_ids, name, fullReportHref);
   }
 
   function clearSelection() {
@@ -8815,7 +8844,7 @@
     });
   }
 
-  function renderResults(manifest, sectionIds, headingLabel) {
+  function renderResults(manifest, sectionIds, headingLabel, fullReportHref) {
     var panel = document.getElementById("results-panel");
     if (!panel) return;
     panel.innerHTML = "";
@@ -8824,6 +8853,14 @@
     heading.className = "results-heading";
     heading.textContent = (LANG === "he" ? "תוצאות: " : "Results: ") + headingLabel;
     panel.appendChild(heading);
+
+    if (fullReportHref) {
+      var fullLink = document.createElement("a");
+      fullLink.className = "results-full-link";
+      fullLink.href = fullReportHref;
+      fullLink.textContent = LANG === "he" ? "פתח כדוח מלא ←" : "View as full report →";
+      panel.appendChild(fullLink);
+    }
 
     sectionIds.forEach(function (id) {
       var section = manifest.sections[id];

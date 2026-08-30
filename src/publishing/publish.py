@@ -374,12 +374,354 @@ def build_about_html(lang: str) -> str:
 """
 
 
+def build_topic_html(lang: str) -> str:
+    """A dynamic, filtered view over manifest.json's sections - not a synthesis:
+    every result links straight to its real section anchor in the actual report
+    (href_he/href_en#section-{id}), never re-rendering comparison_text. Reads
+    ?category=&region=&conflict=&from=&to= (all optional, combinable) at load
+    time client-side - same manifest.json already used by the homepage, no new
+    endpoint/index. Lives only at docs/{he,en}/topic.html (no root copy),
+    matching about.html's convention, since it's a deep-link target reached via
+    query params rather than a primary nav destination.
+    """
+    is_he = lang == "he"
+    dir_attr = "rtl" if is_he else "ltr"
+    other = OTHER_LANG[lang]
+
+    page_title = "תוצאות לפי סינון - גאופוליטיקה יומי" if is_he else "Filtered Results - Daily Geopolitics"
+    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
+    loading_label = "טוען…" if is_he else "Loading…"
+
+    js_code = _TOPIC_JS_TEMPLATE.replace("__LANG__", lang)
+
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(page_title)}</title>
+<style>
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
+
+  {category_css()}
+
+  :root {{
+    --bg: #f3efe8;
+    --bg-elevated: #fffdfa;
+    --text: #221f1b;
+    --text-muted: #6d675e;
+    --border: #e4ddd0;
+    --masthead-accent: #7a2e2a;
+  }}
+
+  @media (prefers-color-scheme: dark) {{
+    :root:not([data-theme="light"]) {{
+      --bg: #16140f;
+      --bg-elevated: #211e18;
+      --text: #ece7dd;
+      --text-muted: #a89f91;
+      --border: #3a352b;
+      --masthead-accent: #d68b86;
+    }}
+  }}
+  :root[data-theme="dark"] {{
+    --bg: #16140f;
+    --bg-elevated: #211e18;
+    --text: #ece7dd;
+    --text-muted: #a89f91;
+    --border: #3a352b;
+    --masthead-accent: #d68b86;
+  }}
+
+  * {{ box-sizing: border-box; }}
+
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
+    line-height: 1.7;
+  }}
+
+  .top-nav {{
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  .top-nav-link {{
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }}
+  .top-nav-link:hover {{
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }}
+
+  .masthead {{
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }}
+  .masthead-inner {{ max-width: 44rem; margin: 0 auto; }}
+  .eyebrow {{
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }}
+  .report-title {{ margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }}
+
+  .topic-body {{ max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }}
+
+  .topic-result {{
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--cat-color, var(--border));
+    border-radius: .8rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: .9rem;
+    text-decoration: none;
+    color: inherit;
+  }}
+  .topic-result:hover {{ border-color: var(--masthead-accent); }}
+  .topic-result-meta {{ display: flex; align-items: center; gap: .6rem; }}
+  .category-dot {{ width: .5rem; height: .5rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }}
+  .category-label {{
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--cat-color);
+    background: var(--cat-bg);
+    padding: .15rem .5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }}
+  .topic-result-date {{ font-size: .78rem; color: var(--text-muted); font-weight: 600; margin-inline-start: auto; }}
+  .topic-result-title {{ margin: 0; font-size: 1.05rem; font-weight: 700; }}
+  .topic-result-sources {{ margin: 0; font-size: .82rem; color: var(--text-muted); }}
+  .topic-empty {{ color: var(--text-muted); font-size: .95rem; }}
+</style>
+</head>
+<body>
+{build_nav_html("archive.html", f"../{other}/topic.html", lang)}
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">{esc(eyebrow)}</p>
+      <h1 class="report-title" id="topic-title">{esc(loading_label)}</h1>
+    </div>
+  </header>
+  <main class="topic-body" id="topic-results"></main>
+  <script>{js_code}</script>
+</body>
+</html>
+"""
+
+
+# Plain (non f-string) template so JS/CSS braces don't need doubling - __TOKEN__
+# placeholders are substituted with .replace() in build_topic_html().
+_TOPIC_JS_TEMPLATE = """
+(function () {
+  var LANG = "__LANG__";
+  var PREFIX = "../";
+
+  // topic.html only ever lives at docs/{lang}/topic.html (no root copy), so
+  // the language-switch link built by build_nav_html always points at a
+  // bare "../{other}/topic.html" - append the current query string here so
+  // an active filter survives switching language, since query params are
+  // only known at runtime, not at build time.
+  if (window.location.search) {
+    var navLinks = document.querySelectorAll(".top-nav-link");
+    var langLink = navLinks[navLinks.length - 1];
+    if (langLink) langLink.href = langLink.getAttribute("href") + window.location.search;
+  }
+
+  var params = new URLSearchParams(window.location.search);
+  var filters = {
+    category: params.get("category"),
+    region: params.get("region"),
+    conflict: params.get("conflict"),
+    from: params.get("from"),
+    to: params.get("to"),
+  };
+
+  fetch(PREFIX + "assets/data/manifest.json")
+    .then(function (r) { return r.json(); })
+    .then(function (manifest) {
+      var ids = filterSections(manifest, filters);
+      renderTitle(manifest, filters);
+      renderResults(manifest, ids);
+    })
+    .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  function filterSections(manifest, f) {
+    var ids = Object.keys(manifest.sections).map(Number);
+    if (f.region) {
+      var region = manifest.regions[f.region];
+      var regionSet = region ? new Set(region.section_ids) : new Set();
+      ids = ids.filter(function (id) { return regionSet.has(id); });
+    }
+    if (f.conflict) {
+      ids = ids.filter(function (id) {
+        return manifest.sections[id].conflict_zones.indexOf(f.conflict) !== -1;
+      });
+    }
+    if (f.category) {
+      ids = ids.filter(function (id) { return manifest.sections[id].category === f.category; });
+    }
+    if (f.from) {
+      ids = ids.filter(function (id) { return manifest.sections[id].date >= f.from; });
+    }
+    if (f.to) {
+      ids = ids.filter(function (id) { return manifest.sections[id].date <= f.to; });
+    }
+    ids.sort(function (a, b) {
+      var da = manifest.sections[a].date, db = manifest.sections[b].date;
+      if (da !== db) return da < db ? 1 : -1;
+      return a - b;
+    });
+    return ids;
+  }
+
+  function hrefFor(section) {
+    var raw = LANG === "he" ? section.href_he : section.href_en;
+    return PREFIX + raw;
+  }
+
+  function topicFor(section) {
+    return LANG === "he" ? section.topic_he : section.topic_en;
+  }
+
+  var HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
+  var EN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  function formatLongDate(iso) {
+    var parts = iso.split("-").map(Number);
+    var day = parts[2], month = parts[1] - 1, year = parts[0];
+    if (LANG === "he") return day + " ב" + HE_MONTHS[month] + " " + year;
+    return EN_MONTHS[month] + " " + day + ", " + year;
+  }
+
+  function formatShortDate(iso) {
+    var p = iso.split("-");
+    return p[2] + "." + p[1] + "." + p[0];
+  }
+
+  function formatRange(from, to) {
+    if (!from && !to) return "";
+    if (from && to) {
+      var f = from.split("-").map(Number), t = to.split("-").map(Number);
+      if (f[0] === t[0] && f[1] === t[1]) {
+        if (LANG === "he") return f[2] + "-" + t[2] + " ב" + HE_MONTHS[f[1] - 1] + " " + f[0];
+        return EN_MONTHS[f[1] - 1] + " " + f[2] + "-" + t[2] + ", " + f[0];
+      }
+      return formatLongDate(from) + " – " + formatLongDate(to);
+    }
+    if (from) return (LANG === "he" ? "מ-" : "From ") + formatLongDate(from);
+    return (LANG === "he" ? "עד " : "Until ") + formatLongDate(to);
+  }
+
+  function renderTitle(manifest, f) {
+    var parts = [];
+    if (f.category && manifest.categories[f.category]) {
+      var c = manifest.categories[f.category];
+      parts.push(LANG === "he" ? c.name_he : c.name_en);
+    }
+    if (f.region && manifest.regions[f.region]) {
+      var r = manifest.regions[f.region];
+      parts.push(LANG === "he" ? r.name_he : r.name_en);
+    }
+    if (f.conflict && manifest.conflict_zones[f.conflict]) {
+      var cz = manifest.conflict_zones[f.conflict];
+      parts.push(LANG === "he" ? cz.name_he : cz.name_en);
+    }
+    var rangeLabel = formatRange(f.from, f.to);
+    if (rangeLabel) parts.push(rangeLabel);
+
+    var title = parts.length ? parts.join(" · ") : (LANG === "he" ? "כל התוצאות" : "All Results");
+    var titleEl = document.getElementById("topic-title");
+    if (titleEl) titleEl.textContent = title;
+    document.title = title + (LANG === "he" ? " - גאופוליטיקה יומי" : " - Daily Geopolitics");
+  }
+
+  function renderResults(manifest, ids) {
+    var container = document.getElementById("topic-results");
+    if (!container) return;
+
+    if (!ids.length) {
+      var empty = document.createElement("p");
+      empty.className = "topic-empty";
+      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון." : "No results match this filter.";
+      container.appendChild(empty);
+      return;
+    }
+
+    ids.forEach(function (id) {
+      var section = manifest.sections[id];
+      if (!section) return;
+
+      var item = document.createElement("a");
+      item.className = "topic-result";
+      item.href = hrefFor(section);
+      item.dataset.category = section.category;
+
+      var meta = document.createElement("div");
+      meta.className = "topic-result-meta";
+
+      var dot = document.createElement("span");
+      dot.className = "category-dot";
+
+      var label = document.createElement("span");
+      label.className = "category-label";
+      var catInfo = manifest.categories[section.category];
+      label.textContent = catInfo ? (LANG === "he" ? catInfo.name_he : catInfo.name_en) : section.category;
+
+      var dateBadge = document.createElement("span");
+      dateBadge.className = "topic-result-date";
+      dateBadge.textContent = formatShortDate(section.date);
+
+      meta.appendChild(dot);
+      meta.appendChild(label);
+      meta.appendChild(dateBadge);
+
+      var title = document.createElement("p");
+      title.className = "topic-result-title";
+      title.textContent = topicFor(section);
+
+      var sources = document.createElement("p");
+      sources.className = "topic-result-sources";
+      var names = manifest.newspaper_display_names || {};
+      sources.textContent = section.sources.map(function (s) { return names[s] || s; }).join(", ");
+
+      item.appendChild(meta);
+      item.appendChild(title);
+      item.appendChild(sources);
+      container.appendChild(item);
+    });
+  }
+})();
+"""
+
+
 # Plain (non f-string) template so JS/CSS braces don't need doubling - __TOKEN__
 # placeholders are substituted with .replace() in build_homepage_html() instead.
 _HOMEPAGE_JS_TEMPLATE = """
 (function () {
   var LANG = "__LANG__";
   var PREFIX = "__PREFIX__";
+  var TOPIC_PREFIX = "__TOPIC_PREFIX__";
 
   fetch(PREFIX + "assets/data/manifest.json")
     .then(function (r) { return r.json(); })
@@ -391,6 +733,7 @@ _HOMEPAGE_JS_TEMPLATE = """
     renderTimeline(manifest);
     renderLatestCard(manifest);
     renderRegionChips(manifest);
+    renderConflictChips(manifest);
     if (manifest.latest_date) {
       selectDate(manifest, manifest.latest_date);
     }
@@ -494,6 +837,23 @@ _HOMEPAGE_JS_TEMPLATE = """
     });
   }
 
+  function renderConflictChips(manifest) {
+    var container = document.getElementById("conflict-chips");
+    if (!container || !manifest.conflict_zones) return;
+    Object.keys(manifest.conflict_zones).forEach(function (key) {
+      var zone = manifest.conflict_zones[key];
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "region-chip";
+      chip.dataset.conflict = key;
+      chip.textContent = LANG === "he" ? zone.name_he : zone.name_en;
+      chip.addEventListener("click", function () {
+        window.location.href = TOPIC_PREFIX + "topic.html?conflict=" + encodeURIComponent(key);
+      });
+      container.appendChild(chip);
+    });
+  }
+
   function selectCountry(manifest, code) {
     clearSelection();
     var el = document.getElementById(code.toLowerCase());
@@ -524,7 +884,8 @@ _HOMEPAGE_JS_TEMPLATE = """
       if (el) el.classList.add("is-selected");
     });
     var name = LANG === "he" ? region.name_he : region.name_en;
-    renderResults(manifest, region.section_ids, name);
+    var fullReportHref = TOPIC_PREFIX + "topic.html?region=" + encodeURIComponent(regionKey);
+    renderResults(manifest, region.section_ids, name, fullReportHref);
   }
 
   function clearSelection() {
@@ -533,7 +894,7 @@ _HOMEPAGE_JS_TEMPLATE = """
     });
   }
 
-  function renderResults(manifest, sectionIds, headingLabel) {
+  function renderResults(manifest, sectionIds, headingLabel, fullReportHref) {
     var panel = document.getElementById("results-panel");
     if (!panel) return;
     panel.innerHTML = "";
@@ -542,6 +903,14 @@ _HOMEPAGE_JS_TEMPLATE = """
     heading.className = "results-heading";
     heading.textContent = (LANG === "he" ? "תוצאות: " : "Results: ") + headingLabel;
     panel.appendChild(heading);
+
+    if (fullReportHref) {
+      var fullLink = document.createElement("a");
+      fullLink.className = "results-full-link";
+      fullLink.href = fullReportHref;
+      fullLink.textContent = LANG === "he" ? "פתח כדוח מלא ←" : "View as full report →";
+      panel.appendChild(fullLink);
+    }
 
     sectionIds.forEach(function (id) {
       var section = manifest.sections[id];
@@ -602,6 +971,9 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
     asset_prefix = "" if is_root else "../"
     other_lang_href = "en/index.html" if is_root else f"../{other}/index.html"
     about_href = "he/about.html" if is_root else "about.html"
+    # topic.html has the same root-copy quirk as about.html (lives only under
+    # docs/{lang}/, never at the site root) - same fix as about_href above.
+    topic_prefix = "he/" if is_root else ""
 
     page_title = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
     eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
@@ -630,7 +1002,9 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
 
     map_svg = _load_map_svg_inline()
     js_code = (
-        _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang).replace("__PREFIX__", asset_prefix)
+        _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
+        .replace("__PREFIX__", asset_prefix)
+        .replace("__TOPIC_PREFIX__", topic_prefix)
     )
 
     return f"""<!doctype html>
@@ -809,6 +1183,14 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
   .latest-card-cta {{ margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
   .results-heading {{ font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }}
+  .results-full-link {{
+    display: inline-block;
+    font-size: .85rem;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    margin: -0.6rem 0 1rem;
+  }}
+  .results-full-link:hover {{ text-decoration: underline; }}
   .result-item {{
     display: flex;
     align-items: center;
@@ -863,6 +1245,7 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
     <section class="home-module map-module">
       {map_svg}
       <div class="region-chips" id="region-chips"></div>
+      <div class="region-chips" id="conflict-chips"></div>
     </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
@@ -1012,6 +1395,7 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
         "dates": dates_index,
         "categories": categories_out,
         "regions": regions_out,
+        "newspaper_display_names": NEWSPAPER_DISPLAY_NAMES,
     }
 
 
@@ -1057,6 +1441,12 @@ def run() -> None:
             out_dir.mkdir(parents=True, exist_ok=True)
             (out_dir / "about.html").write_text(about_html, encoding="utf-8")
         print(f"  wrote about.html for '{lang}'")
+
+        topic_html = build_topic_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "topic.html").write_text(topic_html, encoding="utf-8")
+        print(f"  wrote topic.html for '{lang}'")
 
         homepage_html = build_homepage_html(lang, is_root=False)
         (DOCS_DIR / lang / "index.html").write_text(homepage_html, encoding="utf-8")
