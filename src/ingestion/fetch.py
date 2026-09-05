@@ -59,12 +59,16 @@ def guess_newspaper(file_name: str) -> str | None:
     if "welt" in normalized and "sonntag" not in normalized:
         return "Die Welt"
     if re.search(r"\bnyt\b", normalized) or "new york times" in normalized:
-        # The channel carries both the international and the domestic US home
-        # edition under near-identical names ("NYT International" vs. plain
-        # "NYT") - only the former is our MVP source, so require it explicitly
-        # rather than matching "NYT"/"New York Times" alone.
-        if "international" in normalized:
-            return "New York Times International"
+        # NYT International download is suspended (not just "not an MVP
+        # source" - the channel carries the domestic US home edition too,
+        # which was already excluded here regardless): every copy observed
+        # so far (6/6, see PROJECT_LOG action item 27) turned out to be the
+        # tradingref.com scan-corruption pattern (near-empty page 0, single
+        # embedded image, no real text) - downloading it only to delete it
+        # after Extraction/health-check wastes bandwidth and API cost for
+        # content that never survives. Re-enable once someone investigates
+        # the root cause at the source (a working non-corrupted copy, or an
+        # alternate channel/source for the same content).
         return None
     if "wall street journal" in normalized or re.search(r"\bwsj\b", normalized):
         return "Wall Street Journal"
