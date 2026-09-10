@@ -78,7 +78,17 @@ def guess_newspaper(file_name: str) -> str | None:
         return "Guardian"
     if "telegraph" in normalized:
         return "Daily Telegraph"
-    if "sueddeutsche" in normalized or "süddeutsche" in normalized or re.search(r"\bsz\b", normalized):
+    # "suddeutsche" (umlaut simply dropped, not transliterated to "ue") is a
+    # rare but real variant - seen once so far (2026-09-10, see PROJECT_LOG),
+    # confirmed via full-history retroactive scan to be a one-off upload
+    # quirk rather than a recurring naming convention. Kept as a permanent
+    # pattern (not a one-time fix) since nothing rules out it recurring.
+    if (
+        "sueddeutsche" in normalized
+        or "süddeutsche" in normalized
+        or "suddeutsche" in normalized
+        or re.search(r"\bsz\b", normalized)
+    ):
         return "Süddeutsche Zeitung"
     if "welt" in normalized and "sonntag" not in normalized:
         return "Die Welt"
