@@ -41,6 +41,7 @@ from src.reporting.render import (
     font_face_css,
     format_date_en,
     format_date_he,
+    section_coverage,
 )
 
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
@@ -1345,6 +1346,12 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
             for zone in geo["conflict_zones"]:
                 conflict_zones_index.setdefault(zone, []).append(section_id)
 
+        # Same coverage-based order as the rendered report (see render.py) - so
+        # the homepage's "first section" teaser (section_ids[0]) matches what
+        # actually appears first in the report itself, not raw insertion order.
+        section_ids_for_date.sort(
+            key=lambda sid: tuple(-x for x in section_coverage(sections[sid]["sources"]))
+        )
         dates_index[report_date] = {"sources": sources, "section_ids": section_ids_for_date}
 
     countries_out = {

@@ -70,6 +70,40 @@ NEWSPAPER_DISPLAY_NAMES = {
     "Der Spiegel": "Der Spiegel",
 }
 
+# Used only to sort topics by cross-border reach (see section_coverage) - not
+# a display value, so no "The"/short-form nuance needed like NEWSPAPER_DISPLAY_NAMES.
+NEWSPAPER_LANGUAGES = {
+    "Guardian": "en",
+    "Daily Telegraph": "en",
+    "Wall Street Journal": "en",
+    "Los Angeles Times": "en",
+    "USA Today": "en",
+    "Economist": "en",
+    "New York Times International": "en",
+    "Süddeutsche Zeitung": "de",
+    "Die Welt": "de",
+    "Der Spiegel": "de",
+}
+
+
+def section_coverage(newspapers: list[str]) -> tuple[int, int]:
+    """(source_count, language_count) for a topic - the wider a topic's
+    cross-source/cross-language reach, the more likely it reflects real
+    geopolitical significance rather than a single outlet's local angle."""
+    source_count = len(newspapers)
+    language_count = len({NEWSPAPER_LANGUAGES.get(n, n) for n in newspapers})
+    return source_count, language_count
+
+
+def _coverage_badge_label(source_count: int, language_count: int, lang: str) -> str:
+    if lang == "he":
+        src_word = "מקור" if source_count == 1 else "מקורות"
+        lang_word = "שפה" if language_count == 1 else "שפות"
+    else:
+        src_word = "source" if source_count == 1 else "sources"
+        lang_word = "language" if language_count == 1 else "languages"
+    return f"{source_count} {src_word} · {language_count} {lang_word}"
+
 CATEGORY_LABELS = {
     "security_conflict": {"he": "ביטחון וסכסוכים", "en": "Security & Conflict"},
     "diplomacy_international": {"he": "דיפלומטיה ויחסים בינלאומיים", "en": "Diplomacy & International Relations"},
@@ -225,6 +259,9 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
     topic = section["topic_label_he"] if lang == "he" else section["topic_label_en"]
     text = section["comparison_text_he"] if lang == "he" else section["comparison_text_en"]
 
+    source_count, language_count = section_coverage(section["newspapers"])
+    badge_label = _coverage_badge_label(source_count, language_count, lang)
+
     sources_html = ""
     if show_sources and section["newspapers"]:
         names = ", ".join(esc(NEWSPAPER_DISPLAY_NAMES.get(n, n)) for n in section["newspapers"])
@@ -238,6 +275,7 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
         <div class="topic-meta">
           <span class="category-dot"></span>
           <span class="category-label">{esc(label)}</span>
+          <span class="coverage-badge">{esc(badge_label)}</span>
         </div>
         <h2 class="section-title">{esc(topic)}</h2>
         <p class="comparison-text">{esc(text)}</p>
@@ -257,25 +295,15 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
 
     source_pills = "".join(f"<li>{esc(NEWSPAPER_DISPLAY_NAMES.get(s, s))}</li>" for s in sources)
 
-    main_sections = [s for s in sections if s["category"] != FALLBACK_CATEGORY]
-    fallback_sections = [s for s in sections if s["category"] == FALLBACK_CATEGORY]
-
-    main_html = "\n".join(_render_section(s, lang, show_sources=True) for s in main_sections)
-
-    fallback_html = ""
-    if fallback_sections:
-        appendix_title = (
-            "כיסוי נוסף (מאמרים בודדים, ללא השוואה בין מקורות)"
-            if is_he else "Additional Coverage (single-source items)"
-        )
-        fallback_items = "\n".join(
-            _render_section(s, lang, show_sources=False) for s in fallback_sections
-        )
-        fallback_html = f"""
-      <section class="appendix">
-        <h2 class="appendix-title">{esc(appendix_title)}</h2>
-        {fallback_items}
-      </section>"""
+    # Sections arrive pre-sorted by coverage (see run()) - fallback topics
+    # (category == FALLBACK_CATEGORY) render inline at their sorted position,
+    # not pushed into a separate trailing block: a fallback topic is only a
+    # single article by construction (source_count=language_count=1), so it
+    # naturally settles near the bottom on its own merit, but it is not
+    # structurally forced there - a genuinely wide fallback would rank
+    # normally, same as any other topic. Its own category badge ("Additional
+    # Coverage") is still what visually marks it as fallback-origin.
+    sections_html = "\n".join(_render_section(s, lang, show_sources=True) for s in sections)
 
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
@@ -413,6 +441,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     padding: .2rem .6rem;
     border-radius: 999px;
   }}
+  .coverage-badge {{ font-size: .72rem; color: var(--text-muted); }}
   .section-title {{ margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }}
   .comparison-text {{ margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }}
   .section-sources {{
@@ -474,11 +503,6 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
   }}
   .citations-popup li {{ font-size: .8rem; color: var(--text); line-height: 1.5; }}
 
-  .appendix {{ display: flex; flex-direction: column; gap: 1rem; }}
-  .appendix-title {{ font-size: 1.1rem; font-weight: 700; color: var(--text-muted); margin: .5rem 0 0; }}
-  .appendix .topic-section {{ padding: 1.1rem 1.3rem 1.2rem; }}
-  .appendix .section-title {{ font-size: 1.05rem; }}
-
   @media print {{
     @page {{
       size: A4;
@@ -504,8 +528,7 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     </div>
   </header>
   <main class="report-body">
-{main_html}
-{fallback_html}
+{sections_html}
   </main>
   <script>
     document.addEventListener('click', function (e) {{
@@ -575,6 +598,13 @@ def render_report(conn, report_date: str) -> None:
         )
 
     _ensure_font_asset()
+
+    # Order topics by cross-border reach (language_count desc, source_count
+    # desc as tiebreaker) - a zoom-out-to-zoom-in reading order, not the
+    # arbitrary order stage-1 grouping happened to return them in. Fallback
+    # topics are sorted in on equal footing, not forced to the end (see the
+    # comment in build_report_html).
+    sections.sort(key=lambda s: tuple(-x for x in section_coverage(s["newspapers"])))
 
     main_count = sum(1 for s in sections if s["category"] != FALLBACK_CATEGORY)
     fallback_count = len(sections) - main_count
