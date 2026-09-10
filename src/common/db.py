@@ -153,6 +153,12 @@ def mark_downloaded(
     conn.commit()
 
 
+def get_latest_published_at(conn: sqlite3.Connection) -> str | None:
+    cursor = conn.execute("SELECT MAX(published_at) AS latest FROM downloaded_files")
+    row = cursor.fetchone()
+    return row["latest"] if row else None
+
+
 def get_pending_extraction_files(conn: sqlite3.Connection):
     cursor = conn.execute(
         "SELECT id, file_name, local_path FROM downloaded_files WHERE extraction_status = 'pending'"

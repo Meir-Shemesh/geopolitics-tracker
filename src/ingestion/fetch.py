@@ -15,9 +15,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from telethon import TelegramClient
+from telethon.errors import FloodWaitError
 from telethon.tl.types import DocumentAttributeFilename
 
-from src.common.db import get_connection, init_db, is_downloaded, mark_downloaded
+from src.common.db import get_connection, get_latest_published_at, init_db, is_downloaded, mark_downloaded
 
 # Windows defaults stdout to the cp1252 console codepage even when redirected
 # to a file, which raises UnicodeEncodeError on any print() containing a
@@ -27,6 +28,29 @@ sys.stdout.reconfigure(encoding="utf-8")
 CHANNEL = "demagazinesharing"
 RAW_DIR = Path(__file__).resolve().parents[2] / "data" / "raw"
 SESSION_PATH = Path(__file__).resolve().parents[2] / "data" / "geopolitics_tracker"
+
+MIN_SCAN_LIMIT = 200
+MESSAGES_PER_DAY_MARGIN = 50
+
+
+def compute_scan_limit(
+    latest_published_at: str | None,
+    now: datetime,
+    per_day: int = MESSAGES_PER_DAY_MARGIN,
+    minimum: int = MIN_SCAN_LIMIT,
+) -> int:
+    """Size the iter_messages() scan window to the actual gap since the last
+    run, instead of a fixed constant - a multi-day gap accumulates enough
+    channel traffic (~50 messages/day observed: 2-9 MVP sources plus a lot of
+    non-MVP noise) that a fixed 200 can fail to reach back far enough to cover
+    the oldest un-ingested day at all (confirmed in practice after a 6-day
+    gap - see PROJECT_LOG). `minimum` keeps the normal one/two-day case at the
+    original 200, since scaling down would risk under-scanning it.
+    """
+    if latest_published_at is None:
+        return minimum
+    days_since = (now - datetime.fromisoformat(latest_published_at)).days
+    return max(minimum, days_since * per_day)
 
 
 def _is_pdf(document) -> bool:
@@ -132,7 +156,24 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
 
         channel_dir.mkdir(parents=True, exist_ok=True)
         local_path = channel_dir / file_name
-        await client.download_media(message, file=str(local_path))
+        # Printed *before* the download starts, not after - if download_media()
+        # stalls (network stall, machine sleep, or a flood-wait above Telethon's
+        # default 60s auto-sleep threshold that gets raised to us instead of
+        # handled silently), this line is the last thing in the log and names
+        # exactly which file it's stuck on, instead of a silent multi-hour gap
+        # with no indication of where. See PROJECT_LOG for the incident this
+        # was added after - a run whose per-file gaps grew from ~90s to an
+        # unexplained ~3-hour one with nothing printed in between.
+        print(f"  downloading: {file_name}...", flush=True)
+        download_start = datetime.now(timezone.utc)
+        while True:
+            try:
+                await client.download_media(message, file=str(local_path))
+                break
+            except FloodWaitError as e:
+                print(f"  flood-wait: Telegram asked us to sleep {e.seconds}s before retrying {file_name}", flush=True)
+                await asyncio.sleep(e.seconds)
+        download_seconds = (datetime.now(timezone.utc) - download_start).total_seconds()
 
         mark_downloaded(
             conn,
@@ -145,7 +186,7 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
             str(local_path),
         )
         downloaded += 1
-        print(f"  downloaded: {file_name} ({newspaper})", flush=True)
+        print(f"  downloaded: {file_name} ({newspaper}) [{download_seconds:.1f}s]", flush=True)
 
     return {
         "found": found,
@@ -164,9 +205,11 @@ async def run() -> None:
     conn = get_connection()
     init_db(conn)
 
+    limit = compute_scan_limit(get_latest_published_at(conn), datetime.now(timezone.utc))
+
     try:
         async with TelegramClient(str(SESSION_PATH), int(api_id), api_hash) as client:
-            stats = await fetch_channel(client, CHANNEL, conn)
+            stats = await fetch_channel(client, CHANNEL, conn, limit=limit)
     finally:
         conn.close()
 
