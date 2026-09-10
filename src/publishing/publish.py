@@ -963,7 +963,7 @@ _HOMEPAGE_JS_TEMPLATE = """
 """
 
 
-def build_homepage_html(lang: str, is_root: bool) -> str:
+def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
     other = OTHER_LANG[lang]
@@ -1001,7 +1001,15 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
         story_link_label = "More about the project →"
         archive_link_label = "Full archive →"
 
-    map_svg = _load_map_svg_inline()
+    map_svg = _load_map_svg_inline(lang, countries)
+    map_description = (
+        "מפת עולם אינטראקטיבית. מדינות עם כיסוי חדשותי מודגשות בצבע; לחיצה על מדינה "
+        "מסננת את פאנל התוצאות למטה. רשימת המדינות המכוסות מפורטת בהמשך העמוד."
+        if is_he else
+        "Interactive world map. Countries with news coverage are highlighted in "
+        "color; clicking a country filters the results panel below. The list of "
+        "covered countries is detailed further down the page."
+    )
     js_code = (
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
@@ -1121,6 +1129,20 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
 
   .map-module {{ margin-bottom: 1.25rem; }}
   .map-module svg#world-map {{ width: 100%; height: auto; display: block; }}
+  /* Visually hidden but present for screen readers/search engines - the
+     standard clip-based pattern (not display:none, which removes it from
+     the accessibility tree too). */
+  .sr-only {{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }}
   .oceanxx {{ fill: var(--bg); stroke: var(--border); stroke-width: 0.5; }}
   .landxx, .limitxx, .antxx {{ fill: var(--border); stroke: var(--bg-elevated); stroke-width: 0.5; fill-rule: evenodd; }}
   .circlexx, .subxx, .noxx, .unxx {{ opacity: 0; }}
@@ -1244,6 +1266,7 @@ def build_homepage_html(lang: str, is_root: bool) -> str:
       </section>
     </div>
     <section class="home-module map-module">
+      <p class="sr-only">{esc(map_description)}</p>
       {map_svg}
       <div class="region-chips" id="region-chips"></div>
       <div class="region-chips" id="conflict-chips"></div>
@@ -1286,11 +1309,29 @@ def _copy_map() -> None:
         shutil.copy2(MAP_SOURCE_PATH, dest)
 
 
-def _load_map_svg_inline() -> str:
+def _load_map_svg_inline(lang: str, countries: dict) -> str:
     """Load world.svg (see assets/map/NOTICE.txt for source/license) stripped of
     XML prolog and editor-only (Inkscape/Sodipodi) markup, ready to embed directly
-    in a page's <body> - required so JS can select/color individual <g id="xx">
-    country elements, which an <img>-referenced external SVG would not allow.
+    in a page's <body> - required so JS can select/color individual country
+    elements by id, which an <img>-referenced external SVG would not allow.
+    getElementById(code) is what JS elsewhere already uses, and it doesn't care
+    which of two shapes the element actually is: a multi-piece country (islands/
+    exclaves) is a <g id="xx"> wrapping several <path> children (each child's own
+    id carries a distinguishing suffix, e.g. "il-", never the bare code); a
+    single-piece country is just one bare <path id="xx"> with no wrapping <g> at
+    all. Confirmed empirically against this specific file - neither pattern alone
+    covers every one of the ~90 covered countries, only their union does.
+
+    Also tags every one of the ~250 total country elements (both shapes) for
+    accessibility (a screen reader/search engine otherwise sees a flat,
+    context-free list of every country's raw name, real content or not): a
+    country absent from `countries` (no coverage today) gets aria-hidden="true" -
+    it contributes only background color, no information; a covered country gets
+    a real aria-label instead of relying on the SVG's original bare-name <title>
+    child. This is a one-time build-time snapshot of `countries` - a deliberate,
+    narrow exception to the homepage's usual everything-fetched-at-runtime rule
+    (see build_homepage_html), since static accessibility markup doesn't need to
+    be "live" the way the interactive coloring/click behavior does.
     """
     raw = MAP_SOURCE_PATH.read_text(encoding="utf-8")
     if raw.startswith("<?xml"):
@@ -1304,6 +1345,38 @@ def _load_map_svg_inline() -> str:
         count=1,
         flags=re.DOTALL,
     )
+
+    def _tag_country_element(tag: str):
+        def _replace(match: re.Match) -> str:
+            code = match.group(1)
+            country = countries.get(code.upper())
+            if country is None:
+                return f'<{tag} id="{code}" aria-hidden="true"'
+            name = country["name_he"] if lang == "he" else country["name_en"]
+            label = (
+                f"{name} - יש כיסוי חדשותי, לחץ לסינון" if lang == "he"
+                else f"{name} - has news coverage, click to filter"
+            )
+            # role="img" - not "button" - because aria-label is only reliably
+            # exposed on an element that has *some* valid role (axe flags
+            # aria-label on a bare path/g with none), and these aren't
+            # actually keyboard-operable yet (mouse click only, no tabindex) -
+            # role="button" without that would be a false accessibility claim.
+            # Making the map itself keyboard-navigable is a separate, larger
+            # feature, not part of this fix.
+            return f'<{tag} id="{code}" role="img" aria-label="{esc(label)}"'
+        return _replace
+
+    # Two distinct shapes in this SVG, both selected identically by
+    # getElementById() elsewhere so both need tagging here: a multi-piece
+    # country (islands/exclaves) is a <g id="xx"> wrapping several <path>
+    # children (each child's own id carries a distinguishing suffix, e.g.
+    # "il-", never the bare code, so this can't double-match those); a
+    # single-piece country is just one bare <path id="xx"> with no wrapping
+    # <g> at all. Confirmed empirically: neither pattern alone covers every
+    # manifest country - only their union does.
+    raw = re.sub(r'<g\s+id="([a-zA-Z]{2,3})"', _tag_country_element("g"), raw)
+    raw = re.sub(r'<path\s+id="([a-zA-Z]{2,3})"', _tag_country_element("path"), raw)
     return raw
 
 
@@ -1429,6 +1502,12 @@ def run() -> None:
     _copy_map()
     _copy_reports_to_docs()
 
+    # Computed here (rather than at the very end, as before) because
+    # build_homepage_html() now needs manifest["countries"] to statically
+    # tag the map's accessibility markup - see _load_map_svg_inline().
+    manifest = build_manifest(conn, entries)
+    conn.close()
+
     for lang in ("he", "en"):
         archive_html = build_index_html(
             entries,
@@ -1455,7 +1534,7 @@ def run() -> None:
             (out_dir / "topic.html").write_text(topic_html, encoding="utf-8")
         print(f"  wrote topic.html for '{lang}'")
 
-        homepage_html = build_homepage_html(lang, is_root=False)
+        homepage_html = build_homepage_html(lang, is_root=False, countries=manifest["countries"])
         (DOCS_DIR / lang / "index.html").write_text(homepage_html, encoding="utf-8")
         print(f"  wrote index.html (homepage) for '{lang}'")
 
@@ -1470,12 +1549,10 @@ def run() -> None:
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")
 
-    root_homepage_html = build_homepage_html("he", is_root=True)
+    root_homepage_html = build_homepage_html("he", is_root=True, countries=manifest["countries"])
     (DOCS_DIR / "index.html").write_text(root_homepage_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'index.html'} (root homepage, Hebrew default)")
 
-    manifest = build_manifest(conn, entries)
-    conn.close()
     _write_manifest(manifest)
     print(f"  wrote manifest.json ({len(manifest['sections'])} section(s), {len(manifest['countries'])} countrie(s))")
 
