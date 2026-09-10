@@ -153,6 +153,59 @@
     text-decoration: underline;
   }
 
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
   .masthead {
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -197,6 +250,20 @@
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
   .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -209,7 +276,26 @@
     border-radius: 999px;
   }
   .coverage-badge { font-size: .72rem; color: var(--text-muted); }
-  .section-title { margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
   .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
   .section-sources {
     margin: 0;
@@ -220,20 +306,49 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
-  .citations-row { position: relative; margin-top: .6rem; }
-  .citations-toggle {
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }
-  .citations-toggle:hover { color: var(--masthead-accent); }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
   .citations-popup {
     position: absolute;
     top: 100%;
@@ -278,7 +393,14 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
-    .citations-row { display: none; }
+    .category-nav { display: none; }
+    .section-actions { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
   }
 </style>
 </head>
@@ -292,6 +414,11 @@
       <a class="top-nav-link" href="report_2026-08-24_en.pdf">⬇ Download PDF</a>
     </div>
   </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-236">Security &amp; Conflict</a><a class="category-nav-link" href="#section-238">Diplomacy &amp; International Relations</a><a class="category-nav-link" href="#section-234">Trade &amp; Economics</a><a class="category-nav-link" href="#section-241">Domestic Politics</a><a class="category-nav-link" href="#section-240">Migration &amp; Society</a><a class="category-nav-link" href="#section-253">Society &amp; Culture</a><a class="category-nav-link" href="#section-247">Technology &amp; Media</a><a class="category-nav-link" href="#section-243">Energy &amp; Environment</a></div>
+    <button class="toggle-all-btn" type="button">Expand all / Collapse all</button>
+  </nav>
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">Daily Geopolitics</p>
@@ -304,18 +431,28 @@
   </header>
   <main class="report-body">
 
-      <section class="topic-section" id="section-234" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">4 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-234" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-234">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">4 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-Canada Tariff War</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US-Canada Tariff War</h2>
-        <p class="comparison-text">All four papers cover the breakdown of US-Canada trade talks and Carney&#x27;s dollar-for-dollar retaliation. The Daily Telegraph runs the story from three angles: a news report on Trump&#x27;s &#x27;51st state&#x27; rhetoric, an opinion piece cheering Carney&#x27;s toughness and urging Britain to stand up to Brussels similarly, and an editorial calling the tariff war &#x27;madness&#x27; that damages Western unity against rivals like China. The Guardian offers a news-analysis account of the escalation and documents criticism from US lawmakers of Trump&#x27;s tariffs. Die Welt reports the clash factually, juxtaposing Carney&#x27;s and Trump&#x27;s competing claims. Süddeutsche Zeitung takes the clearest stance, with commentary praising Carney&#x27;s firm, clear response as a model contrasted favorably with Europe&#x27;s more conciliatory approach to Trump, alongside a separate report on business anxieties over rising costs and disrupted supply chains.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, The Guardian, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-234">Citations (8) ▾</button>
+        <div class="section-body" id="body-234">
+          <p class="comparison-text">All four papers cover the breakdown of US-Canada trade talks and Carney&#x27;s dollar-for-dollar retaliation. The Daily Telegraph runs the story from three angles: a news report on Trump&#x27;s &#x27;51st state&#x27; rhetoric, an opinion piece cheering Carney&#x27;s toughness and urging Britain to stand up to Brussels similarly, and an editorial calling the tariff war &#x27;madness&#x27; that damages Western unity against rivals like China. The Guardian offers a news-analysis account of the escalation and documents criticism from US lawmakers of Trump&#x27;s tariffs. Die Welt reports the clash factually, juxtaposing Carney&#x27;s and Trump&#x27;s competing claims. Süddeutsche Zeitung takes the clearest stance, with commentary praising Carney&#x27;s firm, clear response as a model contrasted favorably with Europe&#x27;s more conciliatory approach to Trump, alongside a separate report on business anxieties over rising costs and disrupted supply chains.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, The Guardian, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-234" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-234">
+            Citations (8)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-234" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 11 — "Trump: Canada wants perks of being…"</li>
@@ -328,21 +465,32 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 6 — "Wir wurden angegriffen"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-236" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">3 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-236" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-236">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">3 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russian Hybrid Warfare Against NATO and Europe</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Russian Hybrid Warfare Against NATO and Europe</h2>
-        <p class="comparison-text">This theme receives extensive coverage across three papers. The Daily Telegraph frames escalating Russian sabotage, cyberattacks and assassination attempts as a test of NATO resolve calibrated to stay below the Article 5 threshold, and separately covers Iceland&#x27;s struggle to counter Russian and Chinese activity in the Arctic without a military of its own. Die Welt runs commentary describing NATO as fighting an &#x27;unequal battle&#x27; against hybrid tactics that stay below the threshold for a unified response, warning of the risk of uncontrolled escalation. Süddeutsche Zeitung offers the German domestic angle directly: one piece calls on Berlin to respond decisively to Putin, while another counsels calm composure as the wiser response to Russia&#x27;s ambiguous, low-level provocations, while acknowledging the risk of further escalation.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-236">Citations (5) ▾</button>
+        <div class="section-body" id="body-236">
+          <p class="comparison-text">This theme receives extensive coverage across three papers. The Daily Telegraph frames escalating Russian sabotage, cyberattacks and assassination attempts as a test of NATO resolve calibrated to stay below the Article 5 threshold, and separately covers Iceland&#x27;s struggle to counter Russian and Chinese activity in the Arctic without a military of its own. Die Welt runs commentary describing NATO as fighting an &#x27;unequal battle&#x27; against hybrid tactics that stay below the threshold for a unified response, warning of the risk of uncontrolled escalation. Süddeutsche Zeitung offers the German domestic angle directly: one piece calls on Berlin to respond decisively to Putin, while another counsels calm composure as the wiser response to Russia&#x27;s ambiguous, low-level provocations, while acknowledging the risk of further escalation.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-236" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-236">
+            Citations (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-236" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 2 — "Ukraine missile deal worsens relations with…"</li>
@@ -352,21 +500,32 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 4 — "Schön ruhig bleiben"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-241" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">3 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-241" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-241">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">3 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">The Rise of the AfD in Germany</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">The Rise of the AfD in Germany</h2>
-        <p class="comparison-text">This topic receives broad, varied treatment across the German-language press. The Daily Telegraph reports on the AfD&#x27;s plan in Saxony-Anhalt to segregate special-needs and refugee children from mainstream schooling. Die Welt offers a contrasting angle, attributing the party&#x27;s rise to contemptuous Western German elite attitudes toward the East. Süddeutsche Zeitung publishes the most extensive analysis: a piece on the AfD&#x27;s instrumentalization of Bauhaus culture and heritage as a hegemonic tool, a critique of a cultural manifesto meant to defend the Bauhaus that fails to grapple with its complicated history, an argument that AfD policies would economically harm Germany, and a book review of a dystopian 2033 AfD-government scenario examining the affect-driven politics fueling the party&#x27;s rise.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-241">Citations (6) ▾</button>
+        <div class="section-body" id="body-241">
+          <p class="comparison-text">This topic receives broad, varied treatment across the German-language press. The Daily Telegraph reports on the AfD&#x27;s plan in Saxony-Anhalt to segregate special-needs and refugee children from mainstream schooling. Die Welt offers a contrasting angle, attributing the party&#x27;s rise to contemptuous Western German elite attitudes toward the East. Süddeutsche Zeitung publishes the most extensive analysis: a piece on the AfD&#x27;s instrumentalization of Bauhaus culture and heritage as a hegemonic tool, a critique of a cultural manifesto meant to defend the Bauhaus that fails to grapple with its complicated history, an argument that AfD policies would economically harm Germany, and a book review of a dystopian 2033 AfD-government scenario examining the affect-driven politics fueling the party&#x27;s rise.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-241" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-241">
+            Citations (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-241" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 12</li>
@@ -377,21 +536,32 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 17 — "1933 – noch einmal? Justus Bender:…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-242" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">3 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-242" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-242">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">3 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">French Politics: Le Pen and Glucksmann</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">French Politics: Le Pen and Glucksmann</h2>
-        <p class="comparison-text">The Daily Telegraph and The Guardian cover the French political scene from opposing angles: The Daily Telegraph frames Raphaël Glucksmann&#x27;s candidacy as an attempt to unite the Left as a liberal-democratic bulwark against Marine Le Pen, while The Guardian warns that Le Pen herself, now free of her ban, poses an even greater threat than her protégé Jordan Bardella. Süddeutsche Zeitung adds a third, critical angle, attacking the Rassemblement National for grudgingly acknowledging climate change while still resisting genuine climate policy.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-242">Citations (3) ▾</button>
+        <div class="section-body" id="body-242">
+          <p class="comparison-text">The Daily Telegraph and The Guardian cover the French political scene from opposing angles: The Daily Telegraph frames Raphaël Glucksmann&#x27;s candidacy as an attempt to unite the Left as a liberal-democratic bulwark against Marine Le Pen, while The Guardian warns that Le Pen herself, now free of her ban, poses an even greater threat than her protégé Jordan Bardella. Süddeutsche Zeitung adds a third, critical angle, attacking the Rassemblement National for grudgingly acknowledging climate change while still resisting genuine climate policy.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-242" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-242">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-242" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 13</li>
@@ -399,21 +569,32 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-243" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Energy &amp; Environment</span>
-          <span class="coverage-badge">3 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-243" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-243">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">3 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">North Sea and European Energy Policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">North Sea and European Energy Policy</h2>
-        <p class="comparison-text">The Daily Telegraph and The Guardian sharply diverge on UK energy policy: The Daily Telegraph gives voice to an oil executive who argues punitive taxation and regulatory unpredictability have made Britain &#x27;uninvestable.&#x27; The Guardian, in two pieces, argues the opposite — that North Sea oil has long since lost its economic significance and that its persistence as a nostalgic political symbol (exploited by Farage, Badenoch and Trump) distracts from the real solution of publicly or community-owned renewable energy, as in Norway. Süddeutsche Zeitung adds two European angles: criticism of Germany&#x27;s insufficient gas storage preparation before winter, and an argument that this summer&#x27;s heatwaves exposed nuclear power in France as just as climate-vulnerable as renewables.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-243">Citations (5) ▾</button>
+        <div class="section-body" id="body-243">
+          <p class="comparison-text">The Daily Telegraph and The Guardian sharply diverge on UK energy policy: The Daily Telegraph gives voice to an oil executive who argues punitive taxation and regulatory unpredictability have made Britain &#x27;uninvestable.&#x27; The Guardian, in two pieces, argues the opposite — that North Sea oil has long since lost its economic significance and that its persistence as a nostalgic political symbol (exploited by Farage, Badenoch and Trump) distracts from the real solution of publicly or community-owned renewable energy, as in Norway. Süddeutsche Zeitung adds two European angles: criticism of Germany&#x27;s insufficient gas storage preparation before winter, and an argument that this summer&#x27;s heatwaves exposed nuclear power in France as just as climate-vulnerable as renewables.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-243" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-243">
+            Citations (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-243" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 17</li>
@@ -423,21 +604,32 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 4 — "Nach der Hitze"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-252" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">3 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-252" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-252">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">3 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US Politics: Democrats, Election Integrity and Carlson&#x27;s Revolt</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US Politics: Democrats, Election Integrity and Carlson&#x27;s Revolt</h2>
-        <p class="comparison-text">The Daily Telegraph, The Guardian and Süddeutsche Zeitung cover three different fronts in US politics: The Daily Telegraph describes Democrats&#x27; retreat from &#x27;woke&#x27; positioning as a pragmatic necessity heading into 2028. The Guardian reports experts&#x27; concerns that Trump&#x27;s claims of foreign-linked election fraud are being used as a pretext to undermine confidence in elections. Süddeutsche Zeitung examines Tucker Carlson&#x27;s and other disaffected Republicans&#x27; revolt against Trump over the Iran war, in an attempt to build an anti-interventionist &#x27;Maga 2.0&#x27; movement.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-252">Citations (3) ▾</button>
+        <div class="section-body" id="body-252">
+          <p class="comparison-text">The Daily Telegraph, The Guardian and Süddeutsche Zeitung cover three different fronts in US politics: The Daily Telegraph describes Democrats&#x27; retreat from &#x27;woke&#x27; positioning as a pragmatic necessity heading into 2028. The Guardian reports experts&#x27; concerns that Trump&#x27;s claims of foreign-linked election fraud are being used as a pretext to undermine confidence in elections. Süddeutsche Zeitung examines Tucker Carlson&#x27;s and other disaffected Republicans&#x27; revolt against Trump over the Iran war, in an attempt to build an anti-interventionist &#x27;Maga 2.0&#x27; movement.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-252" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-252">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-252" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 12</li>
@@ -445,21 +637,32 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 6</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-237" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">2 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-237" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-237">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">2 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Ukraine War: Diplomacy, Elections and Strikes</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Ukraine War: Diplomacy, Elections and Strikes</h2>
-        <p class="comparison-text">Die Welt devotes several pieces to US diplomacy on the war: an analysis contrasting a skeptical reading of the Witkoff-Kushner Kyiv visit as mere symbolic PR with a more optimistic view of shifting US sentiment; a piece arguing that without US pressure Putin will not budge; and a report on Putin&#x27;s threat of harsher retaliation for Ukraine&#x27;s economic strikes. The Guardian, by contrast, focuses on Zelenskyy&#x27;s argument against holding wartime elections, and on sabotage inside Crimea and Russia — including a suspected assassination of a Russian naval officer and a profile of an alleged Russian saboteur recruited by Kyiv — while carefully flagging the unverifiable nature of Russian claims.</p>
-        <p class="section-sources">Sources: <b>Die Welt, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-237">Citations (6) ▾</button>
+        <div class="section-body" id="body-237">
+          <p class="comparison-text">Die Welt devotes several pieces to US diplomacy on the war: an analysis contrasting a skeptical reading of the Witkoff-Kushner Kyiv visit as mere symbolic PR with a more optimistic view of shifting US sentiment; a piece arguing that without US pressure Putin will not budge; and a report on Putin&#x27;s threat of harsher retaliation for Ukraine&#x27;s economic strikes. The Guardian, by contrast, focuses on Zelenskyy&#x27;s argument against holding wartime elections, and on sabotage inside Crimea and Russia — including a suspected assassination of a Russian naval officer and a profile of an alleged Russian saboteur recruited by Kyiv — while carefully flagging the unverifiable nature of Russian claims.</p>
+          <p class="section-sources">Sources: <b>Die Welt, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-237" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-237">
+            Citations (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-237" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 2 — "Die große Hoffnung auf den „Heureka-Moment“…"</li>
@@ -470,21 +673,32 @@
             <li>The Guardian, Aug 24, 2026, p. 21 — "The making of a suspected saboteur:…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-249" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">2 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-249" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-249">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">2 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US Debt Crisis and Federal Reserve Policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US Debt Crisis and Federal Reserve Policy</h2>
-        <p class="comparison-text">The Guardian and Die Welt both warn of fiscal risks under Trump, but from different angles: The Guardian emphasizes how Trump&#x27;s chaotic policies undermine the US&#x27;s role as the world&#x27;s financial anchor, and separately expresses concern over new Fed chair Kevin Warsh&#x27;s lack of clear guidance ahead of Jackson Hole. Die Welt focuses more narrowly on criticizing Bessent&#x27;s plan to buy back long-term bonds and issue short-term debt, calling it &#x27;refinancing roulette&#x27; that fails to address the structural deficit problem.</p>
-        <p class="section-sources">Sources: <b>Die Welt, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-249">Citations (3) ▾</button>
+        <div class="section-body" id="body-249">
+          <p class="comparison-text">The Guardian and Die Welt both warn of fiscal risks under Trump, but from different angles: The Guardian emphasizes how Trump&#x27;s chaotic policies undermine the US&#x27;s role as the world&#x27;s financial anchor, and separately expresses concern over new Fed chair Kevin Warsh&#x27;s lack of clear guidance ahead of Jackson Hole. Die Welt focuses more narrowly on criticizing Bessent&#x27;s plan to buy back long-term bonds and issue short-term debt, calling it &#x27;refinancing roulette&#x27; that fails to address the structural deficit problem.</p>
+          <p class="section-sources">Sources: <b>Die Welt, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-249" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-249">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-249" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 10</li>
@@ -492,42 +706,64 @@
             <li>The Guardian, Aug 24, 2026, p. 29 — "New Fed chair faces test at…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-235" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-235">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Helps Ukraine Build Long-Range Missiles</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK Helps Ukraine Build Long-Range Missiles</h2>
-        <p class="comparison-text">Both The Daily Telegraph and The Guardian report the UK Prime Minister&#x27;s pledge to give Ukraine the blueprints to build its own Storm Shadow long-range missiles, citing the same vow that &#x27;Russia should be in no doubt of our resolve.&#x27; Both frame the move as a resolute, unwavering show of support, with The Daily Telegraph emphasizing the strategic significance of sharing military know-how while The Guardian frames it more as a shared moral commitment against Russian aggression.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-235">Citations (2) ▾</button>
+        <div class="section-body" id="body-235">
+          <p class="comparison-text">Both The Daily Telegraph and The Guardian report the UK Prime Minister&#x27;s pledge to give Ukraine the blueprints to build its own Storm Shadow long-range missiles, citing the same vow that &#x27;Russia should be in no doubt of our resolve.&#x27; Both frame the move as a resolute, unwavering show of support, with The Daily Telegraph emphasizing the strategic significance of sharing military know-how while The Guardian frames it more as a shared moral commitment against Russian aggression.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-235" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-235">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-235" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 1</li>
             <li>The Guardian, Aug 24, 2026, p. 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-240" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-240">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Germany&#x27;s Migration Policy: Syrians and Dublin Cases</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Germany&#x27;s Migration Policy: Syrians and Dublin Cases</h2>
-        <p class="comparison-text">Die Welt and Süddeutsche Zeitung approach German migration policy from different angles: Die Welt argues for limiting Syrian refugees&#x27; right to stay to those economically integrated and paying taxes, and separately attacks a center-right politician for a fatalistic &#x27;surrender&#x27; narrative about mass migration&#x27;s irreversibility. Süddeutsche Zeitung, by contrast, takes an opposite, legally grounded critical stance, arguing that Germany&#x27;s complete stripping of benefits from asylum seekers in Dublin cases violates EU law and must stop.</p>
-        <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-240">Citations (3) ▾</button>
+        <div class="section-body" id="body-240">
+          <p class="comparison-text">Die Welt and Süddeutsche Zeitung approach German migration policy from different angles: Die Welt argues for limiting Syrian refugees&#x27; right to stay to those economically integrated and paying taxes, and separately attacks a center-right politician for a fatalistic &#x27;surrender&#x27; narrative about mass migration&#x27;s irreversibility. Süddeutsche Zeitung, by contrast, takes an opposite, legally grounded critical stance, arguing that Germany&#x27;s complete stripping of benefits from asylum seekers in Dublin cases violates EU law and must stop.</p>
+          <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-240" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-240">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-240" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 1 — "Die offizielle Kapitulationserklärung"</li>
@@ -535,84 +771,128 @@
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-247" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-247">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">The AI Investment Bubble and Cyber Risk</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">The AI Investment Bubble and Cyber Risk</h2>
-        <p class="comparison-text">The Daily Telegraph and The Guardian examine different facets of the AI industry: The Daily Telegraph focuses on financial fears that the investment bubble around firms like Nvidia could burst, while The Guardian highlights OpenAI leaders&#x27; warnings about persistent AI-enabled cyberattacks and calls for an international regulatory framework, framed partly around competition with China.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-247">Citations (2) ▾</button>
+        <div class="section-body" id="body-247">
+          <p class="comparison-text">The Daily Telegraph and The Guardian examine different facets of the AI industry: The Daily Telegraph focuses on financial fears that the investment bubble around firms like Nvidia could burst, while The Guardian highlights OpenAI leaders&#x27; warnings about persistent AI-enabled cyberattacks and calls for an international regulatory framework, framed partly around competition with China.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-247" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-247">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-247" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 18</li>
             <li>The Guardian, Aug 24, 2026, p. 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-248" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-248">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Crisis in the German Auto Industry</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Crisis in the German Auto Industry</h2>
-        <p class="comparison-text">Die Welt and Süddeutsche Zeitung cover the Volkswagen crisis from complementary angles: Die Welt relays the CEO&#x27;s official framing of geopolitics, trade barriers and competition as forcing painful cuts, while Süddeutsche Zeitung offers a more human account from the Zwickau plant in eastern Germany, depicting workers&#x27; anxiety over Chinese competition and US tariffs, and management&#x27;s inability to guarantee jobs.</p>
-        <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-248">Citations (2) ▾</button>
+        <div class="section-body" id="body-248">
+          <p class="comparison-text">Die Welt and Süddeutsche Zeitung cover the Volkswagen crisis from complementary angles: Die Welt relays the CEO&#x27;s official framing of geopolitics, trade barriers and competition as forcing painful cuts, while Süddeutsche Zeitung offers a more human account from the Zwickau plant in eastern Germany, depicting workers&#x27; anxiety over Chinese competition and US tariffs, and management&#x27;s inability to guarantee jobs.</p>
+          <p class="section-sources">Sources: <b>Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-248" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-248">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-248" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 11</li>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 3</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-250" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-250">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Politics, Gaza and the Lineker Controversy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK Politics, Gaza and the Lineker Controversy</h2>
-        <p class="comparison-text">The Daily Telegraph and The Guardian offer two different angles on the British political debate over Gaza: The Daily Telegraph reports on Gary Lineker sharing a video equating Zionism with Nazism and accusing UK leaders of complicity in genocide, presenting this as a controversial flashpoint. The Guardian instead covers the internal Labour party angle, reporting that grassroots groups are pressuring Andy Burnham to formally recognize genocide in Gaza and impose a full arms embargo.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-250">Citations (2) ▾</button>
+        <div class="section-body" id="body-250">
+          <p class="comparison-text">The Daily Telegraph and The Guardian offer two different angles on the British political debate over Gaza: The Daily Telegraph reports on Gary Lineker sharing a video equating Zionism with Nazism and accusing UK leaders of complicity in genocide, presenting this as a controversial flashpoint. The Guardian instead covers the internal Labour party angle, reporting that grassroots groups are pressuring Andy Burnham to formally recognize genocide in Gaza and impose a full arms embargo.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-250" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-250">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-250" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 9</li>
             <li>The Guardian, Aug 24, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-251" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-251">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Britain: Monarchy, Immigration and Culture Wars</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Britain: Monarchy, Immigration and Culture Wars</h2>
-        <p class="comparison-text">The Daily Telegraph runs a series of opinion pieces on British social issues: a defense of Prince Harry&#x27;s military service urging his welcome home, criticism of Caribbean nations&#x27; objections to the UK&#x27;s looming cigar ban, an argument that cultural relativism prevents honest criticism of Islamism and its foreign funding, a defense of stop-and-search as a life-saving tool for black youth, and criticism of higher education expansion as an economic drain. The Guardian counters with two more left-leaning pieces — a call to make the British countryside genuinely inclusive against nativist exploitation, and criticism of Burnham and Starmer for lacking a coherent UK foreign policy strategy.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-251">Citations (7) ▾</button>
+        <div class="section-body" id="body-251">
+          <p class="comparison-text">The Daily Telegraph runs a series of opinion pieces on British social issues: a defense of Prince Harry&#x27;s military service urging his welcome home, criticism of Caribbean nations&#x27; objections to the UK&#x27;s looming cigar ban, an argument that cultural relativism prevents honest criticism of Islamism and its foreign funding, a defense of stop-and-search as a life-saving tool for black youth, and criticism of higher education expansion as an economic drain. The Guardian counters with two more left-leaning pieces — a call to make the British countryside genuinely inclusive against nativist exploitation, and criticism of Burnham and Starmer for lacking a coherent UK foreign policy strategy.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-251" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-251">
+            Citations (7)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-251" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 4 — "Harry&#x27;s service to his country deserves…"</li>
@@ -624,21 +904,32 @@
             <li>The Guardian, Aug 24, 2026, p. 46 — "Britain&#x27;s foreign policy under Burnham should…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-238" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-238">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russia&#x27;s Waning Post-Soviet Sphere of Influence</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Russia&#x27;s Waning Post-Soviet Sphere of Influence</h2>
-        <p class="comparison-text">Die Welt runs a series of pieces describing how former Soviet states — Moldova and Armenia, Azerbaijan, Kazakhstan and Uzbekistan — are progressively diversifying away from dependence on Russia toward the EU, Turkey, China and the US, while also noting Western silence over human rights abuses in Azerbaijan and Kazakhstan.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-238">Citations (4) ▾</button>
+        <div class="section-body" id="body-238">
+          <p class="comparison-text">Die Welt runs a series of pieces describing how former Soviet states — Moldova and Armenia, Azerbaijan, Kazakhstan and Uzbekistan — are progressively diversifying away from dependence on Russia toward the EU, Turkey, China and the US, while also noting Western silence over human rights abuses in Azerbaijan and Kazakhstan.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-238" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-238">
+            Citations (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-238" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 2 — "Putin entgleitet sein alter Machtbereich"</li>
@@ -647,392 +938,643 @@
             <li>Die Welt, Aug 24, 2026, p. 3 — "Usbekistans außenpolitische Öffnung unter Mirsijojew"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-239" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-239">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Italy-Germany Migration Dispute</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Italy-Germany Migration Dispute</h2>
-        <p class="comparison-text">Die Welt reports on Italy&#x27;s refusal to take back migrants under Dublin rules, highlighting mounting cross-party German criticism demanding EU Commission action against Rome&#x27;s treaty violations, up to the symbolic suggestion that Italy could no longer belong in the Schengen area.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-239">Citations (1) ▾</button>
+        <div class="section-body" id="body-239">
+          <p class="comparison-text">Die Welt reports on Italy&#x27;s refusal to take back migrants under Dublin rules, highlighting mounting cross-party German criticism demanding EU Commission action against Rome&#x27;s treaty violations, up to the symbolic suggestion that Italy could no longer belong in the Schengen area.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-239" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-239">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-239" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-244" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-244">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Sudan&#x27;s Civil War</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Sudan&#x27;s Civil War</h2>
-        <p class="comparison-text">Süddeutsche Zeitung publishes a report exposing how the RSF militia and other factions in Sudan&#x27;s civil war use graphic execution videos on social media as psychological warfare, recruitment tools, and demonstrations of impunity, criticizing the international community&#x27;s neglect of the resulting civilian suffering.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-244">Citations (1) ▾</button>
+        <div class="section-body" id="body-244">
+          <p class="comparison-text">Süddeutsche Zeitung publishes a report exposing how the RSF militia and other factions in Sudan&#x27;s civil war use graphic execution videos on social media as psychological warfare, recruitment tools, and demonstrations of impunity, criticizing the international community&#x27;s neglect of the resulting civilian suffering.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-244" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-244">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-244" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 2</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-245" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-245">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Iranian Cyberattack on UK Infrastructure</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Iranian Cyberattack on UK Infrastructure</h2>
-        <p class="comparison-text">The Daily Telegraph exclusively reports that Iranian hackers linked to the IRGC shut down a British power plant, prompting GCHQ to place energy firms on high alert, implicitly criticizing gaps in national cyber-incident reporting.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-245">Citations (1) ▾</button>
+        <div class="section-body" id="body-245">
+          <p class="comparison-text">The Daily Telegraph exclusively reports that Iranian hackers linked to the IRGC shut down a British power plant, prompting GCHQ to place energy firms on high alert, implicitly criticizing gaps in national cyber-incident reporting.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-245" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-245">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-245" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 2</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-246" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-246">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Iran and US Sanctions</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Iran and US Sanctions</h2>
-        <p class="comparison-text">The Guardian reports on Tehran&#x27;s dismissal of new US sanctions as a &#x27;desperate&#x27; move, while noting Iran&#x27;s own acknowledgment of domestic economic hardship and its threats against Gulf oil shipping routes.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-246">Citations (1) ▾</button>
+        <div class="section-body" id="body-246">
+          <p class="comparison-text">The Guardian reports on Tehran&#x27;s dismissal of new US sanctions as a &#x27;desperate&#x27; move, while noting Iran&#x27;s own acknowledgment of domestic economic hardship and its threats against Gulf oil shipping routes.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-246" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-246">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-246" hidden>
             <ul>
             <li>The Guardian, Aug 24, 2026, p. 24</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-253" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-253">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">China: Cultural Control and Censorship</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">China: Cultural Control and Censorship</h2>
-        <p class="comparison-text">The Daily Telegraph reports on the investigation of comedian Guo Degang over alleged alterations to a patriotic song&#x27;s lyrics, presenting it as an example of the Communist Party&#x27;s tight grip over China&#x27;s cultural and artistic life.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-253">Citations (1) ▾</button>
+        <div class="section-body" id="body-253">
+          <p class="comparison-text">The Daily Telegraph reports on the investigation of comedian Guo Degang over alleged alterations to a patriotic song&#x27;s lyrics, presenting it as an example of the Communist Party&#x27;s tight grip over China&#x27;s cultural and artistic life.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-253" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-253">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-253" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 12</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-254" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-254">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Imran Khan&#x27;s Imprisonment and Alleged Torture</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Imran Khan&#x27;s Imprisonment and Alleged Torture</h2>
-        <p class="comparison-text">The Daily Telegraph publishes a letter expressing shock and concern over reports that Imran Khan is being tortured in a Pakistani jail, appealing for clemency from the government.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-254">Citations (1) ▾</button>
+        <div class="section-body" id="body-254">
+          <p class="comparison-text">The Daily Telegraph publishes a letter expressing shock and concern over reports that Imran Khan is being tortured in a Pakistani jail, appealing for clemency from the government.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-254" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-254">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-254" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-255" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-255">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Bond Market: A Contrarian Opportunity</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK Bond Market: A Contrarian Opportunity</h2>
-        <p class="comparison-text">The Daily Telegraph runs an analysis suggesting that precisely because of prevailing pessimism around UK government bonds, bold investors might find opportunity there, weighing inflation and rate risks against upside scenarios such as a Middle East resolution lowering oil prices.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-255">Citations (1) ▾</button>
+        <div class="section-body" id="body-255">
+          <p class="comparison-text">The Daily Telegraph runs an analysis suggesting that precisely because of prevailing pessimism around UK government bonds, bold investors might find opportunity there, weighing inflation and rate risks against upside scenarios such as a Middle East resolution lowering oil prices.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-255" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-255">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-255" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 24, 2026, p. 18</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-256" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-256">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">The Challenge to Western Civilization</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">The Challenge to Western Civilization</h2>
-        <p class="comparison-text">Die Welt publishes a sweeping opinion piece arguing that the West, as a civilizational idea rooted in freedom and the rule of law, faces existential threats from both external antagonists (China, Russia, Islamism) and internal self-doubt, calling for the West to reclaim its confidence.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-256">Citations (1) ▾</button>
+        <div class="section-body" id="body-256">
+          <p class="comparison-text">Die Welt publishes a sweeping opinion piece arguing that the West, as a civilizational idea rooted in freedom and the rule of law, faces existential threats from both external antagonists (China, Russia, Islamism) and internal self-doubt, calling for the West to reclaim its confidence.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-256" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-256">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-256" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-257" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-257">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Stasi Legacy in Potsdam and Germany-Russia Ties</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Stasi Legacy in Potsdam and Germany-Russia Ties</h2>
-        <p class="comparison-text">Die Welt criticizes an initiative to name a Potsdam street after Lothar Bisky, a former SED cadre and Stasi informant, and attacks Matthias Platzeck for backing it despite his own damaging ties to the Putin regime.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-257">Citations (1) ▾</button>
+        <div class="section-body" id="body-257">
+          <p class="comparison-text">Die Welt criticizes an initiative to name a Potsdam street after Lothar Bisky, a former SED cadre and Stasi informant, and attacks Matthias Platzeck for backing it despite his own damaging ties to the Putin regime.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-257" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-257">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-257" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 8</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-258" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-258">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">The Future of US Aircraft Carriers</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">The Future of US Aircraft Carriers</h2>
-        <p class="comparison-text">Die Welt sharply criticizes Trump&#x27;s push to strip modern electromagnetic catapults from US aircraft carriers in favor of WWII-era steam technology, arguing it is a wasteful, aesthetically-driven decision that hands China a strategic advantage.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-258">Citations (1) ▾</button>
+        <div class="section-body" id="body-258">
+          <p class="comparison-text">Die Welt sharply criticizes Trump&#x27;s push to strip modern electromagnetic catapults from US aircraft carriers in favor of WWII-era steam technology, arguing it is a wasteful, aesthetically-driven decision that hands China a strategic advantage.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-258" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-258">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-258" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 9</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-259" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-259">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russia&#x27;s War on Ukrainian Grain Exports</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Russia&#x27;s War on Ukrainian Grain Exports</h2>
-        <p class="comparison-text">Die Welt reports that Russia is waging a systematic campaign against Ukraine&#x27;s agricultural export infrastructure, damaging both Ukraine&#x27;s economy and global food prices, while also criticizing Poland for undermining European solidarity with Ukraine to protect its own farmers.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-259">Citations (1) ▾</button>
+        <div class="section-body" id="body-259">
+          <p class="comparison-text">Die Welt reports that Russia is waging a systematic campaign against Ukraine&#x27;s agricultural export infrastructure, damaging both Ukraine&#x27;s economy and global food prices, while also criticizing Poland for undermining European solidarity with Ukraine to protect its own farmers.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-259" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-259">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-259" hidden>
             <ul>
             <li>Die Welt, Aug 24, 2026, p. 9</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-260" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-260">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">The Battle for Commerzbank&#x27;s Independence</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">The Battle for Commerzbank&#x27;s Independence</h2>
-        <p class="comparison-text">Süddeutsche Zeitung runs an interview with Jens Weidmann defending Commerzbank&#x27;s resistance to a UniCredit takeover, expressing skepticism toward claims that Europe necessarily needs giant banks to compete with China and the US.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-260">Citations (1) ▾</button>
+        <div class="section-body" id="body-260">
+          <p class="comparison-text">Süddeutsche Zeitung runs an interview with Jens Weidmann defending Commerzbank&#x27;s resistance to a UniCredit takeover, expressing skepticism toward claims that Europe necessarily needs giant banks to compete with China and the US.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-260" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-260">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-260" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-261" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-261">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">North Korea and Trump&#x27;s Diplomacy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">North Korea and Trump&#x27;s Diplomacy</h2>
-        <p class="comparison-text">Süddeutsche Zeitung portrays Kim Jong-un as a calculating dictator who needs external enemies to secure his rule, strategically leveraging his relationship with Trump while making no real concessions, as his alliances with Russia and China grow stronger.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-261">Citations (1) ▾</button>
+        <div class="section-body" id="body-261">
+          <p class="comparison-text">Süddeutsche Zeitung portrays Kim Jong-un as a calculating dictator who needs external enemies to secure his rule, strategically leveraging his relationship with Trump while making no real concessions, as his alliances with Russia and China grow stronger.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-261" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-261">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-261" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-262" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-262">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Political Theater on Global Democracy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Political Theater on Global Democracy</h2>
-        <p class="comparison-text">Süddeutsche Zeitung praises a theatrical experiment imagining Switzerland joining a fictional international democracy alliance as an engaging, thought-provoking way to explore real geopolitical anxieties about Russia, China and US withdrawal from international institutions.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-262">Citations (1) ▾</button>
+        <div class="section-body" id="body-262">
+          <p class="comparison-text">Süddeutsche Zeitung praises a theatrical experiment imagining Switzerland joining a fictional international democracy alliance as an engaging, thought-provoking way to explore real geopolitical anxieties about Russia, China and US withdrawal from international institutions.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-262" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-262">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-262" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 10</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-263" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-263">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Aldi as a German Cultural Export to America</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Aldi as a German Cultural Export to America</h2>
-        <p class="comparison-text">Süddeutsche Zeitung wryly notes Aldi&#x27;s booming popularity in the US amid Trump&#x27;s failure to control grocery prices, seeing it as a rare instance of German cultural influence flowing into America after decades of one-directional Americanization.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-263">Citations (1) ▾</button>
+        <div class="section-body" id="body-263">
+          <p class="comparison-text">Süddeutsche Zeitung wryly notes Aldi&#x27;s booming popularity in the US amid Trump&#x27;s failure to control grocery prices, seeing it as a rare instance of German cultural influence flowing into America after decades of one-directional Americanization.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-263" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-263">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-263" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 11</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-264" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-264">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Social Media Regulation and Disinformation</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Social Media Regulation and Disinformation</h2>
-        <p class="comparison-text">Süddeutsche Zeitung runs two pieces on this theme: a book review arguing that social media algorithms are eroding the shared factual basis democracy needs and calling for stronger EU regulation, and an analysis of the &#x27;Matryoshka&#x27; disinformation campaign, a suspected Russian operation that hijacked the SZ brand ahead of East German state elections.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-264">Citations (2) ▾</button>
+        <div class="section-body" id="body-264">
+          <p class="comparison-text">Süddeutsche Zeitung runs two pieces on this theme: a book review arguing that social media algorithms are eroding the shared factual basis democracy needs and calling for stronger EU regulation, and an analysis of the &#x27;Matryoshka&#x27; disinformation campaign, a suspected Russian operation that hijacked the SZ brand ahead of East German state elections.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-264" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-264">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-264" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 17 — "Gegen die Macht von Social Media:…"</li>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 19 — "Fake-News-Kampagnen vor Landtagswahlen: Fragen und Antworten…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-265" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-265">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">German Tabloid Journalism Practices</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">German Tabloid Journalism Practices</h2>
-        <p class="comparison-text">Süddeutsche Zeitung criticizes the tabloid magazine Bunte for a business model of publishing fabricated interviews and only redacting them after legal warnings, since doing so remains financially profitable.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-265">Citations (1) ▾</button>
+        <div class="section-body" id="body-265">
+          <p class="comparison-text">Süddeutsche Zeitung criticizes the tabloid magazine Bunte for a business model of publishing fabricated interviews and only redacting them after legal warnings, since doing so remains financially profitable.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-265" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-265">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-265" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 19</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-266" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-266">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">NATO&#x27;s Eastern Border Security Cooperation</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">NATO&#x27;s Eastern Border Security Cooperation</h2>
-        <p class="comparison-text">Süddeutsche Zeitung portrays German-Polish military cooperation reinforcing NATO&#x27;s border against Russia as both a practical defense measure and a symbolically significant sign of alliance unity, despite Polish right-wing rhetoric portraying Germany as an adversary.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-266">Citations (1) ▾</button>
+        <div class="section-body" id="body-266">
+          <p class="comparison-text">Süddeutsche Zeitung portrays German-Polish military cooperation reinforcing NATO&#x27;s border against Russia as both a practical defense measure and a symbolically significant sign of alliance unity, despite Polish right-wing rhetoric portraying Germany as an adversary.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-266" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-266">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-266" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Aug 24, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-267" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-267">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Hungary and the European Union</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Hungary and the European Union</h2>
-        <p class="comparison-text">The Guardian praises Hungarian PM Péter Magyar&#x27;s rapid dismantling of Viktor Orbán&#x27;s corrupt system, calling on the EU to reward this progress by releasing frozen funds.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-267">Citations (1) ▾</button>
+        <div class="section-body" id="body-267">
+          <p class="comparison-text">The Guardian praises Hungarian PM Péter Magyar&#x27;s rapid dismantling of Viktor Orbán&#x27;s corrupt system, calling on the EU to reward this progress by releasing frozen funds.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-267" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-267">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-267" hidden>
             <ul>
             <li>The Guardian, Aug 24, 2026, p. 46</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
   </main>
   <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
     document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
@@ -1053,6 +1595,12 @@
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
           popup.hidden = true;
         });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
       }
     });
   </script>

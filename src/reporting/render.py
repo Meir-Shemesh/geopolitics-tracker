@@ -244,14 +244,15 @@ def _build_citations_html(citations: list, lang: str, section_id: int) -> str:
     popup_id = f"citations-{section_id}"
     items_html = "\n".join(lines)
     return f"""
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="{popup_id}">{esc(toggle_label)} ({len(citations)}) ▾</button>
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="{popup_id}">
+            {esc(toggle_label)} ({len(citations)})
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="{popup_id}" hidden>
             <ul>
 {items_html}
             </ul>
-          </div>
-        </div>"""
+          </div>"""
 
 
 def _render_section(section: dict, lang: str, show_sources: bool) -> str:
@@ -261,6 +262,16 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
 
     source_count, language_count = section_coverage(section["newspapers"])
     badge_label = _coverage_badge_label(source_count, language_count, lang)
+    # Subtle size/width bump for wide-reach topics only - not a hard cutoff for
+    # a single metric, since either a high source_count (many outlets, even if
+    # same language) or a high language_count (cross-border by definition,
+    # even with few outlets) independently signals real geopolitical weight.
+    prominent = source_count >= 3 or language_count >= 2
+    section_class = "topic-section topic-section--prominent" if prominent else "topic-section"
+
+    section_id = section["id"]
+    anchor = f"section-{section_id}"
+    body_id = f"body-{section_id}"
 
     sources_html = ""
     if show_sources and section["newspapers"]:
@@ -268,23 +279,60 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
         sources_label = "מקורות" if lang == "he" else "Sources"
         sources_html = f'<p class="section-sources">{sources_label}: <b>{names}</b></p>'
 
-    citations_html = _build_citations_html(section["citations"], lang, section["id"])
+    citations_html = _build_citations_html(section["citations"], lang, section_id)
+
+    share_label = "🔗 העתק קישור" if lang == "he" else "🔗 Copy link"
+    copied_label = "הועתק!" if lang == "he" else "Copied!"
+    share_html = (
+        f'<button class="share-link-btn" type="button" data-anchor="{anchor}" '
+        f'data-copied-label="{esc(copied_label)}">{esc(share_label)}</button>'
+    )
 
     return f"""
-      <section class="topic-section" id="section-{section['id']}" data-category="{esc(section['category'])}">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">{esc(label)}</span>
-          <span class="coverage-badge">{esc(badge_label)}</span>
+      <section class="{section_class}" id="{anchor}" data-category="{esc(section['category'])}">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="{body_id}">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">{esc(label)}</span>
+            <span class="coverage-badge">{esc(badge_label)}</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">{esc(topic)}</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">{esc(topic)}</h2>
-        <p class="comparison-text">{esc(text)}</p>
-        {sources_html}
-        {citations_html}
+        <div class="section-body" id="{body_id}">
+          <p class="comparison-text">{esc(text)}</p>
+          {sources_html}
+          <div class="section-actions">
+            {share_html}
+            {citations_html}
+          </div>
+        </div>
       </section>"""
 
 
-def build_report_html(report_date: str, sources: list[str], sections: list[dict], lang: str) -> str:
+def _build_category_nav_html(category_nav: list[tuple[str, int]], lang: str) -> str:
+    links = "".join(
+        f'<a class="category-nav-link" href="#section-{section_id}">'
+        f'{esc(CATEGORY_LABELS.get(cat, CATEGORY_LABELS[FALLBACK_CATEGORY])[lang])}</a>'
+        for cat, section_id in category_nav
+    )
+    toggle_all_label = "הרחב הכל / כווץ הכל" if lang == "he" else "Expand all / Collapse all"
+    return f"""
+  <nav class="category-nav">
+    <div class="category-nav-links">{links}</div>
+    <button class="toggle-all-btn" type="button">{esc(toggle_all_label)}</button>
+  </nav>"""
+
+
+def build_report_html(
+    report_date: str,
+    sources: list[str],
+    sections: list[dict],
+    lang: str,
+    category_nav: list[tuple[str, int]],
+) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
 
@@ -386,6 +434,59 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     text-decoration: underline;
   }}
 
+  .category-nav {{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }}
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {{
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }}
+  .category-nav-link {{
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }}
+  .category-nav-link:hover {{ color: var(--masthead-accent); border-color: var(--masthead-accent); }}
+  .toggle-all-btn {{
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }}
+  .toggle-all-btn:hover {{ color: var(--masthead-accent); border-color: var(--masthead-accent); }}
+
   .masthead {{
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -430,6 +531,20 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }}
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {{
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }}
+  .topic-section--prominent .section-title {{ font-size: 1.45rem; }}
+
+  .section-header {{ cursor: pointer; }}
+  .section-header:hover .section-title {{ color: var(--masthead-accent); }}
   .topic-meta {{ display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }}
   .category-dot {{ width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }}
   .category-label {{
@@ -442,7 +557,26 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     border-radius: 999px;
   }}
   .coverage-badge {{ font-size: .72rem; color: var(--text-muted); }}
-  .section-title {{ margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }}
+  .section-title-row {{ display: flex; align-items: center; justify-content: space-between; gap: .75rem; }}
+  .section-title {{ margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }}
+  .expand-chevron {{
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }}
+  .section-header:hover .expand-chevron {{ background: var(--pill-bg); }}
+  .section-header[aria-expanded="false"] .expand-chevron {{ transform: rotate(0deg); }}
+  .section-body {{ margin-top: .75rem; }}
   .comparison-text {{ margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }}
   .section-sources {{
     margin: 0;
@@ -453,20 +587,49 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
   }}
   .section-sources b {{ color: var(--text); font-weight: 600; }}
 
-  .citations-row {{ position: relative; margin-top: .6rem; }}
-  .citations-toggle {{
+  .section-actions {{ position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }}
+  .share-link-btn {{
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }}
-  .citations-toggle:hover {{ color: var(--masthead-accent); }}
+  .share-link-btn:hover {{ background: var(--pill-bg); color: var(--masthead-accent); }}
+  .citations-toggle {{
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }}
+  .citations-toggle:hover {{ background: var(--pill-bg); color: var(--masthead-accent); }}
+  .chevron-circle {{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }}
+  .citations-toggle[aria-expanded="true"] .chevron-circle {{ transform: rotate(180deg); }}
   .citations-popup {{
     position: absolute;
     top: 100%;
@@ -511,12 +674,20 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
     }}
     body {{ background: #fff; }}
     .top-nav {{ display: none; }}
-    .citations-row {{ display: none; }}
+    .category-nav {{ display: none; }}
+    .section-actions {{ display: none; }}
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] {{ display: block !important; }}
+    .expand-chevron {{ display: none; }}
+    .section-header {{ cursor: default; }}
   }}
 </style>
 </head>
 <body>
 {build_nav_html("archive.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang, f"report_{report_date}_{lang}.pdf")}
+{_build_category_nav_html(category_nav, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
@@ -531,7 +702,48 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
 {sections_html}
   </main>
   <script>
+    function toggleSection(header) {{
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }}
+
     document.addEventListener('click', function (e) {{
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {{
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {{
+          if (!shareBtn.dataset.original) {{ shareBtn.dataset.original = shareBtn.textContent; }}
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {{
+            shareBtn.textContent = shareBtn.dataset.original;
+          }}, 1600);
+        }});
+        return;
+      }}
+
+      var header = e.target.closest('.section-header');
+      if (header) {{
+        toggleSection(header);
+        return;
+      }}
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {{
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {{
+          return h.getAttribute('aria-expanded') === 'false';
+        }});
+        headers.forEach(function (h) {{
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        }});
+        return;
+      }}
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {{
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {{
@@ -552,6 +764,12 @@ def build_report_html(report_date: str, sources: list[str], sections: list[dict]
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {{
           popup.hidden = true;
         }});
+        return;
+      }}
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {{
+        e.preventDefault();
+        toggleSection(header);
       }}
     }});
   </script>
@@ -609,8 +827,21 @@ def render_report(conn, report_date: str) -> None:
     main_count = sum(1 for s in sections if s["category"] != FALLBACK_CATEGORY)
     fallback_count = len(sections) - main_count
 
+    # Sticky-nav jump targets: one per category actually present that day (not
+    # a fixed list of 8), each pointing at that category's first section in
+    # the coverage-sorted order above - so jumping there lands on exactly what
+    # the reader would scroll to anyway. Nav item order itself follows
+    # CATEGORY_LABELS' fixed key order (stable day-to-day), independent of
+    # where each category's content happens to land in the sorted report.
+    first_id_for_category: dict[str, int] = {}
+    for s in sections:
+        first_id_for_category.setdefault(s["category"], s["id"])
+    category_nav = [
+        (cat, first_id_for_category[cat]) for cat in CATEGORY_LABELS if cat in first_id_for_category
+    ]
+
     for lang in ("he", "en"):
-        html_str = build_report_html(report_date, sources, sections, lang)
+        html_str = build_report_html(report_date, sources, sections, lang, category_nav)
 
         out_dir = REPORTS_DIR / lang
         out_dir.mkdir(parents=True, exist_ok=True)

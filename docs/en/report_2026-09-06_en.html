@@ -153,6 +153,59 @@
     text-decoration: underline;
   }
 
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
   .masthead {
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -197,6 +250,20 @@
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
   .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -209,7 +276,26 @@
     border-radius: 999px;
   }
   .coverage-badge { font-size: .72rem; color: var(--text-muted); }
-  .section-title { margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
   .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
   .section-sources {
     margin: 0;
@@ -220,20 +306,49 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
-  .citations-row { position: relative; margin-top: .6rem; }
-  .citations-toggle {
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }
-  .citations-toggle:hover { color: var(--masthead-accent); }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
   .citations-popup {
     position: absolute;
     top: 100%;
@@ -278,7 +393,14 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
-    .citations-row { display: none; }
+    .category-nav { display: none; }
+    .section-actions { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
   }
 </style>
 </head>
@@ -291,6 +413,11 @@
       <a class="top-nav-link" href="../he/report_2026-09-06_he.html">עברית</a>
       <a class="top-nav-link" href="report_2026-09-06_en.pdf">⬇ Download PDF</a>
     </div>
+  </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-1253">Security &amp; Conflict</a><a class="category-nav-link" href="#section-1259">Diplomacy &amp; International Relations</a><a class="category-nav-link" href="#section-1248">Trade &amp; Economics</a><a class="category-nav-link" href="#section-1252">Domestic Politics</a><a class="category-nav-link" href="#section-1250">Migration &amp; Society</a><a class="category-nav-link" href="#section-1249">Society &amp; Culture</a><a class="category-nav-link" href="#section-1258">Energy &amp; Environment</a></div>
+    <button class="toggle-all-btn" type="button">Expand all / Collapse all</button>
   </nav>
   <header class="masthead">
     <div class="masthead-inner">
@@ -305,38 +432,59 @@
   <main class="report-body">
 
       <section class="topic-section" id="section-1259" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1259">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Israel-Palestine: soft power and settler violence</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Israel-Palestine: soft power and settler violence</h2>
-        <p class="comparison-text">The two pieces address entirely different facets of Israel&#x27;s international image, each from its own angle. The Daily Telegraph focuses on the soft-power dimension, praising the television series &quot;Fauda&quot; as an effective &quot;weapon&quot; against rising global anti-Zionism, arguing it humanizes both Israelis and Palestinians and functions as cultural diplomacy that resonates internationally despite boycott campaigns. The Los Angeles Times, by contrast, strikes a far darker and more concrete note: it reports that U.S. Ambassador Mike Huckabee - a figure generally supportive of Israel - explicitly labeled West Bank settler violence &quot;terrorism&quot; rather than mere criminality, citing attacks on Palestinian Americans and the broader international consensus that the settlements themselves are illegal. The contrast is stark: where the Telegraph celebrates Israel&#x27;s soft-power successes in culture and media, the Los Angeles Times shows that on the ground, even close allies find it hard to ignore or downplay settler violence, condemning it in unusually forceful terms.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1259">Citations (2) ▾</button>
+        <div class="section-body" id="body-1259">
+          <p class="comparison-text">The two pieces address entirely different facets of Israel&#x27;s international image, each from its own angle. The Daily Telegraph focuses on the soft-power dimension, praising the television series &quot;Fauda&quot; as an effective &quot;weapon&quot; against rising global anti-Zionism, arguing it humanizes both Israelis and Palestinians and functions as cultural diplomacy that resonates internationally despite boycott campaigns. The Los Angeles Times, by contrast, strikes a far darker and more concrete note: it reports that U.S. Ambassador Mike Huckabee - a figure generally supportive of Israel - explicitly labeled West Bank settler violence &quot;terrorism&quot; rather than mere criminality, citing attacks on Palestinian Americans and the broader international consensus that the settlements themselves are illegal. The contrast is stark: where the Telegraph celebrates Israel&#x27;s soft-power successes in culture and media, the Los Angeles Times shows that on the ground, even close allies find it hard to ignore or downplay settler violence, condemning it in unusually forceful terms.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1259" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1259">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1259" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 19</li>
             <li>Los Angeles Times, Sep 6, 2026, p. 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1248" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1248">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK fiscal crisis, debt and taxation</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK fiscal crisis, debt and taxation</h2>
-        <p class="comparison-text">All seven articles on this topic come from the Daily Telegraph alone, forming a unified chorus that attacks the Labour government&#x27;s fiscal policy from several complementary angles. Some pieces center on warnings from economists and market voices - Arthur Laffer argues Britain is &quot;taxing itself to death&quot; and needs tax cuts on work rather than further rises, while another article cites bond-market experts warning that Britain is paying a &quot;credibility premium&quot; as investors lose faith in its fiscal management. Other pieces take a more ideological-commentary angle: one attacks Andy Burnham and Labour&#x27;s left wing for refusing to confront fiscal reality while praising Reform UK and Conservative plans for spending and tax cuts; another, by Daniel Hannan, frames the national debt as Britain&#x27;s foremost strategic weakness, eroding its military and diplomatic standing before rivals; and two further pieces analyze the &quot;high-debt, high-tax, low-growth doom loop,&quot; warning that without curbing public spending Britain risks tipping into a full-blown debt crisis. Despite the range of authors and framings - economic, market-based, ideological, and geopolitical - all the articles share a common frame: blaming excessive government spending and tax increases, consistently calling for cuts and fiscal discipline, and sharply criticizing any inclination within government or Labour&#x27;s ranks to favor further state intervention over debt reduction.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1248">Citations (7) ▾</button>
+        <div class="section-body" id="body-1248">
+          <p class="comparison-text">All seven articles on this topic come from the Daily Telegraph alone, forming a unified chorus that attacks the Labour government&#x27;s fiscal policy from several complementary angles. Some pieces center on warnings from economists and market voices - Arthur Laffer argues Britain is &quot;taxing itself to death&quot; and needs tax cuts on work rather than further rises, while another article cites bond-market experts warning that Britain is paying a &quot;credibility premium&quot; as investors lose faith in its fiscal management. Other pieces take a more ideological-commentary angle: one attacks Andy Burnham and Labour&#x27;s left wing for refusing to confront fiscal reality while praising Reform UK and Conservative plans for spending and tax cuts; another, by Daniel Hannan, frames the national debt as Britain&#x27;s foremost strategic weakness, eroding its military and diplomatic standing before rivals; and two further pieces analyze the &quot;high-debt, high-tax, low-growth doom loop,&quot; warning that without curbing public spending Britain risks tipping into a full-blown debt crisis. Despite the range of authors and framings - economic, market-based, ideological, and geopolitical - all the articles share a common frame: blaming excessive government spending and tax increases, consistently calling for cuts and fiscal discipline, and sharply criticizing any inclination within government or Labour&#x27;s ranks to favor further state intervention over debt reduction.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1248" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1248">
+            Citations (7)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1248" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 1 — "Britain is &#x27;taxing itself to death&#x27;…"</li>
@@ -348,314 +496,521 @@
             <li>The Daily Telegraph, Sep 6, 2026, p. 27 — "Britain must slash taxes on work,…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1249" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1249">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UN&#x27;s new Equal Earth map vs Mercator projection</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UN&#x27;s new Equal Earth map vs Mercator projection</h2>
-        <p class="comparison-text">Only The Daily Telegraph covers the UN&#x27;s adoption of the Equal Earth map in place of the traditional Mercator projection. The article frames the move as a symbolic reckoning with the historical distortion that visually shrank Africa and the Global South on conventional maps, citing the claim that &quot;a map is never neutral&quot; and shapes perceptions of where peoples and continents stand in the world. It also notes US opposition to the change, characterizing it as ideologically driven, but since no other source reports on this story, there is no basis for comparing differing angles or emphases across the press.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1249">Citations (1) ▾</button>
+        <div class="section-body" id="body-1249">
+          <p class="comparison-text">Only The Daily Telegraph covers the UN&#x27;s adoption of the Equal Earth map in place of the traditional Mercator projection. The article frames the move as a symbolic reckoning with the historical distortion that visually shrank Africa and the Global South on conventional maps, citing the claim that &quot;a map is never neutral&quot; and shapes perceptions of where peoples and continents stand in the world. It also notes US opposition to the change, characterizing it as ideologically driven, but since no other source reports on this story, there is no basis for comparing differing angles or emphases across the press.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1249" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1249">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1249" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 8</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1250" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1250">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK immigration protests and policing</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK immigration protests and policing</h2>
-        <p class="comparison-text">Only one article addresses this topic, from The Daily Telegraph, so there is no cross-source comparison to draw, only its own framing to note. The Daily Telegraph condemns masked anti-migrant protesters blocking Dover port as unacceptable, but simultaneously criticizes the police for applying a double standard, arguing that while authorities acted forcefully against the anti-immigration protesters, they had for weeks allowed large pro-Palestinian marches featuring what it calls &quot;genocidal calls for the destruction of Israel&quot; to intimidate Jewish communities and disrupt public life. The piece calls for consistent enforcement against disruptive protest regardless of the protesters&#x27; politics.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1250">Citations (1) ▾</button>
+        <div class="section-body" id="body-1250">
+          <p class="comparison-text">Only one article addresses this topic, from The Daily Telegraph, so there is no cross-source comparison to draw, only its own framing to note. The Daily Telegraph condemns masked anti-migrant protesters blocking Dover port as unacceptable, but simultaneously criticizes the police for applying a double standard, arguing that while authorities acted forcefully against the anti-immigration protesters, they had for weeks allowed large pro-Palestinian marches featuring what it calls &quot;genocidal calls for the destruction of Israel&quot; to intimidate Jewish communities and disrupt public life. The piece calls for consistent enforcement against disruptive protest regardless of the protesters&#x27; politics.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1250" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1250">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1250" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1251" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1251">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK-Israel relations and sanctions policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK-Israel relations and sanctions policy</h2>
-        <p class="comparison-text">As this topic is covered by a single source, no cross-source comparison is possible. The Daily Telegraph frames the issue critically toward the Labour government, giving voice to the shadow foreign secretary, who argues that Labour&#x27;s plan to sanction Israel over West Bank settlements risks damaging vital intelligence-sharing cooperation with Israel, undermining British counter-terrorism efforts, and needlessly provoking tension with the United States. The article casts the policy primarily as a threat to UK national security rather than as a matter of foreign policy or human rights, reflecting the paper&#x27;s broader critical stance toward Labour&#x27;s approach to Israel.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1251">Citations (1) ▾</button>
+        <div class="section-body" id="body-1251">
+          <p class="comparison-text">As this topic is covered by a single source, no cross-source comparison is possible. The Daily Telegraph frames the issue critically toward the Labour government, giving voice to the shadow foreign secretary, who argues that Labour&#x27;s plan to sanction Israel over West Bank settlements risks damaging vital intelligence-sharing cooperation with Israel, undermining British counter-terrorism efforts, and needlessly provoking tension with the United States. The article casts the policy primarily as a threat to UK national security rather than as a matter of foreign policy or human rights, reflecting the paper&#x27;s broader critical stance toward Labour&#x27;s approach to Israel.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1251" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1251">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1251" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1252" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1252">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Germany&#x27;s citizenship reform amid AfD rise</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Germany&#x27;s citizenship reform amid AfD rise</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, The Daily Telegraph, so there is no cross-source comparison, only one outlet&#x27;s framing. The article presents Merz&#x27;s push to tighten citizenship rules - ending dual nationality, raising language requirements and demanding financial self-sufficiency - as a deliberate political strategy to blunt the AfD&#x27;s rising support, quoting CDU parliamentarian Krings&#x27; argument that current rules are too lax and allow a &quot;parallel society&quot; to persist. No opposition or migrant-advocacy voices are cited, so the piece largely channels the perspective of the Merz government itself.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1252">Citations (1) ▾</button>
+        <div class="section-body" id="body-1252">
+          <p class="comparison-text">Coverage of this topic comes from a single source, The Daily Telegraph, so there is no cross-source comparison, only one outlet&#x27;s framing. The article presents Merz&#x27;s push to tighten citizenship rules - ending dual nationality, raising language requirements and demanding financial self-sufficiency - as a deliberate political strategy to blunt the AfD&#x27;s rising support, quoting CDU parliamentarian Krings&#x27; argument that current rules are too lax and allow a &quot;parallel society&quot; to persist. No opposition or migrant-advocacy voices are cited, so the piece largely channels the perspective of the Merz government itself.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1252" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1252">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1252" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1253" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1253">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Falklands/Argentina dispute</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Falklands/Argentina dispute</h2>
-        <p class="comparison-text">Coverage of this topic comes exclusively from The Daily Telegraph, but the two pieces approach it from distinct angles. Tugendhat&#x27;s opinion piece frames the issue in strategic-political terms, arguing that weakness invites aggression and that Britain must therefore take a firm stand against Argentina - including blocking its bid to join the CPTPP trade pact - as an example of resisting &quot;bullies&quot; more broadly, explicitly linking the Falklands dispute to Britain&#x27;s posture toward China. Page&#x27;s piece, by contrast, offers a narrower military-technical assessment, concluding on a more reassuring note: although Britain&#x27;s capacity to defend the Falklands has eroded sharply since 1982, Argentina&#x27;s forces have deteriorated even more, making a renewed invasion a highly risky gamble for Buenos Aires. Where the first article calls for assertive policy driven by a principled fear of repeating past weakness, the second offers practical reassurance grounded in an assessment of the actual military balance.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1253">Citations (2) ▾</button>
+        <div class="section-body" id="body-1253">
+          <p class="comparison-text">Coverage of this topic comes exclusively from The Daily Telegraph, but the two pieces approach it from distinct angles. Tugendhat&#x27;s opinion piece frames the issue in strategic-political terms, arguing that weakness invites aggression and that Britain must therefore take a firm stand against Argentina - including blocking its bid to join the CPTPP trade pact - as an example of resisting &quot;bullies&quot; more broadly, explicitly linking the Falklands dispute to Britain&#x27;s posture toward China. Page&#x27;s piece, by contrast, offers a narrower military-technical assessment, concluding on a more reassuring note: although Britain&#x27;s capacity to defend the Falklands has eroded sharply since 1982, Argentina&#x27;s forces have deteriorated even more, making a renewed invasion a highly risky gamble for Buenos Aires. Where the first article calls for assertive policy driven by a principled fear of repeating past weakness, the second offers practical reassurance grounded in an assessment of the actual military balance.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1253" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1253">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1253" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 8 — "Britain must deter bullies with a…"</li>
             <li>The Daily Telegraph, Sep 6, 2026, p. 18 — "Luckily for Britain, Argentina&#x27;s military is…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1254" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1254">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK domestic politics, Reform Party and Farage</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK domestic politics, Reform Party and Farage</h2>
-        <p class="comparison-text">Both pieces appear in The Daily Telegraph, yet they offer starkly opposing takes on Nigel Farage and Reform UK. The first is written by Farage himself, presenting his own hundred-day plan - cutting foreign aid and stopping migrant boats through a pact with France&#x27;s National Rally - as the only credible route to saving Britain, framed against what he calls Labour&#x27;s ineffective incrementalism. The second, a commentary piece by Frayne, turns the lens inward on the party&#x27;s troubles, arguing that the donations scandal has fatally damaged Farage&#x27;s reputation for honesty and that Reform must purge its amateurish inner circle in favour of serious policy figures like Robert Jenrick, effectively declaring an end to &quot;the Farage we knew.&quot; The contrast is between Farage&#x27;s own confident, combative self-promotion and a sharply critical internal Telegraph voice questioning his leadership&#x27;s credibility.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1254">Citations (2) ▾</button>
+        <div class="section-body" id="body-1254">
+          <p class="comparison-text">Both pieces appear in The Daily Telegraph, yet they offer starkly opposing takes on Nigel Farage and Reform UK. The first is written by Farage himself, presenting his own hundred-day plan - cutting foreign aid and stopping migrant boats through a pact with France&#x27;s National Rally - as the only credible route to saving Britain, framed against what he calls Labour&#x27;s ineffective incrementalism. The second, a commentary piece by Frayne, turns the lens inward on the party&#x27;s troubles, arguing that the donations scandal has fatally damaged Farage&#x27;s reputation for honesty and that Reform must purge its amateurish inner circle in favour of serious policy figures like Robert Jenrick, effectively declaring an end to &quot;the Farage we knew.&quot; The contrast is between Farage&#x27;s own confident, combative self-promotion and a sharply critical internal Telegraph voice questioning his leadership&#x27;s credibility.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1254" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1254">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1254" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 4 — "Only Reform can save Britain –…"</li>
             <li>The Daily Telegraph, Sep 6, 2026, p. 18 — "This donations crisis is extremely serious…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1255" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1255">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK food shortages and Ukraine war grain impact</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK food shortages and Ukraine war grain impact</h2>
-        <p class="comparison-text">This topic is covered by a single source, The Daily Telegraph, so there is no cross-source comparison of differing angles. The article frames the issue primarily as a domestic British concern, warning that droughts combined with Russia&#x27;s ongoing war in Ukraine - which disrupts one of the world&#x27;s key grain-producing regions - point to a grim outlook for UK bread prices. The piece also takes the opportunity to criticize domestic policy, blaming the covering of farmland with solar panels for compounding the food supply problem rather than helping address it.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1255">Citations (1) ▾</button>
+        <div class="section-body" id="body-1255">
+          <p class="comparison-text">This topic is covered by a single source, The Daily Telegraph, so there is no cross-source comparison of differing angles. The article frames the issue primarily as a domestic British concern, warning that droughts combined with Russia&#x27;s ongoing war in Ukraine - which disrupts one of the world&#x27;s key grain-producing regions - point to a grim outlook for UK bread prices. The piece also takes the opportunity to criticize domestic policy, blaming the covering of farmland with solar panels for compounding the food supply problem rather than helping address it.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1255" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1255">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1255" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1256" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1256">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Volkswagen and German/European auto industry</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Volkswagen and German/European auto industry</h2>
-        <p class="comparison-text">Only The Daily Telegraph covers this topic, so there is no cross-source comparison, just a single angle. The article strikes a skeptical, cautionary tone: while markets reacted positively to Volkswagen&#x27;s plan to cut 100,000 jobs, the author argues this does not address the company&#x27;s deeper structural problems - Germany&#x27;s excessively high energy and labour costs, its lag in electric vehicle development, and relatively closed markets in the US and China. The overall framing pushes back against market optimism, emphasizing that a genuine recovery for Volkswagen remains far off.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1256">Citations (1) ▾</button>
+        <div class="section-body" id="body-1256">
+          <p class="comparison-text">Only The Daily Telegraph covers this topic, so there is no cross-source comparison, just a single angle. The article strikes a skeptical, cautionary tone: while markets reacted positively to Volkswagen&#x27;s plan to cut 100,000 jobs, the author argues this does not address the company&#x27;s deeper structural problems - Germany&#x27;s excessively high energy and labour costs, its lag in electric vehicle development, and relatively closed markets in the US and China. The overall framing pushes back against market optimism, emphasizing that a genuine recovery for Volkswagen remains far off.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1256" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1256">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1256" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 26</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1257" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1257">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US election integrity and election deniers</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US election integrity and election deniers</h2>
-        <p class="comparison-text">Only one source, Los Angeles Times, covers this topic, so no cross-source comparison of differing angles is possible here. The piece takes a clear, alarmed advocacy stance, arguing that Trump&#x27;s continued lies about the 2020 election have spurred a wave of election-denier candidates running for secretary of state offices across the country, and urging voters to reject them in order to safeguard fair elections.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1257">Citations (1) ▾</button>
+        <div class="section-body" id="body-1257">
+          <p class="comparison-text">Only one source, Los Angeles Times, covers this topic, so no cross-source comparison of differing angles is possible here. The piece takes a clear, alarmed advocacy stance, arguing that Trump&#x27;s continued lies about the 2020 election have spurred a wave of election-denier candidates running for secretary of state offices across the country, and urging voters to reject them in order to safeguard fair elections.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1257" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1257">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1257" hidden>
             <ul>
             <li>Los Angeles Times, Sep 6, 2026, p. 2</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1258" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Energy &amp; Environment</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1258">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK energy policy: North Sea gas vs imports</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK energy policy: North Sea gas vs imports</h2>
-        <p class="comparison-text">Both articles come from the Daily Telegraph alone, and together they form a single consistent editorial voice sharply critical of Labour&#x27;s energy policy. The first piece focuses on the economic and investment angle, arguing that the windfall tax has made North Sea gas production more expensive than importing US LNG, calling the policy &quot;totally crazy&quot; for deterring investment and pushing Britain toward greater import dependence. The second piece broadens the same argument into a national energy-security framing, contending that Labour&#x27;s promise to free Britain from reliance on &quot;petrostates and dictators&quot; has collapsed in practice, since the ban on new licences, the windfall tax, and delays in approving fields like Jackdaw and Rosebank are instead deepening the UK&#x27;s dependence on gas imports from authoritarian states. In effect, the two pieces reinforce one continuous narrative - moving from an economic-cost critique to a national-security critique - with no counter-source or opposing perspective represented on this topic.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1258">Citations (2) ▾</button>
+        <div class="section-body" id="body-1258">
+          <p class="comparison-text">Both articles come from the Daily Telegraph alone, and together they form a single consistent editorial voice sharply critical of Labour&#x27;s energy policy. The first piece focuses on the economic and investment angle, arguing that the windfall tax has made North Sea gas production more expensive than importing US LNG, calling the policy &quot;totally crazy&quot; for deterring investment and pushing Britain toward greater import dependence. The second piece broadens the same argument into a national energy-security framing, contending that Labour&#x27;s promise to free Britain from reliance on &quot;petrostates and dictators&quot; has collapsed in practice, since the ban on new licences, the windfall tax, and delays in approving fields like Jackdaw and Rosebank are instead deepening the UK&#x27;s dependence on gas imports from authoritarian states. In effect, the two pieces reinforce one continuous narrative - moving from an economic-cost critique to a national-security critique - with no counter-source or opposing perspective represented on this topic.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1258" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1258">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1258" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 6, 2026, p. 25 — "Tax raids make US gas cheaper…"</li>
             <li>The Daily Telegraph, Sep 6, 2026, p. 29 — "Gas cliff-edge threatens a winter of…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1260" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1260">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-Iran conflict and veteran benefits controversy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US-Iran conflict and veteran benefits controversy</h2>
-        <p class="comparison-text">This topic is covered by a single source. Los Angeles Times offers a human-interest, critical angle, focusing on the bureaucratic fallout from the Trump administration&#x27;s refusal to formally label the conflict with Iran a &quot;war.&quot; The article centers on the story of a widow of a fallen airman who was initially denied benefits and pay adjustments because of this technical, legalistic distinction, implicitly criticizing the gap between the real human cost and the administration&#x27;s semantic hedging. Since no other outlets address this specific story, there is no basis for comparing differing emphases or stances.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1260">Citations (1) ▾</button>
+        <div class="section-body" id="body-1260">
+          <p class="comparison-text">This topic is covered by a single source. Los Angeles Times offers a human-interest, critical angle, focusing on the bureaucratic fallout from the Trump administration&#x27;s refusal to formally label the conflict with Iran a &quot;war.&quot; The article centers on the story of a widow of a fallen airman who was initially denied benefits and pay adjustments because of this technical, legalistic distinction, implicitly criticizing the gap between the real human cost and the administration&#x27;s semantic hedging. Since no other outlets address this specific story, there is no basis for comparing differing emphases or stances.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1260" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1260">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1260" hidden>
             <ul>
             <li>Los Angeles Times, Sep 6, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1261" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1261">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US missile defense stockpile depletion</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US missile defense stockpile depletion</h2>
-        <p class="comparison-text">Only the Los Angeles Times covers this topic, in a piece warning that America&#x27;s stockpile of air-defense interceptors and missiles has been significantly depleted as a result of the conflict with Iran. The article argues this depletion undermines Washington&#x27;s ability to deter China over a potential attack on Taiwan or Russia in Europe, and criticizes the Trump administration for publicly downplaying the severity of the shortage while failing to fund replenishment. With no other outlet addressing the issue, there is no competing angle to contrast it with, but the fact that only one source raises this alarm underscores that it reads as an internally focused, critical American framing of defense policy rather than a story receiving broad international coverage.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1261">Citations (1) ▾</button>
+        <div class="section-body" id="body-1261">
+          <p class="comparison-text">Only the Los Angeles Times covers this topic, in a piece warning that America&#x27;s stockpile of air-defense interceptors and missiles has been significantly depleted as a result of the conflict with Iran. The article argues this depletion undermines Washington&#x27;s ability to deter China over a potential attack on Taiwan or Russia in Europe, and criticizes the Trump administration for publicly downplaying the severity of the shortage while failing to fund replenishment. With no other outlet addressing the issue, there is no competing angle to contrast it with, but the fact that only one source raises this alarm underscores that it reads as an internally focused, critical American framing of defense policy rather than a story receiving broad international coverage.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1261" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1261">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1261" hidden>
             <ul>
             <li>Los Angeles Times, Sep 6, 2026, p. 5</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1262" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1262">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Gloria Steinem&#x27;s feminist legacy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Gloria Steinem&#x27;s feminist legacy</h2>
-        <p class="comparison-text">This topic is covered by a single source. Los Angeles Times runs a celebratory tribute to Gloria Steinem, praising her feminist legacy and framing her as someone who made the world a genuinely better, kinder place for women. With no other outlets addressing the subject, there is no competing or contrasting angle to compare - just this one appreciative, commemorative voice.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1262">Citations (1) ▾</button>
+        <div class="section-body" id="body-1262">
+          <p class="comparison-text">This topic is covered by a single source. Los Angeles Times runs a celebratory tribute to Gloria Steinem, praising her feminist legacy and framing her as someone who made the world a genuinely better, kinder place for women. With no other outlets addressing the subject, there is no competing or contrasting angle to compare - just this one appreciative, commemorative voice.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1262" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1262">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1262" hidden>
             <ul>
             <li>Los Angeles Times, Sep 6, 2026, p. 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1263" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Energy &amp; Environment</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1263">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Great Barrier Reef environmental reporting</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Great Barrier Reef environmental reporting</h2>
-        <p class="comparison-text">This topic is covered by a single source: the Los Angeles Times takes a notably contrarian angle, arguing that Australian officials and media have for years wrongly forecast the collapse of the Great Barrier Reef for political and funding-related reasons, while actual data show record-high coral cover and ecological resilience unconnected to government spending. Since no other outlets cover this story, there is no cross-source disagreement or differing emphasis to compare - the perspective presented is that of one publication pushing back against the prevailing narrative about the reef&#x27;s fate.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1263">Citations (1) ▾</button>
+        <div class="section-body" id="body-1263">
+          <p class="comparison-text">This topic is covered by a single source: the Los Angeles Times takes a notably contrarian angle, arguing that Australian officials and media have for years wrongly forecast the collapse of the Great Barrier Reef for political and funding-related reasons, while actual data show record-high coral cover and ecological resilience unconnected to government spending. Since no other outlets cover this story, there is no cross-source disagreement or differing emphasis to compare - the perspective presented is that of one publication pushing back against the prevailing narrative about the reef&#x27;s fate.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1263" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1263">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1263" hidden>
             <ul>
             <li>Los Angeles Times, Sep 6, 2026, p. 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1264" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1264">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US trade policy and tariffs with Canada</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US trade policy and tariffs with Canada</h2>
-        <p class="comparison-text">This topic is covered by a single source, Los Angeles Times, in an opinion piece arguing that Trump&#x27;s tariffs, including those on Canadian goods such as lumber, are driving up consumer prices and undermining the administration&#x27;s own affordability agenda. The author highlights what she sees as an internal contradiction in policy - the administration lowered beef tariffs to bring down prices while keeping tariffs on Canada that make goods like housing more expensive - and concludes that the logical solution is to remove the tariffs altogether. With no other outlets addressing this topic, there is no basis for comparing differing angles or emphases across sources.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1264">Citations (1) ▾</button>
+        <div class="section-body" id="body-1264">
+          <p class="comparison-text">This topic is covered by a single source, Los Angeles Times, in an opinion piece arguing that Trump&#x27;s tariffs, including those on Canadian goods such as lumber, are driving up consumer prices and undermining the administration&#x27;s own affordability agenda. The author highlights what she sees as an internal contradiction in policy - the administration lowered beef tariffs to bring down prices while keeping tariffs on Canada that make goods like housing more expensive - and concludes that the logical solution is to remove the tariffs altogether. With no other outlets addressing this topic, there is no basis for comparing differing angles or emphases across sources.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1264" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1264">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1264" hidden>
             <ul>
             <li>Los Angeles Times, Sep 6, 2026, p. 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
   </main>
   <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
     document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
@@ -676,6 +1031,12 @@
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
           popup.hidden = true;
         });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
       }
     });
   </script>

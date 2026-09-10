@@ -153,6 +153,59 @@
     text-decoration: underline;
   }
 
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
   .masthead {
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -197,6 +250,20 @@
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
   .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -209,7 +276,26 @@
     border-radius: 999px;
   }
   .coverage-badge { font-size: .72rem; color: var(--text-muted); }
-  .section-title { margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
   .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
   .section-sources {
     margin: 0;
@@ -220,20 +306,49 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
-  .citations-row { position: relative; margin-top: .6rem; }
-  .citations-toggle {
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }
-  .citations-toggle:hover { color: var(--masthead-accent); }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
   .citations-popup {
     position: absolute;
     top: 100%;
@@ -278,7 +393,14 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
-    .citations-row { display: none; }
+    .category-nav { display: none; }
+    .section-actions { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
   }
 </style>
 </head>
@@ -291,6 +413,11 @@
       <a class="top-nav-link" href="../he/report_2026-08-23_he.html">עברית</a>
       <a class="top-nav-link" href="report_2026-08-23_en.pdf">⬇ Download PDF</a>
     </div>
+  </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-376">Security &amp; Conflict</a><a class="category-nav-link" href="#section-383">Diplomacy &amp; International Relations</a><a class="category-nav-link" href="#section-378">Trade &amp; Economics</a><a class="category-nav-link" href="#section-382">Domestic Politics</a><a class="category-nav-link" href="#section-381">Migration &amp; Society</a><a class="category-nav-link" href="#section-386">Technology &amp; Media</a><a class="category-nav-link" href="#section-387">Energy &amp; Environment</a><a class="category-nav-link" href="#section-390">Additional Coverage</a></div>
+    <button class="toggle-all-btn" type="button">Expand all / Collapse all</button>
   </nav>
   <header class="masthead">
     <div class="masthead-inner">
@@ -305,178 +432,276 @@
   <main class="report-body">
 
       <section class="topic-section" id="section-376" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-376">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Iranian Cyber Threat to UK Infrastructure</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Iranian Cyber Threat to UK Infrastructure</h2>
-        <p class="comparison-text">The Daily Telegraph runs two connected pieces: a news report detailing the cyberattack that shut down a UK power plant and linking it to a broader Iranian escalation since US-Israeli strikes began, and an opinion piece that uses the same incident to demand a tougher, less complacent British stance toward Tehran.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-376">Citations (2) ▾</button>
+        <div class="section-body" id="body-376">
+          <p class="comparison-text">The Daily Telegraph runs two connected pieces: a news report detailing the cyberattack that shut down a UK power plant and linking it to a broader Iranian escalation since US-Israeli strikes began, and an opinion piece that uses the same incident to demand a tougher, less complacent British stance toward Tehran.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-376" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-376">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-376" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 1 — "Iranian hackers shut UK power plant"</li>
             <li>The Daily Telegraph, Aug 23, 2026, p. 15 — "Britain&#x27;s wake-up call to the Iranian…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-377" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-377">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Fears of Chinese Espionage via Auto Industry</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Fears of Chinese Espionage via Auto Industry</h2>
-        <p class="comparison-text">The Daily Telegraph highlights intelligence-expert warnings that a Chinese-owned automotive site near sensitive UK military testing grounds poses a serious espionage risk, citing Chinese national intelligence law compelling corporate cooperation with the state.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-377">Citations (1) ▾</button>
+        <div class="section-body" id="body-377">
+          <p class="comparison-text">The Daily Telegraph highlights intelligence-expert warnings that a Chinese-owned automotive site near sensitive UK military testing grounds poses a serious espionage risk, citing Chinese national intelligence law compelling corporate cooperation with the state.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-377" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-377">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-377" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 10</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-378" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-378">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Trump&#x27;s Trade War and Canadian Resistance</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Trump&#x27;s Trade War and Canadian Resistance</h2>
-        <p class="comparison-text">The Daily Telegraph frames Mark Carney&#x27;s walkout from trade talks with Trump as a bold model of defiance, arguing European leaders must now choose between emulating Canada&#x27;s resistance or continuing concessions that only embolden Trump.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-378">Citations (1) ▾</button>
+        <div class="section-body" id="body-378">
+          <p class="comparison-text">The Daily Telegraph frames Mark Carney&#x27;s walkout from trade talks with Trump as a bold model of defiance, arguing European leaders must now choose between emulating Canada&#x27;s resistance or continuing concessions that only embolden Trump.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-378" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-378">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-378" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 12</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-379" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-379">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Settler Violence Against Christians and Palestinians in the West Bank</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Settler Violence Against Christians and Palestinians in the West Bank</h2>
-        <p class="comparison-text">The Daily Telegraph documents escalating, largely unpunished settler violence against Palestinian and Christian communities, arguing that &#x27;closed military zone&#x27; orders shield settlers and exclude media, and accusing far-right government ministers of enabling ethnic-cleansing ambitions.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-379">Citations (1) ▾</button>
+        <div class="section-body" id="body-379">
+          <p class="comparison-text">The Daily Telegraph documents escalating, largely unpunished settler violence against Palestinian and Christian communities, arguing that &#x27;closed military zone&#x27; orders shield settlers and exclude media, and accusing far-right government ministers of enabling ethnic-cleansing ambitions.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-379" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-379">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-379" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 13</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-380" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-380">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Women in Combat in Ukraine&#x27;s War Against Russia</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Women in Combat in Ukraine&#x27;s War Against Russia</h2>
-        <p class="comparison-text">The Daily Telegraph argues that Ukraine&#x27;s war effort has proven women equally capable in combat and leadership roles, challenging entrenched sexist stereotypes both in Ukraine and the West.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-380">Citations (1) ▾</button>
+        <div class="section-body" id="body-380">
+          <p class="comparison-text">The Daily Telegraph argues that Ukraine&#x27;s war effort has proven women equally capable in combat and leadership roles, challenging entrenched sexist stereotypes both in Ukraine and the West.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-380" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-380">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-380" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 16</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-381" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-381">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Asylum Policy and the Rwanda Scheme</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK Asylum Policy and the Rwanda Scheme</h2>
-        <p class="comparison-text">The Daily Telegraph contends Britain&#x27;s asylum system is broken and immoral, defends the Rwanda deportation scheme as a reasonable deterrent that Labour wastefully scrapped and is now quietly reviving, and calls for cross-party consensus on stricter immigration laws.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-381">Citations (1) ▾</button>
+        <div class="section-body" id="body-381">
+          <p class="comparison-text">The Daily Telegraph contends Britain&#x27;s asylum system is broken and immoral, defends the Rwanda deportation scheme as a reasonable deterrent that Labour wastefully scrapped and is now quietly reviving, and calls for cross-party consensus on stricter immigration laws.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-381" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-381">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-381" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-382" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-382">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Labour&#x27;s Economic Policy and Business Climate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Labour&#x27;s Economic Policy and Business Climate</h2>
-        <p class="comparison-text">The Daily Telegraph argues that Labour&#x27;s high taxes, employment regulation, net-zero policies and welfare largesse are driving away wealth creators, presenting the Conservatives under Badenoch as the only credible pro-business alternative.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-382">Citations (1) ▾</button>
+        <div class="section-body" id="body-382">
+          <p class="comparison-text">The Daily Telegraph argues that Labour&#x27;s high taxes, employment regulation, net-zero policies and welfare largesse are driving away wealth creators, presenting the Conservatives under Badenoch as the only credible pro-business alternative.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-382" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-382">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-382" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-383" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-383">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Britain&#x27;s Post-Brexit Relationship With the EU</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Britain&#x27;s Post-Brexit Relationship With the EU</h2>
-        <p class="comparison-text">The Daily Telegraph publishes an opinion piece arguing the EU has become dysfunctional and bureaucratic since Brexit, calling on Britain to return and lead a reformed, market-oriented &#x27;New Europe&#x27; alongside rising right-leaning leaders.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-383">Citations (1) ▾</button>
+        <div class="section-body" id="body-383">
+          <p class="comparison-text">The Daily Telegraph publishes an opinion piece arguing the EU has become dysfunctional and bureaucratic since Brexit, calling on Britain to return and lead a reformed, market-oriented &#x27;New Europe&#x27; alongside rising right-leaning leaders.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-383" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-383">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-383" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-384" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-384">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Global Bond Market Crisis and Central Bank Policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Global Bond Market Crisis and Central Bank Policy</h2>
-        <p class="comparison-text">The Daily Telegraph runs three related pieces on the bond crisis: one warns that Trump and Bessent are waging an unwinnable war against bond vigilantes amid ballooning debt in the US, UK, France and Japan; another focuses on Bessent&#x27;s bond-buying tactics as a risky &#x27;financial repression&#x27; gamble reminiscent of banana republics; and a third criticizes the Bank of England&#x27;s quantitative tightening as needlessly costly to taxpayers. Together they paint a consistent picture of alarm over fiscally reckless Western governance.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-384">Citations (3) ▾</button>
+        <div class="section-body" id="body-384">
+          <p class="comparison-text">The Daily Telegraph runs three related pieces on the bond crisis: one warns that Trump and Bessent are waging an unwinnable war against bond vigilantes amid ballooning debt in the US, UK, France and Japan; another focuses on Bessent&#x27;s bond-buying tactics as a risky &#x27;financial repression&#x27; gamble reminiscent of banana republics; and a third criticizes the Bank of England&#x27;s quantitative tightening as needlessly costly to taxpayers. Together they paint a consistent picture of alarm over fiscally reckless Western governance.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-384" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-384">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-384" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 18 — "After Iran, Trump launches another unwinnable…"</li>
@@ -484,151 +709,270 @@
             <li>The Daily Telegraph, Aug 23, 2026, p. 22 — "The Bank of England in a…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-385" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-385">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Welfare Spending and Public Debt Burden</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK Welfare Spending and Public Debt Burden</h2>
-        <p class="comparison-text">The Daily Telegraph warns that Britain&#x27;s spiraling welfare spending and debt-interest payments are alarming the global investors financing UK borrowing, calling for urgent welfare reform along Reform UK lines to avert a 1970s-style fiscal crisis.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-385">Citations (1) ▾</button>
+        <div class="section-body" id="body-385">
+          <p class="comparison-text">The Daily Telegraph warns that Britain&#x27;s spiraling welfare spending and debt-interest payments are alarming the global investors financing UK borrowing, calling for urgent welfare reform along Reform UK lines to avert a 1970s-style fiscal crisis.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-385" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-385">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-385" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 22</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-386" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-386">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Europe&#x27;s Tech and Economic Lag Behind the US</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Europe&#x27;s Tech and Economic Lag Behind the US</h2>
-        <p class="comparison-text">The Daily Telegraph argues that the massive valuations of US tech giants like Anthropic and SpaceX expose how regulation, high taxes, and risk-averse governance have crippled European entrepreneurship, leaving the continent hopelessly behind.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-386">Citations (1) ▾</button>
+        <div class="section-body" id="body-386">
+          <p class="comparison-text">The Daily Telegraph argues that the massive valuations of US tech giants like Anthropic and SpaceX expose how regulation, high taxes, and risk-averse governance have crippled European entrepreneurship, leaving the continent hopelessly behind.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-386" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-386">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-386" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 22</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-387" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Energy &amp; Environment</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-387">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Floating Offshore Wind Policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK Floating Offshore Wind Policy</h2>
-        <p class="comparison-text">The Daily Telegraph critically examines the UK government&#x27;s push for floating offshore wind, noting subsidies three to four times market price that will raise consumer bills while disrupting fishing, shipping and coastal communities, questioning the project&#x27;s economic value.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-387">Citations (1) ▾</button>
+        <div class="section-body" id="body-387">
+          <p class="comparison-text">The Daily Telegraph critically examines the UK government&#x27;s push for floating offshore wind, noting subsidies three to four times market price that will raise consumer bills while disrupting fishing, shipping and coastal communities, questioning the project&#x27;s economic value.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-387" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-387">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-387" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 23</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-388" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-388">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russia&#x27;s Poseidon Torpedo: Threat or Bluff</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Russia&#x27;s Poseidon Torpedo: Threat or Bluff</h2>
-        <p class="comparison-text">The Daily Telegraph presents Russia&#x27;s new nuclear-armed Poseidon torpedo submarine mainly as psychological and diplomatic leverage rather than a genuine strike threat, citing experts who argue Moscow would face devastating retaliation if it ever used the weapon.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-388">Citations (1) ▾</button>
+        <div class="section-body" id="body-388">
+          <p class="comparison-text">The Daily Telegraph presents Russia&#x27;s new nuclear-armed Poseidon torpedo submarine mainly as psychological and diplomatic leverage rather than a genuine strike threat, citing experts who argue Moscow would face devastating retaliation if it ever used the weapon.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-388" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-388">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-388" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 25</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-389" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-389">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Will US Economic Pressure Break Iran</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Will US Economic Pressure Break Iran</h2>
-        <p class="comparison-text">The Daily Telegraph argues that Trump&#x27;s new &#x27;economic D-Day&#x27; campaign against Iran is unlikely to succeed, since Iran&#x27;s regime has weathered severe economic pain before and may read the tactic as a sign Washington has run out of military options.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-389">Citations (1) ▾</button>
+        <div class="section-body" id="body-389">
+          <p class="comparison-text">The Daily Telegraph argues that Trump&#x27;s new &#x27;economic D-Day&#x27; campaign against Iran is unlikely to succeed, since Iran&#x27;s regime has weathered severe economic pain before and may read the tactic as a sign Washington has run out of military options.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-389" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-389">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-389" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 25</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-390" data-category="additional_coverage">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Additional Coverage</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-390">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Language and grammar (non-geopolitical)</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Language and grammar (non-geopolitical)</h2>
-        <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): Not a geopolitical piece; excluded from analysis. Key excerpt: &quot;: }},{},},},style.&quot;</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-390">Citations (1) ▾</button>
+        <div class="section-body" id="body-390">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): Not a geopolitical piece; excluded from analysis. Key excerpt: &quot;: }},{},},},style.&quot;</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-390" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-390">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-390" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 16</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-391" data-category="additional_coverage">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Additional Coverage</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-391">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">And Sino-Ukraine relations / broader</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">And Sino-Ukraine relations / broader</h2>
-        <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The West&#x27;s post-Cold War complacency and social-democinclination weakened defense of free-market capitalism, allowing the Left to claim moral high ground and enabling extremism on both sides; only reviving liberal democracy with genuine free-market capitalism can restore stability. Key excerpt: &quot;The combination of liberal democracy and free-market economics creates the best possible conditions for human beings to flourish.&quot;</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-391">Citations (1) ▾</button>
+        <div class="section-body" id="body-391">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The West&#x27;s post-Cold War complacency and social-democinclination weakened defense of free-market capitalism, allowing the Left to claim moral high ground and enabling extremism on both sides; only reviving liberal democracy with genuine free-market capitalism can restore stability. Key excerpt: &quot;The combination of liberal democracy and free-market economics creates the best possible conditions for human beings to flourish.&quot;</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-391" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-391">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-391" hidden>
             <ul>
             <li>The Daily Telegraph, Aug 23, 2026, p. 16</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
   </main>
   <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
     document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
@@ -649,6 +993,12 @@
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
           popup.hidden = true;
         });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
       }
     });
   </script>

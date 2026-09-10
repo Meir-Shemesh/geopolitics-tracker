@@ -153,6 +153,59 @@
     text-decoration: underline;
   }
 
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
   .masthead {
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -197,6 +250,20 @@
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
   .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -209,7 +276,26 @@
     border-radius: 999px;
   }
   .coverage-badge { font-size: .72rem; color: var(--text-muted); }
-  .section-title { margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
   .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
   .section-sources {
     margin: 0;
@@ -220,20 +306,49 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
-  .citations-row { position: relative; margin-top: .6rem; }
-  .citations-toggle {
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }
-  .citations-toggle:hover { color: var(--masthead-accent); }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
   .citations-popup {
     position: absolute;
     top: 100%;
@@ -278,7 +393,14 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
-    .citations-row { display: none; }
+    .category-nav { display: none; }
+    .section-actions { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
   }
 </style>
 </head>
@@ -291,6 +413,11 @@
       <a class="top-nav-link" href="../en/report_2026-09-06_en.html">English</a>
       <a class="top-nav-link" href="report_2026-09-06_he.pdf">⬇ הורד PDF</a>
     </div>
+  </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-1253">ביטחון וסכסוכים</a><a class="category-nav-link" href="#section-1259">דיפלומטיה ויחסים בינלאומיים</a><a class="category-nav-link" href="#section-1248">כלכלה וסחר</a><a class="category-nav-link" href="#section-1252">פוליטיקה פנימית</a><a class="category-nav-link" href="#section-1250">הגירה וחברה</a><a class="category-nav-link" href="#section-1249">תרבות וזהות</a><a class="category-nav-link" href="#section-1258">אנרגיה וסביבה</a></div>
+    <button class="toggle-all-btn" type="button">הרחב הכל / כווץ הכל</button>
   </nav>
   <header class="masthead">
     <div class="masthead-inner">
@@ -305,38 +432,59 @@
   <main class="report-body">
 
       <section class="topic-section" id="section-1259" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">2 מקורות · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1259">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ישראל-פלסטין: תרבות, תדמית ואלימות מתנחלים</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">ישראל-פלסטין: תרבות, תדמית ואלימות מתנחלים</h2>
-        <p class="comparison-text">שני הסיפורים נוגעים בהיבטים שונים לחלוטין של דימוי ישראל בעולם, וכל אחד מהם מגיע מזווית שונה. The Daily Telegraph מתמקד בממד התרבותי-תדמיתי: הכתבה משבחת את הסדרה &quot;פאודה&quot; כ&quot;נשק&quot; יעיל נגד אנטי-ציונות גוברת, בטענה שהיא מאנישה גם ישראלים וגם פלסטינים ומהווה כלי דיפלומטיה רך המצליח לחלחל לתודעה הבינלאומית חרף קריאות חרם על תוצרת ישראלית. לעומת זאת, הזווית שמעלה Los Angeles Times קודרת ומעשית הרבה יותר - הכתבה מתעדת כיצד השגריר האמריקאי מייק האקבי עצמו, דמות התומכת בישראל, מכנה את אלימות המתנחלים בגדה המערבית &quot;טרור&quot; ולא רק פשע, תוך התייחסות להתקפות על אזרחים אמריקאים-פלסטינים ולעמדה הבינלאומית הרואה בהתנחלויות מעשה בלתי חוקי. כך נוצר ניגוד חד: בעוד הטלגרף עוסק בהצלחות הרכות של ישראל בזירת התרבות והתקשורת, ה-Los Angeles Times חושף כיצד דווקא בזירה המדינית-ביטחונית, אפילו בעלי ברית קרובים מתקשים להתעלם מהאלימות בשטח ומגנים אותה בחריפות.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph, Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1259">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-1259">
+          <p class="comparison-text">שני הסיפורים נוגעים בהיבטים שונים לחלוטין של דימוי ישראל בעולם, וכל אחד מהם מגיע מזווית שונה. The Daily Telegraph מתמקד בממד התרבותי-תדמיתי: הכתבה משבחת את הסדרה &quot;פאודה&quot; כ&quot;נשק&quot; יעיל נגד אנטי-ציונות גוברת, בטענה שהיא מאנישה גם ישראלים וגם פלסטינים ומהווה כלי דיפלומטיה רך המצליח לחלחל לתודעה הבינלאומית חרף קריאות חרם על תוצרת ישראלית. לעומת זאת, הזווית שמעלה Los Angeles Times קודרת ומעשית הרבה יותר - הכתבה מתעדת כיצד השגריר האמריקאי מייק האקבי עצמו, דמות התומכת בישראל, מכנה את אלימות המתנחלים בגדה המערבית &quot;טרור&quot; ולא רק פשע, תוך התייחסות להתקפות על אזרחים אמריקאים-פלסטינים ולעמדה הבינלאומית הרואה בהתנחלויות מעשה בלתי חוקי. כך נוצר ניגוד חד: בעוד הטלגרף עוסק בהצלחות הרכות של ישראל בזירת התרבות והתקשורת, ה-Los Angeles Times חושף כיצד דווקא בזירה המדינית-ביטחונית, אפילו בעלי ברית קרובים מתקשים להתעלם מהאלימות בשטח ומגנים אותה בחריפות.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1259" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1259">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1259" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 19</li>
             <li>Los Angeles Times, 6.9.2026, עמ' 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1248" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1248">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">בריטניה: משבר פיסקלי, חובות ומיסוי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">בריטניה: משבר פיסקלי, חובות ומיסוי</h2>
-        <p class="comparison-text">כל שבע הכתבות בנושא זה מגיעות מה-Daily Telegraph בלבד, ויוצרות מקהלה חד-קולית התוקפת את המדיניות הפיסקלית של ממשלת הלייבור מזוויות משלימות שונות. חלק מהכתבות מתמקדות באזהרות של כלכלנים וגורמים בשווקים - כמו ארתור לאפר, הטוען כי בריטניה &quot;ממסה את עצמה למוות&quot; וזקוקה להורדת מסים על עבודה ולא להעלאתם, וכתבה נוספת המצטטת אזהרות דומות לגבי אובדן אמון המשקיעים באג&quot;ח הבריטי לנוכח &quot;פרמיית סיכון&quot; הנובעת מירידה במהימנות הפיסקלית. כתבות אחרות מציגות זווית אידיאולוגית-פרשנית יותר: אחת תוקפת את אנדי ברנהאם ואת אגף השמאל במפלגת הלייבור על סירובם להתמודד עם המציאות הפיסקלית ומשבחת את תוכניות הקיצוצים של רפורם ושל השמרנים; אחרת, מאת דניאל האנן, מציבה את החוב הלאומי כחולשה אסטרטגית-גיאופוליטית המערערת את מעמדה הצבאי והדיפלומטי של בריטניה מול יריבותיה; ושתי כתבות נוספות מנתחות את &quot;לולאת האבדון&quot; של חוב גבוה-מיסוי גבוה-צמיחה נמוכה, ומזהירות מפני התדרדרות למשבר חוב של ממש אם לא יוגבל ההוצאה הציבורית. למרות ריבוי הכותבים והזוויות - כלכלית, שוקית, אידיאולוגית וגיאופוליטית - כל הכתבות חולקות מסגור משותף: האשמת ההוצאה הממשלתית המופרזת וההעלאות במסים, קריאה עקבית לקיצוצים ומשמעת פיסקלית, וביקורת נחרצת על כל נטייה של הממשלה או של קולות בתוך הלייבור להעדיף התערבות מדינתית נוספת על פני צמצום החוב.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1248">מראי מקום (7) ▾</button>
+        <div class="section-body" id="body-1248">
+          <p class="comparison-text">כל שבע הכתבות בנושא זה מגיעות מה-Daily Telegraph בלבד, ויוצרות מקהלה חד-קולית התוקפת את המדיניות הפיסקלית של ממשלת הלייבור מזוויות משלימות שונות. חלק מהכתבות מתמקדות באזהרות של כלכלנים וגורמים בשווקים - כמו ארתור לאפר, הטוען כי בריטניה &quot;ממסה את עצמה למוות&quot; וזקוקה להורדת מסים על עבודה ולא להעלאתם, וכתבה נוספת המצטטת אזהרות דומות לגבי אובדן אמון המשקיעים באג&quot;ח הבריטי לנוכח &quot;פרמיית סיכון&quot; הנובעת מירידה במהימנות הפיסקלית. כתבות אחרות מציגות זווית אידיאולוגית-פרשנית יותר: אחת תוקפת את אנדי ברנהאם ואת אגף השמאל במפלגת הלייבור על סירובם להתמודד עם המציאות הפיסקלית ומשבחת את תוכניות הקיצוצים של רפורם ושל השמרנים; אחרת, מאת דניאל האנן, מציבה את החוב הלאומי כחולשה אסטרטגית-גיאופוליטית המערערת את מעמדה הצבאי והדיפלומטי של בריטניה מול יריבותיה; ושתי כתבות נוספות מנתחות את &quot;לולאת האבדון&quot; של חוב גבוה-מיסוי גבוה-צמיחה נמוכה, ומזהירות מפני התדרדרות למשבר חוב של ממש אם לא יוגבל ההוצאה הציבורית. למרות ריבוי הכותבים והזוויות - כלכלית, שוקית, אידיאולוגית וגיאופוליטית - כל הכתבות חולקות מסגור משותף: האשמת ההוצאה הממשלתית המופרזת וההעלאות במסים, קריאה עקבית לקיצוצים ומשמעת פיסקלית, וביקורת נחרצת על כל נטייה של הממשלה או של קולות בתוך הלייבור להעדיף התערבות מדינתית נוספת על פני צמצום החוב.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1248" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1248">
+            מראי מקום (7)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1248" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 1 — “Britain is &#x27;taxing itself to death&#x27;…”</li>
@@ -348,314 +496,521 @@
             <li>The Daily Telegraph, 6.9.2026, עמ' 27 — “Britain must slash taxes on work,…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1249" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">תרבות וזהות</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1249">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מפת האו&quot;ם החדשה (Equal Earth) והוויכוח על הטלת מרקטור</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מפת האו&quot;ם החדשה (Equal Earth) והוויכוח על הטלת מרקטור</h2>
-        <p class="comparison-text">רק The Daily Telegraph מסקר את החלטת האו&quot;ם לאמץ את מפת Equal Earth במקום הטלת מרקטור המסורתית. הכתבה ממסגרת את הצעד כמעשה סמלי של תיקון היסטורי מול עיוות קולוניאלי שהקטין ויזואלית את אפריקה ואת גוש הדרום הגלובלי, תוך ציטוט הטענה כי &quot;מפה אף פעם אינה ניטרלית&quot; ומעצבת תפיסות לגבי מעמדם של עמים ויבשות. במקביל, העיתון מציין את התנגדות ארצות הברית למהלך ומתאר אותה כמונעת משיקולים אידאולוגיים, אך מאחר שאין מקורות נוספים המסקרים את הנושא, לא ניתן לזהות זוויות מנוגדות או דגשים שונים בסיקור התקשורתי.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1249">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1249">
+          <p class="comparison-text">רק The Daily Telegraph מסקר את החלטת האו&quot;ם לאמץ את מפת Equal Earth במקום הטלת מרקטור המסורתית. הכתבה ממסגרת את הצעד כמעשה סמלי של תיקון היסטורי מול עיוות קולוניאלי שהקטין ויזואלית את אפריקה ואת גוש הדרום הגלובלי, תוך ציטוט הטענה כי &quot;מפה אף פעם אינה ניטרלית&quot; ומעצבת תפיסות לגבי מעמדם של עמים ויבשות. במקביל, העיתון מציין את התנגדות ארצות הברית למהלך ומתאר אותה כמונעת משיקולים אידאולוגיים, אך מאחר שאין מקורות נוספים המסקרים את הנושא, לא ניתן לזהות זוויות מנוגדות או דגשים שונים בסיקור התקשורתי.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1249" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1249">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1249" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 8</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1250" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">הגירה וחברה</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1250">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">הגירה וחברה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מחאות הגירה בבריטניה ואכיפת המשטרה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מחאות הגירה בבריטניה ואכיפת המשטרה</h2>
-        <p class="comparison-text">בנושא זה מופיעה כתבה יחידה, מאת הדיילי טלגרף, ולכן אין השוואה בין מקורות אלא הצגת עמדתו בלבד. הדיילי טלגרף מגנה את החוסמים המוסווים את נמל דובר במחאה נגד הגירה כבלתי מקובלים, אך במקביל מבקרת את המשטרה על שנהגה במדיניות כפולה: לטענת הכתבה, בעוד שהרשויות פעלו נמרצות נגד מפגיני ההגירה, הן התירו במשך שבועות ארוכים צעדות פרו-פלסטיניות גדולות שכללו קריאות המתוארות כ&quot;קריאות להשמדת ישראל&quot; והטרידו קהילות יהודיות. הכתבה קוראת לאכיפה עקבית נגד הפרות סדר ציבורי, ללא קשר לזהותם הפוליטית של המפגינים.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1250">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1250">
+          <p class="comparison-text">בנושא זה מופיעה כתבה יחידה, מאת הדיילי טלגרף, ולכן אין השוואה בין מקורות אלא הצגת עמדתו בלבד. הדיילי טלגרף מגנה את החוסמים המוסווים את נמל דובר במחאה נגד הגירה כבלתי מקובלים, אך במקביל מבקרת את המשטרה על שנהגה במדיניות כפולה: לטענת הכתבה, בעוד שהרשויות פעלו נמרצות נגד מפגיני ההגירה, הן התירו במשך שבועות ארוכים צעדות פרו-פלסטיניות גדולות שכללו קריאות המתוארות כ&quot;קריאות להשמדת ישראל&quot; והטרידו קהילות יהודיות. הכתבה קוראת לאכיפה עקבית נגד הפרות סדר ציבורי, ללא קשר לזהותם הפוליטית של המפגינים.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1250" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1250">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1250" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1251" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1251">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">בריטניה-ישראל: סנקציות ומדיניות מזרח תיכון</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">בריטניה-ישראל: סנקציות ומדיניות מזרח תיכון</h2>
-        <p class="comparison-text">היות שמדובר במקור יחיד המסקר את הנושא, אין כאן השוואה בין-עיתונאית. The Daily Telegraph מציג את הסוגיה מזווית ביקורתית כלפי ממשלת הלייבור, כשהוא מביא את עמדת שר החוץ בצל מהאופוזיציה השמרנית הטוען כי תוכנית הממשלה להטיל סנקציות על ישראל בשל ההתנחלויות בגדה המערבית עלולה לפגוע בשיתוף הפעולה המודיעיני החיוני עם ישראל, לערער את המאמץ הבריטי למלחמה בטרור ואף לעורר מתיחות מיותרת עם ארצות הברית. הכתבה ממסגרת את הצעד כסיכון לביטחון הלאומי הבריטי, ולא כשאלה של מדיניות חוץ או זכויות אדם, ובכך משקפת את קו העיתון הנוטה לביקורת על מדיניות הלייבור כלפי ישראל.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1251">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1251">
+          <p class="comparison-text">היות שמדובר במקור יחיד המסקר את הנושא, אין כאן השוואה בין-עיתונאית. The Daily Telegraph מציג את הסוגיה מזווית ביקורתית כלפי ממשלת הלייבור, כשהוא מביא את עמדת שר החוץ בצל מהאופוזיציה השמרנית הטוען כי תוכנית הממשלה להטיל סנקציות על ישראל בשל ההתנחלויות בגדה המערבית עלולה לפגוע בשיתוף הפעולה המודיעיני החיוני עם ישראל, לערער את המאמץ הבריטי למלחמה בטרור ואף לעורר מתיחות מיותרת עם ארצות הברית. הכתבה ממסגרת את הצעד כסיכון לביטחון הלאומי הבריטי, ולא כשאלה של מדיניות חוץ או זכויות אדם, ובכך משקפת את קו העיתון הנוטה לביקורת על מדיניות הלייבור כלפי ישראל.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1251" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1251">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1251" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1252" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1252">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">גרמניה: רפורמת אזרחות ועליית ה-AfD</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">גרמניה: רפורמת אזרחות ועליית ה-AfD</h2>
-        <p class="comparison-text">בנושא זה מופיעה כתבה יחידה, של הדיילי טלגרף, ולכן אין השוואה בין מקורות אלא הצגת זווית סיקור אחת. הכתבה ממסגרת את יוזמת מרץ להחמיר את חוקי ההתאזרחות - ביטול אזרחות כפולה, דרישה לשליטה טובה יותר בשפה ולעצמאות כלכלית - כמהלך פוליטי מחושב שנועד לבלום את עליית ה-AfD, תוך ציטוט חבר הבונדסטאג מסיעת CDU, קרינגס, הטוען כי הכללים הנוכחיים רופפים מדי ומאפשרים להיווצר &quot;חברה מקבילה&quot; בתוך גרמניה. אין בכתבה קולות נגד מהאופוזיציה או מארגוני מהגרים, כך שהניתוח משקף בעיקר את נקודת המבט של הממשלה החדשה בהובלת מרץ.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1252">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1252">
+          <p class="comparison-text">בנושא זה מופיעה כתבה יחידה, של הדיילי טלגרף, ולכן אין השוואה בין מקורות אלא הצגת זווית סיקור אחת. הכתבה ממסגרת את יוזמת מרץ להחמיר את חוקי ההתאזרחות - ביטול אזרחות כפולה, דרישה לשליטה טובה יותר בשפה ולעצמאות כלכלית - כמהלך פוליטי מחושב שנועד לבלום את עליית ה-AfD, תוך ציטוט חבר הבונדסטאג מסיעת CDU, קרינגס, הטוען כי הכללים הנוכחיים רופפים מדי ומאפשרים להיווצר &quot;חברה מקבילה&quot; בתוך גרמניה. אין בכתבה קולות נגד מהאופוזיציה או מארגוני מהגרים, כך שהניתוח משקף בעיקר את נקודת המבט של הממשלה החדשה בהובלת מרץ.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1252" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1252">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1252" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1253" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1253">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">סכסוך פוקלנד/מלווינה עם ארגנטינה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">סכסוך פוקלנד/מלווינה עם ארגנטינה</h2>
-        <p class="comparison-text">שני הפריטים בנושא זה מקורם ב-Daily Telegraph בלבד, אך הם מציעים שתי זוויות משלימות ולא זהות. טוגנדהת, בטור דעה, מתמקד בממד המדיני-אסטרטגי: לטענתו חולשה מזמינה תוקפנות, ולכן על בריטניה לנקוט קו נחוש כלפי ארגנטינה - ובכלל זה לחסום את הצטרפותה להסכם הסחר CPTPP - כדוגמה לעמידה איתנה מול &quot;בריונים&quot; בזירה הבינלאומית, תוך קישור מפורש בין המקרה הארגנטינאי ליחסים עם סין. לעומתו, פייג&#x27; בוחן את הנושא מזווית צבאית-טכנית טהורה, ומגיע למסקנה מרגיעה יותר: אף שכושר ההגנה הבריטי על פוקלנד נשחק משמעותית מאז 1982, הצבא הארגנטינאי דעך אף יותר, כך שפלישה מחודשת תהיה מהלך מסוכן מדי עבור ארגנטינה. כלומר, בעוד המאמר הראשון קורא לפעולה מדינית תקיפה מתוך חשש עקרוני מפני הישנות מוטיב של חולשה, השני מספק הרגעה מעשית המבוססת על ניתוח יחסי הכוחות בפועל.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1253">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-1253">
+          <p class="comparison-text">שני הפריטים בנושא זה מקורם ב-Daily Telegraph בלבד, אך הם מציעים שתי זוויות משלימות ולא זהות. טוגנדהת, בטור דעה, מתמקד בממד המדיני-אסטרטגי: לטענתו חולשה מזמינה תוקפנות, ולכן על בריטניה לנקוט קו נחוש כלפי ארגנטינה - ובכלל זה לחסום את הצטרפותה להסכם הסחר CPTPP - כדוגמה לעמידה איתנה מול &quot;בריונים&quot; בזירה הבינלאומית, תוך קישור מפורש בין המקרה הארגנטינאי ליחסים עם סין. לעומתו, פייג&#x27; בוחן את הנושא מזווית צבאית-טכנית טהורה, ומגיע למסקנה מרגיעה יותר: אף שכושר ההגנה הבריטי על פוקלנד נשחק משמעותית מאז 1982, הצבא הארגנטינאי דעך אף יותר, כך שפלישה מחודשת תהיה מהלך מסוכן מדי עבור ארגנטינה. כלומר, בעוד המאמר הראשון קורא לפעולה מדינית תקיפה מתוך חשש עקרוני מפני הישנות מוטיב של חולשה, השני מספק הרגעה מעשית המבוססת על ניתוח יחסי הכוחות בפועל.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1253" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1253">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1253" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 8 — “Britain must deter bullies with a…”</li>
             <li>The Daily Telegraph, 6.9.2026, עמ' 18 — “Luckily for Britain, Argentina&#x27;s military is…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1254" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1254">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">בריטניה: פוליטיקה פנימית, מפלגת רפורם ופרג&#x27;</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">בריטניה: פוליטיקה פנימית, מפלגת רפורם ופרג&#x27;</h2>
-        <p class="comparison-text">שני המאמרים מגיעים מה-Daily Telegraph, אך משקפים שתי זוויות מנוגדות לחלוטין על נגייל פרג&#x27; ומפלגת Reform. במאמר הראשון פרג&#x27; עצמו כותב בגוף ראשון ומציג את עצמו כמנהיג בעל תוכנית ברורה ואמינה להצלת בריטניה - צמצום הסיוע לחוץ, עצירת סירות המהגרים באמצעות הסכם עם המפלגה הלאומנית הצרפתית - תוך הצגת עצמו כאלטרנטיבה נחרצת מול המדיניות ההדרגתית והכושלת, לטענתו, של הלייבור. לעומת זאת, המאמר השני, מפרשנות חיצונית של פריין, הופך את הזרקור לחולשות המפלגה: פרשת התרומות פוגעת אנושות במוניטין של פרג&#x27; כאיש ישר, והכותב קורא לטיהור החוג הפנימי החובבני שלו ולמעבר למדיניות רצינית תחת דמויות כמו רוברט ג&#x27;נריק, ומצהיר למעשה שעידן פרג&#x27; כפי שהכרנו אותו הגיע לסיומו. כך נוצר ניגוד בין הצגה עצמית אופטימית ותוקפנית של המפלגה לבין ביקורת פנימית חריפה על משבר אמינות מנהיגותי.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1254">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-1254">
+          <p class="comparison-text">שני המאמרים מגיעים מה-Daily Telegraph, אך משקפים שתי זוויות מנוגדות לחלוטין על נגייל פרג&#x27; ומפלגת Reform. במאמר הראשון פרג&#x27; עצמו כותב בגוף ראשון ומציג את עצמו כמנהיג בעל תוכנית ברורה ואמינה להצלת בריטניה - צמצום הסיוע לחוץ, עצירת סירות המהגרים באמצעות הסכם עם המפלגה הלאומנית הצרפתית - תוך הצגת עצמו כאלטרנטיבה נחרצת מול המדיניות ההדרגתית והכושלת, לטענתו, של הלייבור. לעומת זאת, המאמר השני, מפרשנות חיצונית של פריין, הופך את הזרקור לחולשות המפלגה: פרשת התרומות פוגעת אנושות במוניטין של פרג&#x27; כאיש ישר, והכותב קורא לטיהור החוג הפנימי החובבני שלו ולמעבר למדיניות רצינית תחת דמויות כמו רוברט ג&#x27;נריק, ומצהיר למעשה שעידן פרג&#x27; כפי שהכרנו אותו הגיע לסיומו. כך נוצר ניגוד בין הצגה עצמית אופטימית ותוקפנית של המפלגה לבין ביקורת פנימית חריפה על משבר אמינות מנהיגותי.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1254" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1254">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1254" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 4 — “Only Reform can save Britain –…”</li>
             <li>The Daily Telegraph, 6.9.2026, עמ' 18 — “This donations crisis is extremely serious…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1255" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1255">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מחסור במזון ואספקת דגנים בעקבות המלחמה באוקראינה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מחסור במזון ואספקת דגנים בעקבות המלחמה באוקראינה</h2>
-        <p class="comparison-text">בנושא זה מדווח מקור יחיד - The Daily Telegraph - ולכן אין השוואה בין-עיתונאית של זוויות שונות. הכתבה מתמקדת בדאגה בריטית פנימית: השילוב של בצורות עם המשך המלחמה של רוסיה באוקראינה, הפוגעת באחד מאזורי ייצור הדגנים המרכזיים בעולם, מציב תחזית קודרת למחירי הלחם בבריטניה. העיתון גם מנצל את ההזדמנות לבקר מדיניות מקומית, ומאשים את כיסוי שטחי חקלאות בפאנלים סולאריים בכך שהוא מחמיר את בעיית אספקת המזון במקום לפתור אותה.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1255">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1255">
+          <p class="comparison-text">בנושא זה מדווח מקור יחיד - The Daily Telegraph - ולכן אין השוואה בין-עיתונאית של זוויות שונות. הכתבה מתמקדת בדאגה בריטית פנימית: השילוב של בצורות עם המשך המלחמה של רוסיה באוקראינה, הפוגעת באחד מאזורי ייצור הדגנים המרכזיים בעולם, מציב תחזית קודרת למחירי הלחם בבריטניה. העיתון גם מנצל את ההזדמנות לבקר מדיניות מקומית, ומאשים את כיסוי שטחי חקלאות בפאנלים סולאריים בכך שהוא מחמיר את בעיית אספקת המזון במקום לפתור אותה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1255" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1255">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1255" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1256" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1256">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">פולקסווגן ותעשיית הרכב הגרמנית/אירופית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">פולקסווגן ותעשיית הרכב הגרמנית/אירופית</h2>
-        <p class="comparison-text">רק The Daily Telegraph מתייחס לנושא פולקסווגן ותעשיית הרכב הגרמנית, ולכן אין כאן השוואה בין מקורות אלא זווית יחידה. הכתבה מציגה עמדה ביקורתית וזהירה: לטענת הכותב, ההתלהבות בשווקים לנוכח תוכנית קיצוץ 100,000 משרות אינה פותרת את בעיות היסוד של החברה - עלויות אנרגיה ועבודה גבוהות מדי בגרמניה, פיגור בפיתוח רכבים חשמליים, ושווקים סגורים יחסית בארה&quot;ב ובסין. הטון הכללי הוא של ספקנות לגבי סיכויי ההתאוששות האמיתית של פולקסווגן, בניגוד לאופטימיות שהציגו השווקים.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1256">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1256">
+          <p class="comparison-text">רק The Daily Telegraph מתייחס לנושא פולקסווגן ותעשיית הרכב הגרמנית, ולכן אין כאן השוואה בין מקורות אלא זווית יחידה. הכתבה מציגה עמדה ביקורתית וזהירה: לטענת הכותב, ההתלהבות בשווקים לנוכח תוכנית קיצוץ 100,000 משרות אינה פותרת את בעיות היסוד של החברה - עלויות אנרגיה ועבודה גבוהות מדי בגרמניה, פיגור בפיתוח רכבים חשמליים, ושווקים סגורים יחסית בארה&quot;ב ובסין. הטון הכללי הוא של ספקנות לגבי סיכויי ההתאוששות האמיתית של פולקסווגן, בניגוד לאופטימיות שהציגו השווקים.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1256" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1256">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1256" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 26</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1257" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1257">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">בחירות אמריקאיות והכחשת תוצאות הבחירות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">בחירות אמריקאיות והכחשת תוצאות הבחירות</h2>
-        <p class="comparison-text">בנושא זה מופיע מקור יחיד - Los Angeles Times - ולכן אין השוואה בין-עיתונאית של זוויות שונות. הכתבה נוקטת עמדה ברורה ומזהירה, בטענה ששקריו הנמשכים של טראמפ על תוצאות בחירות 2020 הצית גל של מועמדים &quot;מכחישי בחירות&quot; המתמודדים לתפקידי מזכיר מדינה ברחבי ארה&quot;ב, ומבקשת מהבוחרים לדחות אותם כדי להגן על יושרת המערכת האלקטורלית.</p>
-        <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1257">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1257">
+          <p class="comparison-text">בנושא זה מופיע מקור יחיד - Los Angeles Times - ולכן אין השוואה בין-עיתונאית של זוויות שונות. הכתבה נוקטת עמדה ברורה ומזהירה, בטענה ששקריו הנמשכים של טראמפ על תוצאות בחירות 2020 הצית גל של מועמדים &quot;מכחישי בחירות&quot; המתמודדים לתפקידי מזכיר מדינה ברחבי ארה&quot;ב, ומבקשת מהבוחרים לדחות אותם כדי להגן על יושרת המערכת האלקטורלית.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1257" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1257">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1257" hidden>
             <ul>
             <li>Los Angeles Times, 6.9.2026, עמ' 2</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1258" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">אנרגיה וסביבה</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1258">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מדיניות אנרגיה בבריטניה: גז ים הצפוני מול יבוא</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מדיניות אנרגיה בבריטניה: גז ים הצפוני מול יבוא</h2>
-        <p class="comparison-text">שני המאמרים מגיעים מה-Daily Telegraph בלבד, ולמעשה מהווים קול אחד המבטא עמדה עקבית וביקורתית כלפי מדיניות האנרגיה של ממשלת הלייבור. הכתבה הראשונה מתמקדת בהיבט הכלכלי-השקעתי: מס הרווחים הבלתי-צפויים (windfall tax) הפך את הפקת הגז בים הצפוני ליקרה יותר מייבוא גז טבעי נוזלי מארצות הברית, ולפי הניתוח - מדובר במדיניות &quot;מטורפת לחלוטין&quot; שמרתיעה השקעות ומעודדת תלות ביבוא. הכתבה השנייה מרחיבה את הטיעון לזווית של ביטחון אנרגטי לאומי, וטוענת כי הבטחת הלייבור לשחרר את בריטניה מתלות ב&quot;מדינות-נפט ורודנים&quot; קרסה בפועל, שכן איסור הרישיונות החדשים, מס הרווחים הבלתי-צפויים והעיכובים באישור שדות כמו Jackdaw ו-Rosebank מגבירים דווקא את התלות ביבוא גז ממשטרים סמכותניים. במילים אחרות, שתי הכתבות חוזרות ומחזקות אותה נרטיב אחד - מהיבט הרווחיות הכלכלית להיבט הביטחון הלאומי - ללא נוכחות של מקור עיתונאי נגדי או פרשנות מנוגדת בנושא זה.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1258">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-1258">
+          <p class="comparison-text">שני המאמרים מגיעים מה-Daily Telegraph בלבד, ולמעשה מהווים קול אחד המבטא עמדה עקבית וביקורתית כלפי מדיניות האנרגיה של ממשלת הלייבור. הכתבה הראשונה מתמקדת בהיבט הכלכלי-השקעתי: מס הרווחים הבלתי-צפויים (windfall tax) הפך את הפקת הגז בים הצפוני ליקרה יותר מייבוא גז טבעי נוזלי מארצות הברית, ולפי הניתוח - מדובר במדיניות &quot;מטורפת לחלוטין&quot; שמרתיעה השקעות ומעודדת תלות ביבוא. הכתבה השנייה מרחיבה את הטיעון לזווית של ביטחון אנרגטי לאומי, וטוענת כי הבטחת הלייבור לשחרר את בריטניה מתלות ב&quot;מדינות-נפט ורודנים&quot; קרסה בפועל, שכן איסור הרישיונות החדשים, מס הרווחים הבלתי-צפויים והעיכובים באישור שדות כמו Jackdaw ו-Rosebank מגבירים דווקא את התלות ביבוא גז ממשטרים סמכותניים. במילים אחרות, שתי הכתבות חוזרות ומחזקות אותה נרטיב אחד - מהיבט הרווחיות הכלכלית להיבט הביטחון הלאומי - ללא נוכחות של מקור עיתונאי נגדי או פרשנות מנוגדת בנושא זה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1258" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1258">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1258" hidden>
             <ul>
             <li>The Daily Telegraph, 6.9.2026, עמ' 25 — “Tax raids make US gas cheaper…”</li>
             <li>The Daily Telegraph, 6.9.2026, עמ' 29 — “Gas cliff-edge threatens a winter of…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1260" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1260">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">המלחמה עם איראן וההשלכות על משפחות חיילים</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">המלחמה עם איראן וההשלכות על משפחות חיילים</h2>
-        <p class="comparison-text">נושא זה מכוסה על ידי מקור יחיד. Los Angeles Times מספק זווית אנושית וביקורתית, המתמקדת בהשלכות הביורוקרטיות של סירוב ממשל טראמפ להגדיר את העימות עם איראן כ&quot;מלחמה&quot; רשמית. הכתבה מציגה את סיפורה של אלמנת טייס שנהרג בעימות, שנשללו ממנה זמנית הטבות והפרשי תשלום בשל ההגדרה הטכנית-משפטית, ובכך מבקרת בעקיפין את הפער בין המחיר האנושי הממשי לבין המשחק הסמנטי של הממשל. מאחר שאין מקורות נוספים המתייחסים לנושא זה, לא ניתן לזהות הבדלי סיקור או עמדות מתחרות.</p>
-        <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1260">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1260">
+          <p class="comparison-text">נושא זה מכוסה על ידי מקור יחיד. Los Angeles Times מספק זווית אנושית וביקורתית, המתמקדת בהשלכות הביורוקרטיות של סירוב ממשל טראמפ להגדיר את העימות עם איראן כ&quot;מלחמה&quot; רשמית. הכתבה מציגה את סיפורה של אלמנת טייס שנהרג בעימות, שנשללו ממנה זמנית הטבות והפרשי תשלום בשל ההגדרה הטכנית-משפטית, ובכך מבקרת בעקיפין את הפער בין המחיר האנושי הממשי לבין המשחק הסמנטי של הממשל. מאחר שאין מקורות נוספים המתייחסים לנושא זה, לא ניתן לזהות הבדלי סיקור או עמדות מתחרות.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1260" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1260">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1260" hidden>
             <ul>
             <li>Los Angeles Times, 6.9.2026, עמ' 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1261" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1261">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מלאי טילים אמריקאי ומוכנות הגנתית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מלאי טילים אמריקאי ומוכנות הגנתית</h2>
-        <p class="comparison-text">רק ה-Los Angeles Times עוסק בנושא זה, במאמר המזהיר כי מלאי מערכות ההגנה האווירית והטילים היירטים של ארה&quot;ב נשחק באופן משמעותי בעקבות המלחמה באיראן. הכתבה טוענת שהשחיקה הזו פוגעת ביכולתה של וושינגטון להרתיע את סין מפני תקיפת טייוואן ואת רוסיה באירופה, ומותחת ביקורת על ממשל טראמפ על כך שהוא מקטין בפומבי את חומרת המחסור ואינו פועל לחידוש המלאים. מאחר שאין מקורות נוספים המתייחסים לסוגיה, לא ניתן להצביע על זוויות מנוגדות, אך עצם הבידוד של הדיווח מדגיש עד כמה מדובר בפריים ביקורתי-פנימי אמריקאי כלפי המדיניות הביטחונית, ולא בסיפור המסוקר בהיקף בינלאומי רחב.</p>
-        <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1261">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1261">
+          <p class="comparison-text">רק ה-Los Angeles Times עוסק בנושא זה, במאמר המזהיר כי מלאי מערכות ההגנה האווירית והטילים היירטים של ארה&quot;ב נשחק באופן משמעותי בעקבות המלחמה באיראן. הכתבה טוענת שהשחיקה הזו פוגעת ביכולתה של וושינגטון להרתיע את סין מפני תקיפת טייוואן ואת רוסיה באירופה, ומותחת ביקורת על ממשל טראמפ על כך שהוא מקטין בפומבי את חומרת המחסור ואינו פועל לחידוש המלאים. מאחר שאין מקורות נוספים המתייחסים לסוגיה, לא ניתן להצביע על זוויות מנוגדות, אך עצם הבידוד של הדיווח מדגיש עד כמה מדובר בפריים ביקורתי-פנימי אמריקאי כלפי המדיניות הביטחונית, ולא בסיפור המסוקר בהיקף בינלאומי רחב.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1261" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1261">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1261" hidden>
             <ul>
             <li>Los Angeles Times, 6.9.2026, עמ' 5</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1262" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">תרבות וזהות</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1262">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מורשת גלוריה סטיינם והפמיניזם</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מורשת גלוריה סטיינם והפמיניזם</h2>
-        <p class="comparison-text">נושא זה מכוסה במקור בודד: Los Angeles Times, המפרסם מאמר הוקרה נלהב לגלוריה סטיינם, המשבח את מורשתה הפמיניסטית ומדגיש כיצד תרמה לשיפור מהותי בחיי הנשים ולעולם טוב וחומל יותר. מאחר שאין מקורות נוספים המתייחסים לנושא, לא ניתן להצביע על זוויות מנוגדות או משלימות - זהו קול יחיד, אוהד ובעל גוון חגיגי מובהק.</p>
-        <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1262">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1262">
+          <p class="comparison-text">נושא זה מכוסה במקור בודד: Los Angeles Times, המפרסם מאמר הוקרה נלהב לגלוריה סטיינם, המשבח את מורשתה הפמיניסטית ומדגיש כיצד תרמה לשיפור מהותי בחיי הנשים ולעולם טוב וחומל יותר. מאחר שאין מקורות נוספים המתייחסים לנושא, לא ניתן להצביע על זוויות מנוגדות או משלימות - זהו קול יחיד, אוהד ובעל גוון חגיגי מובהק.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1262" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1262">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1262" hidden>
             <ul>
             <li>Los Angeles Times, 6.9.2026, עמ' 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1263" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">אנרגיה וסביבה</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1263">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">שונית המחסום הגדולה באוסטרליה ותחזיות סביבתיות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">שונית המחסום הגדולה באוסטרליה ותחזיות סביבתיות</h2>
-        <p class="comparison-text">מדובר בסיקור ממקור יחיד: Los Angeles Times מציג זווית ביקורתית וחריגה יחסית לנרטיב הרווח, וטוען כי גורמי ממשל ותקשורת באוסטרליה חזו שוב ושוב, ובאופן שגוי, את קריסתה של שונית המחסום הגדולה - מסיבות פוליטיות ולצורכי גיוס תקציבים - בעוד שהנתונים בפועל מראים כיסוי אלמוגים שיא ועמידות אקולוגית שאינה קשורה להוצאה הממשלתית. מאחר שאין מקורות נוספים המסקרים את הנושא, לא ניתן להצביע על מחלוקת או הבדלי דגש בין כלי תקשורת שונים - הפרספקטיבה המוצגת היא של עיתון אחד בלבד, החולק על הקונצנזוס הרווח בנוגע לגורל השונית.</p>
-        <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1263">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1263">
+          <p class="comparison-text">מדובר בסיקור ממקור יחיד: Los Angeles Times מציג זווית ביקורתית וחריגה יחסית לנרטיב הרווח, וטוען כי גורמי ממשל ותקשורת באוסטרליה חזו שוב ושוב, ובאופן שגוי, את קריסתה של שונית המחסום הגדולה - מסיבות פוליטיות ולצורכי גיוס תקציבים - בעוד שהנתונים בפועל מראים כיסוי אלמוגים שיא ועמידות אקולוגית שאינה קשורה להוצאה הממשלתית. מאחר שאין מקורות נוספים המסקרים את הנושא, לא ניתן להצביע על מחלוקת או הבדלי דגש בין כלי תקשורת שונים - הפרספקטיבה המוצגת היא של עיתון אחד בלבד, החולק על הקונצנזוס הרווח בנוגע לגורל השונית.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1263" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1263">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1263" hidden>
             <ul>
             <li>Los Angeles Times, 6.9.2026, עמ' 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1264" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1264">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מדיניות סחר וטריפים אמריקאיים מול קנדה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מדיניות סחר וטריפים אמריקאיים מול קנדה</h2>
-        <p class="comparison-text">מקור יחיד מכסה נושא זה: Los Angeles Times, במאמר דעה הטוען כי הטריפים של טראמפ, ובכללם הטריפים על מוצרים קנדיים כמו עץ בנייה, מייקרים את יוקר המחיה ופוגעים באג&#x27;נדת המחיר-סביר שהממשל עצמו מקדם. הכותבת מצביעה על סתירה פנימית במדיניות הממשל - שמצד אחד הפחית טריפים על בשר בקר כדי להוזיל מחירים, אך מצד שני משאיר טריפים על קנדה שמייקרים מוצרים כמו דיור - ומסיקה כי הפתרון ההגיוני הוא ביטול הטריפים כליל. מאחר שאין מקורות נוספים המתייחסים לנושא, אין אפשרות להצביע על זוויות מנוגדות או השוואה בין עיתונים.</p>
-        <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1264">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-1264">
+          <p class="comparison-text">מקור יחיד מכסה נושא זה: Los Angeles Times, במאמר דעה הטוען כי הטריפים של טראמפ, ובכללם הטריפים על מוצרים קנדיים כמו עץ בנייה, מייקרים את יוקר המחיה ופוגעים באג&#x27;נדת המחיר-סביר שהממשל עצמו מקדם. הכותבת מצביעה על סתירה פנימית במדיניות הממשל - שמצד אחד הפחית טריפים על בשר בקר כדי להוזיל מחירים, אך מצד שני משאיר טריפים על קנדה שמייקרים מוצרים כמו דיור - ומסיקה כי הפתרון ההגיוני הוא ביטול הטריפים כליל. מאחר שאין מקורות נוספים המתייחסים לנושא, אין אפשרות להצביע על זוויות מנוגדות או השוואה בין עיתונים.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1264" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1264">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1264" hidden>
             <ul>
             <li>Los Angeles Times, 6.9.2026, עמ' 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
   </main>
   <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
     document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
@@ -676,6 +1031,12 @@
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
           popup.hidden = true;
         });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
       }
     });
   </script>

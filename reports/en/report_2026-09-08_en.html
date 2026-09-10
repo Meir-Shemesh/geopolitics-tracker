@@ -153,6 +153,59 @@
     text-decoration: underline;
   }
 
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
   .masthead {
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -197,6 +250,20 @@
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
   .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -209,7 +276,26 @@
     border-radius: 999px;
   }
   .coverage-badge { font-size: .72rem; color: var(--text-muted); }
-  .section-title { margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
   .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
   .section-sources {
     margin: 0;
@@ -220,20 +306,49 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
-  .citations-row { position: relative; margin-top: .6rem; }
-  .citations-toggle {
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }
-  .citations-toggle:hover { color: var(--masthead-accent); }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
   .citations-popup {
     position: absolute;
     top: 100%;
@@ -278,7 +393,14 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
-    .citations-row { display: none; }
+    .category-nav { display: none; }
+    .section-actions { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
   }
 </style>
 </head>
@@ -292,6 +414,11 @@
       <a class="top-nav-link" href="report_2026-09-08_en.pdf">⬇ Download PDF</a>
     </div>
   </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-1310">Security &amp; Conflict</a><a class="category-nav-link" href="#section-1304">Diplomacy &amp; International Relations</a><a class="category-nav-link" href="#section-1313">Trade &amp; Economics</a><a class="category-nav-link" href="#section-1309">Domestic Politics</a><a class="category-nav-link" href="#section-1328">Migration &amp; Society</a><a class="category-nav-link" href="#section-1305">Society &amp; Culture</a><a class="category-nav-link" href="#section-1315">Technology &amp; Media</a><a class="category-nav-link" href="#section-1347">Additional Coverage</a></div>
+    <button class="toggle-all-btn" type="button">Expand all / Collapse all</button>
+  </nav>
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">Daily Geopolitics</p>
@@ -304,18 +431,28 @@
   </header>
   <main class="report-body">
 
-      <section class="topic-section" id="section-1309" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">4 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-1309" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1309">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">4 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">AfD election victory in Germany and its aftermath</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">AfD election victory in Germany and its aftermath</h2>
-        <p class="comparison-text">Coverage of the AfD&#x27;s landslide win in Saxony-Anhalt reveals sharply different emphases between the German and Anglo-American press. Süddeutsche Zeitung offers by far the widest and most multifaceted array of angles: pieces framing the result as a historic &quot;turning point&quot; in which a far-right party stands for the first time on the threshold of governing power, alongside sharply focused analyses of the security risk posed by a potential AfD interior minister gaining control over the domestic intelligence service, warnings of capital and population flight from the state, criticism of the extreme underrepresentation of women in the AfD&#x27;s parliamentary group, alarm over the possible collapse of German support for Ukraine, scrutiny of the BSW&#x27;s ambiguous ties to both the AfD and Russia, a Jewish-community reckoning tied to Holocaust remembrance, and a survey of international reactions ranging from celebration by the global right (Austria&#x27;s FPÖ, Hungary&#x27;s Fidesz, Reform UK, the Trump administration) to alarm in France and Israel. Süddeutsche Zeitung&#x27;s readers also weigh in fiercely, rejecting any journalism that reduces democracy to a mere arithmetic majority game and demanding a formal ban on the party. Die Welt, by contrast, turns its critical gaze inward, arguing that Germany&#x27;s political, cultural and media elites bear responsibility for the AfD&#x27;s rise through arrogance and detachment from ordinary citizens, and warning that continued elite denial is more dangerous than the AfD itself; it also surveys alarmed reactions from neighboring France and Poland over the party&#x27;s Russia ties, presents SPD politician Ralf Stegner&#x27;s forceful refusal to treat the AfD as a &quot;normal party,&quot; and uniquely reports on an internal AfD debate over softening anti-Islam rhetoric to court Muslim voters - an angle found in no other source. The Daily Telegraph centers its account on Chancellor Merz&#x27;s refusal to resign after the defeat, giving considerable weight to Russian interference as a driver of Germany&#x27;s democratic crisis. The Wall Street Journal frames the story primarily as an institutional political analysis of Merz&#x27;s weakened standing and mounting pressure within his own conservative camp to break the &quot;firewall&quot; against the AfD, treating the international and Russia-linked dimension more lightly than the German outlets do.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung, The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1309">Citations (17) ▾</button>
+        <div class="section-body" id="body-1309">
+          <p class="comparison-text">Coverage of the AfD&#x27;s landslide win in Saxony-Anhalt reveals sharply different emphases between the German and Anglo-American press. Süddeutsche Zeitung offers by far the widest and most multifaceted array of angles: pieces framing the result as a historic &quot;turning point&quot; in which a far-right party stands for the first time on the threshold of governing power, alongside sharply focused analyses of the security risk posed by a potential AfD interior minister gaining control over the domestic intelligence service, warnings of capital and population flight from the state, criticism of the extreme underrepresentation of women in the AfD&#x27;s parliamentary group, alarm over the possible collapse of German support for Ukraine, scrutiny of the BSW&#x27;s ambiguous ties to both the AfD and Russia, a Jewish-community reckoning tied to Holocaust remembrance, and a survey of international reactions ranging from celebration by the global right (Austria&#x27;s FPÖ, Hungary&#x27;s Fidesz, Reform UK, the Trump administration) to alarm in France and Israel. Süddeutsche Zeitung&#x27;s readers also weigh in fiercely, rejecting any journalism that reduces democracy to a mere arithmetic majority game and demanding a formal ban on the party. Die Welt, by contrast, turns its critical gaze inward, arguing that Germany&#x27;s political, cultural and media elites bear responsibility for the AfD&#x27;s rise through arrogance and detachment from ordinary citizens, and warning that continued elite denial is more dangerous than the AfD itself; it also surveys alarmed reactions from neighboring France and Poland over the party&#x27;s Russia ties, presents SPD politician Ralf Stegner&#x27;s forceful refusal to treat the AfD as a &quot;normal party,&quot; and uniquely reports on an internal AfD debate over softening anti-Islam rhetoric to court Muslim voters - an angle found in no other source. The Daily Telegraph centers its account on Chancellor Merz&#x27;s refusal to resign after the defeat, giving considerable weight to Russian interference as a driver of Germany&#x27;s democratic crisis. The Wall Street Journal frames the story primarily as an institutional political analysis of Merz&#x27;s weakened standing and mounting pressure within his own conservative camp to break the &quot;firewall&quot; against the AfD, treating the international and Russia-linked dimension more lightly than the German outlets do.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung, The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1309" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1309">
+            Citations (17)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1309" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 11</li>
@@ -337,21 +474,32 @@
             <li>The Wall Street Journal, Sep 8, 2026, p. 8 — "Vote Puts Merz in Tight Spot"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-1310" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">4 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-1310" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1310">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">4 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Iran conflict: war, sanctions and domestic politics</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Iran conflict: war, sanctions and domestic politics</h2>
-        <p class="comparison-text">Coverage of the Iranian crisis splits along quite different axes across the outlets. The Wall Street Journal devotes the most attention to the economic and strategic dimension from a US vantage point: two pieces describe how the American naval blockade and sanctions are drying up Iran&#x27;s oil revenue and deepening its economic crisis, while a third exposes a loophole - Iranian money flowing through US correspondent banks - relevant to judging how effective the sanctions campaign really is. Beyond this, two Journal opinion pieces view the conflict through a strategic-historical lens: one urges Trump to secure a decisive victory in Iran, drawing on Bush&#x27;s experience in Iraq, and the other compares George Washington&#x27;s Fabian tactics to the attritional strategy of Iran&#x27;s Revolutionary Guard - both reflecting an American preoccupation with the war&#x27;s protraction and the need to justify it. By contrast, the Los Angeles Times offers a more critical, globally-minded socioeconomic frame, arguing that while investors and military contractors - including Trump-linked businesses - profit from the war, ordinary consumers and the world&#x27;s poor, for instance in Sudan, bear the brunt of higher costs and hunger. Die Welt and The Daily Telegraph focus on operational and regional fallout: Die Welt reports on Iran&#x27;s plan to establish a blockade zone near the Strait of Hormuz and sanction ships that violate it, while The Daily Telegraph extends this concern to Europe, warning of a severe gas crisis stemming from disruptions to Hormuz supply routes. The Daily Telegraph is also the only outlet to address Iranian domestic politics, reporting on former president Rouhani&#x27;s call for a referendum to end the war alongside the fierce hardliner backlash against him - a angle highlighting internal fractures within the Iranian regime found in no other source.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Los Angeles Times, The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1310">Citations (9) ▾</button>
+        <div class="section-body" id="body-1310">
+          <p class="comparison-text">Coverage of the Iranian crisis splits along quite different axes across the outlets. The Wall Street Journal devotes the most attention to the economic and strategic dimension from a US vantage point: two pieces describe how the American naval blockade and sanctions are drying up Iran&#x27;s oil revenue and deepening its economic crisis, while a third exposes a loophole - Iranian money flowing through US correspondent banks - relevant to judging how effective the sanctions campaign really is. Beyond this, two Journal opinion pieces view the conflict through a strategic-historical lens: one urges Trump to secure a decisive victory in Iran, drawing on Bush&#x27;s experience in Iraq, and the other compares George Washington&#x27;s Fabian tactics to the attritional strategy of Iran&#x27;s Revolutionary Guard - both reflecting an American preoccupation with the war&#x27;s protraction and the need to justify it. By contrast, the Los Angeles Times offers a more critical, globally-minded socioeconomic frame, arguing that while investors and military contractors - including Trump-linked businesses - profit from the war, ordinary consumers and the world&#x27;s poor, for instance in Sudan, bear the brunt of higher costs and hunger. Die Welt and The Daily Telegraph focus on operational and regional fallout: Die Welt reports on Iran&#x27;s plan to establish a blockade zone near the Strait of Hormuz and sanction ships that violate it, while The Daily Telegraph extends this concern to Europe, warning of a severe gas crisis stemming from disruptions to Hormuz supply routes. The Daily Telegraph is also the only outlet to address Iranian domestic politics, reporting on former president Rouhani&#x27;s call for a referendum to end the war alongside the fierce hardliner backlash against him - a angle highlighting internal fractures within the Iranian regime found in no other source.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Los Angeles Times, The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1310" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1310">
+            Citations (9)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1310" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 12 — "Iran’s ex-president calls for vote to…"</li>
@@ -365,21 +513,32 @@
             <li>The Wall Street Journal, Sep 8, 2026, p. 16 — "Iran&#x27;s Approach to Warfare Mirrors the…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-1314" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">4 sources · 2 languages</span>
+      <section class="topic-section topic-section--prominent" id="section-1314" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1314">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">4 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russia-Ukraine war: mobilization and economic warfare</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Russia-Ukraine war: mobilization and economic warfare</h2>
-        <p class="comparison-text">The sources approach this war-of-attrition theme from markedly different angles. The Daily Telegraph focuses on signs of Russian internal strain, detailing how Putin has endorsed enlisting severely disabled citizens into home-defense drone units as evidence of a deepening manpower shortage. Die Welt takes a broader strategic-political view, arguing that Putin cannot afford to lose and therefore will not pursue genuine peace negotiations, urging Europe and Ukraine to rely on deterrence rather than hope for a quick diplomatic breakthrough - a reading reinforced by The Wall Street Journal&#x27;s own report that the latest Trump-envoy peace push by Kushner and Witkoff yielded only a brief pause in strikes, not real progress. The Wall Street Journal devotes particular attention to the economic dimension of the war: one article argues that Ukraine&#x27;s drone campaign against Russian refineries, logistics and banking is inflicting mounting economic damage despite Putin&#x27;s denials, while a separate, distinctive piece examines a controversial internal Ukrainian debate over legalizing and taxing the pornography industry as a new funding stream for defense. Los Angeles Times adds a consumer-economic, American-facing perspective, linking Ukrainian strikes on Russian refineries alongside the Strait of Hormuz crisis to record-high US fuel prices - framing the war not merely as a Russia-Ukraine military and economic clash but as one with tangible global ripple effects.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Los Angeles Times, The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1314">Citations (6) ▾</button>
+        <div class="section-body" id="body-1314">
+          <p class="comparison-text">The sources approach this war-of-attrition theme from markedly different angles. The Daily Telegraph focuses on signs of Russian internal strain, detailing how Putin has endorsed enlisting severely disabled citizens into home-defense drone units as evidence of a deepening manpower shortage. Die Welt takes a broader strategic-political view, arguing that Putin cannot afford to lose and therefore will not pursue genuine peace negotiations, urging Europe and Ukraine to rely on deterrence rather than hope for a quick diplomatic breakthrough - a reading reinforced by The Wall Street Journal&#x27;s own report that the latest Trump-envoy peace push by Kushner and Witkoff yielded only a brief pause in strikes, not real progress. The Wall Street Journal devotes particular attention to the economic dimension of the war: one article argues that Ukraine&#x27;s drone campaign against Russian refineries, logistics and banking is inflicting mounting economic damage despite Putin&#x27;s denials, while a separate, distinctive piece examines a controversial internal Ukrainian debate over legalizing and taxing the pornography industry as a new funding stream for defense. Los Angeles Times adds a consumer-economic, American-facing perspective, linking Ukrainian strikes on Russian refineries alongside the Strait of Hormuz crisis to record-high US fuel prices - framing the war not merely as a Russia-Ukraine military and economic clash but as one with tangible global ripple effects.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Die Welt, Los Angeles Times, The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1314" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1314">
+            Citations (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1314" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 11</li>
@@ -390,21 +549,32 @@
             <li>The Wall Street Journal, Sep 8, 2026, p. 8 — "Trump Envoys Set New Push for…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-1328" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">3 sources · 1 language</span>
+      <section class="topic-section topic-section--prominent" id="section-1328" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1328">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">3 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Migration failures fueling European far-right rise</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Migration failures fueling European far-right rise</h2>
-        <p class="comparison-text">Three of the papers approach the same underlying story - migration failures fueling the far right - from distinct angles. The Daily Telegraph adopts a warning tone, pointing to Channel crossings as evidence of enforcement failure in both Britain and Germany, and implies that continued government inaction will push citizens toward vigilante responses and boost parties like the AfD, effectively arguing for firmer border enforcement. The Guardian, across two separate pieces, offers a more structural analysis: one article argues that the AfD&#x27;s historic result in Saxony-Anhalt reflects a decade-long European trend driven not by voters shifting ideologically but by mainstream parties&#x27; failure to deliver and their normalisation of far-right rhetoric - noting that keeping the AfD out of power has actually strengthened it by shielding it from the compromises of governing. The second Guardian piece extends this logic to Britain, suggesting Reform UK could outlast Farage because it taps into a deeper public distrust in democracy&#x27;s capacity to solve problems, with migration serving merely as the visible symptom of that broader malaise. The Wall Street Journal takes the widest lens, folding migration pressures into a larger indictment of European fragmentation in the face of geopolitical threats from Russia and China, warning that the continent is &quot;hitting the snooze button&quot; instead of confronting a spreading crisis. So while the Telegraph stresses immediate enforcement failure, the Guardian probes the structural political roots of far-right growth, and the Journal situates migration within a broader narrative of European strategic disunity.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1328">Citations (4) ▾</button>
+        <div class="section-body" id="body-1328">
+          <p class="comparison-text">Three of the papers approach the same underlying story - migration failures fueling the far right - from distinct angles. The Daily Telegraph adopts a warning tone, pointing to Channel crossings as evidence of enforcement failure in both Britain and Germany, and implies that continued government inaction will push citizens toward vigilante responses and boost parties like the AfD, effectively arguing for firmer border enforcement. The Guardian, across two separate pieces, offers a more structural analysis: one article argues that the AfD&#x27;s historic result in Saxony-Anhalt reflects a decade-long European trend driven not by voters shifting ideologically but by mainstream parties&#x27; failure to deliver and their normalisation of far-right rhetoric - noting that keeping the AfD out of power has actually strengthened it by shielding it from the compromises of governing. The second Guardian piece extends this logic to Britain, suggesting Reform UK could outlast Farage because it taps into a deeper public distrust in democracy&#x27;s capacity to solve problems, with migration serving merely as the visible symptom of that broader malaise. The Wall Street Journal takes the widest lens, folding migration pressures into a larger indictment of European fragmentation in the face of geopolitical threats from Russia and China, warning that the continent is &quot;hitting the snooze button&quot; instead of confronting a spreading crisis. So while the Telegraph stresses immediate enforcement failure, the Guardian probes the structural political roots of far-right growth, and the Journal situates migration within a broader narrative of European strategic disunity.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian, The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1328" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1328">
+            Citations (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1328" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 15</li>
@@ -413,21 +583,32 @@
             <li>The Wall Street Journal, Sep 8, 2026, p. 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1304" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1304">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK hardens stance on Israel/settlements sanctions</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK hardens stance on Israel/settlements sanctions</h2>
-        <p class="comparison-text">Coverage splits along clear editorial lines. The Guardian, in two articles that function as a single voice, presents the UK move - a ban on trade in goods from illegal West Bank settlements and a renewed push for a two-state solution - as a significant and well-grounded policy shift, rooted in the ICJ&#x27;s 2024 advisory opinion and driven by settler violence and the collapse of peace efforts; it cites both Israeli objections and Palestinian rights advocates who call the step &quot;welcome, if overdue&quot; but insufficient. The Daily Telegraph, by contrast, frames the same initiative, tied to Andy Burnham and Labour, as a risky and divisive move set to &quot;inflame tensions,&quot; foregrounding criticism from the White House, Jewish groups, and even Labour MPs who fear the sanctions could be seen as antisemitic or a de facto boycott, warning they might &quot;encourage and embolden anti-Semitic attacks against British Jews.&quot; Where The Guardian stresses the legal and moral rationale behind the tougher stance and debates whether it goes far enough, the Daily Telegraph centers on the domestic political and social risks the policy poses within Britain.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1304">Citations (3) ▾</button>
+        <div class="section-body" id="body-1304">
+          <p class="comparison-text">Coverage splits along clear editorial lines. The Guardian, in two articles that function as a single voice, presents the UK move - a ban on trade in goods from illegal West Bank settlements and a renewed push for a two-state solution - as a significant and well-grounded policy shift, rooted in the ICJ&#x27;s 2024 advisory opinion and driven by settler violence and the collapse of peace efforts; it cites both Israeli objections and Palestinian rights advocates who call the step &quot;welcome, if overdue&quot; but insufficient. The Daily Telegraph, by contrast, frames the same initiative, tied to Andy Burnham and Labour, as a risky and divisive move set to &quot;inflame tensions,&quot; foregrounding criticism from the White House, Jewish groups, and even Labour MPs who fear the sanctions could be seen as antisemitic or a de facto boycott, warning they might &quot;encourage and embolden anti-Semitic attacks against British Jews.&quot; Where The Guardian stresses the legal and moral rationale behind the tougher stance and debates whether it goes far enough, the Daily Telegraph centers on the domestic political and social risks the policy poses within Britain.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1304" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1304">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1304" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 1</li>
@@ -435,918 +616,1455 @@
             <li>The Guardian, Sep 8, 2026, p. 2 — "UK declares harder line on Israel…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1313" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1313">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Jaguar Land Rover corporate crisis</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Jaguar Land Rover corporate crisis</h2>
-        <p class="comparison-text">Both papers cover the Jaguar Land Rover crisis but locate the problem differently. The Daily Telegraph turns its critique inward at the company&#x27;s own management, arguing that Jaguar Land Rover&#x27;s fixation on rebranding, virtue-signalling and a muddled electrification strategy has driven it into a self-inflicted doom loop culminating in job cuts. The Guardian instead frames the story as a question of public policy, endorsing minister Jonathan Reynolds&#x27;s refusal to prop up the firm with taxpayer money, on the grounds that the job losses reflect ordinary cyclical and competitive pressures rather than an existential, Volkswagen-style crisis. Where the Telegraph diagnoses a failure of corporate strategy and culture, the Guardian focuses on defending the limits of state intervention in industry.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1313">Citations (2) ▾</button>
+        <div class="section-body" id="body-1313">
+          <p class="comparison-text">Both papers cover the Jaguar Land Rover crisis but locate the problem differently. The Daily Telegraph turns its critique inward at the company&#x27;s own management, arguing that Jaguar Land Rover&#x27;s fixation on rebranding, virtue-signalling and a muddled electrification strategy has driven it into a self-inflicted doom loop culminating in job cuts. The Guardian instead frames the story as a question of public policy, endorsing minister Jonathan Reynolds&#x27;s refusal to prop up the firm with taxpayer money, on the grounds that the job losses reflect ordinary cyclical and competitive pressures rather than an existential, Volkswagen-style crisis. Where the Telegraph diagnoses a failure of corporate strategy and culture, the Guardian focuses on defending the limits of state intervention in industry.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1313" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1313">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1313" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 21</li>
             <li>The Guardian, Sep 8, 2026, p. 30</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1315" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1315">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">AI safety concerns and calls for slowdown</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">AI safety concerns and calls for slowdown</h2>
-        <p class="comparison-text">Both outlets react to the same OpenAI security episode but frame it differently. The Daily Telegraph takes an institutional, insider angle, reporting OpenAI&#x27;s own chief scientist calling for a voluntary industry slowdown and international governmental coordination until shared safety standards exist - a cautious, process-oriented warning from within the field. Los Angeles Times adopts a far more alarmed tone, presenting the same incident, a bot-driven cyberattack, as proof that AI systems have grown dangerously powerful and unpredictable even to their own creators, likening them to &quot;nation-state-level hackers&quot; and urging an outright pause before things spiral out of control. Where the Telegraph emphasizes measured, coordinated regulation, the Los Angeles Times pushes for urgent, immediate action.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1315">Citations (2) ▾</button>
+        <div class="section-body" id="body-1315">
+          <p class="comparison-text">Both outlets react to the same OpenAI security episode but frame it differently. The Daily Telegraph takes an institutional, insider angle, reporting OpenAI&#x27;s own chief scientist calling for a voluntary industry slowdown and international governmental coordination until shared safety standards exist - a cautious, process-oriented warning from within the field. Los Angeles Times adopts a far more alarmed tone, presenting the same incident, a bot-driven cyberattack, as proof that AI systems have grown dangerously powerful and unpredictable even to their own creators, likening them to &quot;nation-state-level hackers&quot; and urging an outright pause before things spiral out of control. Where the Telegraph emphasizes measured, coordinated regulation, the Los Angeles Times pushes for urgent, immediate action.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1315" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1315">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1315" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 21</li>
             <li>Los Angeles Times, Sep 8, 2026, p. 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1322" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">2 sources · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1322">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Syria&#x27;s clandestine nuclear reactor under Assad</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Syria&#x27;s clandestine nuclear reactor under Assad</h2>
-        <p class="comparison-text">Both outlets draw on the same source - the IAEA director general&#x27;s assessment - so their reporting largely overlaps, but each places emphasis slightly differently. The Guardian focuses more on the technical and political significance of the finding, stressing that the reactor was efficiently designed to produce weapons-usable fissile material, and highlights unresolved questions about the fallen Assad regime&#x27;s accountability and the unknown fate of the nuclear material. The Los Angeles Times frames the same finding within a broader narrative of ongoing international nonproliferation efforts, emphasizing the difficulty and complexity of the agency&#x27;s continuing safeguards work under Syria&#x27;s new government, with less focus on historical accountability.</p>
-        <p class="section-sources">Sources: <b>The Guardian, Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1322">Citations (2) ▾</button>
+        <div class="section-body" id="body-1322">
+          <p class="comparison-text">Both outlets draw on the same source - the IAEA director general&#x27;s assessment - so their reporting largely overlaps, but each places emphasis slightly differently. The Guardian focuses more on the technical and political significance of the finding, stressing that the reactor was efficiently designed to produce weapons-usable fissile material, and highlights unresolved questions about the fallen Assad regime&#x27;s accountability and the unknown fate of the nuclear material. The Los Angeles Times frames the same finding within a broader narrative of ongoing international nonproliferation efforts, emphasizing the difficulty and complexity of the agency&#x27;s continuing safeguards work under Syria&#x27;s new government, with less focus on historical accountability.</p>
+          <p class="section-sources">Sources: <b>The Guardian, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1322" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1322">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1322" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 23</li>
             <li>Los Angeles Times, Sep 8, 2026, p. 2</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1299" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1299">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Face coverings ban proposal and UK migrant protests</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Face coverings ban proposal and UK migrant protests</h2>
-        <p class="comparison-text">Both pieces come from The Daily Telegraph and cover the same underlying event and the same voice - Nigel Farage&#x27;s call to ban face coverings in public following migrant-related protests in Britain - so they function as a single journalistic perspective rather than two competing ones. The first article reports the announcement itself as news, leading with Farage&#x27;s provocative quote equating gang balaclavas with Antifa masks, and framing the issue mainly around public order and safety. The second develops the underlying rationale at greater length, casting the proposal as a matter of social trust and an &quot;ancient social contract&quot; between citizens, and extending the argument to claim that face coverings - including religious ones - undermine integration and British values. With no other outlet covering this story, there is no cross-source contrast here, only two layers of the same Telegraph narrative - one more news-driven, the other more argumentative - both amplifying Farage&#x27;s position without presenting an opposing viewpoint.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1299">Citations (2) ▾</button>
+        <div class="section-body" id="body-1299">
+          <p class="comparison-text">Both pieces come from The Daily Telegraph and cover the same underlying event and the same voice - Nigel Farage&#x27;s call to ban face coverings in public following migrant-related protests in Britain - so they function as a single journalistic perspective rather than two competing ones. The first article reports the announcement itself as news, leading with Farage&#x27;s provocative quote equating gang balaclavas with Antifa masks, and framing the issue mainly around public order and safety. The second develops the underlying rationale at greater length, casting the proposal as a matter of social trust and an &quot;ancient social contract&quot; between citizens, and extending the argument to claim that face coverings - including religious ones - undermine integration and British values. With no other outlet covering this story, there is no cross-source contrast here, only two layers of the same Telegraph narrative - one more news-driven, the other more argumentative - both amplifying Farage&#x27;s position without presenting an opposing viewpoint.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1299" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1299">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1299" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 1 — "We&#x27;ll outlaw face coverings, says Farage…"</li>
             <li>The Daily Telegraph, Sep 8, 2026, p. 6 — "Face coverings in public undermine integration…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1300" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1300">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Jamaica slavery reparations dispute</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Jamaica slavery reparations dispute</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, The Daily Telegraph, which frames Jamaica&#x27;s push for slavery reparations in sharply skeptical terms. Citing Lord Sumption, the article portrays Jamaica as cynically exploiting British colonial guilt to extract money, while dismissing the legal basis for the reparations claim as weak. With no other outlets addressing the story in this set, there is no competing framing or alternative perspective to compare it against.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1300">Citations (1) ▾</button>
+        <div class="section-body" id="body-1300">
+          <p class="comparison-text">Coverage of this topic comes from a single source, The Daily Telegraph, which frames Jamaica&#x27;s push for slavery reparations in sharply skeptical terms. Citing Lord Sumption, the article portrays Jamaica as cynically exploiting British colonial guilt to extract money, while dismissing the legal basis for the reparations claim as weak. With no other outlets addressing the story in this set, there is no competing framing or alternative perspective to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1300" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1300">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1300" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 10</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1301" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1301">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK foreign aid budget cuts criticism</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK foreign aid budget cuts criticism</h2>
-        <p class="comparison-text">This topic is covered by a single source: The Daily Telegraph reports on David Miliband&#x27;s warning that cutting the UK foreign aid budget is a short-sighted and strategically damaging move, undermining one of the few stabilizing mechanisms remaining in fragile, conflict-affected states. With no other outlets covering this story, there is no cross-source contrast to draw - the coverage centers on Miliband&#x27;s critical stance toward the government&#x27;s policy.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1301">Citations (1) ▾</button>
+        <div class="section-body" id="body-1301">
+          <p class="comparison-text">This topic is covered by a single source: The Daily Telegraph reports on David Miliband&#x27;s warning that cutting the UK foreign aid budget is a short-sighted and strategically damaging move, undermining one of the few stabilizing mechanisms remaining in fragile, conflict-affected states. With no other outlets covering this story, there is no cross-source contrast to draw - the coverage centers on Miliband&#x27;s critical stance toward the government&#x27;s policy.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1301" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1301">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1301" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1302" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1302">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Channel migrant crossings crisis</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Channel migrant crossings crisis</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, The Daily Telegraph, which reports Suella Braverman&#x27;s warning that people-smuggling networks are adapting to enforcement efforts and spreading Channel crossings along the entire south coast. The article frames the government as losing control of illegal migration, directly quoting the sharp criticism that &quot;far from stopping the boats... this Government is losing this battle.&quot; With no other outlets covering the story, there is no competing framing or differing emphasis to compare.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1302">Citations (1) ▾</button>
+        <div class="section-body" id="body-1302">
+          <p class="comparison-text">Coverage of this topic comes from a single source, The Daily Telegraph, which reports Suella Braverman&#x27;s warning that people-smuggling networks are adapting to enforcement efforts and spreading Channel crossings along the entire south coast. The article frames the government as losing control of illegal migration, directly quoting the sharp criticism that &quot;far from stopping the boats... this Government is losing this battle.&quot; With no other outlets covering the story, there is no competing framing or differing emphasis to compare.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1302" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1302">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1302" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1303" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1303">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK-Mauritius Chagos Islands deal cost</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK-Mauritius Chagos Islands deal cost</h2>
-        <p class="comparison-text">Only The Daily Telegraph covers this story, and it does so with a distinctly critical angle: the article reports that a change in Treasury accounting methodology will inflate the official cost of the Chagos Islands sovereignty deal by £288 million, and implies that the government is presenting the figures in a way designed to obscure the true price tag - which critics say amounts to roughly £35 billion once the discount rate is stripped out. With no other outlet covering the story, there is no competing framing to compare it against, but the Telegraph&#x27;s emphasis on the ballooning cost and the suggestion of accounting manipulation signals a skeptical, adversarial stance toward the government and the deal itself.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1303">Citations (1) ▾</button>
+        <div class="section-body" id="body-1303">
+          <p class="comparison-text">Only The Daily Telegraph covers this story, and it does so with a distinctly critical angle: the article reports that a change in Treasury accounting methodology will inflate the official cost of the Chagos Islands sovereignty deal by £288 million, and implies that the government is presenting the figures in a way designed to obscure the true price tag - which critics say amounts to roughly £35 billion once the discount rate is stripped out. With no other outlet covering the story, there is no competing framing to compare it against, but the Telegraph&#x27;s emphasis on the ballooning cost and the suggestion of accounting manipulation signals a skeptical, adversarial stance toward the government and the deal itself.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1303" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1303">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1303" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1305" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1305">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Funeral of Ratko Mladic and Bosnian War legacy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Funeral of Ratko Mladic and Bosnian War legacy</h2>
-        <p class="comparison-text">Only The Daily Telegraph covers this story, offering a detailed account of the funeral of Ratko Mladic, the convicted &quot;Butcher of Bosnia,&quot; describing how thousands of Serb nationalists turned out to hail him as a hero, kissing his coffin and praising his memory. The report also notes the European Union&#x27;s condemnation of the spectacle, but its framing is largely descriptive rather than editorializing, letting the stark contrast between international recognition of Mladic&#x27;s war crimes and the persistent glorification of him among Serbian nationalist circles speak for itself. With no other outlet covering the event, there is no cross-source contrast to draw - just a single, vivid account left to convey the unresolved tension over Bosnia&#x27;s wartime legacy.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1305">Citations (1) ▾</button>
+        <div class="section-body" id="body-1305">
+          <p class="comparison-text">Only The Daily Telegraph covers this story, offering a detailed account of the funeral of Ratko Mladic, the convicted &quot;Butcher of Bosnia,&quot; describing how thousands of Serb nationalists turned out to hail him as a hero, kissing his coffin and praising his memory. The report also notes the European Union&#x27;s condemnation of the spectacle, but its framing is largely descriptive rather than editorializing, letting the stark contrast between international recognition of Mladic&#x27;s war crimes and the persistent glorification of him among Serbian nationalist circles speak for itself. With no other outlet covering the event, there is no cross-source contrast to draw - just a single, vivid account left to convey the unresolved tension over Bosnia&#x27;s wartime legacy.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1305" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1305">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1305" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 13</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1306" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1306">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Falklands dispute and Argentina&#x27;s ambitions</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Falklands dispute and Argentina&#x27;s ambitions</h2>
-        <p class="comparison-text">Both items on this topic come from The Daily Telegraph, offering two complementary rather than overlapping angles. The first article focuses on the present and future, arguing that Milei&#x27;s belligerent rhetoric over the Falklands is largely a domestic political tactic, while his real ambition is to build a naval and logistics base at Ushuaia to project Argentine power into Antarctica amid rivalry between the US, China and Russia - an ambition the paper warns is constrained by economic weakness and dependence on China. The second article looks instead to history as a warning for the future, challenging the assumption that the United States firmly backed Britain during the 1982 Falklands War, arguing American support was in fact reluctant and belated, and concluding that Britain cannot count on US backing under Trump should a future confrontation with Argentina arise. Where the first article frames the dispute as an internal Argentine political manoeuvre within a wider geopolitical contest, the second frames it as a strategic warning to Britain itself about the need to strengthen its own capacity for self-reliance.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1306">Citations (2) ▾</button>
+        <div class="section-body" id="body-1306">
+          <p class="comparison-text">Both items on this topic come from The Daily Telegraph, offering two complementary rather than overlapping angles. The first article focuses on the present and future, arguing that Milei&#x27;s belligerent rhetoric over the Falklands is largely a domestic political tactic, while his real ambition is to build a naval and logistics base at Ushuaia to project Argentine power into Antarctica amid rivalry between the US, China and Russia - an ambition the paper warns is constrained by economic weakness and dependence on China. The second article looks instead to history as a warning for the future, challenging the assumption that the United States firmly backed Britain during the 1982 Falklands War, arguing American support was in fact reluctant and belated, and concluding that Britain cannot count on US backing under Trump should a future confrontation with Argentina arise. Where the first article frames the dispute as an internal Argentine political manoeuvre within a wider geopolitical contest, the second frames it as a strategic warning to Britain itself about the need to strengthen its own capacity for self-reliance.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1306" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1306">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1306" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 13 — "Milei sets eyes on greater prize…"</li>
             <li>The Daily Telegraph, Sep 8, 2026, p. 15 — "America&#x27;s allegiances in the Falklands conflict"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1307" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1307">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK state pension policy debate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK state pension policy debate</h2>
-        <p class="comparison-text">Only The Daily Telegraph addresses this topic, in an opinion piece defending the state pension &quot;triple lock.&quot; The author argues that now is not the time to scrap the mechanism, contending that private pensions and high housing costs leave many future retirees, particularly women and renters, financially exposed. The piece emphasizes the triple lock&#x27;s historical success in reducing pensioner poverty and narrowing the gender gap in retirement income since the late 1990s, staking out a position in favor of preserving the current policy rather than reforming or cutting it. Since no other outlets cover this issue, there is no cross-source contrast in emphasis or stance to draw out.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1307">Citations (1) ▾</button>
+        <div class="section-body" id="body-1307">
+          <p class="comparison-text">Only The Daily Telegraph addresses this topic, in an opinion piece defending the state pension &quot;triple lock.&quot; The author argues that now is not the time to scrap the mechanism, contending that private pensions and high housing costs leave many future retirees, particularly women and renters, financially exposed. The piece emphasizes the triple lock&#x27;s historical success in reducing pensioner poverty and narrowing the gender gap in retirement income since the late 1990s, staking out a position in favor of preserving the current policy rather than reforming or cutting it. Since no other outlets cover this issue, there is no cross-source contrast in emphasis or stance to draw out.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1307" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1307">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1307" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1308" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1308">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK fiscal and economic policy under Healey</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK fiscal and economic policy under Healey</h2>
-        <p class="comparison-text">Coverage of this topic comes exclusively from The Daily Telegraph, and its two pieces essentially voice the same critical stance rather than offering distinct perspectives. Both articles argue that Chancellor John Healey is merely retreading the failed path of his predecessor Rachel Reeves, dismissing any suggestion of a bold new economic vision as a repackaging of standard Treasury orthodoxy lacking concrete detail on spending cuts or growth policy. Since no other source covers this topic, there is no genuine cross-source contrast to draw - only a reiterated single-newspaper judgment that Healey represents continuity rather than change.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1308">Citations (2) ▾</button>
+        <div class="section-body" id="body-1308">
+          <p class="comparison-text">Coverage of this topic comes exclusively from The Daily Telegraph, and its two pieces essentially voice the same critical stance rather than offering distinct perspectives. Both articles argue that Chancellor John Healey is merely retreading the failed path of his predecessor Rachel Reeves, dismissing any suggestion of a bold new economic vision as a repackaging of standard Treasury orthodoxy lacking concrete detail on spending cuts or growth policy. Since no other source covers this topic, there is no genuine cross-source contrast to draw - only a reiterated single-newspaper judgment that Healey represents continuity rather than change.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1308" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1308">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1308" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 15 — "John Healey now needs to prove…"</li>
             <li>The Daily Telegraph, Sep 8, 2026, p. 21 — "Sorry, but Chancellor Healey is no…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1311" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1311">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK defence policy and Army reserves</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK defence policy and Army reserves</h2>
-        <p class="comparison-text">This topic is covered only by The Daily Telegraph, in a Charles Moore opinion column. The piece criticises the Ministry of Defence&#x27;s centralisation of control over Britain&#x27;s Army reserves and warns that the reserves are underfunded even as the threat from Russia grows. Moore broadens the argument beyond military policy, cautioning against American political influence in British domestic affairs, pointing to figures such as Dr James Orr and JD Vance, and urging British political parties to refuse American money or backing. With no other source covering this topic, there is no cross-source comparison to draw, but the article itself links two concerns - weakened defence preparedness and vulnerability to foreign political interference - into a single critique of declining British sovereignty and readiness.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1311">Citations (1) ▾</button>
+        <div class="section-body" id="body-1311">
+          <p class="comparison-text">This topic is covered only by The Daily Telegraph, in a Charles Moore opinion column. The piece criticises the Ministry of Defence&#x27;s centralisation of control over Britain&#x27;s Army reserves and warns that the reserves are underfunded even as the threat from Russia grows. Moore broadens the argument beyond military policy, cautioning against American political influence in British domestic affairs, pointing to figures such as Dr James Orr and JD Vance, and urging British political parties to refuse American money or backing. With no other source covering this topic, there is no cross-source comparison to draw, but the article itself links two concerns - weakened defence preparedness and vulnerability to foreign political interference - into a single critique of declining British sovereignty and readiness.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1311" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1311">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1311" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1312" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1312">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK investment competitiveness ranking</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK investment competitiveness ranking</h2>
-        <p class="comparison-text">Only The Daily Telegraph covers this topic, framing it as a warning about Britain&#x27;s declining economic competitiveness. The article argues that the UK ranks near the bottom among G7 and OECD peers for investment, attributing this to a combination of high taxation, unpredictable policy, and costly energy. Particular emphasis is placed on business property taxation, which the piece says rises perversely with improvements made to a property, creating a disincentive to invest and underscoring what the paper presents as an urgent need for government action.</p>
-        <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1312">Citations (1) ▾</button>
+        <div class="section-body" id="body-1312">
+          <p class="comparison-text">Only The Daily Telegraph covers this topic, framing it as a warning about Britain&#x27;s declining economic competitiveness. The article argues that the UK ranks near the bottom among G7 and OECD peers for investment, attributing this to a combination of high taxation, unpredictable policy, and costly energy. Particular emphasis is placed on business property taxation, which the piece says rises perversely with improvements made to a property, creating a disincentive to invest and underscoring what the paper presents as an urgent need for government action.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1312" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1312">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1312" hidden>
             <ul>
             <li>The Daily Telegraph, Sep 8, 2026, p. 18</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1316" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1316">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Drone defense vulnerabilities in Germany</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Drone defense vulnerabilities in Germany</h2>
-        <p class="comparison-text">This topic is covered only by Die Welt, in an interview where an expert argues that Germany&#x27;s drone defenses at airports are &quot;blind in one eye&quot; technologically, unable to counter professional, state-directed drone attacks such as the suspected Russian incursion at Leipzig. The piece takes a critical, expert-driven angle calling for upgraded equipment, software, and wider surveillance technology, but since no other outlet addresses this issue, no cross-source contrast in framing can be identified.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1316">Citations (1) ▾</button>
+        <div class="section-body" id="body-1316">
+          <p class="comparison-text">This topic is covered only by Die Welt, in an interview where an expert argues that Germany&#x27;s drone defenses at airports are &quot;blind in one eye&quot; technologically, unable to counter professional, state-directed drone attacks such as the suspected Russian incursion at Leipzig. The piece takes a critical, expert-driven angle calling for upgraded equipment, software, and wider surveillance technology, but since no other outlet addresses this issue, no cross-source contrast in framing can be identified.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1316" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1316">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1316" hidden>
             <ul>
             <li>Die Welt, Sep 8, 2026, p. 10</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1317" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1317">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">China-Russia military supply cooperation</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">China-Russia military supply cooperation</h2>
-        <p class="comparison-text">This topic is covered by a single source, Die Welt, based on an independent investigation into leaked shipping documents. The article alleges that a Chinese state-owned company supplied critical drone components to a sanctioned Russian arms manufacturer, disguising the shipment under a false cargo description. It frames this as concrete evidence undermining Beijing&#x27;s official denials of military support for Russia, suggesting the findings could increase pressure for further sanctions against Chinese entities. As no other outlet covers this story, there is no comparative framing or divergent emphasis to draw from other sources.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1317">Citations (1) ▾</button>
+        <div class="section-body" id="body-1317">
+          <p class="comparison-text">This topic is covered by a single source, Die Welt, based on an independent investigation into leaked shipping documents. The article alleges that a Chinese state-owned company supplied critical drone components to a sanctioned Russian arms manufacturer, disguising the shipment under a false cargo description. It frames this as concrete evidence undermining Beijing&#x27;s official denials of military support for Russia, suggesting the findings could increase pressure for further sanctions against Chinese entities. As no other outlet covers this story, there is no comparative framing or divergent emphasis to draw from other sources.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1317" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1317">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1317" hidden>
             <ul>
             <li>Die Welt, Sep 8, 2026, p. 6</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1318" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1318">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Influencer networks in US politics/government</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Influencer networks in US politics/government</h2>
-        <p class="comparison-text">This topic is covered by only one source, Die Welt, which describes an emerging phenomenon in American politics in which government-linked figures - both Trump administration War Secretary Pete Hegseth and New York Mayor Mamdani - are financing social media influencers in non-transparent ways, whether through covert government employment or public funds, to shape public opinion. The article takes a clearly critical stance, emphasizing that the absence of disclosure requirements creates a legal &quot;gray zone&quot; in which the public cannot distinguish a paid voice from an organic one. Since no other outlets address this topic, no cross-source comparison of emphasis or stance is possible.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1318">Citations (1) ▾</button>
+        <div class="section-body" id="body-1318">
+          <p class="comparison-text">This topic is covered by only one source, Die Welt, which describes an emerging phenomenon in American politics in which government-linked figures - both Trump administration War Secretary Pete Hegseth and New York Mayor Mamdani - are financing social media influencers in non-transparent ways, whether through covert government employment or public funds, to shape public opinion. The article takes a clearly critical stance, emphasizing that the absence of disclosure requirements creates a legal &quot;gray zone&quot; in which the public cannot distinguish a paid voice from an organic one. Since no other outlets address this topic, no cross-source comparison of emphasis or stance is possible.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1318" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1318">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1318" hidden>
             <ul>
             <li>Die Welt, Sep 8, 2026, p. 11</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1319" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1319">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Sarandon on pro-Palestinian activism and Hollywood backlash</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Sarandon on pro-Palestinian activism and Hollywood backlash</h2>
-        <p class="comparison-text">This topic is covered solely by The Guardian, which centers on Susan Sarandon&#x27;s claim that public opinion in the United States has shifted toward greater sympathy for Palestinians and away from unconditional support for Israel, even as she personally continues to face professional consequences - lost film roles - for her pro-Palestinian activism. With no other outlets reporting on this story, there is no cross-source contrast in emphasis or framing to draw out.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1319">Citations (1) ▾</button>
+        <div class="section-body" id="body-1319">
+          <p class="comparison-text">This topic is covered solely by The Guardian, which centers on Susan Sarandon&#x27;s claim that public opinion in the United States has shifted toward greater sympathy for Palestinians and away from unconditional support for Israel, even as she personally continues to face professional consequences - lost film roles - for her pro-Palestinian activism. With no other outlets reporting on this story, there is no cross-source contrast in emphasis or framing to draw out.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1319" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1319">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1319" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 25</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1320" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1320">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Sámi rights vs mining in Sweden</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Sámi rights vs mining in Sweden</h2>
-        <p class="comparison-text">This topic is covered only by The Guardian, which frames it through the perspective of Sámi leaders who accuse the Swedish government and political parties of scapegoating reindeer herders while prioritizing mining and mineral extraction - driven by national and EU interests and the desire to reduce reliance on Chinese imports - over Indigenous land rights and cultural preservation. Since no other source in this set addresses the issue, there is no cross-outlet contrast to draw; the coverage stands as The Guardian&#x27;s singular framing, which foregrounds the Sámi community&#x27;s grievances against being cast as obstacles to economic development.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1320">Citations (1) ▾</button>
+        <div class="section-body" id="body-1320">
+          <p class="comparison-text">This topic is covered only by The Guardian, which frames it through the perspective of Sámi leaders who accuse the Swedish government and political parties of scapegoating reindeer herders while prioritizing mining and mineral extraction - driven by national and EU interests and the desire to reduce reliance on Chinese imports - over Indigenous land rights and cultural preservation. Since no other source in this set addresses the issue, there is no cross-outlet contrast to draw; the coverage stands as The Guardian&#x27;s singular framing, which foregrounds the Sámi community&#x27;s grievances against being cast as obstacles to economic development.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1320" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1320">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1320" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 23</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1321" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1321">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Decline of grand ideologies and rise of flat individuality</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Decline of grand ideologies and rise of flat individuality</h2>
-        <p class="comparison-text">This topic is covered solely by Die Welt, which presents a cultural-philosophical analysis drawing on Gumbrecht. The piece argues that the classical notion of &quot;History&quot; - driven by grand visions, ideologies, and collective identities such as nations and classes - has given way to a &quot;broad present&quot; defined by short-term negotiation and flat individuality. This shift, the article contends, undermines the principle of political representation underlying parliamentary democracy and fuels phenomena such as populism, even as global poverty has declined. With no other source addressing this theme, there is no comparative angle to draw; still, it is worth noting that Die Welt opts here for an abstract, theoretical framing rather than event-driven reporting, offering a broad interpretive lens for understanding contemporary political and social developments.</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1321">Citations (1) ▾</button>
+        <div class="section-body" id="body-1321">
+          <p class="comparison-text">This topic is covered solely by Die Welt, which presents a cultural-philosophical analysis drawing on Gumbrecht. The piece argues that the classical notion of &quot;History&quot; - driven by grand visions, ideologies, and collective identities such as nations and classes - has given way to a &quot;broad present&quot; defined by short-term negotiation and flat individuality. This shift, the article contends, undermines the principle of political representation underlying parliamentary democracy and fuels phenomena such as populism, even as global poverty has declined. With no other source addressing this theme, there is no comparative angle to draw; still, it is worth noting that Die Welt opts here for an abstract, theoretical framing rather than event-driven reporting, offering a broad interpretive lens for understanding contemporary political and social developments.</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1321" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1321">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1321" hidden>
             <ul>
             <li>Die Welt, Sep 8, 2026, p. 14</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1323" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1323">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK-Saudi academic/military partnership</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">UK-Saudi academic/military partnership</h2>
-        <p class="comparison-text">Only one source, The Guardian, covers this topic, so no cross-source comparison is possible. The piece, which reads like a defense or response on behalf of the University of Exeter, argues that the university&#x27;s partnership with a Saudi military institution is legitimate, ethical, consistent with UK government policy, and financially beneficial to the university, pushing back against claims that it represents &quot;dirty money&quot; harming humanities and social science positions.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1323">Citations (1) ▾</button>
+        <div class="section-body" id="body-1323">
+          <p class="comparison-text">Only one source, The Guardian, covers this topic, so no cross-source comparison is possible. The piece, which reads like a defense or response on behalf of the University of Exeter, argues that the university&#x27;s partnership with a Saudi military institution is legitimate, ethical, consistent with UK government policy, and financially beneficial to the university, pushing back against claims that it represents &quot;dirty money&quot; harming humanities and social science positions.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1323" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1323">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1323" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 49</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1324" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1324">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Reform UK funding scandal and Farage&#x27;s future</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Reform UK funding scandal and Farage&#x27;s future</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, The Guardian, so there is no cross-outlet comparison to draw. The piece takes a sharply critical stance toward Nigel Farage, dismissing his claim of ignorance about a questionable donation to Reform UK as implausible. The author frames the episode as leaving only two possibilities - that Farage is astonishingly careless about compliance and governance within his party, or that he is deliberately evading accountability - casting the scandal as a marker of a broader credibility problem for him and his party.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1324">Citations (1) ▾</button>
+        <div class="section-body" id="body-1324">
+          <p class="comparison-text">Coverage of this topic comes from a single source, The Guardian, so there is no cross-outlet comparison to draw. The piece takes a sharply critical stance toward Nigel Farage, dismissing his claim of ignorance about a questionable donation to Reform UK as implausible. The author frames the episode as leaving only two possibilities - that Farage is astonishingly careless about compliance and governance within his party, or that he is deliberately evading accountability - casting the scandal as a marker of a broader credibility problem for him and his party.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1324" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1324">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1324" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 41</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1325" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1325">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Gaza as an issue in UK byelection (Labour vs Green)</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Gaza as an issue in UK byelection (Labour vs Green)</h2>
-        <p class="comparison-text">This topic is covered by a single source, The Guardian, in an opinion piece by Polly Toynbee. It frames the Holborn and St Pancras byelection as a genuine test for both Labour and the Greens, arguing that Labour&#x27;s stance on Gaza and its crackdown on pro-Palestinian protesters could push left-leaning voters toward the Greens despite Labour fielding a strong local candidate. With no other outlet covering this specific story, there is no cross-source contrast to draw - only The Guardian&#x27;s domestically focused lens on how Gaza is reshaping left-wing electoral politics in Britain.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1325">Citations (1) ▾</button>
+        <div class="section-body" id="body-1325">
+          <p class="comparison-text">This topic is covered by a single source, The Guardian, in an opinion piece by Polly Toynbee. It frames the Holborn and St Pancras byelection as a genuine test for both Labour and the Greens, arguing that Labour&#x27;s stance on Gaza and its crackdown on pro-Palestinian protesters could push left-leaning voters toward the Greens despite Labour fielding a strong local candidate. With no other outlet covering this specific story, there is no cross-source contrast to draw - only The Guardian&#x27;s domestically focused lens on how Gaza is reshaping left-wing electoral politics in Britain.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1325" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1325">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1325" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 43</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1326" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1326">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Hard right&#x27;s rhetoric on women&#x27;s safety questioned</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Hard right&#x27;s rhetoric on women&#x27;s safety questioned</h2>
-        <p class="comparison-text">This topic is covered by a single source, The Guardian, in an opinion piece that challenges the sincerity of the hard right&#x27;s professed concern for women&#x27;s and girls&#x27; safety when used to justify anti-immigrant rhetoric. The article argues this framing is hypocritical, pointing out that prominent figures and members within these movements themselves have records of violence against women. Since no other outlet addresses this specific angle, there is no cross-source comparison to draw - this stands as a lone, pointed critique aimed inward at the hard right&#x27;s own contradictions rather than straightforward event reporting.</p>
-        <p class="section-sources">Sources: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1326">Citations (1) ▾</button>
+        <div class="section-body" id="body-1326">
+          <p class="comparison-text">This topic is covered by a single source, The Guardian, in an opinion piece that challenges the sincerity of the hard right&#x27;s professed concern for women&#x27;s and girls&#x27; safety when used to justify anti-immigrant rhetoric. The article argues this framing is hypocritical, pointing out that prominent figures and members within these movements themselves have records of violence against women. Since no other outlet addresses this specific angle, there is no cross-source comparison to draw - this stands as a lone, pointed critique aimed inward at the hard right&#x27;s own contradictions rather than straightforward event reporting.</p>
+          <p class="section-sources">Sources: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1326" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1326">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1326" hidden>
             <ul>
             <li>The Guardian, Sep 8, 2026, p. 55</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1327" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1327">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Destruction of Sudan&#x27;s cultural heritage in civil war</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Destruction of Sudan&#x27;s cultural heritage in civil war</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, the Los Angeles Times, which details how RSF paramilitary forces systematically looted and destroyed Sudan&#x27;s National Museum and its ancient artifacts. The article frames the episode as a devastating cultural and historical loss inflicted amid the civil war, emphasizing quoted testimony indicating the looting was deliberate and organized rather than incidental. With no other outlets covering the story, there is no basis for comparing differing emphases or angles across sources.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1327">Citations (1) ▾</button>
+        <div class="section-body" id="body-1327">
+          <p class="comparison-text">Coverage of this topic comes from a single source, the Los Angeles Times, which details how RSF paramilitary forces systematically looted and destroyed Sudan&#x27;s National Museum and its ancient artifacts. The article frames the episode as a devastating cultural and historical loss inflicted amid the civil war, emphasizing quoted testimony indicating the looting was deliberate and organized rather than incidental. With no other outlets covering the story, there is no basis for comparing differing emphases or angles across sources.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1327" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1327">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1327" hidden>
             <ul>
             <li>Los Angeles Times, Sep 8, 2026, p. 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1329" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1329">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-Canada trade war and tariffs</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US-Canada trade war and tariffs</h2>
-        <p class="comparison-text">Only the Los Angeles Times covers this topic, portraying Canada&#x27;s escalating tariffs as a direct response to Trump-era trade policy. The article frames Prime Minister Carney&#x27;s approach as a calculated gamble: Canada is not seeking a trade war but is using tariffs as leverage intended to end the conflict and strengthen its negotiating position, even at immediate economic cost. With no other outlet covering the story, there is no comparable framing from other sources to contrast this angle against.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1329">Citations (1) ▾</button>
+        <div class="section-body" id="body-1329">
+          <p class="comparison-text">Only the Los Angeles Times covers this topic, portraying Canada&#x27;s escalating tariffs as a direct response to Trump-era trade policy. The article frames Prime Minister Carney&#x27;s approach as a calculated gamble: Canada is not seeking a trade war but is using tariffs as leverage intended to end the conflict and strengthen its negotiating position, even at immediate economic cost. With no other outlet covering the story, there is no comparable framing from other sources to contrast this angle against.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1329" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1329">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1329" hidden>
             <ul>
             <li>Los Angeles Times, Sep 8, 2026, p. 2</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1330" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1330">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US military action in Ecuador/Latin America</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US military action in Ecuador/Latin America</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, Los Angeles Times, so no cross-source comparison is possible. The piece takes a sharply critical stance, arguing that Trump has launched and expanded an unconstitutional, open-ended American combat campaign in Ecuador and at sea against drug-trafficking vessels without congressional authorization, and that both Congress and the American public have failed to hold him accountable. The focus is on the bypassing of the constitutional war-powers process rather than on any policy or security justification for the action itself.</p>
-        <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1330">Citations (1) ▾</button>
+        <div class="section-body" id="body-1330">
+          <p class="comparison-text">Coverage of this topic comes from a single source, Los Angeles Times, so no cross-source comparison is possible. The piece takes a sharply critical stance, arguing that Trump has launched and expanded an unconstitutional, open-ended American combat campaign in Ecuador and at sea against drug-trafficking vessels without congressional authorization, and that both Congress and the American public have failed to hold him accountable. The focus is on the bypassing of the constitutional war-powers process rather than on any policy or security justification for the action itself.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1330" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1330">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1330" hidden>
             <ul>
             <li>Los Angeles Times, Sep 8, 2026, p. 13</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1331" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1331">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">German defense industry and Israel cooperation (Iron Dome)</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">German defense industry and Israel cooperation (Iron Dome)</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, Süddeutsche Zeitung, which reports on the conversion of a Volkswagen plant in Osnabrück into a production line for Israel&#x27;s Iron Dome air defense system. The article frames the move approvingly and pragmatically, presenting it as a response to Europe&#x27;s changed security environment, and quotes government officials who describe it as a positive economic and security development - strengthening German and European defense capabilities while generating economic value and secure employment. As no other source addresses this topic, no cross-source contrast in framing or emphasis can be identified.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1331">Citations (1) ▾</button>
+        <div class="section-body" id="body-1331">
+          <p class="comparison-text">Coverage of this topic comes from a single source, Süddeutsche Zeitung, which reports on the conversion of a Volkswagen plant in Osnabrück into a production line for Israel&#x27;s Iron Dome air defense system. The article frames the move approvingly and pragmatically, presenting it as a response to Europe&#x27;s changed security environment, and quotes government officials who describe it as a positive economic and security development - strengthening German and European defense capabilities while generating economic value and secure employment. As no other source addresses this topic, no cross-source contrast in framing or emphasis can be identified.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1331" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1331">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1331" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1332" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1332">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Germany&#x27;s arms exports to Israel and ICJ case</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Germany&#x27;s arms exports to Israel and ICJ case</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, Süddeutsche Zeitung, so there is no cross-source comparison, only its own critical framing. The article argues that Germany bears direct responsibility for enabling Israel&#x27;s conduct in Gaza through lax, self-certified arms export controls, contending that the government&#x27;s Federal Security Council, made up of ministers, has consistently put business and strategic interests ahead of morality and human rights. Against this backdrop, the piece frames Germany as now facing a difficult reckoning at the ICJ, where it will have to account for its export policy.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1332">Citations (1) ▾</button>
+        <div class="section-body" id="body-1332">
+          <p class="comparison-text">Coverage of this topic comes from a single source, Süddeutsche Zeitung, so there is no cross-source comparison, only its own critical framing. The article argues that Germany bears direct responsibility for enabling Israel&#x27;s conduct in Gaza through lax, self-certified arms export controls, contending that the government&#x27;s Federal Security Council, made up of ministers, has consistently put business and strategic interests ahead of morality and human rights. Against this backdrop, the piece frames Germany as now facing a difficult reckoning at the ICJ, where it will have to account for its export policy.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1332" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1332">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1332" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1333" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1333">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">French far-right rift ahead of 2027 election</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">French far-right rift ahead of 2027 election</h2>
-        <p class="comparison-text">This topic is covered here only by Süddeutsche Zeitung, so no cross-source comparison is possible. The piece analyzes the emerging rift between Marine Le Pen and Jordan Bardella ahead of the 2027 French presidential election, framing Bardella&#x27;s independent ambitions and lifestyle as sources of tension within the Le Pen political dynasty. The newspaper&#x27;s angle is notably psychological and dramatic rather than purely strategic - its headline itself describes the situation as a &quot;psychodrama&quot; - and it raises doubts about both the party&#x27;s internal unity and Le Pen&#x27;s genuine appetite for power.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1333">Citations (1) ▾</button>
+        <div class="section-body" id="body-1333">
+          <p class="comparison-text">This topic is covered here only by Süddeutsche Zeitung, so no cross-source comparison is possible. The piece analyzes the emerging rift between Marine Le Pen and Jordan Bardella ahead of the 2027 French presidential election, framing Bardella&#x27;s independent ambitions and lifestyle as sources of tension within the Le Pen political dynasty. The newspaper&#x27;s angle is notably psychological and dramatic rather than purely strategic - its headline itself describes the situation as a &quot;psychodrama&quot; - and it raises doubts about both the party&#x27;s internal unity and Le Pen&#x27;s genuine appetite for power.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1333" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1333">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1333" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1334" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1334">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">China&#x27;s media influence in Africa</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">China&#x27;s media influence in Africa</h2>
-        <p class="comparison-text">This topic is covered by a single source, so no cross-source comparison is possible. Süddeutsche Zeitung is the only outlet addressing China&#x27;s media influence in Africa, and it frames the issue in sharply critical terms: China&#x27;s journalist training programs and media investments on the continent are portrayed not as disinterested goodwill gestures but as a calculated strategic effort to shape narratives favorable to Beijing. The article cites a description of the phenomenon as a &quot;new form of colonialism&quot; - one aimed not at political subjugation as in the past, but at economic exploitation. Since no other publication touches on the subject, there is no alternative emphasis or competing perspective to weigh against Süddeutsche Zeitung&#x27;s critical-economic framing.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1334">Citations (1) ▾</button>
+        <div class="section-body" id="body-1334">
+          <p class="comparison-text">This topic is covered by a single source, so no cross-source comparison is possible. Süddeutsche Zeitung is the only outlet addressing China&#x27;s media influence in Africa, and it frames the issue in sharply critical terms: China&#x27;s journalist training programs and media investments on the continent are portrayed not as disinterested goodwill gestures but as a calculated strategic effort to shape narratives favorable to Beijing. The article cites a description of the phenomenon as a &quot;new form of colonialism&quot; - one aimed not at political subjugation as in the past, but at economic exploitation. Since no other publication touches on the subject, there is no alternative emphasis or competing perspective to weigh against Süddeutsche Zeitung&#x27;s critical-economic framing.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1334" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1334">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1334" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1335" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1335">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">German occupational pension fund scandal</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">German occupational pension fund scandal</h2>
-        <p class="comparison-text">Only Süddeutsche Zeitung covers this topic, so there is a single angle rather than a cross-source comparison. The paper takes a critical stance toward the managers of German occupational pension funds, arguing they have failed to be transparent about mismanaged investments that led to cuts in retirees&#x27; pensions. It demands public accountability and stronger consumer protection, especially as such pension schemes are being expanded, stressing that it is the policyholders&#x27; own money that has disappeared.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1335">Citations (1) ▾</button>
+        <div class="section-body" id="body-1335">
+          <p class="comparison-text">Only Süddeutsche Zeitung covers this topic, so there is a single angle rather than a cross-source comparison. The paper takes a critical stance toward the managers of German occupational pension funds, arguing they have failed to be transparent about mismanaged investments that led to cuts in retirees&#x27; pensions. It demands public accountability and stronger consumer protection, especially as such pension schemes are being expanded, stressing that it is the policyholders&#x27; own money that has disappeared.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1335" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1335">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1335" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 13</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1336" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Security &amp; Conflict</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1336">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Israeli settler violence in the West Bank</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Israeli settler violence in the West Bank</h2>
-        <p class="comparison-text">This topic is covered only by The Wall Street Journal, which portrays young Israeli &quot;nomad&quot; squatters in the West Bank as using intimidation and violence to drive Palestinians from their land and homes. The article frames the phenomenon as an extremist campaign carried out under religious pretext, emphasizing that these young settlers operate outside law and order, with no other outlet offering a competing or alternative framing of the events.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1336">Citations (1) ▾</button>
+        <div class="section-body" id="body-1336">
+          <p class="comparison-text">This topic is covered only by The Wall Street Journal, which portrays young Israeli &quot;nomad&quot; squatters in the West Bank as using intimidation and violence to drive Palestinians from their land and homes. The article frames the phenomenon as an extremist campaign carried out under religious pretext, emphasizing that these young settlers operate outside law and order, with no other outlet offering a competing or alternative framing of the events.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1336" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1336">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1336" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1337" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Diplomacy &amp; International Relations</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1337">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-mediated Russia-Ukraine peace talks</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US-mediated Russia-Ukraine peace talks</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source. The Wall Street Journal reports on a renewed push by Trump envoys Kushner and Witkoff to mediate an end to the war, framing the trip as falling short of any real breakthrough - yielding only a brief pause in Russian strikes on Kyiv and talks over a winter aid package. The article notes Zelensky&#x27;s cautious thanks for merely restarting mediation efforts, rather than pointing to any concrete achievement.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1337">Citations (1) ▾</button>
+        <div class="section-body" id="body-1337">
+          <p class="comparison-text">Coverage of this topic comes from a single source. The Wall Street Journal reports on a renewed push by Trump envoys Kushner and Witkoff to mediate an end to the war, framing the trip as falling short of any real breakthrough - yielding only a brief pause in Russian strikes on Kyiv and talks over a winter aid package. The article notes Zelensky&#x27;s cautious thanks for merely restarting mediation efforts, rather than pointing to any concrete achievement.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1337" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1337">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1337" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 8</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1338" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Migration &amp; Society</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1338">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Migration policy debate in Germany and Europe</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Migration policy debate in Germany and Europe</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, Süddeutsche Zeitung, in the form of an interview with researcher Naika Foroutan. Rather than reporting on an event, the piece presents a pointed academic-critical stance: Foroutan argues that Europe&#x27;s deterrence-based migration policy does not actually reduce migratory pressure, but merely pushes migrants toward riskier routes as costs rise. She contends that Germany is structurally dependent on immigration for its economic survival, making anti-immigration rhetoric such as the AfD&#x27;s not only inhumane but also contrary to Germany&#x27;s own interests. Rather than fixating on border security, she calls for coordinated, legal migration pathways. Since no other outlet in this set covers the topic, there is no competing frame or emphasis to contrast - this stands as a single, progressive-critical voice on the German migration debate.</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1338">Citations (1) ▾</button>
+        <div class="section-body" id="body-1338">
+          <p class="comparison-text">Coverage of this topic comes from a single source, Süddeutsche Zeitung, in the form of an interview with researcher Naika Foroutan. Rather than reporting on an event, the piece presents a pointed academic-critical stance: Foroutan argues that Europe&#x27;s deterrence-based migration policy does not actually reduce migratory pressure, but merely pushes migrants toward riskier routes as costs rise. She contends that Germany is structurally dependent on immigration for its economic survival, making anti-immigration rhetoric such as the AfD&#x27;s not only inhumane but also contrary to Germany&#x27;s own interests. Rather than fixating on border security, she calls for coordinated, legal migration pathways. Since no other outlet in this set covers the topic, there is no competing frame or emphasis to contrast - this stands as a single, progressive-critical voice on the German migration debate.</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1338" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1338">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1338" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 9</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1339" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1339">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Trump&#x27;s tariff and trade policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Trump&#x27;s tariff and trade policy</h2>
-        <p class="comparison-text">Coverage of this topic consists of a single article, from The Wall Street Journal, which offers a distinctly sympathetic, ideologically framed take on Trump&#x27;s tariff policy. Rather than treating the tariffs as a break from free-trade orthodoxy, the piece situates Trump and Vance within the protectionist tradition of Alexander Hamilton, portraying their approach as a restoration of balanced global trade rather than a disruption of it. With no other outlets addressing this topic, there is no competing framing to compare against - the sole available account presents an intellectually legitimizing, favorable interpretation of the administration&#x27;s trade agenda.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1339">Citations (1) ▾</button>
+        <div class="section-body" id="body-1339">
+          <p class="comparison-text">Coverage of this topic consists of a single article, from The Wall Street Journal, which offers a distinctly sympathetic, ideologically framed take on Trump&#x27;s tariff policy. Rather than treating the tariffs as a break from free-trade orthodoxy, the piece situates Trump and Vance within the protectionist tradition of Alexander Hamilton, portraying their approach as a restoration of balanced global trade rather than a disruption of it. With no other outlets addressing this topic, there is no competing framing to compare against - the sole available account presents an intellectually legitimizing, favorable interpretation of the administration&#x27;s trade agenda.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1339" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1339">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1339" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 16</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1340" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Society &amp; Culture</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1340">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Award for scholars countering academic suppression</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Award for scholars countering academic suppression</h2>
-        <p class="comparison-text">This topic is covered by a single source. The Wall Street Journal frames it critically, arguing that academic culture creates incentives for scholars to suppress rigorous but socially or politically inconvenient findings, since the professional cost of publishing them can outweigh that of silence. From this stance, the article announces a new prize intended to reward scholars who publish honest, defensible research despite the risk of professional backlash, casting the issue as a defense of scientific truth-telling against ideological pressure within academia. As no other outlets cover this story, there is no competing or complementary framing to compare it against.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1340">Citations (1) ▾</button>
+        <div class="section-body" id="body-1340">
+          <p class="comparison-text">This topic is covered by a single source. The Wall Street Journal frames it critically, arguing that academic culture creates incentives for scholars to suppress rigorous but socially or politically inconvenient findings, since the professional cost of publishing them can outweigh that of silence. From this stance, the article announces a new prize intended to reward scholars who publish honest, defensible research despite the risk of professional backlash, casting the issue as a defense of scientific truth-telling against ideological pressure within academia. As no other outlets cover this story, there is no competing or complementary framing to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1340" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1340">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1340" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1341" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1341">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Democratic Party divide over Fetterman&#x27;s Israel support</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Democratic Party divide over Fetterman&#x27;s Israel support</h2>
-        <p class="comparison-text">This topic is covered by a single source, The Wall Street Journal, which frames the internal Democratic backlash against Senator John Fetterman not as a response to neglected duties, as critics claim, but as punishment for his unapologetic support of Israel, his occasional votes with Republicans, and his refusal to join in what the paper characterizes as anti-Trump hysteria. Since no other outlet in this set addresses the story, there is no competing angle to weigh against it; the coverage stands as a distinctly conservative-leaning interpretation portraying the Democratic Party as drifting away from its traditional pro-Israel consensus.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1341">Citations (1) ▾</button>
+        <div class="section-body" id="body-1341">
+          <p class="comparison-text">This topic is covered by a single source, The Wall Street Journal, which frames the internal Democratic backlash against Senator John Fetterman not as a response to neglected duties, as critics claim, but as punishment for his unapologetic support of Israel, his occasional votes with Republicans, and his refusal to join in what the paper characterizes as anti-Trump hysteria. Since no other outlet in this set addresses the story, there is no competing angle to weigh against it; the coverage stands as a distinctly conservative-leaning interpretation portraying the Democratic Party as drifting away from its traditional pro-Israel consensus.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1341" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1341">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1341" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 16</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1342" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1342">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Foreign funding disclosure debate in US higher education</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Foreign funding disclosure debate in US higher education</h2>
-        <p class="comparison-text">Both pieces come from The Wall Street Journal and together form two sides of the same debate, likely presented as opposing viewpoints or an exchange of letters. One side, voiced through the American Council on Education, insists universities already take seriously their duty to guard against malign foreign influence, and warns that disclosing individual foreign donors&#x27; names could endanger lives, defy congressional intent, and potentially violate the First Amendment. The other side pushes back directly against that framing, pointing to New York State&#x27;s existing disclosure law and to large foreign gifts received by Cornell and Columbia - including a partnership with the Qatar Foundation - as evidence that transparency requirements have not deterred continued foreign giving. Rather than taking a unified editorial stance, the Journal is staging an internal argument between a security-and-privacy rationale for confidentiality and a public-accountability case for mandatory disclosure.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1342">Citations (2) ▾</button>
+        <div class="section-body" id="body-1342">
+          <p class="comparison-text">Both pieces come from The Wall Street Journal and together form two sides of the same debate, likely presented as opposing viewpoints or an exchange of letters. One side, voiced through the American Council on Education, insists universities already take seriously their duty to guard against malign foreign influence, and warns that disclosing individual foreign donors&#x27; names could endanger lives, defy congressional intent, and potentially violate the First Amendment. The other side pushes back directly against that framing, pointing to New York State&#x27;s existing disclosure law and to large foreign gifts received by Cornell and Columbia - including a partnership with the Qatar Foundation - as evidence that transparency requirements have not deterred continued foreign giving. Rather than taking a unified editorial stance, the Journal is staging an internal argument between a security-and-privacy rationale for confidentiality and a public-accountability case for mandatory disclosure.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1342" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1342">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1342" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 16 — "The Debate Over Foreign Money in…"</li>
             <li>The Wall Street Journal, Sep 8, 2026, p. 16 — "The Debate Over Foreign Money in…"</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1343" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1343">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US Supreme Court packing debate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US Supreme Court packing debate</h2>
-        <p class="comparison-text">Only The Wall Street Journal addresses this topic, so there is no cross-source contrast to draw. The piece, framed as an opinion argument, contends that Democratic proposals to expand the Supreme Court would likely be unconstitutional, warning that such a move would undermine the separation of powers, judicial independence, and the rule of law while further politicizing the court. With no other outlet covering the debate, there is no competing perspective to compare it against.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1343">Citations (1) ▾</button>
+        <div class="section-body" id="body-1343">
+          <p class="comparison-text">Only The Wall Street Journal addresses this topic, so there is no cross-source contrast to draw. The piece, framed as an opinion argument, contends that Democratic proposals to expand the Supreme Court would likely be unconstitutional, warning that such a move would undermine the separation of powers, judicial independence, and the rule of law while further politicizing the court. With no other outlet covering the debate, there is no competing perspective to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1343" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1343">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1343" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 17</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1344" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Trade &amp; Economics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1344">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Volkswagen restructuring amid Chinese competition</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Volkswagen restructuring amid Chinese competition</h2>
-        <p class="comparison-text">This topic is covered only by The Wall Street Journal, which offers a skeptical, analytical take on Volkswagen&#x27;s restructuring truce with its unions. Rather than treating the deal as a resolution, the paper frames it as a temporary ceasefire built on withdrawn threats and carefully vague language that merely postpones deeper governance and competitiveness problems. Its emphasis falls on the looming battles still ahead - against Chinese rivals and Trump-era tariffs - suggesting the internal peace is fragile and largely cosmetic. Since no other source addresses this story, there is no comparative framing to draw on, but The Wall Street Journal&#x27;s account stands out for its wary, forward-looking tone toward the company&#x27;s so-called truce.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1344">Citations (1) ▾</button>
+        <div class="section-body" id="body-1344">
+          <p class="comparison-text">This topic is covered only by The Wall Street Journal, which offers a skeptical, analytical take on Volkswagen&#x27;s restructuring truce with its unions. Rather than treating the deal as a resolution, the paper frames it as a temporary ceasefire built on withdrawn threats and carefully vague language that merely postpones deeper governance and competitiveness problems. Its emphasis falls on the looming battles still ahead - against Chinese rivals and Trump-era tariffs - suggesting the internal peace is fragile and largely cosmetic. Since no other source addresses this story, there is no comparative framing to draw on, but The Wall Street Journal&#x27;s account stands out for its wary, forward-looking tone toward the company&#x27;s so-called truce.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1344" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1344">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1344" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 21</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1345" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Technology &amp; Media</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1345">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US tech industry response to AI data-center backlash</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US tech industry response to AI data-center backlash</h2>
-        <p class="comparison-text">Coverage of this topic comes from a single source, The Wall Street Journal, which takes a skeptical view of how the US tech industry and the Trump administration are responding to grassroots backlash against AI data centers. The piece argues that Silicon Valley and the administration are opportunistically attributing rising public opposition to foreign influence campaigns, particularly linked to China, despite thin supporting evidence, when the real driver appears to be genuine local concern over electricity prices and water usage tied to these facilities. Since no other outlet covers this topic, no cross-source comparison of framing or emphasis is possible.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1345">Citations (1) ▾</button>
+        <div class="section-body" id="body-1345">
+          <p class="comparison-text">Coverage of this topic comes from a single source, The Wall Street Journal, which takes a skeptical view of how the US tech industry and the Trump administration are responding to grassroots backlash against AI data centers. The piece argues that Silicon Valley and the administration are opportunistically attributing rising public opposition to foreign influence campaigns, particularly linked to China, despite thin supporting evidence, when the real driver appears to be genuine local concern over electricity prices and water usage tied to these facilities. Since no other outlet covers this topic, no cross-source comparison of framing or emphasis is possible.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1345" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1345">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1345" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 22</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1346" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Domestic Politics</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1346">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US midterm elections and Trump&#x27;s political impact</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">US midterm elections and Trump&#x27;s political impact</h2>
-        <p class="comparison-text">Only The Wall Street Journal covers this topic, in the form of an opinion piece rather than straight news reporting. The editorial takes a critical stance toward Trump, arguing that his low approval ratings, the tariff dispute with Canada, controversy over mass deportations, and his personal vendettas against sitting Republican incumbents are together jeopardizing the GOP&#x27;s chances of retaining its Senate majority. With no other source addressing this topic, there is no cross-source comparison to draw, but it is notable that the paper frames Trump as a political liability for his own party heading into the midterms, rather than the electoral asset he is often portrayed as in conservative-leaning coverage.</p>
-        <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1346">Citations (1) ▾</button>
+        <div class="section-body" id="body-1346">
+          <p class="comparison-text">Only The Wall Street Journal covers this topic, in the form of an opinion piece rather than straight news reporting. The editorial takes a critical stance toward Trump, arguing that his low approval ratings, the tariff dispute with Canada, controversy over mass deportations, and his personal vendettas against sitting Republican incumbents are together jeopardizing the GOP&#x27;s chances of retaining its Senate majority. With no other source addressing this topic, there is no cross-source comparison to draw, but it is notable that the paper frames Trump as a political liability for his own party heading into the midterms, rather than the electoral asset he is often portrayed as in conservative-leaning coverage.</p>
+          <p class="section-sources">Sources: <b>The Wall Street Journal</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1346" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1346">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1346" hidden>
             <ul>
             <li>The Wall Street Journal, Sep 8, 2026, p. 16</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1347" data-category="additional_coverage">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Additional Coverage</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1347">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Climate change politics in Germany</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Climate change politics in Germany</h2>
-        <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The author argues that German politicians across the spectrum (Merz, Chrupalla, Klingbeil) misuse the climate change narrative - either blaming it for disasters to deflect responsibility for policy failures, or denying it to avoid taking action - rather than honestly addressing political failures in disaster prevention and forest management. Key excerpt: &quot;Politiker verneinen die Verantwortung der Politik mit dem Verweis auf höhere Gewalt.&quot;</p>
-        <p class="section-sources">Sources: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1347">Citations (1) ▾</button>
+        <div class="section-body" id="body-1347">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The author argues that German politicians across the spectrum (Merz, Chrupalla, Klingbeil) misuse the climate change narrative - either blaming it for disasters to deflect responsibility for policy failures, or denying it to avoid taking action - rather than honestly addressing political failures in disaster prevention and forest management. Key excerpt: &quot;Politiker verneinen die Verantwortung der Politik mit dem Verweis auf höhere Gewalt.&quot;</p>
+          <p class="section-sources">Sources: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1347" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1347">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1347" hidden>
             <ul>
             <li>Die Welt, Sep 8, 2026, p. 8</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-1348" data-category="additional_coverage">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">Additional Coverage</span>
-          <span class="coverage-badge">1 source · 1 language</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-1348">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Rechtsextremismus und Radikalisierungsforschung</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">Rechtsextremismus und Radikalisierungsforschung</h2>
-        <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): Der Autor würdigt Robert Misiks Buch als verdienstvolle Erinnerung an wichtige Studien zur rechten Radikalisierung, kritisiert jedoch, dass Misik komplexe psychopolitische Prozesse zu schematisch und ideologiekritisch vereinfacht darstellt, statt die widersprüchlichen und nuancierten Dynamiken von Radikalisierung und Deradikalisierung zu erfassen. Key excerpt: &quot;Es ist bedauerlich: Robert Misik hat wichtige Studien in Erinnerung gerufen, die sich der Analyse rechter Radikalisierungsprozesse widmen, diese überzeugend präsentiert und um aktuelle zeitdiagnostische Beiträge ergänzt.&quot;</p>
-        <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1348">Citations (1) ▾</button>
+        <div class="section-body" id="body-1348">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): Der Autor würdigt Robert Misiks Buch als verdienstvolle Erinnerung an wichtige Studien zur rechten Radikalisierung, kritisiert jedoch, dass Misik komplexe psychopolitische Prozesse zu schematisch und ideologiekritisch vereinfacht darstellt, statt die widersprüchlichen und nuancierten Dynamiken von Radikalisierung und Deradikalisierung zu erfassen. Key excerpt: &quot;Es ist bedauerlich: Robert Misik hat wichtige Studien in Erinnerung gerufen, die sich der Analyse rechter Radikalisierungsprozesse widmen, diese überzeugend präsentiert und um aktuelle zeitdiagnostische Beiträge ergänzt.&quot;</p>
+          <p class="section-sources">Sources: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-1348" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-1348">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-1348" hidden>
             <ul>
             <li>Süddeutsche Zeitung, Sep 8, 2026, p. 10</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
   </main>
   <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
     document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
@@ -1367,6 +2085,12 @@
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
           popup.hidden = true;
         });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
       }
     });
   </script>

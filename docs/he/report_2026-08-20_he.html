@@ -153,6 +153,59 @@
     text-decoration: underline;
   }
 
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
   .masthead {
     background: var(--bg-elevated);
     border-bottom: 3px solid var(--masthead-accent);
@@ -197,6 +250,20 @@
     padding: 1.5rem 1.6rem 1.65rem;
     border-inline-start: 5px solid var(--cat-color);
   }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
   .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
   .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -209,7 +276,26 @@
     border-radius: 999px;
   }
   .coverage-badge { font-size: .72rem; color: var(--text-muted); }
-  .section-title { margin: 0 0 .75rem; font-size: 1.3rem; font-weight: 700; line-height: 1.4; }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
   .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
   .section-sources {
     margin: 0;
@@ -220,20 +306,49 @@
   }
   .section-sources b { color: var(--text); font-weight: 600; }
 
-  .citations-row { position: relative; margin-top: .6rem; }
-  .citations-toggle {
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: .2rem .3rem;
     margin: 0;
     font: inherit;
     font-size: .78rem;
     color: var(--text-muted);
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
   }
-  .citations-toggle:hover { color: var(--masthead-accent); }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
   .citations-popup {
     position: absolute;
     top: 100%;
@@ -278,7 +393,14 @@
     }
     body { background: #fff; }
     .top-nav { display: none; }
-    .citations-row { display: none; }
+    .category-nav { display: none; }
+    .section-actions { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
   }
 </style>
 </head>
@@ -292,6 +414,11 @@
       <a class="top-nav-link" href="report_2026-08-20_he.pdf">⬇ הורד PDF</a>
     </div>
   </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-269">ביטחון וסכסוכים</a><a class="category-nav-link" href="#section-273">דיפלומטיה ויחסים בינלאומיים</a><a class="category-nav-link" href="#section-275">כלכלה וסחר</a><a class="category-nav-link" href="#section-268">פוליטיקה פנימית</a><a class="category-nav-link" href="#section-272">הגירה וחברה</a><a class="category-nav-link" href="#section-281">תרבות וזהות</a><a class="category-nav-link" href="#section-291">טכנולוגיה ומדיה</a><a class="category-nav-link" href="#section-276">אנרגיה וסביבה</a><a class="category-nav-link" href="#section-297">כיסוי נוסף</a></div>
+    <button class="toggle-all-btn" type="button">הרחב הכל / כווץ הכל</button>
+  </nav>
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">גאופוליטיקה יומי</p>
@@ -304,18 +431,28 @@
   </header>
   <main class="report-body">
 
-      <section class="topic-section" id="section-268" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">3 מקורות · 2 שפות</span>
+      <section class="topic-section topic-section--prominent" id="section-268" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-268">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">3 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">פיטורי פדורוב ומשבר שלטון באוקראינה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">פיטורי פדורוב ומשבר שלטון באוקראינה</h2>
-        <p class="comparison-text">The Guardian מקדיש שני מאמרים לנושא - האחד סוקר את הפיטורים והמחאה כאתגר ישיר לזלנסקי, והשני מסביר מדוע ביקורתו של פדורוב על שחיתות ושלטון מבוסס-נאמנות אמינה, תוך שהוא מדגיש שהחברה האזרחית האוקראינית עדיין מתפקדת כבלם על הנשיא. Süddeutsche Zeitung מציג את פדורוב כמאתגר פוליטי אמין ופופולרי הדורש בחירות חרף האיסור החוקתי בזמן מלחמה, ומדגיש את הסיכונים שבכך. The Daily Telegraph, לעומת זאת, נוקט עמדה הפוכה בתכלית: הוא רואה בפיטורי פדורוב ובריחוק מיריבים כמו זלוז&#x27;ני טעות אסטרטגית שמחלישה את האחדות האוקראינית ומועילה לרוסיה, ובמאמר נפרד קובע שכל קריאה לבחירות עכשיו משרתת את פוטין ויש להימנע ממנה עד לניצחון במלחמה.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-268">מראי מקום (5) ▾</button>
+        <div class="section-body" id="body-268">
+          <p class="comparison-text">The Guardian מקדיש שני מאמרים לנושא - האחד סוקר את הפיטורים והמחאה כאתגר ישיר לזלנסקי, והשני מסביר מדוע ביקורתו של פדורוב על שחיתות ושלטון מבוסס-נאמנות אמינה, תוך שהוא מדגיש שהחברה האזרחית האוקראינית עדיין מתפקדת כבלם על הנשיא. Süddeutsche Zeitung מציג את פדורוב כמאתגר פוליטי אמין ופופולרי הדורש בחירות חרף האיסור החוקתי בזמן מלחמה, ומדגיש את הסיכונים שבכך. The Daily Telegraph, לעומת זאת, נוקט עמדה הפוכה בתכלית: הוא רואה בפיטורי פדורוב ובריחוק מיריבים כמו זלוז&#x27;ני טעות אסטרטגית שמחלישה את האחדות האוקראינית ומועילה לרוסיה, ובמאמר נפרד קובע שכל קריאה לבחירות עכשיו משרתת את פוטין ויש להימנע ממנה עד לניצחון במלחמה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, The Guardian, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-268" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-268">
+            מראי מקום (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-268" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 11 — “Ukraine&#x27;s president has handed the Kremlin…”</li>
@@ -325,21 +462,32 @@
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 1</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-272" data-category="migration_society">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">הגירה וחברה</span>
-          <span class="coverage-badge">3 מקורות · 2 שפות</span>
+      <section class="topic-section topic-section--prominent" id="section-272" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-272">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">הגירה וחברה</span>
+            <span class="coverage-badge">3 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">משבר ההגירה באירופה ומדיניות המקלט</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">משבר ההגירה באירופה ומדיניות המקלט</h2>
-        <p class="comparison-text">הנושא מקבל טיפול נרחב ב-Die Welt, הכולל שני ראיונות עם יאן זולווין הטוענים שמערכת שנגן/דבלין קרסה מבנית ומצריכה פתרון אירופי מרכזי עם מתקני מעצר בגבולות החיצוניים, כתבה על היחלשות הגנת הפליטים הסורים בגרמניה, וכתבה ביקורתית הטוענת שארגונים גרמניים ולא-ממשלתיים מערערים את אכיפת הגבולות האיטלקית. The Daily Telegraph מדווח בגישה עיתונאית-פוליטית על המשבר בספרד סביב תקיפות מיניות בסאוטה, המנוצל על ידי המפלגות הימניות, ועל כישלון גרמניה בגירוש 9,000 מהגרים, תוך שהוא מציג את שני האירועים כפוליטית רגישים למרז ולממשלת גרמניה. Süddeutsche Zeitung מוסיף זווית שונה - ביקורת על פולין שנמנעת מדיון כן בהגירה חרף הצורך הכלכלי בעובדים זרים, בהשוואה חיובית לספרד.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-272">מראי מקום (7) ▾</button>
+        <div class="section-body" id="body-272">
+          <p class="comparison-text">הנושא מקבל טיפול נרחב ב-Die Welt, הכולל שני ראיונות עם יאן זולווין הטוענים שמערכת שנגן/דבלין קרסה מבנית ומצריכה פתרון אירופי מרכזי עם מתקני מעצר בגבולות החיצוניים, כתבה על היחלשות הגנת הפליטים הסורים בגרמניה, וכתבה ביקורתית הטוענת שארגונים גרמניים ולא-ממשלתיים מערערים את אכיפת הגבולות האיטלקית. The Daily Telegraph מדווח בגישה עיתונאית-פוליטית על המשבר בספרד סביב תקיפות מיניות בסאוטה, המנוצל על ידי המפלגות הימניות, ועל כישלון גרמניה בגירוש 9,000 מהגרים, תוך שהוא מציג את שני האירועים כפוליטית רגישים למרז ולממשלת גרמניה. Süddeutsche Zeitung מוסיף זווית שונה - ביקורת על פולין שנמנעת מדיון כן בהגירה חרף הצורך הכלכלי בעובדים זרים, בהשוואה חיובית לספרד.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-272" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-272">
+            מראי מקום (7)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-272" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 12 — “Sex attacks prompt Spain to move…”</li>
@@ -351,42 +499,64 @@
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 6</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-275" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">2 מקורות · 2 שפות</span>
+      <section class="topic-section topic-section--prominent" id="section-275" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-275">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">2 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מתחים ומו&quot;מ סחר בין ארה&quot;ב לקנדה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מתחים ומו&quot;מ סחר בין ארה&quot;ב לקנדה</h2>
-        <p class="comparison-text">The Guardian מדווח על כך שקנדה נמלטה בעור שיניה מרכיבי מכס של 50% בזכות משא ומתן של הרגע האחרון, תוך שהוא מדגיש את שבריריות ההסכם ואת יחסי ארה&quot;ב-קנדה המתוחים. Süddeutsche Zeitung נוקט טון סאטירי יותר, לועג לאיומי המכסים ההפכפכים והבריונות הרטורית של טראמפ, ומציין שקנדה דווקא דוחפת בחזרה כלכלית במקום להיכנע.</p>
-        <p class="section-sources">מקורות: <b>The Guardian, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-275">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-275">
+          <p class="comparison-text">The Guardian מדווח על כך שקנדה נמלטה בעור שיניה מרכיבי מכס של 50% בזכות משא ומתן של הרגע האחרון, תוך שהוא מדגיש את שבריריות ההסכם ואת יחסי ארה&quot;ב-קנדה המתוחים. Süddeutsche Zeitung נוקט טון סאטירי יותר, לועג לאיומי המכסים ההפכפכים והבריונות הרטורית של טראמפ, ומציין שקנדה דווקא דוחפת בחזרה כלכלית במקום להיכנע.</p>
+          <p class="section-sources">מקורות: <b>The Guardian, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-275" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-275">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-275" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 29</li>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
-      <section class="topic-section" id="section-278" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">2 מקורות · 2 שפות</span>
+      <section class="topic-section topic-section--prominent" id="section-278" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-278">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">2 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מדיניות פיסקלית ושוקי החוב בבריטניה וגרמניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מדיניות פיסקלית ושוקי החוב בבריטניה וגרמניה</h2>
-        <p class="comparison-text">The Daily Telegraph מפרסם שני מאמרים המזהירים מפני תלות יתר של בריטניה במחזיקי אג&quot;ח זרים ומהעידן החדש של ריבית גבוהה לאחר תום עידן הכסף הזול. Die Welt, במקביל, מזהיר שדירוג האשראי AAA של גרמניה נמצא בסיכון רציני נוכח חוב שיא, היעדר צמיחה והיעדר רפורמות, בדומה להורדת הדירוג האמריקאית.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph, Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-278">מראי מקום (3) ▾</button>
+        <div class="section-body" id="body-278">
+          <p class="comparison-text">The Daily Telegraph מפרסם שני מאמרים המזהירים מפני תלות יתר של בריטניה במחזיקי אג&quot;ח זרים ומהעידן החדש של ריבית גבוהה לאחר תום עידן הכסף הזול. Die Welt, במקביל, מזהיר שדירוג האשראי AAA של גרמניה נמצא בסיכון רציני נוכח חוב שיא, היעדר צמיחה והיעדר רפורמות, בדומה להורדת הדירוג האמריקאית.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-278" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-278">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-278" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 21 — “Britain can&#x27;t just rely on &#x27;kindness…”</li>
@@ -394,21 +564,32 @@
             <li>Die Welt, 20.8.2026, עמ' 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-269" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">2 מקורות · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-269">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מלחמת רוסיה-אוקראינה: אבדות אזרחים ואיומי הסלמה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מלחמת רוסיה-אוקראינה: אבדות אזרחים ואיומי הסלמה</h2>
-        <p class="comparison-text">Die Welt מפרסם שני זוויות: האחת דוחה שקילות מוסרית בין הצדדים וטוענת שרוסיה פוגעת בכוונה באזרחים כאסטרטגיית טרור בעוד הנפגעים האזרחיים מצד אוקראינה הם נזק אגבי; השנייה מנתחת את הצגת הפטריארך קיריל את המלחמה כמאבק מטאפיזי המקדש את ההרג. Süddeutsche Zeitung, במאמר על מהלך המלחמה, טוענת שאיומי ההסלמה הגרעינית של רוסיה הם בעיקר בלוף שנועד להרתיע תמיכה מערבית, בעוד רוסיה עצמה נפגעת כלכלית וצבאית מהתקפות הרחפנים האוקראיניות.</p>
-        <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-269">מראי מקום (3) ▾</button>
+        <div class="section-body" id="body-269">
+          <p class="comparison-text">Die Welt מפרסם שני זוויות: האחת דוחה שקילות מוסרית בין הצדדים וטוענת שרוסיה פוגעת בכוונה באזרחים כאסטרטגיית טרור בעוד הנפגעים האזרחיים מצד אוקראינה הם נזק אגבי; השנייה מנתחת את הצגת הפטריארך קיריל את המלחמה כמאבק מטאפיזי המקדש את ההרג. Süddeutsche Zeitung, במאמר על מהלך המלחמה, טוענת שאיומי ההסלמה הגרעינית של רוסיה הם בעיקר בלוף שנועד להרתיע תמיכה מערבית, בעוד רוסיה עצמה נפגעת כלכלית וצבאית מהתקפות הרחפנים האוקראיניות.</p>
+          <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-269" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-269">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-269" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 5 — “Tötet die Ukraine absichtlich Zivilisten?”</li>
@@ -416,21 +597,32 @@
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-270" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">2 מקורות · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-270">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">נאט&quot;ו וביטחון הבלטים מול רוסיה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">נאט&quot;ו וביטחון הבלטים מול רוסיה</h2>
-        <p class="comparison-text">Die Welt מסקר את הנושא בשני מאמרים: האחד רואה בהצגת הכוח של נאט&quot;ו מול קלינינגרד אות הרתעה מכוון, תוך אזהרה שרוסיה תעדיף לוחמה היברידית סמויה על פני עימות ישיר; השני מציג את מסילת הרכבת Rail Baltica כהכרח אסטרטגי להגנה על מסדרון סובאלקי הפגיע, ומזהיר מפני עיכובים. Süddeutsche Zeitung, בכתבה נפרדת, מתמקד בלחץ הפוליטי הגובר בגרמניה לסגור את &#x27;הבית הרוסי&#x27; בברלין החשוד בריגול והפצת תעמולה, ומאשים את הממשלה בהזנחה מסוכנת.</p>
-        <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-270">מראי מקום (3) ▾</button>
+        <div class="section-body" id="body-270">
+          <p class="comparison-text">Die Welt מסקר את הנושא בשני מאמרים: האחד רואה בהצגת הכוח של נאט&quot;ו מול קלינינגרד אות הרתעה מכוון, תוך אזהרה שרוסיה תעדיף לוחמה היברידית סמויה על פני עימות ישיר; השני מציג את מסילת הרכבת Rail Baltica כהכרח אסטרטגי להגנה על מסדרון סובאלקי הפגיע, ומזהיר מפני עיכובים. Süddeutsche Zeitung, בכתבה נפרדת, מתמקד בלחץ הפוליטי הגובר בגרמניה לסגור את &#x27;הבית הרוסי&#x27; בברלין החשוד בריגול והפצת תעמולה, ומאשים את הממשלה בהזנחה מסוכנת.</p>
+          <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-270" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-270">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-270" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 1 — “Die Nato demonstriert vor Kaliningrad Stärke”</li>
@@ -438,21 +630,32 @@
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 5</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-273" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">2 מקורות · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-273">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ישראל, עזה ותגובת גרמניה לבן גביר</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">ישראל, עזה ותגובת גרמניה לבן גביר</h2>
-        <p class="comparison-text">Süddeutsche Zeitung מקדיש שני דיווחים חופפים (המתפקדים כקול אחד) לגינוי החריף של מרץ את קריאותיו של בן גביר להריגות ממוקדות בעזה כבלתי אנושיות ומנוגדות למשפט הבינלאומי, ותומך בשקילת סנקציות אירופיות נגדו; פרופיל נלווה מציג את בן גביר כקיצוני ותיק שהתמסד בקואליציית נתניהו. Die Welt מביא זווית מנוגדת חריפה בראיון עם תננבאום, המגן על המתנחלים כאנשים רגילים המנוצלים ואז ננטשים על ידי פוליטיקאים ישראלים, מבקר סיקור תקשורתי חד-צדדי, ומזהיר מפני מדינה פלסטינית בשליטת חמאס.</p>
-        <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-273">מראי מקום (4) ▾</button>
+        <div class="section-body" id="body-273">
+          <p class="comparison-text">Süddeutsche Zeitung מקדיש שני דיווחים חופפים (המתפקדים כקול אחד) לגינוי החריף של מרץ את קריאותיו של בן גביר להריגות ממוקדות בעזה כבלתי אנושיות ומנוגדות למשפט הבינלאומי, ותומך בשקילת סנקציות אירופיות נגדו; פרופיל נלווה מציג את בן גביר כקיצוני ותיק שהתמסד בקואליציית נתניהו. Die Welt מביא זווית מנוגדת חריפה בראיון עם תננבאום, המגן על המתנחלים כאנשים רגילים המנוצלים ואז ננטשים על ידי פוליטיקאים ישראלים, מבקר סיקור תקשורתי חד-צדדי, ומזהיר מפני מדינה פלסטינית בשליטת חמאס.</p>
+          <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-273" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-273">
+            מראי מקום (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-273" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 16</li>
@@ -461,103 +664,158 @@
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 6 — “Merz geht auf Konfrontation”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-291" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">טכנולוגיה ומדיה</span>
-          <span class="coverage-badge">2 מקורות · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-291">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תעשיית ה-AI: ארה&quot;ב מול סין</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">תעשיית ה-AI: ארה&quot;ב מול סין</h2>
-        <p class="comparison-text">Die Welt מתעד גל זעם ציבורי ואף אלימות קיצונית בארה&quot;ב נגד חברות בינה מלאכותית ומרכזי נתונים, על רקע תוכנית הסבסוד של טראמפ שנועדה לנצח בתחרות ה-AI מול סין, ומדגיש הבדלים חדים בתגובות בין מדינות רפובליקניות לדמוקרטיות. Süddeutsche Zeitung, במקביל, מנתח את האסטרטגיה הסינית ההפוכה - ניהול מלמעלה למטה של הטמעת AI בכל מכשיר עד 2027-2030 באמצעות סבסוד מסיבי, תוך ניסיון לאזן בין החלפת מומחים חסרים לבין מניעת פיטורים המוניים.</p>
-        <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-291">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-291">
+          <p class="comparison-text">Die Welt מתעד גל זעם ציבורי ואף אלימות קיצונית בארה&quot;ב נגד חברות בינה מלאכותית ומרכזי נתונים, על רקע תוכנית הסבסוד של טראמפ שנועדה לנצח בתחרות ה-AI מול סין, ומדגיש הבדלים חדים בתגובות בין מדינות רפובליקניות לדמוקרטיות. Süddeutsche Zeitung, במקביל, מנתח את האסטרטגיה הסינית ההפוכה - ניהול מלמעלה למטה של הטמעת AI בכל מכשיר עד 2027-2030 באמצעות סבסוד מסיבי, תוך ניסיון לאזן בין החלפת מומחים חסרים לבין מניעת פיטורים המוניים.</p>
+          <p class="section-sources">מקורות: <b>Die Welt, Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-291" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-291">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-291" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 11</li>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 15</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-271" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-271">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תעמולה וריגול רוסיים במערב</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">תעמולה וריגול רוסיים במערב</h2>
-        <p class="comparison-text">Süddeutsche Zeitung מפרסם ראיון עם החוקרת סילביה זסה המנתח את קמפיין התעמולה הרוסי &#x27;מטרושקה&#x27; ככלי המשכי לטקטיקות ה-KGB הישנות, שנועד לפלג בין כוחות פרו-רוסיים למבקרים ולהיתמך בנרטיבים פופוליסטיים גלובליים.</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-271">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-271">
+          <p class="comparison-text">Süddeutsche Zeitung מפרסם ראיון עם החוקרת סילביה זסה המנתח את קמפיין התעמולה הרוסי &#x27;מטרושקה&#x27; ככלי המשכי לטקטיקות ה-KGB הישנות, שנועד לפלג בין כוחות פרו-רוסיים למבקרים ולהיתמך בנרטיבים פופוליסטיים גלובליים.</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-271" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-271">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-271" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 10</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-274" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-274">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">טראמפ, בית המשפט הפלילי הבינלאומי והסדר הבינלאומי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">טראמפ, בית המשפט הפלילי הבינלאומי והסדר הבינלאומי</h2>
-        <p class="comparison-text">Süddeutsche Zeitung מגנה בחריפות את סנקציות טראמפ נגד שופט בית הדין הפלילי הבינלאומי בקשר לתיק פשעי המלחמה בעזה, ורואה בכך ניסיון שיטתי להרוס את הסדר המשפטי הבינלאומי, קוראת לגרמניה ולאיחוד האירופי להגן על סמכות בית הדין.</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-274">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-274">
+          <p class="comparison-text">Süddeutsche Zeitung מגנה בחריפות את סנקציות טראמפ נגד שופט בית הדין הפלילי הבינלאומי בקשר לתיק פשעי המלחמה בעזה, ורואה בכך ניסיון שיטתי להרוס את הסדר המשפטי הבינלאומי, קוראת לגרמניה ולאיחוד האירופי להגן על סמכות בית הדין.</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-274" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-274">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-274" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 4</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-276" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">אנרגיה וסביבה</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-276">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">אקלים ותשתיות מים בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">אקלים ותשתיות מים בבריטניה</h2>
-        <p class="comparison-text">The Guardian מציג שני מאמרים (המתפקדים כקול אחד) הטוענים שבריטניה נכנסת לעידן של &#x27;טלטלת אקלים&#x27; קיצונית - בצורות והצפות - תוך ביקורת על כישלון הפוליטיקאים להתמודד עם המשבר, ומאשימים את הפרטת המים בעידן תאצ&#x27;ר בכרסום ביכולת המערכת להתמודד עם משברי אקלים, קוראים להשקעה ציבורית מחודשת.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-276">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-276">
+          <p class="comparison-text">The Guardian מציג שני מאמרים (המתפקדים כקול אחד) הטוענים שבריטניה נכנסת לעידן של &#x27;טלטלת אקלים&#x27; קיצונית - בצורות והצפות - תוך ביקורת על כישלון הפוליטיקאים להתמודד עם המשבר, ומאשימים את הפרטת המים בעידן תאצ&#x27;ר בכרסום ביכולת המערכת להתמודד עם משברי אקלים, קוראים להשקעה ציבורית מחודשת.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-276" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-276">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-276" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 45 — “Welcome to the age of climate…”</li>
             <li>The Guardian, 20.8.2026, עמ' 46 — “Welcome to the age of climate…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-277" data-category="energy_environment">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">אנרגיה וסביבה</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-277">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ביטחון אנרגטי בים הצפוני והמדיניות הירוקה בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">ביטחון אנרגטי בים הצפוני והמדיניות הירוקה בבריטניה</h2>
-        <p class="comparison-text">The Daily Telegraph מקדיש שלוש כתבות לנושא: אחת מבקרת את מכירת נכסי BP בים הצפוני כסימן להיחלשות עצמאות בריטניה, שנייה טוענת שהמכשול האמיתי הוא משטר מיסוי עונשי ולא רישוי, ושלישית קוראת לאישור מהיר של שדות גז חדשים לטובת האוצר וביטחון האנרגיה. בנוסף, כתבה נפרדת של אותו עיתון תוקפת את מס הגבול הירוק של האיחוד האירופי כמכה קשה לחקלאים הבריטים, וכתבה נוספת תומכת בביטול איסור על משאיות דיזל אפס-פליטה. יחדיו, העיתון בונה נרטיב עקבי נגד מדיניות אקלים המחקה את האיחוד האירופי.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-277">מראי מקום (6) ▾</button>
+        <div class="section-body" id="body-277">
+          <p class="comparison-text">The Daily Telegraph מקדיש שלוש כתבות לנושא: אחת מבקרת את מכירת נכסי BP בים הצפוני כסימן להיחלשות עצמאות בריטניה, שנייה טוענת שהמכשול האמיתי הוא משטר מיסוי עונשי ולא רישוי, ושלישית קוראת לאישור מהיר של שדות גז חדשים לטובת האוצר וביטחון האנרגיה. בנוסף, כתבה נפרדת של אותו עיתון תוקפת את מס הגבול הירוק של האיחוד האירופי כמכה קשה לחקלאים הבריטים, וכתבה נוספת תומכת בביטול איסור על משאיות דיזל אפס-פליטה. יחדיו, העיתון בונה נרטיב עקבי נגד מדיניות אקלים המחקה את האיחוד האירופי.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-277" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-277">
+            מראי מקום (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-277" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 10 — “EU green tax will pile pain…”</li>
@@ -568,82 +826,126 @@
             <li>The Daily Telegraph, 20.8.2026, עמ' 21 — “We will lose technology that can…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-279" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-279">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">הרכש הביטחוני והחוסן התעשייתי של בריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">הרכש הביטחוני והחוסן התעשייתי של בריטניה</h2>
-        <p class="comparison-text">The Daily Telegraph טוען שהמאמץ הביטחוני הבריטי לרכוש &#x27;תוצרת בריטית&#x27; הוא לרוב רטוריקה בלבד, שכן תוכניות רבות מסתמכות על רכיבים אמריקאים, גרמנים וזרים אחרים עקב אובדן יכולת תעשייתית מקומית, אך רואה אפשרות לשיקום אמיתי בכפוף לרצון פוליטי מתמשך.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-279">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-279">
+          <p class="comparison-text">The Daily Telegraph טוען שהמאמץ הביטחוני הבריטי לרכוש &#x27;תוצרת בריטית&#x27; הוא לרוב רטוריקה בלבד, שכן תוכניות רבות מסתמכות על רכיבים אמריקאים, גרמנים וזרים אחרים עקב אובדן יכולת תעשייתית מקומית, אך רואה אפשרות לשיקום אמיתי בכפוף לרצון פוליטי מתמשך.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-279" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-279">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-279" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 18</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-280" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-280">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">זהות לאומית, דת ופוליטיקה בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">זהות לאומית, דת ופוליטיקה בבריטניה</h2>
-        <p class="comparison-text">The Daily Telegraph מציג שתי זוויות מנוגדות בתוך אותו עיתון: מאמר אחד מותח ביקורת על פאראג&#x27; על ניצול הנצרות ככלי ציני להסתה נגד מוסלמים, בעוד מאמר אחר טוען שהאובדן ההולך וגובר של הגאווה הלאומית וההיסטוריה המשותפת מהווה סכנה אמיתית לדמוקרטיה ולסולידריות החברתית, וקורא לשיקום הביטחון הפטריוטי.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-280">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-280">
+          <p class="comparison-text">The Daily Telegraph מציג שתי זוויות מנוגדות בתוך אותו עיתון: מאמר אחד מותח ביקורת על פאראג&#x27; על ניצול הנצרות ככלי ציני להסתה נגד מוסלמים, בעוד מאמר אחר טוען שהאובדן ההולך וגובר של הגאווה הלאומית וההיסטוריה המשותפת מהווה סכנה אמיתית לדמוקרטיה ולסולידריות החברתית, וקורא לשיקום הביטחון הפטריוטי.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-280" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-280">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-280" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 9 — “Williams: Farage is using Christianity to…”</li>
             <li>The Daily Telegraph, 20.8.2026, עמ' 14 — “Our shared sense of history is…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-281" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">תרבות וזהות</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-281">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">קריקטריסטיות אפגניות ודיכוי נשים תחת הטליבאן</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">קריקטריסטיות אפגניות ודיכוי נשים תחת הטליבאן</h2>
-        <p class="comparison-text">The Daily Telegraph מספר את סיפורן של שחקניות קריקט אפגניות שנמלטו מהטליבאן, ומציג את קבוצתן כסמל תקווה והתנגדות למגבלות הדרקוניות המוטלות על נשים באפגניסטן.</p>
-        <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-281">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-281">
+          <p class="comparison-text">The Daily Telegraph מספר את סיפורן של שחקניות קריקט אפגניות שנמלטו מהטליבאן, ומציג את קבוצתן כסמל תקווה והתנגדות למגבלות הדרקוניות המוטלות על נשים באפגניסטן.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-281" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-281">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-281" hidden>
             <ul>
             <li>The Daily Telegraph, 20.8.2026, עמ' 35</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-282" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-282">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">פוליטיקה גרמנית פנימית: AfD, יציבות חוקתית וביטחון פנים</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">פוליטיקה גרמנית פנימית: AfD, יציבות חוקתית וביטחון פנים</h2>
-        <p class="comparison-text">Die Welt מסקר את שאיפות ה-AfD לשלטון עצמאי במקלנבורג-פומרן, ומפרסם מאמרי דעה נגד עיגון האקלים בחוק היסוד ונגד סמכויות המשרד להגנת החוקה. Süddeutsche Zeitung, במאמר נפרד, טוען שלמרות הרטוריקה החברתית-פופוליסטית של AfD, הקו המפריד האמיתי בין ימין לשמאל הוא רעיון השוויון, ופוליטיקת המפלגה נותרת בלתי-שוויונית ומדירה במהותה. Die Welt מוסיף גם הגנה על שתיקת מרץ כערך ממלכתי ולא כחולשה.</p>
-        <p class="section-sources">מקורות: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-282">מראי מקום (4) ▾</button>
+        <div class="section-body" id="body-282">
+          <p class="comparison-text">Die Welt מסקר את שאיפות ה-AfD לשלטון עצמאי במקלנבורג-פומרן, ומפרסם מאמרי דעה נגד עיגון האקלים בחוק היסוד ונגד סמכויות המשרד להגנת החוקה. Süddeutsche Zeitung, במאמר נפרד, טוען שלמרות הרטוריקה החברתית-פופוליסטית של AfD, הקו המפריד האמיתי בין ימין לשמאל הוא רעיון השוויון, ופוליטיקת המפלגה נותרת בלתי-שוויונית ומדירה במהותה. Die Welt מוסיף גם הגנה על שתיקת מרץ כערך ממלכתי ולא כחולשה.</p>
+          <p class="section-sources">מקורות: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-282" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-282">
+            מראי מקום (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-282" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 1 — “Das Schweigen von Merz”</li>
@@ -652,294 +954,490 @@
             <li>Die Welt, 20.8.2026, עמ' 7 — “Es braucht keinen Verfassungsschutz, um Radikale…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-283" data-category="security_conflict">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">ביטחון וסכסוכים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-283">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">איראן: לחצים כלכליים וחשש ממלחמה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">איראן: לחצים כלכליים וחשש ממלחמה</h2>
-        <p class="comparison-text">Die Welt, בדיווח אנונימי מטהראן, מתאר איך האזרחים האיראנים שחוקים כלכלית ופוליטית ונרתעים ממלחמה, בעוד התמיכה בעמדת המשטר נשחקת חרף היערכות קשוחים למתקפה קרקעית אמריקאית אפשרית.</p>
-        <p class="section-sources">מקורות: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-283">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-283">
+          <p class="comparison-text">Die Welt, בדיווח אנונימי מטהראן, מתאר איך האזרחים האיראנים שחוקים כלכלית ופוליטית ונרתעים ממלחמה, בעוד התמיכה בעמדת המשטר נשחקת חרף היערכות קשוחים למתקפה קרקעית אמריקאית אפשרית.</p>
+          <p class="section-sources">מקורות: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-283" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-283">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-283" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 6</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-284" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-284">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">בולגריה כמפריעה חדשה באיחוד האירופי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">בולגריה כמפריעה חדשה באיחוד האירופי</h2>
-        <p class="comparison-text">The Guardian מתאר את נשיא בולגריה רומן רדב כמנהל מדיניות חוץ טרנזקציונית וחסרת עקביות אידיאולוגית, המתנדנדת בין עמדות פרו-אירופיות לפרו-רוסיות, ומדאיגה אנליסטים אירופיים גם אם אין לו את יכולת ההפרעה של אורבן.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-284">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-284">
+          <p class="comparison-text">The Guardian מתאר את נשיא בולגריה רומן רדב כמנהל מדיניות חוץ טרנזקציונית וחסרת עקביות אידיאולוגית, המתנדנדת בין עמדות פרו-אירופיות לפרו-רוסיות, ומדאיגה אנליסטים אירופיים גם אם אין לו את יכולת ההפרעה של אורבן.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-284" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-284">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-284" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 30</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-285" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-285">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">טראמפ, קוריאה הצפונית ותרגילי הצבא המשותפים</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">טראמפ, קוריאה הצפונית ותרגילי הצבא המשותפים</h2>
-        <p class="comparison-text">The Guardian מדווח בשני מאמרים: הראשון סוקר את הודעת טראמפ על פגישה מתוכננת עם קים ג&#x27;ונג און ואת קיצור התרגילים המשותפים, תוך ציון הספקנות הצפון-קוריאנית וההפתעה הדרום-קוריאנית; השני מנתח כיצד הצעד, אף שהוא תואם רצונות ותיקים של השמאל הדרום-קוריאני, נעשה באופן חד-צדדי ומזלזל שערער את האמון בברית עם ארה&quot;ב.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-285">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-285">
+          <p class="comparison-text">The Guardian מדווח בשני מאמרים: הראשון סוקר את הודעת טראמפ על פגישה מתוכננת עם קים ג&#x27;ונג און ואת קיצור התרגילים המשותפים, תוך ציון הספקנות הצפון-קוריאנית וההפתעה הדרום-קוריאנית; השני מנתח כיצד הצעד, אף שהוא תואם רצונות ותיקים של השמאל הדרום-קוריאני, נעשה באופן חד-צדדי ומזלזל שערער את האמון בברית עם ארה&quot;ב.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-285" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-285">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-285" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 24 — “Trump says he will meet Kim…”</li>
             <li>The Guardian, 20.8.2026, עמ' 24 — “Seoul has got what it wanted…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-286" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-286">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">סייע מקורב לטראמפ בבית הלבן</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">סייע מקורב לטראמפ בבית הלבן</h2>
-        <p class="comparison-text">The Guardian בוחן את תפקידה החריג ורב ההשפעה של נטלי הארפ, סייעת מקורבת לטראמפ, ומעלה שאלות לגבי מידת השפעתה על תפיסת עולמו ותגובת הבית הלבן ההגנתית שחשפה רגישות בנוגע לקשר ביניהם.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-286">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-286">
+          <p class="comparison-text">The Guardian בוחן את תפקידה החריג ורב ההשפעה של נטלי הארפ, סייעת מקורבת לטראמפ, ומעלה שאלות לגבי מידת השפעתה על תפיסת עולמו ותגובת הבית הלבן ההגנתית שחשפה רגישות בנוגע לקשר ביניהם.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-286" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-286">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-286" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 28</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-287" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-287">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מעצר פעיל קולומביאני והתערבות ארה&quot;ב</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">מעצר פעיל קולומביאני והתערבות ארה&quot;ב</h2>
-        <p class="comparison-text">The Guardian מפרסם שתי כתבות (המתפקדות כקול אחד) המציגות את גרסתו של הפעיל הקולומביאני בטו קורל, הטוען שנעצר וסבל מיחס פוגעני מרשויות ההגירה האמריקאיות לבקשת מועמד נשיאותי קולומביאני נתמך טראמפ, ומסגיר את המקרה כרדיפה פוליטית חסרת תקדים באמצעות משמורת אמריקאית ולחץ ויזות.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-287">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-287">
+          <p class="comparison-text">The Guardian מפרסם שתי כתבות (המתפקדות כקול אחד) המציגות את גרסתו של הפעיל הקולומביאני בטו קורל, הטוען שנעצר וסבל מיחס פוגעני מרשויות ההגירה האמריקאיות לבקשת מועמד נשיאותי קולומביאני נתמך טראמפ, ומסגיר את המקרה כרדיפה פוליטית חסרת תקדים באמצעות משמורת אמריקאית ולחץ ויזות.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-287" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-287">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-287" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 28 — “Activist claims candidate requested his US…”</li>
             <li>The Guardian, 20.8.2026, עמ' 29 — “Colombia activist alleges persecution after Petro-Trump…”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-288" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-288">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">פריימריז דמוקרטיים בפלורידה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">פריימריז דמוקרטיים בפלורידה</h2>
-        <p class="comparison-text">The Guardian מדווח על ניצחון ההפתעה של אנג&#x27;י ניקסון, סוציאליסטית דמוקרטית, על אלכסנדר וינדמן בפריימריז לסנאט בפלורידה, במסגרת דיווח חדשותי המדגיש את הדחייה של הממסד הוושינגטוני.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-288">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-288">
+          <p class="comparison-text">The Guardian מדווח על ניצחון ההפתעה של אנג&#x27;י ניקסון, סוציאליסטית דמוקרטית, על אלכסנדר וינדמן בפריימריז לסנאט בפלורידה, במסגרת דיווח חדשותי המדגיש את הדחייה של הממסד הוושינגטוני.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-288" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-288">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-288" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 29</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-289" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-289">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">אחריות תאגידית: גרנפל ובואינג</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">אחריות תאגידית: גרנפל ובואינג</h2>
-        <p class="comparison-text">The Guardian מפרסם שני מאמרים המצביעים על כשל מערכתי באחריות תאגידית: האחד טוען שמערכת האחריות התאגידית הבריטית רקובה, בהתייחס למקרה גרנפל וחברת Arconic שנמלטה מעונש, וקורא לחוקים דומים לאלה שבארה&quot;ב; השני, ביקורת ספר על בואינג, טוען שהנהלת החברה העדיפה רווח על בטיחות ונמלטת מאחריות פלילית אמיתית.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-289">מראי מקום (2) ▾</button>
+        <div class="section-body" id="body-289">
+          <p class="comparison-text">The Guardian מפרסם שני מאמרים המצביעים על כשל מערכתי באחריות תאגידית: האחד טוען שמערכת האחריות התאגידית הבריטית רקובה, בהתייחס למקרה גרנפל וחברת Arconic שנמלטה מעונש, וקורא לחוקים דומים לאלה שבארה&quot;ב; השני, ביקורת ספר על בואינג, טוען שהנהלת החברה העדיפה רווח על בטיחות ונמלטת מאחריות פלילית אמיתית.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-289" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-289">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-289" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 46 — “The law must make firms pay…”</li>
             <li>The Guardian, 20.8.2026, עמ' 62 — “Freefall: A Reckoning for Boeing (review)”</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-290" data-category="diplomacy_international">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-290">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">קיצוצי סיוע בינלאומי ומגפת האבולה בקונגו</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">קיצוצי סיוע בינלאומי ומגפת האבולה בקונגו</h2>
-        <p class="comparison-text">The Guardian טוען שקיצוצי הסיוע המערביים, ובפרט פירוק USAID בידי ממשל טראמפ וצמצום תקציבי הסיוע האירופיים, חשפו את קונגו למגפת אבולה מחמירה, בהשוואה למוביליזציה הנרחבת בעידן אובמה ב-2014.</p>
-        <p class="section-sources">מקורות: <b>The Guardian</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-290">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-290">
+          <p class="comparison-text">The Guardian טוען שקיצוצי הסיוע המערביים, ובפרט פירוק USAID בידי ממשל טראמפ וצמצום תקציבי הסיוע האירופיים, חשפו את קונגו למגפת אבולה מחמירה, בהשוואה למוביליזציה הנרחבת בעידן אובמה ב-2014.</p>
+          <p class="section-sources">מקורות: <b>The Guardian</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-290" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-290">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-290" hidden>
             <ul>
             <li>The Guardian, 20.8.2026, עמ' 46</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-292" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">תרבות וזהות</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-292">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תנועת 4B בדרום קוריאה ויחסי מגדר</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">תנועת 4B בדרום קוריאה ויחסי מגדר</h2>
-        <p class="comparison-text">Süddeutsche Zeitung סוקר באהדה את תנועת 4B בדרום קוריאה, שבה נשים דוחות מערכות יחסים, נישואין, מין וילדים עם גברים כתגובה לאלימות מגדרית מושרשת ולתגובת-נגד המתייגת פמיניזם כרדיקלי, ומציג את התנועה כתגובה רציונלית לאפליה מבנית.</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-292">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-292">
+          <p class="comparison-text">Süddeutsche Zeitung סוקר באהדה את תנועת 4B בדרום קוריאה, שבה נשים דוחות מערכות יחסים, נישואין, מין וילדים עם גברים כתגובה לאלימות מגדרית מושרשת ולתגובת-נגד המתייגת פמיניזם כרדיקלי, ומציג את התנועה כתגובה רציונלית לאפליה מבנית.</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-292" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-292">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-292" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 3</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-293" data-category="technology_media">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">טכנולוגיה ומדיה</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-293">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">רדיפת עיתונאים בפקיסטן</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">רדיפת עיתונאים בפקיסטן</h2>
-        <p class="comparison-text">Süddeutsche Zeitung מתעד כיצד הממשלה הפקיסטנית הסמכותנית מתנקמת בעיתונות ביקורתית, שוללת ויזות ומטילה מגבלות חדשות על עיתונאים זרים ומקומיים כדי לדכא סיקור של נושאים רגישים כמו ביטחון גרעיני, קשמיר וחוסר יציבות פוליטית.</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-293">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-293">
+          <p class="comparison-text">Süddeutsche Zeitung מתעד כיצד הממשלה הפקיסטנית הסמכותנית מתנקמת בעיתונות ביקורתית, שוללת ויזות ומטילה מגבלות חדשות על עיתונאים זרים ומקומיים כדי לדכא סיקור של נושאים רגישים כמו ביטחון גרעיני, קשמיר וחוסר יציבות פוליטית.</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-293" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-293">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-293" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 19</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-294" data-category="trade_economics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כלכלה וסחר</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-294">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">האיחוד האירופי ואוקראינה: סחר וחקלאות בצל המלחמה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">האיחוד האירופי ואוקראינה: סחר וחקלאות בצל המלחמה</h2>
-        <p class="comparison-text">Die Welt טוען שהאיחוד האירופי נטש את הסולידריות האמיתית עם אוקראינה בכך שהוא מטיל מכסים, מכסות והיטלי אקלים (CBAM) המתעלמים ממצבה במלחמה, ופוגעים קשות בכלכלה המבוססת על יצוא בעודה סובלת מהסגר הימי הרוסי.</p>
-        <p class="section-sources">מקורות: <b>Die Welt</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-294">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-294">
+          <p class="comparison-text">Die Welt טוען שהאיחוד האירופי נטש את הסולידריות האמיתית עם אוקראינה בכך שהוא מטיל מכסים, מכסות והיטלי אקלים (CBAM) המתעלמים ממצבה במלחמה, ופוגעים קשות בכלכלה המבוססת על יצוא בעודה סובלת מהסגר הימי הרוסי.</p>
+          <p class="section-sources">מקורות: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-294" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-294">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-294" hidden>
             <ul>
             <li>Die Welt, 20.8.2026, עמ' 9</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-295" data-category="domestic_politics">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">פוליטיקה פנימית</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-295">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">רובע האיחוד האירופי בבריסל וסמלי הדשדוש הבירוקרטי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">רובע האיחוד האירופי בבריסל וסמלי הדשדוש הבירוקרטי</h2>
-        <p class="comparison-text">Süddeutsche Zeitung לועג לשיפוץ המתעכב והסבוך פוליטית של כיכר שומאן בבריסל, ורואה בו סמל לתפקוד לקוי בלגי ואירופי, לחוסר אומץ ודמיון וזלזול במורשתו של רוברט שומאן, מייסד האיחוד.</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-295">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-295">
+          <p class="comparison-text">Süddeutsche Zeitung לועג לשיפוץ המתעכב והסבוך פוליטית של כיכר שומאן בבריסל, ורואה בו סמל לתפקוד לקוי בלגי ואירופי, לחוסר אומץ ודמיון וזלזול במורשתו של רוברט שומאן, מייסד האיחוד.</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-295" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-295">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-295" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 7</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-296" data-category="society_culture">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">תרבות וזהות</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-296">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">יומני בקט מגרמניה הנאצית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">יומני בקט מגרמניה הנאצית</h2>
-        <p class="comparison-text">Süddeutsche Zeitung סוקר את פרסום יומני הביקור של סמואל בקט בגרמניה הנאצית (1936-37), ומדגיש את נקודת המבט החיצונית, החדה בהומורה היבש, המתעדת אנטישמיות שגרתית ופוליטיקת אמנות מבלי לספק ניתוח פוליטי שיטתי.</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-296">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-296">
+          <p class="comparison-text">Süddeutsche Zeitung סוקר את פרסום יומני הביקור של סמואל בקט בגרמניה הנאצית (1936-37), ומדגיש את נקודת המבט החיצונית, החדה בהומורה היבש, המתעדת אנטישמיות שגרתית ופוליטיקת אמנות מבלי לספק ניתוח פוליטי שיטתי.</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-296" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-296">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-296" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 11</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
 
       <section class="topic-section" id="section-297" data-category="additional_coverage">
-        <div class="topic-meta">
-          <span class="category-dot"></span>
-          <span class="category-label">כיסוי נוסף</span>
-          <span class="coverage-badge">1 מקור · 1 שפה</span>
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-297">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כיסוי נוסף</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">German far-right politics / AfD ideology</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
         </div>
-        <h2 class="section-title">German far-right politics / AfD ideology</h2>
-        <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): The author argues that despite AfD&#x27;s populist social-welfare posturing and nostalgic references to the GDR and Nazi-era policies, the true dividing line between right and left is not attitude toward the state or social policy but the concept of equality; the AfD&#x27;s politics remain fundamentally inegalitarian and exclusionary rather than genuinely &#x27;left&#x27;. ציטוט מרכזי: &quot;Der zentrale Unterschied zwischen rechts und links liegt also nicht in der Haltung zum Staat und zur Sozialpolitik, sondern im Gedanken der Gleichheit.&quot;</p>
-        <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
-        
-        <div class="citations-row">
-          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-297">מראי מקום (1) ▾</button>
+        <div class="section-body" id="body-297">
+          <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): The author argues that despite AfD&#x27;s populist social-welfare posturing and nostalgic references to the GDR and Nazi-era policies, the true dividing line between right and left is not attitude toward the state or social policy but the concept of equality; the AfD&#x27;s politics remain fundamentally inegalitarian and exclusionary rather than genuinely &#x27;left&#x27;. ציטוט מרכזי: &quot;Der zentrale Unterschied zwischen rechts und links liegt also nicht in der Haltung zum Staat und zur Sozialpolitik, sondern im Gedanken der Gleichheit.&quot;</p>
+          <p class="section-sources">מקורות: <b>Süddeutsche Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-297" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-297">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
           <div class="citations-popup" id="citations-297" hidden>
             <ul>
             <li>Süddeutsche Zeitung, 20.8.2026, עמ' 9</li>
             </ul>
           </div>
+          </div>
         </div>
       </section>
   </main>
   <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
     document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
       var toggle = e.target.closest('.citations-toggle');
       document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
         if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
@@ -960,6 +1458,12 @@
         document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
           popup.hidden = true;
         });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
       }
     });
   </script>
