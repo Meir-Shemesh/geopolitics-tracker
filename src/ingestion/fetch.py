@@ -93,16 +93,18 @@ def guess_newspaper(file_name: str) -> str | None:
     if "welt" in normalized and "sonntag" not in normalized:
         return "Die Welt"
     if re.search(r"\bnyt\b", normalized) or "new york times" in normalized:
-        # NYT International download is suspended (not just "not an MVP
-        # source" - the channel carries the domestic US home edition too,
-        # which was already excluded here regardless): every copy observed
-        # so far (6/6, see PROJECT_LOG action item 27) turned out to be the
-        # tradingref.com scan-corruption pattern (near-empty page 0, single
-        # embedded image, no real text) - downloading it only to delete it
-        # after Extraction/health-check wastes bandwidth and API cost for
-        # content that never survives. Re-enable once someone investigates
-        # the root cause at the source (a working non-corrupted copy, or an
-        # alternate channel/source for the same content).
+        # NYT download is suspended for EVERY edition - not just International.
+        # Tried switching to the home edition + magazine on 2026-09-12 (see
+        # PROJECT_LOG 4.34/4.35): both "NYT 1309.pdf" (118 pages) and "NYT
+        # Magazine 1309.pdf" (48 pages) were confirmed corrupted end-to-end by
+        # direct content inspection (tradingref.com, ~14 chars + 1 image, on
+        # every sampled page cover-to-back) - the exact same pattern already
+        # seen 6/6 times on the International edition (action item 27). The
+        # corruption is evidently a property of how this channel sources NYT
+        # content generally, not specific to the International edition's
+        # branding - a filename-based edition switch cannot route around it.
+        # Re-enable only after someone finds a working, non-corrupted feed for
+        # any NYT edition at the source.
         return None
     if "wall street journal" in normalized or re.search(r"\bwsj\b", normalized):
         return "Wall Street Journal"
@@ -112,6 +114,11 @@ def guess_newspaper(file_name: str) -> str | None:
         return "Los Angeles Times"
     if "usa today" in normalized:
         return "USA Today"
+    if "washington post" in normalized:
+        # Requiring the full two-word phrase avoids any collision with other
+        # "post"-named papers (e.g. New York Post) should the channel ever
+        # carry one - "post" alone would be too broad to match safely.
+        return "Washington Post"
     if "web" in normalized and (
         "economist" in normalized or re.match(r"te-\d{4}-\d{2}-\d{2}", lowered)
     ):

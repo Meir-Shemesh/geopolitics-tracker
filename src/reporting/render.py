@@ -66,6 +66,7 @@ NEWSPAPER_DISPLAY_NAMES = {
     "Wall Street Journal": "The Wall Street Journal",
     "Los Angeles Times": "Los Angeles Times",
     "USA Today": "USA Today",
+    "Washington Post": "The Washington Post",
     "Economist": "The Economist",
     "Der Spiegel": "Der Spiegel",
 }
@@ -80,6 +81,7 @@ NEWSPAPER_LANGUAGES = {
     "USA Today": "en",
     "Economist": "en",
     "New York Times International": "en",
+    "Washington Post": "en",
     "Süddeutsche Zeitung": "de",
     "Die Welt": "de",
     "Der Spiegel": "de",
