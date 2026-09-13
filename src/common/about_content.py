@@ -101,7 +101,7 @@ CONTENT = {
                         "אחרי כמה ימים יציבים התברר פער בולט: הזירה האמריקאית לא הייתה "
                         "מיוצגת כלל. ההרחבה שבאה בעקבות כך לא הסתפקה בזוג נוסף - נבחרו "
                         "ארבעה עיתונים אמריקאים במכוון כדי לפרוש טווח פוליטי רחב יותר בתוך "
-                        "הזירה עצמה (New York Times International, Wall Street Journal, "
+                        "הזירה עצמה (Washington Post, Wall Street Journal, "
                         "Los Angeles Times, USA Today), ולצדם שני שבועונים (Economist, Der "
                         "Spiegel) שמביאים עומק במקום עוד זווית יומית.",
                     ),
@@ -250,7 +250,7 @@ CONTENT = {
                         "wasn't represented at all. The expansion that followed didn't "
                         "settle for one more pair - four American newspapers were chosen "
                         "deliberately to span a wider political range within that arena "
-                        "itself (The New York Times International, The Wall Street "
+                        "itself (The Washington Post, The Wall Street "
                         "Journal, Los Angeles Times, USA Today), joined by two weeklies "
                         "(The Economist, Der Spiegel) that bring depth rather than "
                         "another daily angle.",
