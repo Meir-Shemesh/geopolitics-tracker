@@ -33,8 +33,10 @@ from src.reporting.render import (
     FONT_FAMILY,
     FONT_FILENAME,
     LANG_LABEL,
+    LOGO_LINK_LABEL,
     NEWSPAPER_DISPLAY_NAMES,
     OTHER_LANG,
+    build_footer_html,
     build_nav_html,
     category_css,
     esc,
@@ -42,6 +44,7 @@ from src.reporting.render import (
     format_date_en,
     format_date_he,
     section_coverage,
+    shared_chrome_css,
 )
 
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
@@ -59,6 +62,8 @@ def build_index_html(
     other_lang_href: str,
     font_relative_path: str,
     asset_prefix: str,
+    accessibility_href: str = "accessibility.html",
+    terms_href: str = "terms.html",
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
@@ -187,11 +192,13 @@ def build_index_html(
   .archive-card:hover {{ border-color: var(--masthead-accent); }}
   .archive-date {{ font-size: 1.1rem; font-weight: 700; }}
   .archive-sources {{ font-size: .82rem; color: var(--text-muted); }}
+
+  {shared_chrome_css()}
 </style>
 </head>
 <body>
   <nav class="top-nav">
-    <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
+    <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[OTHER_LANG[lang]])}</a>
     </div>
@@ -205,6 +212,7 @@ def build_index_html(
   <main class="archive-list">
 {cards_html}
   </main>
+{build_footer_html(lang, accessibility_href, terms_href)}
 </body>
 </html>
 """
@@ -346,6 +354,8 @@ def build_about_html(lang: str) -> str:
   .about-author img {{ height: 96px; width: auto; flex: 0 0 auto; }}
   .about-author-name {{ margin: 0; font-weight: 800; }}
   .about-author-role {{ margin: 0; font-size: .85rem; color: var(--text-muted); }}
+
+  {shared_chrome_css()}
 </style>
 </head>
 <body>
@@ -370,9 +380,217 @@ def build_about_html(lang: str) -> str:
       </div>
     </div>
   </main>
+{build_footer_html(lang)}
 </body>
 </html>
 """
+
+
+# Shared by build_accessibility_html and build_terms_html - both are simple,
+# static, single-column prose pages using the same masthead/body/footer shell
+# as about.html, just without about.html's heading-per-section DSL (a single
+# flat set of <h2>/<p> blocks doesn't need that machinery).
+def _build_static_page_html(
+    lang: str, page_title: str, heading: str, body_html: str, other_lang_filename: str
+) -> str:
+    is_he = lang == "he"
+    dir_attr = "rtl" if is_he else "ltr"
+    other = OTHER_LANG[lang]
+    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
+
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(page_title)}</title>
+<style>
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
+
+  :root {{
+    --bg: #f3efe8;
+    --bg-elevated: #fffdfa;
+    --text: #221f1b;
+    --text-muted: #6d675e;
+    --border: #e4ddd0;
+    --masthead-accent: #7a2e2a;
+  }}
+
+  @media (prefers-color-scheme: dark) {{
+    :root:not([data-theme="light"]) {{
+      --bg: #16140f;
+      --bg-elevated: #211e18;
+      --text: #ece7dd;
+      --text-muted: #a89f91;
+      --border: #3a352b;
+      --masthead-accent: #d68b86;
+    }}
+  }}
+  :root[data-theme="dark"] {{
+    --bg: #16140f;
+    --bg-elevated: #211e18;
+    --text: #ece7dd;
+    --text-muted: #a89f91;
+    --border: #3a352b;
+    --masthead-accent: #d68b86;
+  }}
+
+  * {{ box-sizing: border-box; }}
+
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
+    line-height: 1.7;
+  }}
+
+  .top-nav {{
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
+  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+
+  .masthead {{
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }}
+  .masthead-inner {{ max-width: 44rem; margin: 0 auto; }}
+  .eyebrow {{
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }}
+  .report-title {{ margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }}
+
+  .static-body {{ max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }}
+  .static-body h2 {{ margin: 1.9rem 0 1.1rem; font-size: 1.2rem; font-weight: 700; color: var(--masthead-accent); }}
+  .static-body h2:first-child {{ margin-top: 0; }}
+  .static-body p {{ margin: 0 0 1.1rem; font-size: 1rem; }}
+  .static-body a {{ color: var(--masthead-accent); }}
+
+  {shared_chrome_css()}
+</style>
+</head>
+<body>
+{build_nav_html("archive.html", f"../{other}/{other_lang_filename}", lang)}
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">{esc(eyebrow)}</p>
+      <h1 class="report-title">{esc(heading)}</h1>
+    </div>
+  </header>
+  <main class="static-body">
+{body_html}
+  </main>
+{build_footer_html(lang)}
+</body>
+</html>
+"""
+
+
+# Contact address for accessibility issue reports - given directly by the site
+# owner (2026-09-16), not invented; change here only at his explicit request.
+ACCESSIBILITY_CONTACT_EMAIL = "meir@meirshemesh.com"
+
+
+def build_accessibility_html(lang: str) -> str:
+    if lang == "he":
+        page_title = "הצהרת נגישות - גאופוליטיקה יומי"
+        heading = "הצהרת נגישות"
+        body_html = f"""
+    <p>אתר זה שואף לעמוד בדרישות תקן ישראלי (ת"י) 5568 חלק 1, המבוסס על הנחיות
+    WCAG 2.0 ברמת AA.</p>
+    <h2>התאמות שבוצעו</h2>
+    <p>טקסט חלופי לתמונות ולסמלים משמעותיים; ניגודיות צבעים נבדקה ותוקנה מול
+    דרישת 4.5:1 עבור טקסט רגיל; ניווט מקלדת מלא לרוב הרכיבים האינטראקטיביים
+    באתר (הרחבת/כיווץ נושאים, כפתור שיתוף, ניווט-קטגוריות דביק); מבנה כותרות
+    היררכי תקין בכל עמודי האתר; תיוג SVG למפת העולם האינטראקטיבית (שם
+    וסטטוס-כיסוי לכל מדינה).</p>
+    <h2>מגבלה ידועה</h2>
+    <p>ניווט מקלדת למפת העולם האינטראקטיבית (בחירת מדינה בלחיצה) טרם מומש
+    במלואו - זוהי הרחבה עתידית.</p>
+    <h2>יצירת קשר</h2>
+    <p>נתקלתם בבעיית נגישות באתר? אנא כתבו אלינו:
+    <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
+    <p>עודכן לאחרונה: ספטמבר 2026.</p>"""
+    else:
+        page_title = "Accessibility Statement - Daily Geopolitics"
+        heading = "Accessibility Statement"
+        body_html = f"""
+    <p>This site aims to comply with Israeli Standard (IS) 5568 Part 1, based
+    on WCAG 2.0 Level AA guidelines.</p>
+    <h2>Accommodations made</h2>
+    <p>Alternative text for meaningful images and icons; color contrast checked
+    and corrected against the 4.5:1 requirement for normal text; full keyboard
+    navigation for most of the site's interactive elements (expanding/
+    collapsing topics, the share button, the sticky category nav); a properly
+    hierarchical heading structure across every page; SVG tagging on the
+    interactive world map (name and coverage status for each country).</p>
+    <h2>Known limitation</h2>
+    <p>Keyboard navigation for the interactive world map (selecting a country
+    by click) is not yet fully implemented - this is a planned future
+    improvement.</p>
+    <h2>Contact us</h2>
+    <p>Encountered an accessibility issue on this site? Please write to us:
+    <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
+    <p>Last updated: September 2026.</p>"""
+
+    return _build_static_page_html(lang, page_title, heading, body_html, "accessibility.html")
+
+
+def build_terms_html(lang: str) -> str:
+    if lang == "he":
+        page_title = "תנאי שימוש - גאופוליטיקה יומי"
+        heading = "תנאי שימוש"
+        body_html = """
+    <h2>1. אופי התוכן</h2>
+    <p>התוכן המוצג באתר, לרבות ניתוחים, השוואות בין מקורות, וסיכומים, מופק
+    באמצעות מודל בינה מלאכותית, ואינו עובר אימות עובדתי עצמאי. אין להסתמך
+    עליו כמקור בלעדי למידע מדויק, מלא, או עדכני.</p>
+    <h2>2. אחריות</h2>
+    <p>האתר ותכניו מסופקים כמות-שהם ("as-is"), ללא כל אחריות, מפורשת או
+    משתמעת, לדיוק, שלמות, עדכניות, או התאמה למטרה מסוימת.</p>
+    <h2>3. אחריות המשתמש</h2>
+    <p>כל שימוש בתוכן האתר, לרבות הסתמכות על מסקנה, ציטוט, או נתון המופיעים
+    בו, הוא באחריותו הבלעדית של המשתמש.</p>
+    <h2>4. שינויים</h2>
+    <p>בעל האתר רשאי לעדכן תנאים אלה מעת לעת ללא הודעה מוקדמת.</p>"""
+    else:
+        page_title = "Terms of Use - Daily Geopolitics"
+        heading = "Terms of Use"
+        body_html = """
+    <h2>1. Nature of the content</h2>
+    <p>The content on this site, including analyses, cross-source comparisons,
+    and summaries, is generated using an artificial intelligence model and has
+    not undergone independent fact-checking. It should not be relied upon as a
+    sole source of accurate, complete, or current information.</p>
+    <h2>2. No warranty</h2>
+    <p>The site and its content are provided "as-is," without any warranty,
+    express or implied, as to accuracy, completeness, currency, or fitness for
+    a particular purpose.</p>
+    <h2>3. User responsibility</h2>
+    <p>Any use of the site's content, including reliance on any conclusion,
+    quotation, or figure it presents, is the user's sole responsibility.</p>
+    <h2>4. Changes</h2>
+    <p>The site owner may update these terms from time to time without prior
+    notice.</p>"""
+
+    return _build_static_page_html(lang, page_title, heading, body_html, "terms.html")
 
 
 def build_topic_html(lang: str) -> str:
@@ -514,6 +732,8 @@ def build_topic_html(lang: str) -> str:
   .topic-result-title {{ margin: 0; font-size: 1.05rem; font-weight: 700; }}
   .topic-result-sources {{ margin: 0; font-size: .82rem; color: var(--text-muted); }}
   .topic-empty {{ color: var(--text-muted); font-size: .95rem; }}
+
+  {shared_chrome_css()}
 </style>
 </head>
 <body>
@@ -525,6 +745,7 @@ def build_topic_html(lang: str) -> str:
     </div>
   </header>
   <main class="topic-body" id="topic-results"></main>
+{build_footer_html(lang)}
   <script>{js_code}</script>
 </body>
 </html>
@@ -783,7 +1004,12 @@ _HOMEPAGE_JS_TEMPLATE = """
       var cell = document.createElement("div");
       cell.className = "timeline-cell";
       cell.dataset.date = d;
-      var pct = Math.round(20 + intensity * 60);
+      // Capped at 55 (not 80) since a 2026-09-16 WCAG audit measured --text
+      // against this color-mix at the old max and found it fell to ~3:1 in
+      // both themes on the highest-coverage days - below the 4.5:1 minimum,
+      // and ironically on the most-important cells to actually read. 55 keeps
+      // every intensity level at or above 4.75:1 in both themes.
+      var pct = Math.round(20 + intensity * 35);
       cell.style.background = "color-mix(in srgb, var(--masthead-accent) " + pct + "%, var(--bg-elevated))";
       cell.textContent = formatShortDate(d);
       cell.addEventListener("click", function () {
@@ -975,6 +1201,9 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     # topic.html has the same root-copy quirk as about.html (lives only under
     # docs/{lang}/, never at the site root) - same fix as about_href above.
     topic_prefix = "he/" if is_root else ""
+    # accessibility.html/terms.html follow the same no-root-copy convention.
+    accessibility_href = "he/accessibility.html" if is_root else "accessibility.html"
+    terms_href = "he/terms.html" if is_root else "terms.html"
 
     page_title = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
     eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
@@ -1034,6 +1263,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     --text-muted: #6d675e;
     --border: #e4ddd0;
     --masthead-accent: #7a2e2a;
+    --chip-selected-text: #ffffff;
   }}
 
   @media (prefers-color-scheme: dark) {{
@@ -1044,6 +1274,12 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
       --text-muted: #a89f91;
       --border: #3a352b;
       --masthead-accent: #d68b86;
+      /* --masthead-accent flips to a light dusty pink in dark mode, so the
+         selected-chip text (previously hardcoded white) needs its own
+         theme-aware token too - white-on-light-pink measured at 2.66:1 in a
+         2026-09-16 WCAG audit, well under the 4.5:1 minimum; this dark value
+         measures 6.62:1 against the dark-mode accent. */
+      --chip-selected-text: #2a1210;
     }}
   }}
   :root[data-theme="dark"] {{
@@ -1053,6 +1289,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     --text-muted: #a89f91;
     --border: #3a352b;
     --masthead-accent: #d68b86;
+    --chip-selected-text: #2a1210;
   }}
 
   * {{ box-sizing: border-box; }}
@@ -1168,7 +1405,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     cursor: pointer;
   }}
   .region-chip:hover {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
-  .region-chip.is-selected {{ background: var(--masthead-accent); border-color: var(--masthead-accent); color: #fff; }}
+  .region-chip.is-selected {{ background: var(--masthead-accent); border-color: var(--masthead-accent); color: var(--chip-selected-text); }}
 
   .timeline-top {{ display: flex; justify-content: flex-end; margin-bottom: .6rem; }}
   .timeline-track {{
@@ -1239,6 +1476,8 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     white-space: nowrap;
   }}
   .result-topic {{ font-size: .92rem; }}
+
+  {shared_chrome_css()}
 </style>
 </head>
 <body>
@@ -1266,13 +1505,14 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
       </section>
     </div>
     <section class="home-module map-module">
-      <p class="sr-only">{esc(map_description)}</p>
+      <p class="sr-only" id="map-description">{esc(map_description)}</p>
       {map_svg}
       <div class="region-chips" id="region-chips"></div>
       <div class="region-chips" id="conflict-chips"></div>
     </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
+{build_footer_html(lang, accessibility_href, terms_href)}
   <script>{js_code}</script>
 </body>
 </html>
@@ -1338,9 +1578,15 @@ def _load_map_svg_inline(lang: str, countries: dict) -> str:
         raw = raw.split("\n", 1)[1]
     raw = re.sub(r"\s*<sodipodi:namedview.*?/>\s*\n", "\n", raw, count=1, flags=re.DOTALL)
     raw = re.sub(r'\s*<style\s+id="style_css_sheet".*?</style>\s*\n', "\n", raw, count=1, flags=re.DOTALL)
+    # role="img" + aria-labelledby give the map itself an accessible name before
+    # a screen reader descends into individual countries - previously the only
+    # accessible-text on the page was the sr-only <p id="map-description"> sitting
+    # next to the <svg> in the DOM, with no programmatic link between them
+    # (a WCAG audit, 2026-09-16, flagged this: DOM adjacency isn't a formal name).
     raw = re.sub(
         r'<svg\s+version="1\.1"\s+id="svg2985".*?xmlns:svg="http://www\.w3\.org/2000/svg">',
-        '<svg id="world-map" viewBox="-35.8 80 2776 1163.1" xmlns="http://www.w3.org/2000/svg">',
+        '<svg id="world-map" role="img" aria-labelledby="map-description" '
+        'viewBox="-35.8 80 2776 1163.1" xmlns="http://www.w3.org/2000/svg">',
         raw,
         count=1,
         flags=re.DOTALL,
@@ -1528,6 +1774,18 @@ def run() -> None:
             (out_dir / "about.html").write_text(about_html, encoding="utf-8")
         print(f"  wrote about.html for '{lang}'")
 
+        accessibility_html = build_accessibility_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "accessibility.html").write_text(accessibility_html, encoding="utf-8")
+        print(f"  wrote accessibility.html for '{lang}'")
+
+        terms_html = build_terms_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "terms.html").write_text(terms_html, encoding="utf-8")
+        print(f"  wrote terms.html for '{lang}'")
+
         topic_html = build_topic_html(lang)
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -1545,6 +1803,8 @@ def run() -> None:
         other_lang_href="en/archive.html",
         font_relative_path=f"assets/fonts/{FONT_FILENAME}",
         asset_prefix="",
+        accessibility_href="he/accessibility.html",
+        terms_href="he/terms.html",
     )
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")

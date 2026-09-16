@@ -88,6 +88,19 @@ CONTENT = {
                 ],
             },
             {
+                "heading": "גילוי נאות: שימוש בבינה מלאכותית",
+                "blocks": [
+                    (
+                        "p",
+                        "תוכן ההשוואה בכל דוח באתר זה מופק באמצעות מודל שפה (Claude API של "
+                        "Anthropic) - לא נכתב בידי עיתונאי אנושי. קיימת בקרה אנושית לאורך "
+                        "התהליך: בדיקה ויזואלית לפני כל שינוי שיוצא לאוויר, ורשת-ביטחון ברמת-"
+                        "קוד לכשלים חוזרים (ראו לעיל, “שיטת העבודה”). למגבלות הנובעות מהשימוש "
+                        "בבינה מלאכותית - ראו גם: “מגבלות ידועות” למטה.",
+                    ),
+                ],
+            },
+            {
                 "heading": "המקורות: מארבעה לעשרה",
                 "blocks": [
                     (
@@ -232,6 +245,21 @@ CONTENT = {
                         "human visual review before anything goes live, and a generic "
                         "safety net at the code level whenever a recurring failure "
                         "surfaces - not a one-off patch for each individual case.",
+                    ),
+                ],
+            },
+            {
+                "heading": "Disclosure: Use of Artificial Intelligence",
+                "blocks": [
+                    (
+                        "p",
+                        "The comparison content in every report on this site is generated "
+                        "by a language model (Anthropic's Claude API) - not written by a "
+                        "human journalist. Human oversight is built into the process "
+                        "throughout: visual review before any change goes live, and a "
+                        "code-level safety net for recurring failures (see \"Working "
+                        "method\" above). For the limitations that come with this - see "
+                        "also: \"Known limitations\" below.",
                     ),
                 ],
             },

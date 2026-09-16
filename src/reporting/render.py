@@ -121,10 +121,14 @@ CATEGORY_LABELS = {
 # (light color, light bg tint, dark color, dark bg tint) per category - defined once
 # here and turned into CSS custom properties by build_report_html, so there is a
 # single source of truth for the palette instead of colors hardcoded in two places.
+# trade_economics' light-mode foreground was #93691a until a WCAG 2.0 AA audit
+# (2026-09-16) measured it at 4.37:1 against its bg - below the 4.5:1 minimum for
+# normal text. Darkened to #8a6114 (4.92:1) - every other pairing here already
+# passed when measured the same way.
 CATEGORY_STYLES = {
     "security_conflict":       ("#8a3324", "#f7e6e2", "#e0a08f", "#3a2019"),
     "diplomacy_international": ("#2a5b8a", "#e3edf5", "#8fb8dd", "#182a38"),
-    "trade_economics":         ("#93691a", "#faf1dd", "#e0b859", "#332a13"),
+    "trade_economics":         ("#8a6114", "#faf1dd", "#e0b859", "#332a13"),
     "domestic_politics":       ("#5c3d82", "#f0e9f6", "#c6a6ea", "#2c2138"),
     "migration_society":       ("#1f6f76", "#e6f3f2", "#6fc9d0", "#12302f"),
     "society_culture":         ("#a5457a", "#f8e8f0", "#e2a0c6", "#381e2c"),
@@ -196,6 +200,9 @@ def esc(text: str) -> str:
     return html.escape(text)
 
 
+LOGO_LINK_LABEL = {"he": "גאופוליטיקה יומי - דף הבית", "en": "Daily Geopolitics - home"}
+
+
 def build_nav_html(back_href: str, other_lang_href: str, lang: str, pdf_href: str | None = None) -> str:
     other = OTHER_LANG[lang]
     pdf_link = ""
@@ -204,12 +211,56 @@ def build_nav_html(back_href: str, other_lang_href: str, lang: str, pdf_href: st
         pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(pdf_label)}</a>'
     return f"""
   <nav class="top-nav">
-    <a class="top-nav-logo-link" href="../index.html"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>
       <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>{pdf_link}
     </div>
   </nav>"""
+
+
+def build_footer_html(
+    lang: str,
+    accessibility_href: str = "accessibility.html",
+    terms_href: str = "terms.html",
+) -> str:
+    accessibility_label = "הצהרת נגישות" if lang == "he" else "Accessibility statement"
+    terms_label = "תנאי שימוש" if lang == "he" else "Terms of use"
+    return f"""
+  <footer class="site-footer">
+    <a class="footer-link" href="{esc(accessibility_href)}">{esc(accessibility_label)}</a>
+    <a class="footer-link" href="{esc(terms_href)}">{esc(terms_label)}</a>
+  </footer>"""
+
+
+def shared_chrome_css() -> str:
+    """Footer + focus-visible styles shared identically across all 5 page types
+    (report/about/archive/topic/homepage) - each page inlines its own <style>
+    block (no shared external stylesheet, see CLAUDE.md), so this is called
+    from each page builder rather than duplicated as raw CSS text 5 times.
+    Added in the 2026-09-16 accessibility pass: no page previously had a
+    <footer> at all, and no page had a custom :focus-visible style (nothing
+    suppressed the browser default either, so this wasn't a violation - just
+    an inconsistent default across differently-shaped custom buttons)."""
+    return """
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  @media print {
+    .site-footer { display: none; }
+  }"""
 
 
 def _build_citations_html(citations: list, lang: str, section_id: int) -> str:
@@ -685,6 +736,8 @@ def build_report_html(
     .expand-chevron {{ display: none; }}
     .section-header {{ cursor: default; }}
   }}
+
+  {shared_chrome_css()}
 </style>
 </head>
 <body>
@@ -703,6 +756,7 @@ def build_report_html(
   <main class="report-body">
 {sections_html}
   </main>
+{build_footer_html(lang)}
   <script>
     function toggleSection(header) {{
       var body = document.getElementById(header.getAttribute('aria-controls'));

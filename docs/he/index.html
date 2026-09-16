@@ -16,7 +16,7 @@
   --tok-security_conflict-bg: #f7e6e2;
   --tok-diplomacy_international-color: #2a5b8a;
   --tok-diplomacy_international-bg: #e3edf5;
-  --tok-trade_economics-color: #93691a;
+  --tok-trade_economics-color: #8a6114;
   --tok-trade_economics-bg: #faf1dd;
   --tok-domestic_politics-color: #5c3d82;
   --tok-domestic_politics-bg: #f0e9f6;
@@ -90,6 +90,7 @@
     --text-muted: #6d675e;
     --border: #e4ddd0;
     --masthead-accent: #7a2e2a;
+    --chip-selected-text: #ffffff;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -100,6 +101,12 @@
       --text-muted: #a89f91;
       --border: #3a352b;
       --masthead-accent: #d68b86;
+      /* --masthead-accent flips to a light dusty pink in dark mode, so the
+         selected-chip text (previously hardcoded white) needs its own
+         theme-aware token too - white-on-light-pink measured at 2.66:1 in a
+         2026-09-16 WCAG audit, well under the 4.5:1 minimum; this dark value
+         measures 6.62:1 against the dark-mode accent. */
+      --chip-selected-text: #2a1210;
     }
   }
   :root[data-theme="dark"] {
@@ -109,6 +116,7 @@
     --text-muted: #a89f91;
     --border: #3a352b;
     --masthead-accent: #d68b86;
+    --chip-selected-text: #2a1210;
   }
 
   * { box-sizing: border-box; }
@@ -224,7 +232,7 @@
     cursor: pointer;
   }
   .region-chip:hover { border-color: var(--masthead-accent); color: var(--masthead-accent); }
-  .region-chip.is-selected { background: var(--masthead-accent); border-color: var(--masthead-accent); color: #fff; }
+  .region-chip.is-selected { background: var(--masthead-accent); border-color: var(--masthead-accent); color: var(--chip-selected-text); }
 
   .timeline-top { display: flex; justify-content: flex-end; margin-bottom: .6rem; }
   .timeline-track {
@@ -295,6 +303,26 @@
     white-space: nowrap;
   }
   .result-topic { font-size: .92rem; }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  @media print {
+    .site-footer { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -322,8 +350,8 @@
       </section>
     </div>
     <section class="home-module map-module">
-      <p class="sr-only">מפת עולם אינטראקטיבית. מדינות עם כיסוי חדשותי מודגשות בצבע; לחיצה על מדינה מסננת את פאנל התוצאות למטה. רשימת המדינות המכוסות מפורטת בהמשך העמוד.</p>
-      <svg id="world-map" viewBox="-35.8 80 2776 1163.1" xmlns="http://www.w3.org/2000/svg">
+      <p class="sr-only" id="map-description">מפת עולם אינטראקטיבית. מדינות עם כיסוי חדשותי מודגשות בצבע; לחיצה על מדינה מסננת את פאנל התוצאות למטה. רשימת המדינות המכוסות מפורטת בהמשך העמוד.</p>
+      <svg id="world-map" role="img" aria-labelledby="map-description" viewBox="-35.8 80 2776 1163.1" xmlns="http://www.w3.org/2000/svg">
   <defs
      id="defs2913" />
   <title
@@ -8427,6 +8455,11 @@
     </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
+    <a class="footer-link" href="terms.html">תנאי שימוש</a>
+  </footer>
   <script>
 (function () {
   var LANG = "he";
@@ -8492,7 +8525,12 @@
       var cell = document.createElement("div");
       cell.className = "timeline-cell";
       cell.dataset.date = d;
-      var pct = Math.round(20 + intensity * 60);
+      // Capped at 55 (not 80) since a 2026-09-16 WCAG audit measured --text
+      // against this color-mix at the old max and found it fell to ~3:1 in
+      // both themes on the highest-coverage days - below the 4.5:1 minimum,
+      // and ironically on the most-important cells to actually read. 55 keeps
+      // every intensity level at or above 4.75:1 in both themes.
+      var pct = Math.round(20 + intensity * 35);
       cell.style.background = "color-mix(in srgb, var(--masthead-accent) " + pct + "%, var(--bg-elevated))";
       cell.textContent = formatShortDate(d);
       cell.addEventListener("click", function () {
