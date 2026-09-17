@@ -12,6 +12,8 @@
 
 **דוחות 13.9/14.9 נפתחו-מחדש (17.9, באישור מפורש)**: תוכן-catch-up שכבר היה ב-DB (Washington Post ל-14.9, LA Times שני ל-13.9) הוכל בפועל - `synthesize --force`+`render`+`publish` הורצו לשני התאריכים בלבד. תוך-כדי התגלה ש-**GTK3 Runtime חסר היה במחשב זה** (WeasyPrint דילג על PDF) - הותקן (`winget install tschoonj.GTKForWindows`), ושני ה-PDF-ים נבנו-מחדש כדי לא להישאר לא-מסונכרנים עם ה-HTML המעודכן.
 
+**Favicon נוסף לכל עמוד (17.9)** - סט-סטנדרטי נגזר מהלוגו הקיים, בכל 6 סוגי-עמוד, אומת ב-HTTP אמיתי.
+
 ## מה הושלם (יכולות בשלות, לא יומן-שינויים)
 
 - **`src/common/db.py`** - מקור-אמת יחיד לסכמה, מיגרציה אוטומטית.
@@ -19,13 +21,14 @@
 - **`src/extraction/extract.py`**, **`src/analysis/screen.py`+`analyze.py`** (Haiku רשת-רחבה → Sonnet ניתוח-מעמיק+תיוג-גיאוגרפי), **`geo_tag_backfill.py`**.
 - **`src/common/geo_taxonomy.py`** - 94 מדינות/8 אזורים/3 קונפליקטים.
 - **`src/reporting/synthesize.py`** - ארכיטקטורת שני-שלבים, רשת-ביטחון כפולה.
-- **`src/reporting/render.py`** - HTML+PDF דו-לשוני, citations, accordion, sticky-nav, מיון-לפי-כיסוי, **פוטר-משותף חדש** (`build_footer_html`/`shared_chrome_css` - כולל `:focus-visible` גלובלי).
+- **`src/reporting/render.py`** - HTML+PDF דו-לשוני, citations, accordion, sticky-nav, מיון-לפי-כיסוי, **פוטר-משותף חדש** (`build_footer_html`/`shared_chrome_css` - כולל `:focus-visible` גלובלי), **favicon בכל עמוד** (`favicon_links_html`).
 - **`src/publishing/publish.py`** - `docs/` שלם: דוחות, `archive.html`, `about.html`, `topic.html`, **`accessibility.html`/`terms.html` חדשים**, דף-בית, `manifest.json`.
 - **`src/common/about_content.py`** - נכתב מחדש במלואו (10.9); עודכן להחלפת NYT←Washington Post (12.9); **נוסף סעיף גילוי-נאות-AI חדש** (16.9, אחרי "שיטת העבודה").
 - **חבילת-ציות רגולטורי** - `accessibility.html`/`terms.html` (ת"י 5568/WCAG 2.0 AA), בלי זכויות-יוצרים/אנליטיקס-חדש (אושר-בפועל שהאתר נקי מקוד-מעקב). ביקורת-WCAG מדודה (לא הונחה) מצאה ותיקנה: קישור-לוגו עם שם-נגישות שבור, מפת-SVG בלי `aria-labelledby` עצמי, ו-3 כשלי-ניגודיות אמיתיים (תג-קטגוריה, צ'יפ-נבחר במצב-כהה, תאי-ציר-זמן בעצימות-גבוהה).
 - **מדידת-עלות רטרואקטיבית** - שחזור `count_tokens` ל-Screening/Analysis (Analysis כ"גבול-תחתון"); Synthesize משתמש בנתוני-usage-אמיתיים.
 - **הפרדת-עלות בין ריצות** - Screening/Analysis (חסרי-סינון-לפי-תאריך) משויכים ל"סבב" הרחב; Synthesize (יש לו `--date`) תמיד ספציפי-ליום.
 - **פתיחה-מחדש של 13.9/14.9** (17.9, אישור מפורש) - תוכן-catch-up שהמתין ב-DB הוכל בפועל; GTK3 Runtime הותקן במחשב זה אחרי שנמצא חסר.
+- **Favicon** (17.9) - סט-סטנדרטי (favicon.ico/32x32/16x16/apple-touch-icon), נגזר מ-`MS_Logo.png` הקיים (לא לוגו חדש) דרך `scripts/generate_favicons.py` חד-פעמי, מוזרק בכל 6 סוגי-עמוד. אומת ב-HTTP אמיתי, כל 25 התאריכים נבנו-מחדש.
 
 ## קבצים מרכזיים (תפקיד נוכחי)
 
@@ -77,10 +80,8 @@
 
 **תאריך:** 2026-09-17
 
-**תיאור:** סשן קצר וממוקד, נפתח ב-`/resume-project`. כלל:
+**תיאור:** שני חלקים, אותו יום. חלק א' (`/resume-project` ראשון): גילה וסגר סנכרון-handoff תקוע - CLAUDE.md/HANDOFF.md מהסשן הקודם (16.9) תיארו נכונה commits `49e7643`/`3e65092`/`0ba082e` אך לא הגיעו בעצמם ל-commit בזמנו (נבדק מול git בפועל, לא הונח) - תוקן (`c54527f`); פתח-מחדש 13.9/14.9 באישור מפורש (`2e1d290`); וגילה+תיקן חוסר-GTK3-Runtime במחשב זה (timestamp-comparison אמיתי בין PDF-ישן ל-HTML-מעודכן, לא הונח שהצלחת-הרינדור מלאה רק כי לא הייתה שגיאת-קוד).
 
-1. **`/resume-project` גילה סנכרון-handoff תקוע** - CLAUDE.md/HANDOFF.md מהסשן הקודם (16.9) כבר תיארו נכונה את commits `49e7643`/`3e65092`/`0ba082e`, אך שני הקבצים עצמם לא הגיעו ל-commit בזמנו. נבדק (השווה תוכן-קובץ מול commits בפועל, לא הונח) ותוקן: `commit` (`c54527f`) + push.
-2. **פתיחה-מחדש של 13.9/14.9** (אישור מפורש מהמשתמש) - תוכן-catch-up שהמתין ב-DB מאז 15.9 (Washington Post ל-14.9, LA Times שני ל-13.9) הוכל בפועל: `synthesize --force`+`render`+`publish` הורצו לשני התאריכים בלבד (שינוי-תוכן, לא שינוי-מבנה - לא נדרשה regeneration גורפת של כל הארכיון). `commit` (`2e1d290`) + push.
-3. **ממצא-סביבה תוך-כדי**: GTK3 Runtime חסר היה במחשב הזה - WeasyPrint דילג על שלב ה-PDF (עם הודעה מפורשת בפלט הרצה, כפי שמתועד ב-CLAUDE.md). התגלה כי הושוו timestamps של קובצי ה-PDF/HTML בפועל אחרי הרינדור הראשון ונמצא ש-PDF נשאר מיום קודם בעוד ה-HTML כבר מעודכן - לא הונח שהרינדור הצליח במלואו רק כי לא היתה שגיאת-קוד. הותקן (`winget install tschoonj.GTKForWindows`), ושני ה-PDF-ים נבנו-מחדש לפני ה-commit.
+חלק ב' (`/resume-project` **שני, נפרד ומאוחר יותר** באותו יום): גילה שקיים **commit נוסף אחרי חלק א'** שלא תועד בכלל בשום קובץ-המשכיות - `45b99c9` ("Add favicon (browser tab/bookmark icon) to all page types") - נמצא ע"י השוואת `git log` בפועל מול מה ש-HANDOFF/CLAUDE.md תיארו, לא הונח שהתיעוד עדכני. תוקן: CLAUDE.md/HANDOFF.md/PROJECT_LOG.md עודכנו בהתאם (הסשן הזה).
 
-**דפוס חוזר בסשן**: "בדוק בפועל, אל תניח" - שוב פעם שלישית ברצף (אחרי `message_id` ב-4.37/4.38): כאן זה timestamp של קובץ-הפלט מול תוכן-ה-HTML, שחשף פער-סביבה אמיתי (GTK3 חסר) שהיה נשאר סמוי אם היה מונח "render.py לא זרק שגיאה = הצליח לגמרי".
+**דפוס חוזר בפרויקט**: "בדוק בפועל, אל תניח" - כאן זה `git log` מול תוכן-קבצי-ההמשכיות עצמם, שחשף פער-תיעוד אמיתי (עבודה שלמה ומאומתת שלא נכנסה לזיכרון-הפרויקט בכלל) - תזכורת ש-`/resume-project` צריך לבדוק גם "האם יש commits אחרי מה ש-HANDOFF מתאר", לא רק "האם יש שינויים לא-committed".
