@@ -55,6 +55,25 @@ def font_face_css(relative_path: str) -> str:
     font-weight: {FONT_WEIGHT_RANGE};
   }}"""
 
+
+# Same source logo already used in every top-nav (assets/images/MS_Logo.png) -
+# not a separate design asset. Filenames match the standard names browsers/
+# OSes look for by convention (favicon.ico, apple-touch-icon.png), so no
+# additional <link> attributes are needed beyond what's declared here.
+FAVICON_FILENAMES = ("favicon.ico", "favicon-32x32.png", "favicon-16x16.png", "apple-touch-icon.png")
+
+
+def favicon_links_html(asset_prefix: str) -> str:
+    """<link> tags for the page <head>. `asset_prefix` is the same depth-relative
+    prefix used for the logo/font/map assets ("" at a docs/ root copy, "../" one
+    level down under he/en) - not a per-file path like font_face_css takes,
+    since all 4 favicon files always live together in assets/images/."""
+    base = f"{asset_prefix}assets/images"
+    return f"""<link rel="icon" href="{base}/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="{base}/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="{base}/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="{base}/apple-touch-icon.png">"""
+
 FALLBACK_CATEGORY = "additional_coverage"
 
 NEWSPAPER_DISPLAY_NAMES = {
@@ -412,6 +431,7 @@ def build_report_html(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
+{favicon_links_html("../")}
 <style>
   {font_face_css(FONT_RELATIVE_PATH)}
 

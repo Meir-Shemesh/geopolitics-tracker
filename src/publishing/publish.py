@@ -30,6 +30,7 @@ from src.common.db import (
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION, REGION_LABELS
 from src.reporting.render import (
     CATEGORY_LABELS,
+    FAVICON_FILENAMES,
     FONT_FAMILY,
     FONT_FILENAME,
     LANG_LABEL,
@@ -40,6 +41,7 @@ from src.reporting.render import (
     build_nav_html,
     category_css,
     esc,
+    favicon_links_html,
     font_face_css,
     format_date_en,
     format_date_he,
@@ -51,6 +53,7 @@ REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
 DOCS_DIR = Path(__file__).resolve().parents[2] / "docs"
 FONT_SOURCE_PATH = REPORTS_DIR / "assets" / "fonts" / FONT_FILENAME
 LOGO_SOURCE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "assets" / "MS_Logo.png"
+FAVICON_SOURCE_DIR = Path(__file__).resolve().parents[2] / "scripts" / "assets"
 MAP_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "map" / "world.svg"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
 
@@ -89,6 +92,7 @@ def build_index_html(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
+{favicon_links_html(asset_prefix)}
 <style>
   {font_face_css(font_relative_path)}
 
@@ -236,6 +240,7 @@ def build_about_html(lang: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
+{favicon_links_html("../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -404,6 +409,7 @@ def _build_static_page_html(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
+{favicon_links_html("../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -619,6 +625,7 @@ def build_topic_html(lang: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
+{favicon_links_html("../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -1251,6 +1258,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(page_title)}</title>
+{favicon_links_html(asset_prefix)}
 <style>
   {font_face_css(f"{asset_prefix}assets/fonts/{FONT_FILENAME}")}
 
@@ -1542,6 +1550,14 @@ def _copy_logo() -> None:
         shutil.copy2(LOGO_SOURCE_PATH, dest)
 
 
+def _copy_favicons() -> None:
+    for base_dir in (DOCS_DIR, REPORTS_DIR):
+        dest_dir = base_dir / "assets" / "images"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        for filename in FAVICON_FILENAMES:
+            shutil.copy2(FAVICON_SOURCE_DIR / filename, dest_dir / filename)
+
+
 def _copy_map() -> None:
     for base_dir in (DOCS_DIR, REPORTS_DIR):
         dest = base_dir / "assets" / "map" / MAP_SOURCE_PATH.name
@@ -1745,6 +1761,7 @@ def run() -> None:
 
     _copy_font()
     _copy_logo()
+    _copy_favicons()
     _copy_map()
     _copy_reports_to_docs()
 
