@@ -8,6 +8,7 @@ next run, with no manual migration step or need to delete the DB.
 """
 
 import sqlite3
+from datetime import datetime, tzinfo
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "tracker.db"
@@ -24,6 +25,9 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "local_path": "TEXT NOT NULL",
         "extraction_status": "TEXT NOT NULL DEFAULT 'pending'",
         "extraction_error": "TEXT",
+        # Which report this file's articles belong to - see REPORT_DATE_SQL below.
+        # Nullable on purpose: rows ingested before the rule existed stay NULL.
+        "report_date": "TEXT",
     },
     "extracted_pages": {
         "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -132,6 +136,26 @@ def is_downloaded(conn: sqlite3.Connection, channel: str, message_id: int) -> bo
     return cursor.fetchone() is not None
 
 
+# A file's articles belong to the report of the local calendar day on which the
+# pipeline downloaded the file - not to its Telegram upload time (published_at)
+# and not to a date parsed from its name. published_at drifts from the coverage
+# day (weekly issues, weekend editions, supplements), which left articles that
+# were analyzed and paid for out of every report (see CLAUDE.md, PROJECT_LOG
+# 4.43). Rows ingested before this rule have report_date NULL and keep their
+# legacy meaning, date(published_at), so every existing report regenerates
+# exactly as before. Queries that select "the articles of report day X" must use
+# this expression (with downloaded_files aliased as df), never date(published_at).
+REPORT_DATE_SQL = "COALESCE(df.report_date, date(df.published_at))"
+
+
+def report_date_for_download(downloaded_at: str, tz: tzinfo | None = None) -> str:
+    """Calendar day of an ISO-8601 download timestamp in `tz` (default: the system's local timezone).
+
+    `tz` exists so tests can pin a timezone instead of depending on the machine they run on.
+    """
+    return datetime.fromisoformat(downloaded_at).astimezone(tz).date().isoformat()
+
+
 def mark_downloaded(
     conn: sqlite3.Connection,
     channel: str,
@@ -145,10 +169,19 @@ def mark_downloaded(
     conn.execute(
         """
         INSERT INTO downloaded_files
-            (channel, message_id, file_name, newspaper, published_at, downloaded_at, local_path)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+            (channel, message_id, file_name, newspaper, published_at, downloaded_at, local_path, report_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (channel, message_id, file_name, newspaper, published_at, downloaded_at, local_path),
+        (
+            channel,
+            message_id,
+            file_name,
+            newspaper,
+            published_at,
+            downloaded_at,
+            local_path,
+            report_date_for_download(downloaded_at),
+        ),
     )
     conn.commit()
 
@@ -294,22 +327,22 @@ def insert_article(
 
 
 def get_articles_for_date(conn: sqlite3.Connection, report_date: str):
-    query = """
+    query = f"""
         SELECT a.id, a.newspaper, a.headline, a.region_topic, a.stance_summary, a.key_excerpt
         FROM articles a
         JOIN downloaded_files df ON df.id = a.file_id
-        WHERE date(df.published_at) = ?
+        WHERE {REPORT_DATE_SQL} = ?
         ORDER BY a.newspaper, a.id
     """
     return conn.execute(query, (report_date,)).fetchall()
 
 
 def get_sources_for_date(conn: sqlite3.Connection, report_date: str) -> list[str]:
-    query = """
+    query = f"""
         SELECT DISTINCT df.newspaper
         FROM downloaded_files df
         JOIN articles a ON a.file_id = df.id
-        WHERE date(df.published_at) = ?
+        WHERE {REPORT_DATE_SQL} = ?
         ORDER BY df.newspaper
     """
     return [row["newspaper"] for row in conn.execute(query, (report_date,)).fetchall()]
@@ -495,7 +528,7 @@ def get_articles_without_geo_tags(conn: sqlite3.Connection, report_date: str | N
     params: list = []
     if report_date is not None:
         query += " JOIN downloaded_files df ON df.id = a.file_id"
-        conditions.append("date(df.published_at) = ?")
+        conditions.append(f"{REPORT_DATE_SQL} = ?")
         params.append(report_date)
     query += " WHERE " + " AND ".join(conditions) + " ORDER BY a.id"
     return conn.execute(query, params).fetchall()
