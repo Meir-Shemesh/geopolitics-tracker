@@ -31,6 +31,8 @@ from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_
 from src.reporting.render import (
     ALL_LANGS,
     CATEGORY_LABELS,
+    CONTACT_EMAIL,
+    CONTACT_LABEL,
     FAVICON_FILENAMES,
     FONT_FAMILY,
     FONT_FILENAME,
@@ -210,6 +212,7 @@ def build_index_html(
     <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
+      <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
     </div>
   </nav>
   <header class="masthead">
@@ -1591,6 +1594,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     <img class="home-logo" src="{asset_prefix}assets/images/MS_Logo.png" alt="">
     <div class="home-top-bar-links">
       {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
+      <a href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
     </div>
   </div>
   <header class="masthead">

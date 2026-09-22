@@ -266,6 +266,8 @@ LOGO_LINK_LABEL = {
     "he": "גאופוליטיקה יומי - דף הבית", "en": "Daily Geopolitics - home", "de": "Tägliche Geopolitik - Startseite",
 }
 PDF_LABEL = {"he": "⬇ הורד PDF", "en": "⬇ Download PDF", "de": "⬇ PDF herunterladen"}
+CONTACT_EMAIL = "meir@meirshemesh.com"
+CONTACT_LABEL = {"he": "צור קשר", "en": "Contact", "de": "Kontakt"}
 
 
 def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_href: str | None = None) -> str:
@@ -276,7 +278,10 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
     fixed "other language" link. `top-nav-lang-link` (in addition to the
     shared `top-nav-link` styling class) marks these specifically, so page-
     local JS that needs to find just the language links (e.g. topic.html's
-    query-string preservation) doesn't have to guess by position."""
+    query-string preservation) doesn't have to guess by position. A mailto
+    "Contact" link is always appended last, after the language links and the
+    optional PDF link - single point of change so every page type that calls
+    this function gets it automatically."""
     pdf_link = ""
     if pdf_href is not None:
         pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(PDF_LABEL[lang])}</a>'
@@ -284,11 +289,12 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
         f'\n      <a class="top-nav-link top-nav-lang-link" href="{esc(lang_hrefs[other])}">{esc(LANG_LABEL[other])}</a>'
         for other in other_langs(lang) if other in lang_hrefs
     )
+    contact_link = f'\n      <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>'
     return f"""
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{lang_links}{pdf_link}
+      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{lang_links}{pdf_link}{contact_link}
     </div>
   </nav>"""
 
