@@ -150,6 +150,7 @@
     font-size: .82rem;
   }
   .home-top-bar a:hover { color: var(--masthead-accent); text-decoration: underline; }
+  .home-top-bar-links { display: flex; align-items: center; gap: 1.1rem; }
 
   .masthead {
     background: var(--bg-elevated);
@@ -332,7 +333,9 @@
 <body>
   <div class="home-top-bar">
     <img class="home-logo" src="../assets/images/MS_Logo.png" alt="">
-    <a href="../he/index.html">עברית</a>
+    <div class="home-top-bar-links">
+      <a href="../he/index.html">עברית</a><a href="../de/index.html">Deutsch</a>
+    </div>
   </div>
   <header class="masthead">
     <div class="masthead-inner">
@@ -8486,13 +8489,16 @@
     }
   }
 
+  var LABEL_KEY = { he: "name_he", en: "name_en", de: "name_de" }[LANG] || "name_en";
+  var TOPIC_KEY = { he: "topic_he", en: "topic_en", de: "topic_de" }[LANG] || "topic_en";
+  var HREF_KEY = { he: "href_he", en: "href_en", de: "href_de" }[LANG] || "href_en";
+
   function hrefFor(section) {
-    var raw = LANG === "he" ? section.href_he : section.href_en;
-    return PREFIX + raw;
+    return PREFIX + section[HREF_KEY];
   }
 
   function topicFor(section) {
-    return LANG === "he" ? section.topic_he : section.topic_en;
+    return section[TOPIC_KEY];
   }
 
   function renderMap(manifest) {
@@ -8507,7 +8513,7 @@
       el.classList.add("has-coverage");
       var titleEl = el.querySelector("title");
       if (titleEl) {
-        titleEl.textContent = LANG === "he" ? country.name_he : country.name_en;
+        titleEl.textContent = country[LABEL_KEY];
       }
       el.addEventListener("click", function () {
         selectCountry(manifest, code);
@@ -8564,7 +8570,7 @@
 
     var cta = document.createElement("p");
     cta.className = "latest-card-cta";
-    cta.textContent = LANG === "he" ? "לדוח המלא ←" : "Full report →";
+    cta.textContent = LANG === "he" ? "לדוח המלא ←" : LANG === "de" ? "Zum vollständigen Bericht →" : "Full report →";
 
     link.appendChild(numberEl);
     link.appendChild(previewEl);
@@ -8581,7 +8587,7 @@
       chip.type = "button";
       chip.className = "region-chip";
       chip.dataset.region = key;
-      chip.textContent = LANG === "he" ? region.name_he : region.name_en;
+      chip.textContent = region[LABEL_KEY];
       chip.addEventListener("click", function () {
         selectRegion(manifest, key);
       });
@@ -8598,7 +8604,7 @@
       chip.type = "button";
       chip.className = "region-chip";
       chip.dataset.conflict = key;
-      chip.textContent = LANG === "he" ? zone.name_he : zone.name_en;
+      chip.textContent = zone[LABEL_KEY];
       chip.addEventListener("click", function () {
         window.location.href = TOPIC_PREFIX + "topic.html?conflict=" + encodeURIComponent(key);
       });
@@ -8611,7 +8617,7 @@
     var el = document.getElementById(code.toLowerCase());
     if (el) el.classList.add("is-selected");
     var country = manifest.countries[code];
-    var name = LANG === "he" ? country.name_he : country.name_en;
+    var name = country[LABEL_KEY];
     renderResults(manifest, country.section_ids, name);
   }
 
@@ -8635,7 +8641,7 @@
       var el = document.getElementById(code.toLowerCase());
       if (el) el.classList.add("is-selected");
     });
-    var name = LANG === "he" ? region.name_he : region.name_en;
+    var name = region[LABEL_KEY];
     var fullReportHref = TOPIC_PREFIX + "topic.html?region=" + encodeURIComponent(regionKey);
     renderResults(manifest, region.section_ids, name, fullReportHref);
   }
@@ -8653,14 +8659,15 @@
 
     var heading = document.createElement("p");
     heading.className = "results-heading";
-    heading.textContent = (LANG === "he" ? "תוצאות: " : "Results: ") + headingLabel;
+    var resultsPrefix = LANG === "he" ? "תוצאות: " : LANG === "de" ? "Ergebnisse: " : "Results: ";
+    heading.textContent = resultsPrefix + headingLabel;
     panel.appendChild(heading);
 
     if (fullReportHref) {
       var fullLink = document.createElement("a");
       fullLink.className = "results-full-link";
       fullLink.href = fullReportHref;
-      fullLink.textContent = LANG === "he" ? "פתח כדוח מלא ←" : "View as full report →";
+      fullLink.textContent = LANG === "he" ? "פתח כדוח מלא ←" : LANG === "de" ? "Als vollständigen Bericht öffnen →" : "View as full report →";
       panel.appendChild(fullLink);
     }
 
@@ -8679,7 +8686,7 @@
       var label = document.createElement("span");
       label.className = "category-label";
       var catInfo = manifest.categories[section.category];
-      label.textContent = catInfo ? (LANG === "he" ? catInfo.name_he : catInfo.name_en) : section.category;
+      label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
 
       var topic = document.createElement("span");
       topic.className = "result-topic";
@@ -8699,6 +8706,7 @@
 
   var HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
   var EN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DE_MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 
   function formatLongDate(iso) {
     var parts = iso.split("-").map(Number);
@@ -8707,6 +8715,9 @@
     var year = parts[0];
     if (LANG === "he") {
       return day + " ב" + HE_MONTHS[month] + " " + year;
+    }
+    if (LANG === "de") {
+      return day + ". " + DE_MONTHS[month] + " " + year;
     }
     return EN_MONTHS[month] + " " + day + ", " + year;
   }

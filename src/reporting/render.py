@@ -120,21 +120,27 @@ def _coverage_badge_label(source_count: int, language_count: int, lang: str) -> 
     if lang == "he":
         src_word = "מקור" if source_count == 1 else "מקורות"
         lang_word = "שפה" if language_count == 1 else "שפות"
+    elif lang == "de":
+        src_word = "Quelle" if source_count == 1 else "Quellen"
+        lang_word = "Sprache" if language_count == 1 else "Sprachen"
     else:
         src_word = "source" if source_count == 1 else "sources"
         lang_word = "language" if language_count == 1 else "languages"
     return f"{source_count} {src_word} · {language_count} {lang_word}"
 
 CATEGORY_LABELS = {
-    "security_conflict": {"he": "ביטחון וסכסוכים", "en": "Security & Conflict"},
-    "diplomacy_international": {"he": "דיפלומטיה ויחסים בינלאומיים", "en": "Diplomacy & International Relations"},
-    "trade_economics": {"he": "כלכלה וסחר", "en": "Trade & Economics"},
-    "domestic_politics": {"he": "פוליטיקה פנימית", "en": "Domestic Politics"},
-    "migration_society": {"he": "הגירה וחברה", "en": "Migration & Society"},
-    "society_culture": {"he": "תרבות וזהות", "en": "Society & Culture"},
-    "technology_media": {"he": "טכנולוגיה ומדיה", "en": "Technology & Media"},
-    "energy_environment": {"he": "אנרגיה וסביבה", "en": "Energy & Environment"},
-    FALLBACK_CATEGORY: {"he": "כיסוי נוסף", "en": "Additional Coverage"},
+    "security_conflict": {"he": "ביטחון וסכסוכים", "en": "Security & Conflict", "de": "Sicherheit & Konflikte"},
+    "diplomacy_international": {
+        "he": "דיפלומטיה ויחסים בינלאומיים", "en": "Diplomacy & International Relations",
+        "de": "Diplomatie & internationale Beziehungen",
+    },
+    "trade_economics": {"he": "כלכלה וסחר", "en": "Trade & Economics", "de": "Handel & Wirtschaft"},
+    "domestic_politics": {"he": "פוליטיקה פנימית", "en": "Domestic Politics", "de": "Innenpolitik"},
+    "migration_society": {"he": "הגירה וחברה", "en": "Migration & Society", "de": "Migration & Gesellschaft"},
+    "society_culture": {"he": "תרבות וזהות", "en": "Society & Culture", "de": "Gesellschaft & Kultur"},
+    "technology_media": {"he": "טכנולוגיה ומדיה", "en": "Technology & Media", "de": "Technologie & Medien"},
+    "energy_environment": {"he": "אנרגיה וסביבה", "en": "Energy & Environment", "de": "Energie & Umwelt"},
+    FALLBACK_CATEGORY: {"he": "כיסוי נוסף", "en": "Additional Coverage", "de": "Zusätzliche Berichterstattung"},
 }
 
 # (light color, light bg tint, dark color, dark bg tint) per category - defined once
@@ -156,9 +162,25 @@ CATEGORY_STYLES = {
     FALLBACK_CATEGORY:         ("#6b6560", "#efece6", "#a89f91", "#2a2620"),
 }
 
+# Bilingual pages that predate the trilingual expansion (2026-09-22) and are staying
+# bilingual for now - the homepage (build_homepage_html), accessibility.html and
+# terms.html (see CLAUDE.md "השלב הבא: תלת-לשוניות" for the scope decision) - still
+# use this. Everything that went trilingual (report/about/archive/topic) uses
+# ALL_LANGS/other_langs() below instead, via build_nav_html's lang_hrefs dict.
 OTHER_LANG = {"he": "en", "en": "he"}
-LANG_LABEL = {"he": "עברית", "en": "English"}
-BACK_LABEL = {"he": "← לכל הדוחות", "en": "← All reports"}
+
+ALL_LANGS = ("he", "en", "de")
+
+
+def other_langs(lang: str) -> tuple[str, ...]:
+    """The other languages besides `lang`, always in ALL_LANGS order - what a
+    trilingual page's nav switcher offers, given as many hrefs as are passed to
+    build_nav_html (2 for a trilingual page, 1 for a still-bilingual one)."""
+    return tuple(l for l in ALL_LANGS if l != lang)
+
+
+LANG_LABEL = {"he": "עברית", "en": "English", "de": "Deutsch"}
+BACK_LABEL = {"he": "← לכל הדוחות", "en": "← All reports", "de": "← Alle Berichte"}
 
 HE_WEEKDAYS = ["יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת", "יום ראשון"]
 HE_MONTHS = [
@@ -166,8 +188,13 @@ HE_MONTHS = [
     "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
 ]
 EN_MONTHS_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+DE_WEEKDAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+DE_MONTHS = [
+    "Januar", "Februar", "März", "April", "Mai", "Juni",
+    "Juli", "August", "September", "Oktober", "November", "Dezember",
+]
 
-CITATION_PAGE_LABEL = {"he": "עמ'", "en": "p."}
+CITATION_PAGE_LABEL = {"he": "עמ'", "en": "p.", "de": "S."}
 
 
 def format_date_he(report_date: str) -> str:
@@ -180,6 +207,14 @@ def format_date_en(report_date: str) -> str:
     return d.strftime("%A, %B %d, %Y")
 
 
+def format_date_de(report_date: str) -> str:
+    d = date_cls.fromisoformat(report_date)
+    return f"{DE_WEEKDAYS[d.weekday()]}, {d.day}. {DE_MONTHS[d.month - 1]} {d.year}"
+
+
+FORMAT_DATE = {"he": format_date_he, "en": format_date_en, "de": format_date_de}
+
+
 def format_citation_date_he(date_str: str) -> str:
     d = date_cls.fromisoformat(date_str)
     return f"{d.day}.{d.month}.{d.year}"
@@ -188,6 +223,14 @@ def format_citation_date_he(date_str: str) -> str:
 def format_citation_date_en(date_str: str) -> str:
     d = date_cls.fromisoformat(date_str)
     return f"{EN_MONTHS_ABBR[d.month - 1]} {d.day}, {d.year}"
+
+
+def format_citation_date_de(date_str: str) -> str:
+    d = date_cls.fromisoformat(date_str)
+    return f"{d.day}.{d.month}.{d.year}"  # same numeric day.month.year convention as Hebrew
+
+
+FORMAT_CITATION_DATE = {"he": format_citation_date_he, "en": format_citation_date_en, "de": format_citation_date_de}
 
 
 def _truncate_headline(headline: str, max_words: int = 6) -> str:
@@ -219,21 +262,33 @@ def esc(text: str) -> str:
     return html.escape(text)
 
 
-LOGO_LINK_LABEL = {"he": "גאופוליטיקה יומי - דף הבית", "en": "Daily Geopolitics - home"}
+LOGO_LINK_LABEL = {
+    "he": "גאופוליטיקה יומי - דף הבית", "en": "Daily Geopolitics - home", "de": "Tägliche Geopolitik - Startseite",
+}
+PDF_LABEL = {"he": "⬇ הורד PDF", "en": "⬇ Download PDF", "de": "⬇ PDF herunterladen"}
 
 
-def build_nav_html(back_href: str, other_lang_href: str, lang: str, pdf_href: str | None = None) -> str:
-    other = OTHER_LANG[lang]
+def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_href: str | None = None) -> str:
+    """`lang_hrefs` maps every OTHER language this page exists in (a subset of
+    other_langs(lang) - 2 entries for a trilingual page, 1 for a still-bilingual
+    one) to that language's href for this same page. Each becomes its own
+    top-nav-link, in ALL_LANGS order - a real N-way switcher, not a single
+    fixed "other language" link. `top-nav-lang-link` (in addition to the
+    shared `top-nav-link` styling class) marks these specifically, so page-
+    local JS that needs to find just the language links (e.g. topic.html's
+    query-string preservation) doesn't have to guess by position."""
     pdf_link = ""
     if pdf_href is not None:
-        pdf_label = "⬇ הורד PDF" if lang == "he" else "⬇ Download PDF"
-        pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(pdf_label)}</a>'
+        pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(PDF_LABEL[lang])}</a>'
+    lang_links = "".join(
+        f'\n      <a class="top-nav-link top-nav-lang-link" href="{esc(lang_hrefs[other])}">{esc(LANG_LABEL[other])}</a>'
+        for other in other_langs(lang) if other in lang_hrefs
+    )
     return f"""
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>
-      <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>{pdf_link}
+      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{lang_links}{pdf_link}
     </div>
   </nav>"""
 
@@ -243,13 +298,23 @@ def build_footer_html(
     accessibility_href: str = "accessibility.html",
     terms_href: str = "terms.html",
 ) -> str:
-    accessibility_label = "הצהרת נגישות" if lang == "he" else "Accessibility statement"
-    terms_label = "תנאי שימוש" if lang == "he" else "Terms of use"
+    accessibility_label = {
+        "he": "הצהרת נגישות", "en": "Accessibility statement", "de": "Barrierefreiheitserklärung",
+    }[lang]
+    terms_label = {"he": "תנאי שימוש", "en": "Terms of use", "de": "Nutzungsbedingungen"}[lang]
     return f"""
   <footer class="site-footer">
     <a class="footer-link" href="{esc(accessibility_href)}">{esc(accessibility_label)}</a>
     <a class="footer-link" href="{esc(terms_href)}">{esc(terms_label)}</a>
   </footer>"""
+
+
+def footer_hrefs_for(lang: str) -> tuple[str, str]:
+    """(accessibility_href, terms_href) for build_footer_html - same-folder-relative
+    for all three languages. German got its own accessibility.html/terms.html on
+    2026-09-22 (same day as the rest of the trilingual expansion, just a later pass -
+    see CLAUDE.md), so this no longer needs a de->en fallback."""
+    return "accessibility.html", "terms.html"
 
 
 def shared_chrome_css() -> str:
@@ -286,9 +351,9 @@ def _build_citations_html(citations: list, lang: str, section_id: int) -> str:
     if not citations:
         return ""
 
-    format_date = format_citation_date_he if lang == "he" else format_citation_date_en
+    format_date = FORMAT_CITATION_DATE[lang]
     page_label = CITATION_PAGE_LABEL[lang]
-    quote_marks = ("“", "”") if lang == "he" else ('"', '"')
+    quote_marks = {"he": ("“", "”"), "en": ('"', '"'), "de": ("„", "“")}[lang]
 
     # citations arrive pre-sorted by (newspaper, page_number) - group consecutive
     # same-newspaper rows so we know, per group, whether a headline is needed to
@@ -312,7 +377,7 @@ def _build_citations_html(citations: list, lang: str, section_id: int) -> str:
                 line += f" — {quote_marks[0]}{snippet}{quote_marks[1]}"
             lines.append(f"            <li>{line}</li>")
 
-    toggle_label = "מראי מקום" if lang == "he" else "Citations"
+    toggle_label = {"he": "מראי מקום", "en": "Citations", "de": "Quellenangaben"}[lang]
     popup_id = f"citations-{section_id}"
     items_html = "\n".join(lines)
     return f"""
@@ -329,8 +394,8 @@ def _build_citations_html(citations: list, lang: str, section_id: int) -> str:
 
 def _render_section(section: dict, lang: str, show_sources: bool) -> str:
     label = CATEGORY_LABELS.get(section["category"], CATEGORY_LABELS[FALLBACK_CATEGORY])[lang]
-    topic = section["topic_label_he"] if lang == "he" else section["topic_label_en"]
-    text = section["comparison_text_he"] if lang == "he" else section["comparison_text_en"]
+    topic = section[f"topic_label_{lang}"]
+    text = section[f"comparison_text_{lang}"]
 
     source_count, language_count = section_coverage(section["newspapers"])
     badge_label = _coverage_badge_label(source_count, language_count, lang)
@@ -348,13 +413,13 @@ def _render_section(section: dict, lang: str, show_sources: bool) -> str:
     sources_html = ""
     if show_sources and section["newspapers"]:
         names = ", ".join(esc(NEWSPAPER_DISPLAY_NAMES.get(n, n)) for n in section["newspapers"])
-        sources_label = "מקורות" if lang == "he" else "Sources"
+        sources_label = {"he": "מקורות", "en": "Sources", "de": "Quellen"}[lang]
         sources_html = f'<p class="section-sources">{sources_label}: <b>{names}</b></p>'
 
     citations_html = _build_citations_html(section["citations"], lang, section_id)
 
-    share_label = "🔗 העתק קישור" if lang == "he" else "🔗 Copy link"
-    copied_label = "הועתק!" if lang == "he" else "Copied!"
+    share_label = {"he": "🔗 העתק קישור", "en": "🔗 Copy link", "de": "🔗 Link kopieren"}[lang]
+    copied_label = {"he": "הועתק!", "en": "Copied!", "de": "Kopiert!"}[lang]
     share_html = (
         f'<button class="share-link-btn" type="button" data-anchor="{anchor}" '
         f'data-copied-label="{esc(copied_label)}">{esc(share_label)}</button>'
@@ -390,7 +455,9 @@ def _build_category_nav_html(category_nav: list[tuple[str, int]], lang: str) -> 
         f'{esc(CATEGORY_LABELS.get(cat, CATEGORY_LABELS[FALLBACK_CATEGORY])[lang])}</a>'
         for cat, section_id in category_nav
     )
-    toggle_all_label = "הרחב הכל / כווץ הכל" if lang == "he" else "Expand all / Collapse all"
+    toggle_all_label = {
+        "he": "הרחב הכל / כווץ הכל", "en": "Expand all / Collapse all", "de": "Alle aufklappen / einklappen",
+    }[lang]
     return f"""
   <nav class="category-nav">
     <div class="category-nav-links">{links}</div>
@@ -408,10 +475,16 @@ def build_report_html(
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
 
-    date_str = format_date_he(report_date) if is_he else format_date_en(report_date)
-    page_title = f"דוח יומי - {date_str}" if is_he else f"Daily Geopolitics Report - {date_str}"
-    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
-    sources_label = "עיתונים שנסקרו היום:" if is_he else "Sources covering today:"
+    date_str = FORMAT_DATE[lang](report_date)
+    page_title = {
+        "he": f"דוח יומי - {date_str}",
+        "en": f"Daily Geopolitics Report - {date_str}",
+        "de": f"Tagesbericht - {date_str}",
+    }[lang]
+    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    sources_label = {
+        "he": "עיתונים שנסקרו היום:", "en": "Sources covering today:", "de": "Heutige Quellen:",
+    }[lang]
 
     source_pills = "".join(f"<li>{esc(NEWSPAPER_DISPLAY_NAMES.get(s, s))}</li>" for s in sources)
 
@@ -761,7 +834,7 @@ def build_report_html(
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", f"../{OTHER_LANG[lang]}/report_{report_date}_{OTHER_LANG[lang]}.html", lang, f"report_{report_date}_{lang}.pdf")}
+{build_nav_html("archive.html", {other: f"../{other}/report_{report_date}_{other}.html" for other in other_langs(lang)}, lang, f"report_{report_date}_{lang}.pdf")}
 {_build_category_nav_html(category_nav, lang)}
   <header class="masthead">
     <div class="masthead-inner">
@@ -776,7 +849,7 @@ def build_report_html(
   <main class="report-body">
 {sections_html}
   </main>
-{build_footer_html(lang)}
+{build_footer_html(lang, *footer_hrefs_for(lang))}
   <script>
     function toggleSection(header) {{
       var body = document.getElementById(header.getAttribute('aria-controls'));
@@ -883,13 +956,27 @@ def render_report(conn, report_date: str) -> None:
                 "id": s["id"],
                 "topic_label_he": s["topic_label_he"],
                 "topic_label_en": s["topic_label_en"],
+                "topic_label_de": s["topic_label_de"],
                 "comparison_text_he": s["comparison_text_he"],
                 "comparison_text_en": s["comparison_text_en"],
+                "comparison_text_de": s["comparison_text_de"],
                 "category": s["category"],
                 "newspapers": newspapers,
                 "citations": citations,
             }
         )
+
+    # German is only rendered once every section of this report has been backfilled/
+    # generated in German - a report synthesized before the 2026-09-22 trilingual
+    # change (and not yet covered by scripts/backfill_german_translation.py) has
+    # topic_label_de/comparison_text_de = NULL, and this is the one place that
+    # matters: writing "None" into the page would be worse than just not writing a
+    # German file yet. he/en are unaffected either way.
+    render_langs = ["he", "en"]
+    if all(s["topic_label_de"] and s["comparison_text_de"] for s in sections):
+        render_langs.append("de")
+    else:
+        print(f"  note: German content missing for some section(s) of {report_date} - skipping the German render.")
 
     _ensure_font_asset()
 
@@ -916,7 +1003,7 @@ def render_report(conn, report_date: str) -> None:
         (cat, first_id_for_category[cat]) for cat in CATEGORY_LABELS if cat in first_id_for_category
     ]
 
-    for lang in ("he", "en"):
+    for lang in render_langs:
         html_str = build_report_html(report_date, sources, sections, lang, category_nav)
 
         out_dir = REPORTS_DIR / lang

@@ -81,6 +81,14 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "topic_label_en": "TEXT NOT NULL",
         "comparison_text_he": "TEXT NOT NULL",
         "comparison_text_en": "TEXT NOT NULL",
+        # German, added 2026-09-22 for the trilingual expansion. Nullable: existing rows are
+        # backfilled by scripts/backfill_german_translation.py, not by this migration - a report
+        # with NULL here simply predates the backfill, not a data error (same convention as
+        # downloaded_files.report_date, see CLAUDE.md). Going forward Synthesize's Stage 2 writes
+        # this directly (native generation from the source articles, same call as he/en) - see
+        # CLAUDE.md "השלב הבא: תלת-לשוניות" for why German was added to Stage 2 only, not Stage 1.
+        "topic_label_de": "TEXT",
+        "comparison_text_de": "TEXT",
         "category": "TEXT NOT NULL DEFAULT 'other'",
         "created_at": "TEXT NOT NULL",
     },
@@ -383,14 +391,18 @@ def insert_report_section(
     comparison_text_en: str,
     category: str,
     created_at: str,
+    topic_label_de: str,
+    comparison_text_de: str,
 ) -> int:
     cursor = conn.execute(
         """
         INSERT INTO report_sections
-            (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+            (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category,
+             created_at, topic_label_de, comparison_text_de)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category, created_at),
+        (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category, created_at,
+         topic_label_de, comparison_text_de),
     )
     conn.commit()
     return cursor.lastrowid
@@ -420,7 +432,8 @@ def get_all_reports(conn: sqlite3.Connection):
 def get_report_sections_for_date(conn: sqlite3.Connection, report_date: str):
     return conn.execute(
         """
-        SELECT id, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category
+        SELECT id, topic_label_he, topic_label_en, topic_label_de,
+               comparison_text_he, comparison_text_en, comparison_text_de, category
         FROM report_sections
         WHERE report_date = ?
         ORDER BY id

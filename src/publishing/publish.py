@@ -29,10 +29,12 @@ from src.common.db import (
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION, REGION_LABELS
 from src.reporting.render import (
+    ALL_LANGS,
     CATEGORY_LABELS,
     FAVICON_FILENAMES,
     FONT_FAMILY,
     FONT_FILENAME,
+    FORMAT_DATE,
     LANG_LABEL,
     LOGO_LINK_LABEL,
     NEWSPAPER_DISPLAY_NAMES,
@@ -43,8 +45,8 @@ from src.reporting.render import (
     esc,
     favicon_links_html,
     font_face_css,
-    format_date_en,
-    format_date_he,
+    footer_hrefs_for,
+    other_langs,
     section_coverage,
     shared_chrome_css,
 )
@@ -62,7 +64,7 @@ def build_index_html(
     entries: list[tuple[str, list[str]]],
     lang: str,
     report_link_prefix: str,
-    other_lang_href: str,
+    lang_hrefs: dict[str, str],
     font_relative_path: str,
     asset_prefix: str,
     accessibility_href: str = "accessibility.html",
@@ -70,13 +72,16 @@ def build_index_html(
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
-    page_title = "כל הדוחות - גאופוליטיקה יומי" if is_he else "All Reports - Daily Geopolitics"
-    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
-    heading = "כל הדוחות" if is_he else "All Reports"
+    page_title = {
+        "he": "כל הדוחות - גאופוליטיקה יומי", "en": "All Reports - Daily Geopolitics",
+        "de": "Alle Berichte - Tägliche Geopolitik",
+    }[lang]
+    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    heading = {"he": "כל הדוחות", "en": "All Reports", "de": "Alle Berichte"}[lang]
 
     cards = []
     for report_date, sources in entries:
-        formatted = format_date_he(report_date) if is_he else format_date_en(report_date)
+        formatted = FORMAT_DATE[lang](report_date)
         href = f"{report_link_prefix}report_{report_date}_{lang}.html"
         sources_str = ", ".join(esc(NEWSPAPER_DISPLAY_NAMES.get(s, s)) for s in sources)
         cards.append(f"""
@@ -204,7 +209,7 @@ def build_index_html(
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(other_lang_href)}">{esc(LANG_LABEL[OTHER_LANG[lang]])}</a>
+      {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
     </div>
   </nav>
   <header class="masthead">
@@ -225,12 +230,14 @@ def build_index_html(
 def build_about_html(lang: str) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
-    other = OTHER_LANG[lang]
     content = CONTENT[lang]
 
-    page_title = "אודות הפרויקט - גאופוליטיקה יומי" if is_he else "About the Project - Daily Geopolitics"
-    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
-    heading = "אודות הפרויקט" if is_he else "About the Project"
+    page_title = {
+        "he": "אודות הפרויקט - גאופוליטיקה יומי", "en": "About the Project - Daily Geopolitics",
+        "de": "Über das Projekt - Tägliche Geopolitik",
+    }[lang]
+    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    heading = {"he": "אודות הפרויקט", "en": "About the Project", "de": "Über das Projekt"}[lang]
 
     sections_html = render_sections_html(content["sections"])
 
@@ -364,7 +371,7 @@ def build_about_html(lang: str) -> str:
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", f"../{other}/about.html", lang)}
+{build_nav_html("archive.html", {o: f"../{o}/about.html" for o in other_langs(lang)}, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
@@ -385,7 +392,7 @@ def build_about_html(lang: str) -> str:
       </div>
     </div>
   </main>
-{build_footer_html(lang)}
+{build_footer_html(lang, *footer_hrefs_for(lang))}
 </body>
 </html>
 """
@@ -394,14 +401,14 @@ def build_about_html(lang: str) -> str:
 # Shared by build_accessibility_html and build_terms_html - both are simple,
 # static, single-column prose pages using the same masthead/body/footer shell
 # as about.html, just without about.html's heading-per-section DSL (a single
-# flat set of <h2>/<p> blocks doesn't need that machinery).
+# flat set of <h2>/<p> blocks doesn't need that machinery). Trilingual as of
+# 2026-09-22 (de/accessibility.html and de/terms.html now exist for real).
 def _build_static_page_html(
     lang: str, page_title: str, heading: str, body_html: str, other_lang_filename: str
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
-    other = OTHER_LANG[lang]
-    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
+    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
 
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
@@ -493,7 +500,7 @@ def _build_static_page_html(
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", f"../{other}/{other_lang_filename}", lang)}
+{build_nav_html("archive.html", {o: f"../{o}/{other_lang_filename}" for o in other_langs(lang)}, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
@@ -534,6 +541,29 @@ def build_accessibility_html(lang: str) -> str:
     <p>נתקלתם בבעיית נגישות באתר? אנא כתבו אלינו:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
     <p>עודכן לאחרונה: ספטמבר 2026.</p>"""
+    elif lang == "de":
+        page_title = "Barrierefreiheitserklärung - Tägliche Geopolitik"
+        heading = "Barrierefreiheitserklärung"
+        body_html = f"""
+    <p>Diese Website strebt an, den israelischen Standard (IS) 5568 Teil 1 zu
+    erfüllen, der auf den WCAG-2.0-Richtlinien der Stufe AA basiert.</p>
+    <h2>Umgesetzte Maßnahmen</h2>
+    <p>Alternativtext für bedeutungstragende Bilder und Symbole; Farbkontraste
+    wurden geprüft und gegen die Anforderung von 4,5:1 für normalen Text
+    korrigiert; vollständige Tastaturnavigation für die meisten interaktiven
+    Elemente der Website (Ein-/Ausklappen von Themen, Teilen-Schaltfläche,
+    fixierte Kategorienavigation); durchgehend korrekte, hierarchische
+    Überschriftenstruktur auf jeder Seite; SVG-Auszeichnung der interaktiven
+    Weltkarte (Name und Berichterstattungsstatus für jedes Land).</p>
+    <h2>Bekannte Einschränkung</h2>
+    <p>Die Tastaturnavigation für die interaktive Weltkarte (Länderauswahl per
+    Klick) ist noch nicht vollständig umgesetzt - das ist eine geplante
+    künftige Verbesserung.</p>
+    <h2>Kontakt</h2>
+    <p>Ein Barrierefreiheitsproblem auf dieser Website festgestellt? Bitte
+    schreiben Sie uns:
+    <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
+    <p>Zuletzt aktualisiert: September 2026.</p>"""
     else:
         page_title = "Accessibility Statement - Daily Geopolitics"
         heading = "Accessibility Statement"
@@ -576,6 +606,30 @@ def build_terms_html(lang: str) -> str:
     בו, הוא באחריותו הבלעדית של המשתמש.</p>
     <h2>4. שינויים</h2>
     <p>בעל האתר רשאי לעדכן תנאים אלה מעת לעת ללא הודעה מוקדמת.</p>"""
+    elif lang == "de":
+        page_title = "Nutzungsbedingungen - Tägliche Geopolitik"
+        heading = "Nutzungsbedingungen"
+        body_html = """
+    <h2>1. Art des Inhalts</h2>
+    <p>Die auf dieser Website dargestellten Inhalte, einschließlich Analysen,
+    quellenübergreifender Vergleiche und Zusammenfassungen, werden mittels
+    eines Sprachmodells der künstlichen Intelligenz erzeugt und durchlaufen
+    keine unabhängige Faktenprüfung. Sie sollten nicht als alleinige Quelle
+    für genaue, vollständige oder aktuelle Informationen herangezogen
+    werden.</p>
+    <h2>2. Gewährleistungsausschluss</h2>
+    <p>Die Website und ihre Inhalte werden „wie besehen" bereitgestellt, ohne
+    jegliche ausdrückliche oder stillschweigende Gewährleistung hinsichtlich
+    Genauigkeit, Vollständigkeit, Aktualität oder Eignung für einen
+    bestimmten Zweck.</p>
+    <h2>3. Verantwortung der Nutzerin bzw. des Nutzers</h2>
+    <p>Jede Nutzung der Inhalte dieser Website, einschließlich des
+    Vertrauens auf eine darin enthaltene Schlussfolgerung, ein Zitat oder
+    eine Zahlenangabe, erfolgt in alleiniger Verantwortung der Nutzerin
+    bzw. des Nutzers.</p>
+    <h2>4. Änderungen</h2>
+    <p>Der Betreiber der Website kann diese Bedingungen von Zeit zu Zeit
+    ohne vorherige Ankündigung aktualisieren.</p>"""
     else:
         page_title = "Terms of Use - Daily Geopolitics"
         heading = "Terms of Use"
@@ -611,11 +665,13 @@ def build_topic_html(lang: str) -> str:
     """
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
-    other = OTHER_LANG[lang]
 
-    page_title = "תוצאות לפי סינון - גאופוליטיקה יומי" if is_he else "Filtered Results - Daily Geopolitics"
-    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
-    loading_label = "טוען…" if is_he else "Loading…"
+    page_title = {
+        "he": "תוצאות לפי סינון - גאופוליטיקה יומי", "en": "Filtered Results - Daily Geopolitics",
+        "de": "Gefilterte Ergebnisse - Tägliche Geopolitik",
+    }[lang]
+    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    loading_label = {"he": "טוען…", "en": "Loading…", "de": "Wird geladen…"}[lang]
 
     js_code = _TOPIC_JS_TEMPLATE.replace("__LANG__", lang)
 
@@ -744,7 +800,7 @@ def build_topic_html(lang: str) -> str:
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", f"../{other}/topic.html", lang)}
+{build_nav_html("archive.html", {o: f"../{o}/topic.html" for o in other_langs(lang)}, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
@@ -752,7 +808,7 @@ def build_topic_html(lang: str) -> str:
     </div>
   </header>
   <main class="topic-body" id="topic-results"></main>
-{build_footer_html(lang)}
+{build_footer_html(lang, *footer_hrefs_for(lang))}
   <script>{js_code}</script>
 </body>
 </html>
@@ -767,14 +823,18 @@ _TOPIC_JS_TEMPLATE = """
   var PREFIX = "../";
 
   // topic.html only ever lives at docs/{lang}/topic.html (no root copy), so
-  // the language-switch link built by build_nav_html always points at a
-  // bare "../{other}/topic.html" - append the current query string here so
+  // each language-switch link built by build_nav_html (one per other
+  // language - two now, trilingual) always points at a bare
+  // "../{other}/topic.html" - append the current query string to each one so
   // an active filter survives switching language, since query params are
-  // only known at runtime, not at build time.
+  // only known at runtime, not at build time. build_nav_html marks these
+  // specifically with .top-nav-lang-link, so this doesn't have to assume a
+  // fixed count/position among .top-nav-link (which also includes the
+  // "back to archive" link).
   if (window.location.search) {
-    var navLinks = document.querySelectorAll(".top-nav-link");
-    var langLink = navLinks[navLinks.length - 1];
-    if (langLink) langLink.href = langLink.getAttribute("href") + window.location.search;
+    document.querySelectorAll(".top-nav-lang-link").forEach(function (link) {
+      link.href = link.getAttribute("href") + window.location.search;
+    });
   }
 
   var params = new URLSearchParams(window.location.search);
@@ -824,22 +884,27 @@ _TOPIC_JS_TEMPLATE = """
     return ids;
   }
 
+  var LABEL_KEY = { he: "name_he", en: "name_en", de: "name_de" }[LANG] || "name_en";
+  var TOPIC_KEY = { he: "topic_he", en: "topic_en", de: "topic_de" }[LANG] || "topic_en";
+  var HREF_KEY = { he: "href_he", en: "href_en", de: "href_de" }[LANG] || "href_en";
+
   function hrefFor(section) {
-    var raw = LANG === "he" ? section.href_he : section.href_en;
-    return PREFIX + raw;
+    return PREFIX + section[HREF_KEY];
   }
 
   function topicFor(section) {
-    return LANG === "he" ? section.topic_he : section.topic_en;
+    return section[TOPIC_KEY];
   }
 
   var HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
   var EN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DE_MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 
   function formatLongDate(iso) {
     var parts = iso.split("-").map(Number);
     var day = parts[2], month = parts[1] - 1, year = parts[0];
     if (LANG === "he") return day + " ב" + HE_MONTHS[month] + " " + year;
+    if (LANG === "de") return day + ". " + DE_MONTHS[month] + " " + year;
     return EN_MONTHS[month] + " " + day + ", " + year;
   }
 
@@ -854,35 +919,35 @@ _TOPIC_JS_TEMPLATE = """
       var f = from.split("-").map(Number), t = to.split("-").map(Number);
       if (f[0] === t[0] && f[1] === t[1]) {
         if (LANG === "he") return f[2] + "-" + t[2] + " ב" + HE_MONTHS[f[1] - 1] + " " + f[0];
+        if (LANG === "de") return f[2] + ".-" + t[2] + ". " + DE_MONTHS[f[1] - 1] + " " + f[0];
         return EN_MONTHS[f[1] - 1] + " " + f[2] + "-" + t[2] + ", " + f[0];
       }
       return formatLongDate(from) + " – " + formatLongDate(to);
     }
-    if (from) return (LANG === "he" ? "מ-" : "From ") + formatLongDate(from);
-    return (LANG === "he" ? "עד " : "Until ") + formatLongDate(to);
+    if (from) return (LANG === "he" ? "מ-" : LANG === "de" ? "Ab " : "From ") + formatLongDate(from);
+    return (LANG === "he" ? "עד " : LANG === "de" ? "Bis " : "Until ") + formatLongDate(to);
   }
 
   function renderTitle(manifest, f) {
     var parts = [];
     if (f.category && manifest.categories[f.category]) {
-      var c = manifest.categories[f.category];
-      parts.push(LANG === "he" ? c.name_he : c.name_en);
+      parts.push(manifest.categories[f.category][LABEL_KEY]);
     }
     if (f.region && manifest.regions[f.region]) {
-      var r = manifest.regions[f.region];
-      parts.push(LANG === "he" ? r.name_he : r.name_en);
+      parts.push(manifest.regions[f.region][LABEL_KEY]);
     }
     if (f.conflict && manifest.conflict_zones[f.conflict]) {
-      var cz = manifest.conflict_zones[f.conflict];
-      parts.push(LANG === "he" ? cz.name_he : cz.name_en);
+      parts.push(manifest.conflict_zones[f.conflict][LABEL_KEY]);
     }
     var rangeLabel = formatRange(f.from, f.to);
     if (rangeLabel) parts.push(rangeLabel);
 
-    var title = parts.length ? parts.join(" · ") : (LANG === "he" ? "כל התוצאות" : "All Results");
+    var allResultsLabel = LANG === "he" ? "כל התוצאות" : LANG === "de" ? "Alle Ergebnisse" : "All Results";
+    var title = parts.length ? parts.join(" · ") : allResultsLabel;
     var titleEl = document.getElementById("topic-title");
     if (titleEl) titleEl.textContent = title;
-    document.title = title + (LANG === "he" ? " - גאופוליטיקה יומי" : " - Daily Geopolitics");
+    var suffix = LANG === "he" ? " - גאופוליטיקה יומי" : LANG === "de" ? " - Tägliche Geopolitik" : " - Daily Geopolitics";
+    document.title = title + suffix;
   }
 
   function renderResults(manifest, ids) {
@@ -892,7 +957,9 @@ _TOPIC_JS_TEMPLATE = """
     if (!ids.length) {
       var empty = document.createElement("p");
       empty.className = "topic-empty";
-      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון." : "No results match this filter.";
+      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
+        : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
+        : "No results match this filter.";
       container.appendChild(empty);
       return;
     }
@@ -915,7 +982,7 @@ _TOPIC_JS_TEMPLATE = """
       var label = document.createElement("span");
       label.className = "category-label";
       var catInfo = manifest.categories[section.category];
-      label.textContent = catInfo ? (LANG === "he" ? catInfo.name_he : catInfo.name_en) : section.category;
+      label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
 
       var dateBadge = document.createElement("span");
       dateBadge.className = "topic-result-date";
@@ -968,13 +1035,16 @@ _HOMEPAGE_JS_TEMPLATE = """
     }
   }
 
+  var LABEL_KEY = { he: "name_he", en: "name_en", de: "name_de" }[LANG] || "name_en";
+  var TOPIC_KEY = { he: "topic_he", en: "topic_en", de: "topic_de" }[LANG] || "topic_en";
+  var HREF_KEY = { he: "href_he", en: "href_en", de: "href_de" }[LANG] || "href_en";
+
   function hrefFor(section) {
-    var raw = LANG === "he" ? section.href_he : section.href_en;
-    return PREFIX + raw;
+    return PREFIX + section[HREF_KEY];
   }
 
   function topicFor(section) {
-    return LANG === "he" ? section.topic_he : section.topic_en;
+    return section[TOPIC_KEY];
   }
 
   function renderMap(manifest) {
@@ -989,7 +1059,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       el.classList.add("has-coverage");
       var titleEl = el.querySelector("title");
       if (titleEl) {
-        titleEl.textContent = LANG === "he" ? country.name_he : country.name_en;
+        titleEl.textContent = country[LABEL_KEY];
       }
       el.addEventListener("click", function () {
         selectCountry(manifest, code);
@@ -1046,7 +1116,7 @@ _HOMEPAGE_JS_TEMPLATE = """
 
     var cta = document.createElement("p");
     cta.className = "latest-card-cta";
-    cta.textContent = LANG === "he" ? "לדוח המלא ←" : "Full report →";
+    cta.textContent = LANG === "he" ? "לדוח המלא ←" : LANG === "de" ? "Zum vollständigen Bericht →" : "Full report →";
 
     link.appendChild(numberEl);
     link.appendChild(previewEl);
@@ -1063,7 +1133,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       chip.type = "button";
       chip.className = "region-chip";
       chip.dataset.region = key;
-      chip.textContent = LANG === "he" ? region.name_he : region.name_en;
+      chip.textContent = region[LABEL_KEY];
       chip.addEventListener("click", function () {
         selectRegion(manifest, key);
       });
@@ -1080,7 +1150,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       chip.type = "button";
       chip.className = "region-chip";
       chip.dataset.conflict = key;
-      chip.textContent = LANG === "he" ? zone.name_he : zone.name_en;
+      chip.textContent = zone[LABEL_KEY];
       chip.addEventListener("click", function () {
         window.location.href = TOPIC_PREFIX + "topic.html?conflict=" + encodeURIComponent(key);
       });
@@ -1093,7 +1163,7 @@ _HOMEPAGE_JS_TEMPLATE = """
     var el = document.getElementById(code.toLowerCase());
     if (el) el.classList.add("is-selected");
     var country = manifest.countries[code];
-    var name = LANG === "he" ? country.name_he : country.name_en;
+    var name = country[LABEL_KEY];
     renderResults(manifest, country.section_ids, name);
   }
 
@@ -1117,7 +1187,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       var el = document.getElementById(code.toLowerCase());
       if (el) el.classList.add("is-selected");
     });
-    var name = LANG === "he" ? region.name_he : region.name_en;
+    var name = region[LABEL_KEY];
     var fullReportHref = TOPIC_PREFIX + "topic.html?region=" + encodeURIComponent(regionKey);
     renderResults(manifest, region.section_ids, name, fullReportHref);
   }
@@ -1135,14 +1205,15 @@ _HOMEPAGE_JS_TEMPLATE = """
 
     var heading = document.createElement("p");
     heading.className = "results-heading";
-    heading.textContent = (LANG === "he" ? "תוצאות: " : "Results: ") + headingLabel;
+    var resultsPrefix = LANG === "he" ? "תוצאות: " : LANG === "de" ? "Ergebnisse: " : "Results: ";
+    heading.textContent = resultsPrefix + headingLabel;
     panel.appendChild(heading);
 
     if (fullReportHref) {
       var fullLink = document.createElement("a");
       fullLink.className = "results-full-link";
       fullLink.href = fullReportHref;
-      fullLink.textContent = LANG === "he" ? "פתח כדוח מלא ←" : "View as full report →";
+      fullLink.textContent = LANG === "he" ? "פתח כדוח מלא ←" : LANG === "de" ? "Als vollständigen Bericht öffnen →" : "View as full report →";
       panel.appendChild(fullLink);
     }
 
@@ -1161,7 +1232,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       var label = document.createElement("span");
       label.className = "category-label";
       var catInfo = manifest.categories[section.category];
-      label.textContent = catInfo ? (LANG === "he" ? catInfo.name_he : catInfo.name_en) : section.category;
+      label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
 
       var topic = document.createElement("span");
       topic.className = "result-topic";
@@ -1181,6 +1252,7 @@ _HOMEPAGE_JS_TEMPLATE = """
 
   var HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
   var EN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DE_MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 
   function formatLongDate(iso) {
     var parts = iso.split("-").map(Number);
@@ -1189,6 +1261,9 @@ _HOMEPAGE_JS_TEMPLATE = """
     var year = parts[0];
     if (LANG === "he") {
       return day + " ב" + HE_MONTHS[month] + " " + year;
+    }
+    if (LANG === "de") {
+      return day + ". " + DE_MONTHS[month] + " " + year;
     }
     return EN_MONTHS[month] + " " + day + ", " + year;
   }
@@ -1199,11 +1274,16 @@ _HOMEPAGE_JS_TEMPLATE = """
 def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
-    other = OTHER_LANG[lang]
     content = CONTENT[lang]
 
     asset_prefix = "" if is_root else "../"
-    other_lang_href = "en/index.html" if is_root else f"../{other}/index.html"
+    # Only "he" ever has is_root=True (the root copy stays Hebrew-default, unchanged
+    # convention) - so the other-language hrefs from a root page are root-relative
+    # ("en/index.html"), while every non-root copy points "up and over" ("../en/index.html").
+    lang_hrefs = (
+        {o: f"{o}/index.html" for o in other_langs(lang)} if is_root
+        else {o: f"../{o}/index.html" for o in other_langs(lang)}
+    )
     about_href = "he/about.html" if is_root else "about.html"
     # topic.html has the same root-copy quirk as about.html (lives only under
     # docs/{lang}/, never at the site root) - same fix as about_href above.
@@ -1212,40 +1292,57 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     accessibility_href = "he/accessibility.html" if is_root else "accessibility.html"
     terms_href = "he/terms.html" if is_root else "terms.html"
 
-    page_title = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
-    eyebrow = "גאופוליטיקה יומי" if is_he else "Daily Geopolitics"
+    page_title = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = page_title
 
-    if is_he:
-        story_text = (
+    story_text = {
+        "he": (
             "בכל יום, עשרות עיתונים מספרים סיפור שונה על אותו עולם. רובנו קוראים זווית "
             "אחת - זו שכבר מוכרת לנו - ומחמיצים את השיחה השלמה שמתקיימת, במקביל, בין "
             "מבטים שונים על אותו אירוע. כאן אנו עוקבים אחרי כמה מהעיתונים המובילים "
             "בעולם, וממזגים אותם לתמונה אחת: לא כדי להכריע מי צודק, אלא כדי להאיר את "
             "זוויות המבט השונות."
-        )
-        story_link_label = "עוד על הפרויקט ←"
-        archive_link_label = "לארכיון המלא ←"
-    else:
-        story_text = (
+        ),
+        "en": (
             "Every day, dozens of newspapers tell a different story about the same "
             "world. Most of us read one angle - the one we already know - and miss "
             "the fuller conversation unfolding, at the same time, between different "
             "viewpoints on the same event. Here, we follow some of the world's "
             "leading newspapers and merge them into a single picture: not to decide "
             "who's right, but to illuminate the different points of view."
-        )
-        story_link_label = "More about the project →"
-        archive_link_label = "Full archive →"
+        ),
+        "de": (
+            "Jeden Tag erzählen Dutzende Zeitungen eine andere Geschichte über "
+            "dieselbe Welt. Die meisten von uns lesen nur eine Perspektive - die "
+            "bereits vertraute - und verpassen dabei das vollständige Gespräch, das "
+            "zur gleichen Zeit zwischen verschiedenen Sichtweisen auf dasselbe "
+            "Ereignis stattfindet. Hier verfolgen wir einige der weltweit führenden "
+            "Zeitungen und fügen sie zu einem einzigen Bild zusammen: nicht um zu "
+            "entscheiden, wer recht hat, sondern um die unterschiedlichen "
+            "Blickwinkel sichtbar zu machen."
+        ),
+    }[lang]
+    story_link_label = {"he": "עוד על הפרויקט ←", "en": "More about the project →", "de": "Mehr über das Projekt →"}[lang]
+    archive_link_label = {"he": "לארכיון המלא ←", "en": "Full archive →", "de": "Zum vollständigen Archiv →"}[lang]
 
     map_svg = _load_map_svg_inline(lang, countries)
-    map_description = (
-        "מפת עולם אינטראקטיבית. מדינות עם כיסוי חדשותי מודגשות בצבע; לחיצה על מדינה "
-        "מסננת את פאנל התוצאות למטה. רשימת המדינות המכוסות מפורטת בהמשך העמוד."
-        if is_he else
-        "Interactive world map. Countries with news coverage are highlighted in "
-        "color; clicking a country filters the results panel below. The list of "
-        "covered countries is detailed further down the page."
-    )
+    map_description = {
+        "he": (
+            "מפת עולם אינטראקטיבית. מדינות עם כיסוי חדשותי מודגשות בצבע; לחיצה על מדינה "
+            "מסננת את פאנל התוצאות למטה. רשימת המדינות המכוסות מפורטת בהמשך העמוד."
+        ),
+        "en": (
+            "Interactive world map. Countries with news coverage are highlighted in "
+            "color; clicking a country filters the results panel below. The list of "
+            "covered countries is detailed further down the page."
+        ),
+        "de": (
+            "Interaktive Weltkarte. Länder mit Nachrichtenberichterstattung sind "
+            "farblich hervorgehoben; ein Klick auf ein Land filtert das "
+            "Ergebnisfeld weiter unten. Die Liste der abgedeckten Länder ist "
+            "weiter unten auf der Seite aufgeführt."
+        ),
+    }[lang]
     js_code = (
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
@@ -1327,6 +1424,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     font-size: .82rem;
   }}
   .home-top-bar a:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+  .home-top-bar-links {{ display: flex; align-items: center; gap: 1.1rem; }}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -1491,7 +1589,9 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 <body>
   <div class="home-top-bar">
     <img class="home-logo" src="{asset_prefix}assets/images/MS_Logo.png" alt="">
-    <a href="{esc(other_lang_href)}">{esc(LANG_LABEL[other])}</a>
+    <div class="home-top-bar-links">
+      {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
+    </div>
   </div>
   <header class="masthead">
     <div class="masthead-inner">
@@ -1528,7 +1628,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 
 
 def _copy_reports_to_docs() -> None:
-    for lang in ("he", "en"):
+    for lang in ("he", "en", "de"):
         src_dir = REPORTS_DIR / lang
         dst_dir = DOCS_DIR / lang
         dst_dir.mkdir(parents=True, exist_ok=True)
@@ -1614,11 +1714,12 @@ def _load_map_svg_inline(lang: str, countries: dict) -> str:
             country = countries.get(code.upper())
             if country is None:
                 return f'<{tag} id="{code}" aria-hidden="true"'
-            name = country["name_he"] if lang == "he" else country["name_en"]
-            label = (
-                f"{name} - יש כיסוי חדשותי, לחץ לסינון" if lang == "he"
-                else f"{name} - has news coverage, click to filter"
-            )
+            name = country[{"he": "name_he", "en": "name_en", "de": "name_de"}[lang]]
+            label = {
+                "he": f"{name} - יש כיסוי חדשותי, לחץ לסינון",
+                "en": f"{name} - has news coverage, click to filter",
+                "de": f"{name} - hat Nachrichtenberichterstattung, zum Filtern klicken",
+            }[lang]
             # role="img" - not "button" - because aria-label is only reliably
             # exposed on an element that has *some* valid role (axe flags
             # aria-label on a bare path/g with none), and these aren't
@@ -1669,11 +1770,13 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
                 "category": s["category"],
                 "topic_he": s["topic_label_he"],
                 "topic_en": s["topic_label_en"],
+                "topic_de": s["topic_label_de"],
                 "sources": newspapers,
                 "countries": geo["countries"],
                 "conflict_zones": geo["conflict_zones"],
                 "href_he": f"he/report_{report_date}_he.html#section-{section_id}",
                 "href_en": f"en/report_{report_date}_en.html#section-{section_id}",
+                "href_de": f"de/report_{report_date}_de.html#section-{section_id}",
             }
 
             for code in geo["countries"]:
@@ -1693,6 +1796,7 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
         code: {
             "name_he": COUNTRY_LIST[code]["name_he"],
             "name_en": COUNTRY_LIST[code]["name_en"],
+            "name_de": COUNTRY_LIST[code]["name_de"],
             "region": COUNTRY_TO_REGION[code],
             "section_ids": ids,
         }
@@ -1702,13 +1806,15 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
         zone: {
             "name_he": CONFLICT_ZONE_LABELS[zone]["name_he"],
             "name_en": CONFLICT_ZONE_LABELS[zone]["name_en"],
+            "name_de": CONFLICT_ZONE_LABELS[zone]["name_de"],
             "section_ids": ids,
         }
         for zone, ids in conflict_zones_index.items()
     }
 
     categories_out = {
-        code: {"name_he": labels["he"], "name_en": labels["en"]} for code, labels in CATEGORY_LABELS.items()
+        code: {"name_he": labels["he"], "name_en": labels["en"], "name_de": labels["de"]}
+        for code, labels in CATEGORY_LABELS.items()
     }
 
     region_country_codes: dict[str, list[str]] = {}
@@ -1724,6 +1830,7 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
             regions_out[region_key] = {
                 "name_he": REGION_LABELS[region_key]["name_he"],
                 "name_en": REGION_LABELS[region_key]["name_en"],
+                "name_de": REGION_LABELS[region_key]["name_de"],
                 "country_codes": sorted(codes),
                 "section_ids": sorted(ids),
             }
@@ -1771,12 +1878,16 @@ def run() -> None:
     manifest = build_manifest(conn, entries)
     conn.close()
 
-    for lang in ("he", "en"):
+    # German (added 2026-09-22) covers archive/about/topic - the pages explicitly in
+    # scope for the trilingual expansion (see CLAUDE.md) - but not accessibility.html/
+    # terms.html or the homepage, which stay bilingual for now; those two blocks below
+    # are guarded accordingly rather than looping ALL_LANGS unconditionally.
+    for lang in ALL_LANGS:
         archive_html = build_index_html(
             entries,
             lang,
             report_link_prefix="",
-            other_lang_href=f"../{OTHER_LANG[lang]}/archive.html",
+            lang_hrefs={o: f"../{o}/archive.html" for o in other_langs(lang)},
             font_relative_path=f"../assets/fonts/{FONT_FILENAME}",
             asset_prefix="../",
         )
@@ -1791,6 +1902,15 @@ def run() -> None:
             (out_dir / "about.html").write_text(about_html, encoding="utf-8")
         print(f"  wrote about.html for '{lang}'")
 
+        topic_html = build_topic_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "topic.html").write_text(topic_html, encoding="utf-8")
+        print(f"  wrote topic.html for '{lang}'")
+
+        # German joined the trilingual set on 2026-09-22 (previously accessibility.html/
+        # terms.html/the homepage stayed he/en-only) - all three now build for every
+        # language in ALL_LANGS, same as archive/about/topic above.
         accessibility_html = build_accessibility_html(lang)
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -1803,12 +1923,6 @@ def run() -> None:
             (out_dir / "terms.html").write_text(terms_html, encoding="utf-8")
         print(f"  wrote terms.html for '{lang}'")
 
-        topic_html = build_topic_html(lang)
-        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
-            out_dir.mkdir(parents=True, exist_ok=True)
-            (out_dir / "topic.html").write_text(topic_html, encoding="utf-8")
-        print(f"  wrote topic.html for '{lang}'")
-
         homepage_html = build_homepage_html(lang, is_root=False, countries=manifest["countries"])
         (DOCS_DIR / lang / "index.html").write_text(homepage_html, encoding="utf-8")
         print(f"  wrote index.html (homepage) for '{lang}'")
@@ -1817,7 +1931,7 @@ def run() -> None:
         entries,
         "he",
         report_link_prefix="he/",
-        other_lang_href="en/archive.html",
+        lang_hrefs={o: f"{o}/archive.html" for o in other_langs("he")},
         font_relative_path=f"assets/fonts/{FONT_FILENAME}",
         asset_prefix="",
         accessibility_href="he/accessibility.html",

@@ -223,7 +223,8 @@
     <a class="top-nav-logo-link" href="../index.html" aria-label="Daily Geopolitics - home"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← All reports</a>
-      <a class="top-nav-link" href="../he/topic.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../he/topic.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../de/topic.html">Deutsch</a>
     </div>
   </nav>
   <header class="masthead">
@@ -244,14 +245,18 @@
   var PREFIX = "../";
 
   // topic.html only ever lives at docs/{lang}/topic.html (no root copy), so
-  // the language-switch link built by build_nav_html always points at a
-  // bare "../{other}/topic.html" - append the current query string here so
+  // each language-switch link built by build_nav_html (one per other
+  // language - two now, trilingual) always points at a bare
+  // "../{other}/topic.html" - append the current query string to each one so
   // an active filter survives switching language, since query params are
-  // only known at runtime, not at build time.
+  // only known at runtime, not at build time. build_nav_html marks these
+  // specifically with .top-nav-lang-link, so this doesn't have to assume a
+  // fixed count/position among .top-nav-link (which also includes the
+  // "back to archive" link).
   if (window.location.search) {
-    var navLinks = document.querySelectorAll(".top-nav-link");
-    var langLink = navLinks[navLinks.length - 1];
-    if (langLink) langLink.href = langLink.getAttribute("href") + window.location.search;
+    document.querySelectorAll(".top-nav-lang-link").forEach(function (link) {
+      link.href = link.getAttribute("href") + window.location.search;
+    });
   }
 
   var params = new URLSearchParams(window.location.search);
@@ -301,22 +306,27 @@
     return ids;
   }
 
+  var LABEL_KEY = { he: "name_he", en: "name_en", de: "name_de" }[LANG] || "name_en";
+  var TOPIC_KEY = { he: "topic_he", en: "topic_en", de: "topic_de" }[LANG] || "topic_en";
+  var HREF_KEY = { he: "href_he", en: "href_en", de: "href_de" }[LANG] || "href_en";
+
   function hrefFor(section) {
-    var raw = LANG === "he" ? section.href_he : section.href_en;
-    return PREFIX + raw;
+    return PREFIX + section[HREF_KEY];
   }
 
   function topicFor(section) {
-    return LANG === "he" ? section.topic_he : section.topic_en;
+    return section[TOPIC_KEY];
   }
 
   var HE_MONTHS = ["ינואר","פברואר","מרץ","אפריל","מאי","יוני","יולי","אוגוסט","ספטמבר","אוקטובר","נובמבר","דצמבר"];
   var EN_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var DE_MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 
   function formatLongDate(iso) {
     var parts = iso.split("-").map(Number);
     var day = parts[2], month = parts[1] - 1, year = parts[0];
     if (LANG === "he") return day + " ב" + HE_MONTHS[month] + " " + year;
+    if (LANG === "de") return day + ". " + DE_MONTHS[month] + " " + year;
     return EN_MONTHS[month] + " " + day + ", " + year;
   }
 
@@ -331,35 +341,35 @@
       var f = from.split("-").map(Number), t = to.split("-").map(Number);
       if (f[0] === t[0] && f[1] === t[1]) {
         if (LANG === "he") return f[2] + "-" + t[2] + " ב" + HE_MONTHS[f[1] - 1] + " " + f[0];
+        if (LANG === "de") return f[2] + ".-" + t[2] + ". " + DE_MONTHS[f[1] - 1] + " " + f[0];
         return EN_MONTHS[f[1] - 1] + " " + f[2] + "-" + t[2] + ", " + f[0];
       }
       return formatLongDate(from) + " – " + formatLongDate(to);
     }
-    if (from) return (LANG === "he" ? "מ-" : "From ") + formatLongDate(from);
-    return (LANG === "he" ? "עד " : "Until ") + formatLongDate(to);
+    if (from) return (LANG === "he" ? "מ-" : LANG === "de" ? "Ab " : "From ") + formatLongDate(from);
+    return (LANG === "he" ? "עד " : LANG === "de" ? "Bis " : "Until ") + formatLongDate(to);
   }
 
   function renderTitle(manifest, f) {
     var parts = [];
     if (f.category && manifest.categories[f.category]) {
-      var c = manifest.categories[f.category];
-      parts.push(LANG === "he" ? c.name_he : c.name_en);
+      parts.push(manifest.categories[f.category][LABEL_KEY]);
     }
     if (f.region && manifest.regions[f.region]) {
-      var r = manifest.regions[f.region];
-      parts.push(LANG === "he" ? r.name_he : r.name_en);
+      parts.push(manifest.regions[f.region][LABEL_KEY]);
     }
     if (f.conflict && manifest.conflict_zones[f.conflict]) {
-      var cz = manifest.conflict_zones[f.conflict];
-      parts.push(LANG === "he" ? cz.name_he : cz.name_en);
+      parts.push(manifest.conflict_zones[f.conflict][LABEL_KEY]);
     }
     var rangeLabel = formatRange(f.from, f.to);
     if (rangeLabel) parts.push(rangeLabel);
 
-    var title = parts.length ? parts.join(" · ") : (LANG === "he" ? "כל התוצאות" : "All Results");
+    var allResultsLabel = LANG === "he" ? "כל התוצאות" : LANG === "de" ? "Alle Ergebnisse" : "All Results";
+    var title = parts.length ? parts.join(" · ") : allResultsLabel;
     var titleEl = document.getElementById("topic-title");
     if (titleEl) titleEl.textContent = title;
-    document.title = title + (LANG === "he" ? " - גאופוליטיקה יומי" : " - Daily Geopolitics");
+    var suffix = LANG === "he" ? " - גאופוליטיקה יומי" : LANG === "de" ? " - Tägliche Geopolitik" : " - Daily Geopolitics";
+    document.title = title + suffix;
   }
 
   function renderResults(manifest, ids) {
@@ -369,7 +379,9 @@
     if (!ids.length) {
       var empty = document.createElement("p");
       empty.className = "topic-empty";
-      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון." : "No results match this filter.";
+      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
+        : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
+        : "No results match this filter.";
       container.appendChild(empty);
       return;
     }
@@ -392,7 +404,7 @@
       var label = document.createElement("span");
       label.className = "category-label";
       var catInfo = manifest.categories[section.category];
-      label.textContent = catInfo ? (LANG === "he" ? catInfo.name_he : catInfo.name_en) : section.category;
+      label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
 
       var dateBadge = document.createElement("span");
       dateBadge.className = "topic-result-date";

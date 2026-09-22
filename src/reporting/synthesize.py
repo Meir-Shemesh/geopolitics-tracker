@@ -1,11 +1,18 @@
 """Reporting stage 1: synthesize cross-source topic sections for one report date.
 
-Two-stage architecture: a single grouping pass (Sonnet, compact article fields only)
-places every article into a real-world topic, then one comparison-writing call per
-topic (Sonnet, full article fields, run concurrently with prompt caching on the
-shared system prompt) writes the bilingual comparison. Replaces the original
-single-mega-call design, which became unstable at 9+ sources / 250+ articles - see
-PROJECT_LOG.md 4.23 for the failure history that motivated this.
+Two-stage architecture: a single grouping pass (Sonnet, compact article fields only,
+Hebrew/English topic labels only) places every article into a real-world topic, then
+one comparison-writing call per topic (Sonnet, full article fields, run concurrently
+with prompt caching on the shared system prompt) writes the trilingual comparison -
+Hebrew, English and German. Replaces the original single-mega-call design, which
+became unstable at 9+ sources / 250+ articles - see PROJECT_LOG.md 4.23 for the
+failure history that motivated this. German was added to Stage 2 only, generated
+natively from the source articles alongside Hebrew/English in the same call - not a
+translation pass, and Stage 1 (grouping) is untouched by the trilingual expansion,
+by design (see PROJECT_LOG.md 4.4x): Stage 1 already has a known, unexplained
+"mostly unassigned" failure mode, and this keeps German's addition from being able
+to make that worse. Stage 2 also invents topic_label_de itself (Stage 1's
+topic_label_he/en are given to it only as context, not translated).
 Results are stored in reports / report_sections / report_section_articles.
 Independent one-shot run - not a long-running daemon.
 """
@@ -19,6 +26,7 @@ from datetime import datetime, timezone
 import anthropic
 from dotenv import load_dotenv
 
+from src.common.about_content import CONTENT
 from src.common.db import (
     delete_report,
     get_articles_for_date,
@@ -40,6 +48,7 @@ MODEL = "claude-sonnet-5"
 
 FALLBACK_PREFIX_HE = "כיסוי נוסף (לא שובץ להשוואה בין מקורות): "
 FALLBACK_PREFIX_EN = "Additional coverage (not merged into a cross-source comparison): "
+FALLBACK_PREFIX_DE = "Zusätzliche Berichterstattung (nicht in einen quellenübergreifenden Vergleich einbezogen): "
 
 # Stage 1 (grouping) retry threshold - same value/spirit as the old single-call
 # fallback threshold, now scoped narrowly to "did stage 1 place every article,"
@@ -159,28 +168,39 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles) -> tuple[l
 
 # --- Stage 2: per-topic comparison (one call/topic, full fields, cached) ----
 
-STAGE2_SYSTEM_PROMPT = """You are a synthesis editor for a geopolitical news-monitoring report, writing the cross-source comparison for ONE already-identified topic (grouping already happened in an earlier pass). You will be given every article assigned to this topic - each with an id, source newspaper, headline, an original per-article topic tag, a stance summary, and a key excerpt.
+# A real excerpt of the project's established German house style (src/common/about_content.py),
+# given to the model as a concrete register/terminology anchor for comparison_text_de/topic_label_de
+# below - the same anchor scripts/backfill_german_translation.py uses for the archive, so newly
+# generated and backfilled German sections read consistently. Added 2026-09-22 for the trilingual
+# expansion - see CLAUDE.md "השלב הבא: תלת-לשוניות" for why this lives in Stage 2 only, not Stage 1.
+_GERMAN_STYLE_ANCHOR = CONTENT["de"]["sections"][0]["blocks"][0][1]
+
+STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor for a geopolitical news-monitoring report, writing the cross-source comparison for ONE already-identified topic (grouping already happened in an earlier pass). You will be given every article assigned to this topic - each with an id, source newspaper, headline, an original per-article topic tag, a stance summary, and a key excerpt - plus that topic's already-decided English and Hebrew labels, for reference only.
 
 Your task: write a comparative analysis (a few sentences to a short paragraph) of how the sources covering this topic frame it differently - their differing emphasis, stance, or angle - not a neutral summary of "what happened." If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), treat them as ONE voice for that newspaper in your narrative - do not present that newspaper's position on the same event twice, even though you were given both ids. If only one source covers the topic, describe that source's stance/angle on its own.
 
-Reference sources by name only - never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en, in either language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report..." - never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one into the other.
+Reference sources by name only - never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en/de, in any language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report..." - never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one into the other (and not a translation of comparison_text_he or comparison_text_en into German either - compose comparison_text_de independently, from the same source articles).
 
-Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in either language: "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt", "The New York Times International", "The Wall Street Journal", "Los Angeles Times", "USA Today", "The Washington Post", "The Economist", "Der Spiegel". This applies identically inside Hebrew text - a Latin-script proper name is never rendered in Hebrew letters. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name.
+Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt", "The New York Times International", "The Wall Street Journal", "Los Angeles Times", "USA Today", "The Washington Post", "The Economist", "Der Spiegel". This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name.
 
 Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify - for example "שתי זוויות" not "שני זוויות" (זווית is feminine), "שלוש כתבות" not "שלושה כתבות" (כתבה is feminine). Reread each Hebrew sentence you write for this kind of agreement error before finalizing it.
 
-Call record_topic_comparison exactly once with comparison_text_he and comparison_text_en."""
+German: topic_label_de and comparison_text_de must read as if written natively in German by a professional journalist, in the same formal-but-readable register (Hochsprache) as this real excerpt of the project's established German house style: "{_GERMAN_STYLE_ANCHOR}" - match that register and, where it fits naturally, its established terms (e.g. "Meinungsbeitrag(e)" for an opinion piece, "Vergleich" for the cross-source comparison, "Quelle"/"Zeitung" for a source). topic_label_de is a natural German label for this topic, not a translation of topic_label_en or topic_label_he - use those two only as context for what the topic is. Pay particular attention to German article/adjective/case agreement (der/die/das and declension) and noun-number agreement; reread each German sentence for this kind of agreement error before finalizing it.
+
+Call record_topic_comparison exactly once with topic_label_de, comparison_text_he, comparison_text_en, and comparison_text_de."""
 
 COMPARE_TOOL = {
     "name": "record_topic_comparison",
-    "description": "Record the cross-source comparison for this one topic.",
+    "description": "Record the cross-source comparison for this one topic, in all three languages.",
     "input_schema": {
         "type": "object",
         "properties": {
+            "topic_label_de": {"type": "string"},
             "comparison_text_he": {"type": "string"},
             "comparison_text_en": {"type": "string"},
+            "comparison_text_de": {"type": "string"},
         },
-        "required": ["comparison_text_he", "comparison_text_en"],
+        "required": ["topic_label_de", "comparison_text_he", "comparison_text_en", "comparison_text_de"],
         "additionalProperties": False,
     },
     "strict": True,
@@ -204,7 +224,7 @@ def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_artic
     articles_text = format_articles_for_prompt(topic_articles)
     response = client.messages.create(
         model=MODEL,
-        max_tokens=4096,
+        max_tokens=6000,  # was 4096 for he/en; headroom raised for the added de fields (2026-09-22)
         system=[
             {
                 "type": "text",
@@ -226,8 +246,10 @@ def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_artic
     )
     tool_use = next(b for b in response.content if b.type == "tool_use")
     comparison = {
+        "topic_label_de": tool_use.input["topic_label_de"],
         "comparison_text_he": tool_use.input["comparison_text_he"],
         "comparison_text_en": tool_use.input["comparison_text_en"],
+        "comparison_text_de": tool_use.input["comparison_text_de"],
     }
     usage = {
         "input_tokens": response.usage.input_tokens,
@@ -254,11 +276,15 @@ def build_fallback_section(article) -> dict:
     return {
         "topic_label_he": article["region_topic"],
         "topic_label_en": article["region_topic"],
+        "topic_label_de": article["region_topic"],
         "comparison_text_he": (
             f'{FALLBACK_PREFIX_HE}{article["stance_summary"]} ציטוט מרכזי: "{article["key_excerpt"]}"'
         ),
         "comparison_text_en": (
             f'{FALLBACK_PREFIX_EN}{article["stance_summary"]} Key excerpt: "{article["key_excerpt"]}"'
+        ),
+        "comparison_text_de": (
+            f'{FALLBACK_PREFIX_DE}{article["stance_summary"]} Wichtiges Zitat: "{article["key_excerpt"]}"'
         ),
         "category": FALLBACK_CATEGORY,
     }
@@ -407,10 +433,11 @@ def run(report_date: str, force: bool = False, dry_run: bool = False) -> None:
         print(f"  articles/topic ratio: {articles_per_topic:.2f} ({len(valid_ids) - len(missing)} articles / {len(sections)} topics)")
         print("\n  --- sample sections (first 4) ---")
         for section in sections[:4]:
-            print(f"\n  [{section['category']}] {section['topic_label_en']} / {section['topic_label_he']}")
+            print(f"\n  [{section['category']}] {section['topic_label_en']} / {section['topic_label_he']} / {section['topic_label_de']}")
             print(f"    {len(section['article_ids'])} article(s): {section['article_ids']}")
             print(f"    EN: {section['comparison_text_en']}")
             print(f"    HE: {section['comparison_text_he']}")
+            print(f"    DE: {section['comparison_text_de']}")
         print(
             f"\nDry run complete for {report_date}: {len(sections)} section(s) would be written, "
             f"{len(missing)} article(s) would fall back individually. No DB writes performed."
@@ -432,6 +459,8 @@ def run(report_date: str, force: bool = False, dry_run: bool = False) -> None:
             section["comparison_text_en"],
             section["category"],
             now,
+            section["topic_label_de"],
+            section["comparison_text_de"],
         )
         for article_id in dict.fromkeys(section["article_ids"]):
             if article_id not in valid_ids:
@@ -458,6 +487,8 @@ def run(report_date: str, force: bool = False, dry_run: bool = False) -> None:
                 fallback["comparison_text_en"],
                 fallback["category"],
                 now,
+                fallback["topic_label_de"],
+                fallback["comparison_text_de"],
             )
             link_section_article(conn, section_id, article_id)
             print(f"  fallback section created for article_id={article_id}: {fallback['topic_label_en']}")
