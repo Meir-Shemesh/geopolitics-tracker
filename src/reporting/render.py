@@ -268,6 +268,7 @@ LOGO_LINK_LABEL = {
 PDF_LABEL = {"he": "⬇ הורד PDF", "en": "⬇ Download PDF", "de": "⬇ PDF herunterladen"}
 CONTACT_EMAIL = "meir@meirshemesh.com"
 CONTACT_LABEL = {"he": "צור קשר", "en": "Contact", "de": "Kontakt"}
+FILTER_LABEL = {"he": "סינון מתקדם", "en": "Advanced filter", "de": "Erweiterte Filterung"}
 
 
 def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_href: str | None = None) -> str:
@@ -281,10 +282,17 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
     query-string preservation) doesn't have to guess by position. A mailto
     "Contact" link is always appended last, after the language links and the
     optional PDF link - single point of change so every page type that calls
-    this function gets it automatically."""
+    this function gets it automatically.
+
+    The "Advanced filter" link (added 2026-09-23) is hardcoded to the bare
+    sibling href "filter.html" rather than taking a parameter like back_href -
+    every caller of this function lives at the same docs/{lang}/ depth as
+    filter.html itself (no root copy, same convention as topic.html), so
+    there is nothing page-specific to parameterize."""
     pdf_link = ""
     if pdf_href is not None:
         pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(PDF_LABEL[lang])}</a>'
+    filter_link = f'\n      <a class="top-nav-link" href="filter.html">{esc(FILTER_LABEL[lang])}</a>'
     lang_links = "".join(
         f'\n      <a class="top-nav-link top-nav-lang-link" href="{esc(lang_hrefs[other])}">{esc(LANG_LABEL[other])}</a>'
         for other in other_langs(lang) if other in lang_hrefs
@@ -294,7 +302,7 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{lang_links}{pdf_link}{contact_link}
+      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{filter_link}{lang_links}{pdf_link}{contact_link}
     </div>
   </nav>"""
 

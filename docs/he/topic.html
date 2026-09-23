@@ -223,6 +223,108 @@
   .load-more-btn:hover, .load-more-btn:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
 
   
+  .filter-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    max-width: 32rem;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: .4rem; }
+  .filter-field label { font-size: .85rem; font-weight: 600; color: var(--text-muted); }
+  .filter-field select, .filter-field input[type="date"] {
+    font-family: inherit;
+    font-size: .95rem;
+    padding: .55rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+  }
+  .filter-presets { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
+  .filter-preset-btn {
+    font-family: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .35rem .8rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .filter-preset-btn:hover, .filter-preset-btn:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+  .filter-date-inputs { display: flex; align-items: center; gap: .6rem; }
+  .filter-date-inputs span { color: var(--text-muted); font-size: .85rem; }
+  .filter-actions { display: flex; align-items: center; gap: .8rem; margin-top: .3rem; }
+  .filter-submit-btn {
+    font-family: inherit;
+    font-size: .92rem;
+    font-weight: 700;
+    padding: .65rem 1.5rem;
+    border: none;
+    border-radius: .6rem;
+    background: var(--masthead-accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .filter-reset-btn, .filter-close-btn {
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .55rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .filter-reset-btn:hover, .filter-close-btn:hover { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+
+  .filter-panel-wrapper { max-width: 44rem; margin: 0 auto; padding: 1.2rem 1.5rem 0; }
+  .edit-filter-btn {
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .edit-filter-btn:hover, .edit-filter-btn:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+  .filter-builder-panel {
+    margin-top: 1rem;
+    padding: 1.3rem 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    background: var(--bg-elevated);
+  }
+
+  .filter-suggestion-banner {
+    border: 1px dashed var(--border);
+    border-radius: .8rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.1rem;
+  }
+  .filter-suggestion-banner p { margin: 0 0 .5rem; }
+  .filter-suggestion-banner p:last-child { margin-bottom: 0; }
+  .filter-suggestion-hint { font-size: .85rem; color: var(--text-muted); }
+  .filter-suggestion-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .filter-suggestion-chip {
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .3rem .75rem;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .filter-suggestion-chip:hover, .filter-suggestion-chip:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+
+
+  
   .site-footer {
     max-width: 44rem;
     margin: 0 auto;
@@ -249,6 +351,7 @@
     <a class="top-nav-logo-link" href="../index.html" aria-label="גאופוליטיקה יומי - דף הבית"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       <a class="top-nav-link" href="archive.html">← לכל הדוחות</a>
+      <a class="top-nav-link" href="filter.html">סינון מתקדם</a>
       <a class="top-nav-link top-nav-lang-link" href="../en/topic.html">English</a>
       <a class="top-nav-link top-nav-lang-link" href="../de/topic.html">Deutsch</a>
       <a class="top-nav-link" href="mailto:meir@meirshemesh.com">צור קשר</a>
@@ -260,6 +363,43 @@
       <h1 class="report-title" id="topic-title">טוען…</h1>
     </div>
   </header>
+  <div class="filter-panel-wrapper">
+    <button type="button" class="edit-filter-btn" id="edit-filter-btn">ערוך סינון</button>
+    <div class="filter-builder-panel" id="filter-builder-panel" hidden>
+      <div class="filter-builder">
+    <div class="filter-field">
+      <label for="filter-category">קטגוריה</label>
+      <select id="filter-category"><option value="">הכל</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="filter-region">אזור גיאוגרפי</label>
+      <select id="filter-region"><option value="">הכל</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="filter-conflict">סכסוך פעיל</label>
+      <select id="filter-conflict"><option value="">הכל</option></select>
+    </div>
+    <div class="filter-field">
+      <label>טווח תאריכים</label>
+      <div class="filter-presets">
+        <button type="button" class="filter-preset-btn" data-preset="7">7 ימים אחרונים</button>
+        <button type="button" class="filter-preset-btn" data-preset="30">30 יום אחרונים</button>
+        <button type="button" class="filter-preset-btn" data-preset="month">החודש הנוכחי</button>
+      </div>
+      <div class="filter-date-inputs">
+        <span>מ-</span>
+        <input type="date" id="filter-from">
+        <span>עד</span>
+        <input type="date" id="filter-to">
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button type="button" class="filter-submit-btn" id="filter-submit-btn">החל סינון</button>
+      <button type="button" class="filter-reset-btn" id="filter-reset-btn">נקה הכל</button>
+      <button type="button" class="filter-close-btn" id="filter-close-btn">סגור</button>
+    </div></div>
+    </div>
+  </div>
   <main class="topic-body">
     <p class="topic-count" id="topic-count"></p>
     <div id="topic-results"></div>
@@ -269,6 +409,129 @@
     <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
     <a class="footer-link" href="terms.html">תנאי שימוש</a>
   </footer>
+  <script>
+(function () {
+  var LANG = "he";
+  var TARGET = ""; // "" = reload the current page; otherwise a bare filename to navigate to
+
+  var LABEL_KEY = { he: "name_he", en: "name_en", de: "name_de" }[LANG] || "name_en";
+
+  function populateSelect(id, dict) {
+    var select = document.getElementById(id);
+    if (!select || !dict) return;
+    Object.keys(dict).forEach(function (key) {
+      var option = document.createElement("option");
+      option.value = key;
+      option.textContent = dict[key][LABEL_KEY] || key;
+      select.appendChild(option);
+    });
+  }
+
+  function prefillFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    ["category", "region", "conflict"].forEach(function (name) {
+      var raw = params.get(name);
+      var first = raw ? raw.split(",")[0].trim() : "";
+      var el = document.getElementById("filter-" + name);
+      if (el && first) el.value = first;
+    });
+    var fromEl = document.getElementById("filter-from");
+    var toEl = document.getElementById("filter-to");
+    if (fromEl && params.get("from")) fromEl.value = params.get("from");
+    if (toEl && params.get("to")) toEl.value = params.get("to");
+  }
+
+  function isoFromUTC(y, m, d) {
+    var dt = new Date(Date.UTC(y, m, d));
+    return dt.getUTCFullYear() + "-" + String(dt.getUTCMonth() + 1).padStart(2, "0") + "-" + String(dt.getUTCDate()).padStart(2, "0");
+  }
+  function addDaysIso(iso, delta) {
+    var p = iso.split("-").map(Number);
+    return isoFromUTC(p[0], p[1] - 1, p[2] + delta);
+  }
+  function monthStartIso(iso) {
+    var p = iso.split("-").map(Number);
+    return isoFromUTC(p[0], p[1] - 1, 1);
+  }
+  function monthEndIso(iso) {
+    var p = iso.split("-").map(Number);
+    return isoFromUTC(p[0], p[1], 0); // day 0 of next month = last day of this month
+  }
+
+  function wirePresets(anchorDate) {
+    document.querySelectorAll(".filter-preset-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var fromEl = document.getElementById("filter-from");
+        var toEl = document.getElementById("filter-to");
+        if (!fromEl || !toEl || !anchorDate) return;
+        var preset = btn.dataset.preset;
+        if (preset === "7") { fromEl.value = addDaysIso(anchorDate, -6); toEl.value = anchorDate; }
+        else if (preset === "30") { fromEl.value = addDaysIso(anchorDate, -29); toEl.value = anchorDate; }
+        else if (preset === "month") { fromEl.value = monthStartIso(anchorDate); toEl.value = monthEndIso(anchorDate); }
+      });
+    });
+  }
+
+  function targetUrl(qs) {
+    var path;
+    if (TARGET) {
+      path = window.location.pathname.replace(/[^\/]*$/, "") + TARGET;
+    } else {
+      path = window.location.pathname;
+    }
+    return path + (qs ? "?" + qs : "");
+  }
+
+  function wireSubmit() {
+    var btn = document.getElementById("filter-submit-btn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var params = new URLSearchParams();
+      ["category", "region", "conflict"].forEach(function (name) {
+        var el = document.getElementById("filter-" + name);
+        if (el && el.value) params.set(name, el.value);
+      });
+      var fromEl = document.getElementById("filter-from");
+      var toEl = document.getElementById("filter-to");
+      var from = fromEl ? fromEl.value : "";
+      var to = toEl ? toEl.value : "";
+      if (from && to && from > to) { var tmp = from; from = to; to = tmp; }
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      window.location.href = targetUrl(params.toString());
+    });
+  }
+
+  function wireReset() {
+    var btn = document.getElementById("filter-reset-btn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      ["filter-category", "filter-region", "filter-conflict", "filter-from", "filter-to"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+    });
+  }
+
+  function wireClose() {
+    var btn = document.getElementById("filter-close-btn");
+    var panel = document.getElementById("filter-builder-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function () { panel.hidden = true; });
+  }
+
+  window.initFilterBuilder = function (manifest) {
+    populateSelect("filter-category", manifest.categories);
+    populateSelect("filter-region", manifest.regions);
+    populateSelect("filter-conflict", manifest.conflict_zones);
+    prefillFromQuery();
+    wirePresets(manifest.latest_date);
+    wireSubmit();
+    wireReset();
+    wireClose();
+  };
+})();
+</script>
   <script>
 (function () {
   var LANG = "he";
@@ -289,11 +552,22 @@
     });
   }
 
+  // Every enum-like dimension (category/region/conflict) is parsed as a
+  // comma-separated list, even though the UI only ever writes a single value
+  // today - this is the forward-compatible URL scheme: "?category=security"
+  // and "?category=security,economy" both parse the same way, so a future
+  // multi-select UI needs no scheme change and breaks no existing link.
+  // from/to stay plain scalars - a date range is one interval, not a set of
+  // enum values, so a comma-list doesn't apply to it the same way.
+  function parseList(raw) {
+    return raw ? raw.split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [];
+  }
+
   var params = new URLSearchParams(window.location.search);
   var filters = {
-    category: params.get("category"),
-    region: params.get("region"),
-    conflict: params.get("conflict"),
+    category: parseList(params.get("category")),
+    region: parseList(params.get("region")),
+    conflict: parseList(params.get("conflict")),
     from: params.get("from"),
     to: params.get("to"),
   };
@@ -309,6 +583,11 @@
   // supposed to already be visible while scrolling, which is the opposite of
   // what was asked for here.
   var PAGE_SIZE = 15;
+  // Below this many total matches, a suggestion banner (with per-filter
+  // "remove this" chips) appears above the results, not just when there are
+  // literally zero - a 4-dimension AND filter can easily land on 1-2 results
+  // even though each dimension alone has plenty.
+  var FEW_RESULTS_THRESHOLD = 5;
   var allIds = [];
   var shownCount = 0;
   var contentCache = {}; // section id (string) -> {topic_label, comparison_text}
@@ -321,15 +600,33 @@
     .then(function (r) { return r.json(); })
     .then(function (manifest) {
       currentManifest = manifest;
+      // Same already-fetched manifest object hands off to the embedded
+      // filter-builder panel - it never fetches manifest.json a second time
+      // (see _FILTER_BUILDER_JS_TEMPLATE's comment on why that matters at
+      // ~900KB).
+      if (window.initFilterBuilder) window.initFilterBuilder(manifest);
+      wireEditFilterButton();
+
       allIds = filterSections(manifest, filters);
       renderTitle(manifest, filters, allIds.length);
+      var container = document.getElementById("topic-results");
       if (!allIds.length) {
-        renderEmptyState();
+        renderFilterBanner(container, filters, manifest, "empty");
         return;
+      }
+      if (allIds.length < FEW_RESULTS_THRESHOLD) {
+        renderFilterBanner(container, filters, manifest, "few");
       }
       loadNextBatch();
     })
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  function wireEditFilterButton() {
+    var btn = document.getElementById("edit-filter-btn");
+    var panel = document.getElementById("filter-builder-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function () { panel.hidden = !panel.hidden; });
+  }
 
   function contentUrlFor(date) {
     return PREFIX + "assets/data/content/" + date + "_" + LANG + ".json";
@@ -403,31 +700,95 @@
     container.appendChild(loadMoreBtn); // re-appending an existing node moves it to the end
   }
 
-  function renderEmptyState() {
-    var container = document.getElementById("topic-results");
+  // Shown both when a filter combination matches nothing (kind="empty") and
+  // when it matches very few sections (kind="few", see FEW_RESULTS_THRESHOLD)
+  // - same banner either way, just a different headline message. Each active
+  // filter dimension gets its own "remove this" chip (an <a> to the current
+  // URL with just that one param stripped), so the suggestion is concrete,
+  // not just "try something else." A date range counts as one dimension for
+  // this purpose (removing it clears both from and to together).
+  function renderFilterBanner(container, f, manifest, kind) {
     if (!container) return;
-    var empty = document.createElement("p");
-    empty.className = "topic-empty";
-    empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
-      : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
-      : "No results match this filter.";
-    container.appendChild(empty);
+    var banner = document.createElement("div");
+    banner.className = "filter-suggestion-banner";
+
+    var msg = document.createElement("p");
+    msg.textContent = kind === "empty"
+      ? (LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
+        : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
+        : "No results match this filter.")
+      : (LANG === "he" ? "מעט מאוד תוצאות עבור השילוב הזה."
+        : LANG === "de" ? "Sehr wenige Ergebnisse für diese Kombination."
+        : "Very few results for this combination.");
+    banner.appendChild(msg);
+
+    var chips = activeFilterChips(f, manifest);
+    if (chips.length) {
+      var hint = document.createElement("p");
+      hint.className = "filter-suggestion-hint";
+      hint.textContent = LANG === "he" ? "נסו להסיר או להרחיב אחד מהסינונים:"
+        : LANG === "de" ? "Entfernen oder erweitern Sie einen der Filter:"
+        : "Try removing or broadening one of these filters:";
+      banner.appendChild(hint);
+
+      var chipRow = document.createElement("div");
+      chipRow.className = "filter-suggestion-chips";
+      chips.forEach(function (chip) {
+        var a = document.createElement("a");
+        a.className = "filter-suggestion-chip";
+        a.href = urlWithoutParam(chip.removeParam);
+        a.textContent = "✕ " + chip.label;
+        chipRow.appendChild(a);
+      });
+      banner.appendChild(chipRow);
+    }
+    container.appendChild(banner);
+  }
+
+  function activeFilterChips(f, manifest) {
+    var chips = [];
+    f.category.forEach(function (key) {
+      chips.push({ label: (manifest.categories[key] || {})[LABEL_KEY] || key, removeParam: "category" });
+    });
+    f.region.forEach(function (key) {
+      chips.push({ label: (manifest.regions[key] || {})[LABEL_KEY] || key, removeParam: "region" });
+    });
+    f.conflict.forEach(function (key) {
+      chips.push({ label: (manifest.conflict_zones[key] || {})[LABEL_KEY] || key, removeParam: "conflict" });
+    });
+    if (f.from || f.to) {
+      chips.push({ label: formatRange(f.from, f.to), removeParam: "daterange" });
+    }
+    return chips;
+  }
+
+  function urlWithoutParam(param) {
+    var p = new URLSearchParams(window.location.search);
+    if (param === "daterange") { p.delete("from"); p.delete("to"); }
+    else { p.delete(param); }
+    var qs = p.toString();
+    return window.location.pathname + (qs ? "?" + qs : "");
   }
 
   function filterSections(manifest, f) {
     var ids = Object.keys(manifest.sections).map(Number);
-    if (f.region) {
-      var region = manifest.regions[f.region];
-      var regionSet = region ? new Set(region.section_ids) : new Set();
+    if (f.region.length) {
+      var regionSet = new Set();
+      f.region.forEach(function (key) {
+        var region = manifest.regions[key];
+        if (region) region.section_ids.forEach(function (id) { regionSet.add(id); });
+      });
       ids = ids.filter(function (id) { return regionSet.has(id); });
     }
-    if (f.conflict) {
+    if (f.conflict.length) {
       ids = ids.filter(function (id) {
-        return manifest.sections[id].conflict_zones.indexOf(f.conflict) !== -1;
+        return f.conflict.some(function (key) {
+          return manifest.sections[id].conflict_zones.indexOf(key) !== -1;
+        });
       });
     }
-    if (f.category) {
-      ids = ids.filter(function (id) { return manifest.sections[id].category === f.category; });
+    if (f.category.length) {
+      ids = ids.filter(function (id) { return f.category.indexOf(manifest.sections[id].category) !== -1; });
     }
     if (f.from) {
       ids = ids.filter(function (id) { return manifest.sections[id].date >= f.from; });
@@ -487,17 +848,15 @@
     return (LANG === "he" ? "עד " : LANG === "de" ? "Bis " : "Until ") + formatLongDate(to);
   }
 
+  function labelsFor(keys, dict) {
+    return keys.map(function (key) { return (dict[key] || {})[LABEL_KEY] || key; });
+  }
+
   function renderTitle(manifest, f, count) {
     var parts = [];
-    if (f.category && manifest.categories[f.category]) {
-      parts.push(manifest.categories[f.category][LABEL_KEY]);
-    }
-    if (f.region && manifest.regions[f.region]) {
-      parts.push(manifest.regions[f.region][LABEL_KEY]);
-    }
-    if (f.conflict && manifest.conflict_zones[f.conflict]) {
-      parts.push(manifest.conflict_zones[f.conflict][LABEL_KEY]);
-    }
+    parts = parts.concat(labelsFor(f.category, manifest.categories));
+    parts = parts.concat(labelsFor(f.region, manifest.regions));
+    parts = parts.concat(labelsFor(f.conflict, manifest.conflict_zones));
     var rangeLabel = formatRange(f.from, f.to);
     if (rangeLabel) parts.push(rangeLabel);
 

@@ -657,6 +657,458 @@ def build_terms_html(lang: str) -> str:
     return _build_static_page_html(lang, page_title, heading, body_html, "terms.html")
 
 
+FILTER_FORM_LABELS = {
+    "category": {"he": "קטגוריה", "en": "Category", "de": "Kategorie"},
+    "region": {"he": "אזור גיאוגרפי", "en": "Region", "de": "Region"},
+    "conflict": {"he": "סכסוך פעיל", "en": "Active conflict", "de": "Aktiver Konflikt"},
+    "daterange": {"he": "טווח תאריכים", "en": "Date range", "de": "Zeitraum"},
+    "any": {"he": "הכל", "en": "Any", "de": "Alle"},
+    "apply": {"he": "החל סינון", "en": "Apply filter", "de": "Filter anwenden"},
+    "reset": {"he": "נקה הכל", "en": "Clear all", "de": "Alles zurücksetzen"},
+    "close": {"he": "סגור", "en": "Close", "de": "Schließen"},
+    "last7": {"he": "7 ימים אחרונים", "en": "Last 7 days", "de": "Letzte 7 Tage"},
+    "last30": {"he": "30 יום אחרונים", "en": "Last 30 days", "de": "Letzte 30 Tage"},
+    "thismonth": {"he": "החודש הנוכחי", "en": "This month", "de": "Dieser Monat"},
+    "from": {"he": "מ-", "en": "From", "de": "Von"},
+    "to": {"he": "עד", "en": "To", "de": "Bis"},
+}
+
+
+def _filter_builder_css() -> str:
+    """Shared by build_filter_html() (the standalone page) and build_topic_html()
+    (the embedded panel opened via "Edit filter") - one definition, so the two
+    entry points can never visually drift apart. See _filter_builder_form_html()
+    and _FILTER_BUILDER_JS_TEMPLATE for the rest of the shared component."""
+    return """
+  .filter-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    max-width: 32rem;
+  }
+  .filter-field { display: flex; flex-direction: column; gap: .4rem; }
+  .filter-field label { font-size: .85rem; font-weight: 600; color: var(--text-muted); }
+  .filter-field select, .filter-field input[type="date"] {
+    font-family: inherit;
+    font-size: .95rem;
+    padding: .55rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+  }
+  .filter-presets { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
+  .filter-preset-btn {
+    font-family: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .35rem .8rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .filter-preset-btn:hover, .filter-preset-btn:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+  .filter-date-inputs { display: flex; align-items: center; gap: .6rem; }
+  .filter-date-inputs span { color: var(--text-muted); font-size: .85rem; }
+  .filter-actions { display: flex; align-items: center; gap: .8rem; margin-top: .3rem; }
+  .filter-submit-btn {
+    font-family: inherit;
+    font-size: .92rem;
+    font-weight: 700;
+    padding: .65rem 1.5rem;
+    border: none;
+    border-radius: .6rem;
+    background: var(--masthead-accent);
+    color: #fff;
+    cursor: pointer;
+  }
+  .filter-reset-btn, .filter-close-btn {
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .55rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .filter-reset-btn:hover, .filter-close-btn:hover { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+
+  .filter-panel-wrapper { max-width: 44rem; margin: 0 auto; padding: 1.2rem 1.5rem 0; }
+  .edit-filter-btn {
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .edit-filter-btn:hover, .edit-filter-btn:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+  .filter-builder-panel {
+    margin-top: 1rem;
+    padding: 1.3rem 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    background: var(--bg-elevated);
+  }
+
+  .filter-suggestion-banner {
+    border: 1px dashed var(--border);
+    border-radius: .8rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.1rem;
+  }
+  .filter-suggestion-banner p { margin: 0 0 .5rem; }
+  .filter-suggestion-banner p:last-child { margin-bottom: 0; }
+  .filter-suggestion-hint { font-size: .85rem; color: var(--text-muted); }
+  .filter-suggestion-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .filter-suggestion-chip {
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .3rem .75rem;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .filter-suggestion-chip:hover, .filter-suggestion-chip:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+"""
+
+
+def _filter_builder_form_html(lang: str, show_close: bool) -> str:
+    """The filter-builder's form markup - shared verbatim by build_filter_html()
+    (fresh/blank, no close button) and build_topic_html()'s embedded panel
+    (pre-filled from the current URL by _FILTER_BUILDER_JS_TEMPLATE, with a
+    close button to dismiss the panel without navigating). category/region/
+    conflict <select> options are populated client-side from manifest.json
+    (same JS handles both host pages), not baked in here - see
+    _FILTER_BUILDER_JS_TEMPLATE's populateSelect().
+    """
+    t = FILTER_FORM_LABELS
+    any_label = esc(t["any"][lang])
+    close_btn = (
+        f'<button type="button" class="filter-close-btn" id="filter-close-btn">{esc(t["close"][lang])}</button>'
+        if show_close else ""
+    )
+    return f"""
+    <div class="filter-field">
+      <label for="filter-category">{esc(t['category'][lang])}</label>
+      <select id="filter-category"><option value="">{any_label}</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="filter-region">{esc(t['region'][lang])}</label>
+      <select id="filter-region"><option value="">{any_label}</option></select>
+    </div>
+    <div class="filter-field">
+      <label for="filter-conflict">{esc(t['conflict'][lang])}</label>
+      <select id="filter-conflict"><option value="">{any_label}</option></select>
+    </div>
+    <div class="filter-field">
+      <label>{esc(t['daterange'][lang])}</label>
+      <div class="filter-presets">
+        <button type="button" class="filter-preset-btn" data-preset="7">{esc(t['last7'][lang])}</button>
+        <button type="button" class="filter-preset-btn" data-preset="30">{esc(t['last30'][lang])}</button>
+        <button type="button" class="filter-preset-btn" data-preset="month">{esc(t['thismonth'][lang])}</button>
+      </div>
+      <div class="filter-date-inputs">
+        <span>{esc(t['from'][lang])}</span>
+        <input type="date" id="filter-from">
+        <span>{esc(t['to'][lang])}</span>
+        <input type="date" id="filter-to">
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button type="button" class="filter-submit-btn" id="filter-submit-btn">{esc(t['apply'][lang])}</button>
+      <button type="button" class="filter-reset-btn" id="filter-reset-btn">{esc(t['reset'][lang])}</button>
+      {close_btn}
+    </div>"""
+
+
+# Plain (non f-string) template so JS/CSS braces don't need doubling - __TOKEN__
+# placeholders are substituted with .replace() in build_filter_html() and
+# build_topic_html(). Defines window.initFilterBuilder(manifest) but does not
+# call fetch() itself - each host page already has (or is about to make) its
+# own manifest.json fetch, and handing this component the parsed manifest
+# object (rather than having it fetch a second, ~900KB copy of its own) is
+# the whole reason it's a plain function instead of a self-starting IIFE like
+# the other page templates. build_topic_html() calls it with the manifest its
+# own script already fetched; build_filter_html() does one small fetch of its
+# own (it has no other reason to load manifest.json) and calls it from there.
+_FILTER_BUILDER_JS_TEMPLATE = """
+(function () {
+  var LANG = "__LANG__";
+  var TARGET = "__TARGET__"; // "" = reload the current page; otherwise a bare filename to navigate to
+
+  var LABEL_KEY = { he: "name_he", en: "name_en", de: "name_de" }[LANG] || "name_en";
+
+  function populateSelect(id, dict) {
+    var select = document.getElementById(id);
+    if (!select || !dict) return;
+    Object.keys(dict).forEach(function (key) {
+      var option = document.createElement("option");
+      option.value = key;
+      option.textContent = dict[key][LABEL_KEY] || key;
+      select.appendChild(option);
+    });
+  }
+
+  function prefillFromQuery() {
+    var params = new URLSearchParams(window.location.search);
+    ["category", "region", "conflict"].forEach(function (name) {
+      var raw = params.get(name);
+      var first = raw ? raw.split(",")[0].trim() : "";
+      var el = document.getElementById("filter-" + name);
+      if (el && first) el.value = first;
+    });
+    var fromEl = document.getElementById("filter-from");
+    var toEl = document.getElementById("filter-to");
+    if (fromEl && params.get("from")) fromEl.value = params.get("from");
+    if (toEl && params.get("to")) toEl.value = params.get("to");
+  }
+
+  function isoFromUTC(y, m, d) {
+    var dt = new Date(Date.UTC(y, m, d));
+    return dt.getUTCFullYear() + "-" + String(dt.getUTCMonth() + 1).padStart(2, "0") + "-" + String(dt.getUTCDate()).padStart(2, "0");
+  }
+  function addDaysIso(iso, delta) {
+    var p = iso.split("-").map(Number);
+    return isoFromUTC(p[0], p[1] - 1, p[2] + delta);
+  }
+  function monthStartIso(iso) {
+    var p = iso.split("-").map(Number);
+    return isoFromUTC(p[0], p[1] - 1, 1);
+  }
+  function monthEndIso(iso) {
+    var p = iso.split("-").map(Number);
+    return isoFromUTC(p[0], p[1], 0); // day 0 of next month = last day of this month
+  }
+
+  function wirePresets(anchorDate) {
+    document.querySelectorAll(".filter-preset-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var fromEl = document.getElementById("filter-from");
+        var toEl = document.getElementById("filter-to");
+        if (!fromEl || !toEl || !anchorDate) return;
+        var preset = btn.dataset.preset;
+        if (preset === "7") { fromEl.value = addDaysIso(anchorDate, -6); toEl.value = anchorDate; }
+        else if (preset === "30") { fromEl.value = addDaysIso(anchorDate, -29); toEl.value = anchorDate; }
+        else if (preset === "month") { fromEl.value = monthStartIso(anchorDate); toEl.value = monthEndIso(anchorDate); }
+      });
+    });
+  }
+
+  function targetUrl(qs) {
+    var path;
+    if (TARGET) {
+      path = window.location.pathname.replace(/[^\\/]*$/, "") + TARGET;
+    } else {
+      path = window.location.pathname;
+    }
+    return path + (qs ? "?" + qs : "");
+  }
+
+  function wireSubmit() {
+    var btn = document.getElementById("filter-submit-btn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var params = new URLSearchParams();
+      ["category", "region", "conflict"].forEach(function (name) {
+        var el = document.getElementById("filter-" + name);
+        if (el && el.value) params.set(name, el.value);
+      });
+      var fromEl = document.getElementById("filter-from");
+      var toEl = document.getElementById("filter-to");
+      var from = fromEl ? fromEl.value : "";
+      var to = toEl ? toEl.value : "";
+      if (from && to && from > to) { var tmp = from; from = to; to = tmp; }
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      window.location.href = targetUrl(params.toString());
+    });
+  }
+
+  function wireReset() {
+    var btn = document.getElementById("filter-reset-btn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      ["filter-category", "filter-region", "filter-conflict", "filter-from", "filter-to"].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = "";
+      });
+    });
+  }
+
+  function wireClose() {
+    var btn = document.getElementById("filter-close-btn");
+    var panel = document.getElementById("filter-builder-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function () { panel.hidden = true; });
+  }
+
+  window.initFilterBuilder = function (manifest) {
+    populateSelect("filter-category", manifest.categories);
+    populateSelect("filter-region", manifest.regions);
+    populateSelect("filter-conflict", manifest.conflict_zones);
+    prefillFromQuery();
+    wirePresets(manifest.latest_date);
+    wireSubmit();
+    wireReset();
+    wireClose();
+  };
+})();
+"""
+
+
+def build_filter_html(lang: str) -> str:
+    """Standalone "Advanced filter" page - docs/{lang}/filter.html only, no root
+    copy (same convention as topic.html and about.html: a destination reached
+    via the nav or a deep link, not a primary landing page). Opened blank
+    (nothing pre-filled) via the "Advanced filter" nav link added to
+    build_nav_html(); submitting navigates to topic.html?... with whatever was
+    selected. This is the SAME component (_filter_builder_form_html() +
+    _FILTER_BUILDER_JS_TEMPLATE) that topic.html embeds inline behind its
+    "Edit filter" button - not a second implementation of the builder.
+    """
+    is_he = lang == "he"
+    dir_attr = "rtl" if is_he else "ltr"
+
+    page_title = {
+        "he": "סינון מתקדם - גאופוליטיקה יומי", "en": "Advanced Filter - Daily Geopolitics",
+        "de": "Erweiterte Filterung - Tägliche Geopolitik",
+    }[lang]
+    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    heading = {"he": "סינון מתקדם", "en": "Advanced filter", "de": "Erweiterte Filterung"}[lang]
+
+    form_html = _filter_builder_form_html(lang, show_close=False)
+    builder_js = _FILTER_BUILDER_JS_TEMPLATE.replace("__LANG__", lang).replace("__TARGET__", "topic.html")
+    bootstrap_js = (
+        'fetch("../assets/data/manifest.json").then(function(r){return r.json();})'
+        '.then(function(manifest){ if (window.initFilterBuilder) window.initFilterBuilder(manifest); })'
+        '.catch(function(err){ console.error("Failed to load manifest.json", err); });'
+    )
+
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(page_title)}</title>
+{favicon_links_html("../")}
+<style>
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
+
+  {category_css()}
+
+  :root {{
+    --bg: #f3efe8;
+    --bg-elevated: #fffdfa;
+    --text: #221f1b;
+    --text-muted: #6d675e;
+    --border: #e4ddd0;
+    --masthead-accent: #7a2e2a;
+  }}
+
+  @media (prefers-color-scheme: dark) {{
+    :root:not([data-theme="light"]) {{
+      --bg: #16140f;
+      --bg-elevated: #211e18;
+      --text: #ece7dd;
+      --text-muted: #a89f91;
+      --border: #3a352b;
+      --masthead-accent: #d68b86;
+    }}
+  }}
+  :root[data-theme="dark"] {{
+    --bg: #16140f;
+    --bg-elevated: #211e18;
+    --text: #ece7dd;
+    --text-muted: #a89f91;
+    --border: #3a352b;
+    --masthead-accent: #d68b86;
+  }}
+
+  * {{ box-sizing: border-box; }}
+
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
+    line-height: 1.7;
+  }}
+
+  .top-nav {{
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  .top-nav-link {{
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }}
+  .top-nav-link:hover {{
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }}
+
+  .masthead {{
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }}
+  .masthead-inner {{ max-width: 44rem; margin: 0 auto; }}
+  .eyebrow {{
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }}
+  .report-title {{ margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }}
+
+  .filter-body {{ max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }}
+
+  {_filter_builder_css()}
+
+  {shared_chrome_css()}
+</style>
+</head>
+<body>
+{build_nav_html("archive.html", {o: f"../{o}/filter.html" for o in other_langs(lang)}, lang)}
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">{esc(eyebrow)}</p>
+      <h1 class="report-title">{esc(heading)}</h1>
+    </div>
+  </header>
+  <main class="filter-body">
+    <div class="filter-builder">{form_html}</div>
+  </main>
+{build_footer_html(lang, *footer_hrefs_for(lang))}
+  <script>{builder_js}</script>
+  <script>{bootstrap_js}</script>
+</body>
+</html>
+"""
+
+
 def build_topic_html(lang: str) -> str:
     """A dynamic, filtered view over manifest.json's sections - not a synthesis:
     every result links straight to its real section anchor in the actual report
@@ -676,7 +1128,15 @@ def build_topic_html(lang: str) -> str:
     }[lang]
     eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     loading_label = {"he": "טוען…", "en": "Loading…", "de": "Wird geladen…"}[lang]
+    edit_filter_label = {"he": "ערוך סינון", "en": "Edit filter", "de": "Filter bearbeiten"}[lang]
 
+    # The panel embeds the exact same builder component as the standalone
+    # filter.html page (_filter_builder_form_html() + _FILTER_BUILDER_JS_TEMPLATE)
+    # - with a close button (it's a dismissible panel, not a full page) and
+    # TARGET="" so submitting reloads topic.html itself with the new query
+    # string instead of navigating to a separate page.
+    panel_form_html = _filter_builder_form_html(lang, show_close=True)
+    filter_builder_js = _FILTER_BUILDER_JS_TEMPLATE.replace("__LANG__", lang).replace("__TARGET__", "")
     js_code = _TOPIC_JS_TEMPLATE.replace("__LANG__", lang)
 
     return f"""<!doctype html>
@@ -826,6 +1286,8 @@ def build_topic_html(lang: str) -> str:
   }}
   .load-more-btn:hover, .load-more-btn:focus-visible {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
 
+  {_filter_builder_css()}
+
   {shared_chrome_css()}
 </style>
 </head>
@@ -837,11 +1299,18 @@ def build_topic_html(lang: str) -> str:
       <h1 class="report-title" id="topic-title">{esc(loading_label)}</h1>
     </div>
   </header>
+  <div class="filter-panel-wrapper">
+    <button type="button" class="edit-filter-btn" id="edit-filter-btn">{esc(edit_filter_label)}</button>
+    <div class="filter-builder-panel" id="filter-builder-panel" hidden>
+      <div class="filter-builder">{panel_form_html}</div>
+    </div>
+  </div>
   <main class="topic-body">
     <p class="topic-count" id="topic-count"></p>
     <div id="topic-results"></div>
   </main>
 {build_footer_html(lang, *footer_hrefs_for(lang))}
+  <script>{filter_builder_js}</script>
   <script>{js_code}</script>
 </body>
 </html>
@@ -870,11 +1339,22 @@ _TOPIC_JS_TEMPLATE = """
     });
   }
 
+  // Every enum-like dimension (category/region/conflict) is parsed as a
+  // comma-separated list, even though the UI only ever writes a single value
+  // today - this is the forward-compatible URL scheme: "?category=security"
+  // and "?category=security,economy" both parse the same way, so a future
+  // multi-select UI needs no scheme change and breaks no existing link.
+  // from/to stay plain scalars - a date range is one interval, not a set of
+  // enum values, so a comma-list doesn't apply to it the same way.
+  function parseList(raw) {
+    return raw ? raw.split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [];
+  }
+
   var params = new URLSearchParams(window.location.search);
   var filters = {
-    category: params.get("category"),
-    region: params.get("region"),
-    conflict: params.get("conflict"),
+    category: parseList(params.get("category")),
+    region: parseList(params.get("region")),
+    conflict: parseList(params.get("conflict")),
     from: params.get("from"),
     to: params.get("to"),
   };
@@ -890,6 +1370,11 @@ _TOPIC_JS_TEMPLATE = """
   // supposed to already be visible while scrolling, which is the opposite of
   // what was asked for here.
   var PAGE_SIZE = 15;
+  // Below this many total matches, a suggestion banner (with per-filter
+  // "remove this" chips) appears above the results, not just when there are
+  // literally zero - a 4-dimension AND filter can easily land on 1-2 results
+  // even though each dimension alone has plenty.
+  var FEW_RESULTS_THRESHOLD = 5;
   var allIds = [];
   var shownCount = 0;
   var contentCache = {}; // section id (string) -> {topic_label, comparison_text}
@@ -902,15 +1387,33 @@ _TOPIC_JS_TEMPLATE = """
     .then(function (r) { return r.json(); })
     .then(function (manifest) {
       currentManifest = manifest;
+      // Same already-fetched manifest object hands off to the embedded
+      // filter-builder panel - it never fetches manifest.json a second time
+      // (see _FILTER_BUILDER_JS_TEMPLATE's comment on why that matters at
+      // ~900KB).
+      if (window.initFilterBuilder) window.initFilterBuilder(manifest);
+      wireEditFilterButton();
+
       allIds = filterSections(manifest, filters);
       renderTitle(manifest, filters, allIds.length);
+      var container = document.getElementById("topic-results");
       if (!allIds.length) {
-        renderEmptyState();
+        renderFilterBanner(container, filters, manifest, "empty");
         return;
+      }
+      if (allIds.length < FEW_RESULTS_THRESHOLD) {
+        renderFilterBanner(container, filters, manifest, "few");
       }
       loadNextBatch();
     })
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  function wireEditFilterButton() {
+    var btn = document.getElementById("edit-filter-btn");
+    var panel = document.getElementById("filter-builder-panel");
+    if (!btn || !panel) return;
+    btn.addEventListener("click", function () { panel.hidden = !panel.hidden; });
+  }
 
   function contentUrlFor(date) {
     return PREFIX + "assets/data/content/" + date + "_" + LANG + ".json";
@@ -984,31 +1487,95 @@ _TOPIC_JS_TEMPLATE = """
     container.appendChild(loadMoreBtn); // re-appending an existing node moves it to the end
   }
 
-  function renderEmptyState() {
-    var container = document.getElementById("topic-results");
+  // Shown both when a filter combination matches nothing (kind="empty") and
+  // when it matches very few sections (kind="few", see FEW_RESULTS_THRESHOLD)
+  // - same banner either way, just a different headline message. Each active
+  // filter dimension gets its own "remove this" chip (an <a> to the current
+  // URL with just that one param stripped), so the suggestion is concrete,
+  // not just "try something else." A date range counts as one dimension for
+  // this purpose (removing it clears both from and to together).
+  function renderFilterBanner(container, f, manifest, kind) {
     if (!container) return;
-    var empty = document.createElement("p");
-    empty.className = "topic-empty";
-    empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
-      : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
-      : "No results match this filter.";
-    container.appendChild(empty);
+    var banner = document.createElement("div");
+    banner.className = "filter-suggestion-banner";
+
+    var msg = document.createElement("p");
+    msg.textContent = kind === "empty"
+      ? (LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
+        : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
+        : "No results match this filter.")
+      : (LANG === "he" ? "מעט מאוד תוצאות עבור השילוב הזה."
+        : LANG === "de" ? "Sehr wenige Ergebnisse für diese Kombination."
+        : "Very few results for this combination.");
+    banner.appendChild(msg);
+
+    var chips = activeFilterChips(f, manifest);
+    if (chips.length) {
+      var hint = document.createElement("p");
+      hint.className = "filter-suggestion-hint";
+      hint.textContent = LANG === "he" ? "נסו להסיר או להרחיב אחד מהסינונים:"
+        : LANG === "de" ? "Entfernen oder erweitern Sie einen der Filter:"
+        : "Try removing or broadening one of these filters:";
+      banner.appendChild(hint);
+
+      var chipRow = document.createElement("div");
+      chipRow.className = "filter-suggestion-chips";
+      chips.forEach(function (chip) {
+        var a = document.createElement("a");
+        a.className = "filter-suggestion-chip";
+        a.href = urlWithoutParam(chip.removeParam);
+        a.textContent = "✕ " + chip.label;
+        chipRow.appendChild(a);
+      });
+      banner.appendChild(chipRow);
+    }
+    container.appendChild(banner);
+  }
+
+  function activeFilterChips(f, manifest) {
+    var chips = [];
+    f.category.forEach(function (key) {
+      chips.push({ label: (manifest.categories[key] || {})[LABEL_KEY] || key, removeParam: "category" });
+    });
+    f.region.forEach(function (key) {
+      chips.push({ label: (manifest.regions[key] || {})[LABEL_KEY] || key, removeParam: "region" });
+    });
+    f.conflict.forEach(function (key) {
+      chips.push({ label: (manifest.conflict_zones[key] || {})[LABEL_KEY] || key, removeParam: "conflict" });
+    });
+    if (f.from || f.to) {
+      chips.push({ label: formatRange(f.from, f.to), removeParam: "daterange" });
+    }
+    return chips;
+  }
+
+  function urlWithoutParam(param) {
+    var p = new URLSearchParams(window.location.search);
+    if (param === "daterange") { p.delete("from"); p.delete("to"); }
+    else { p.delete(param); }
+    var qs = p.toString();
+    return window.location.pathname + (qs ? "?" + qs : "");
   }
 
   function filterSections(manifest, f) {
     var ids = Object.keys(manifest.sections).map(Number);
-    if (f.region) {
-      var region = manifest.regions[f.region];
-      var regionSet = region ? new Set(region.section_ids) : new Set();
+    if (f.region.length) {
+      var regionSet = new Set();
+      f.region.forEach(function (key) {
+        var region = manifest.regions[key];
+        if (region) region.section_ids.forEach(function (id) { regionSet.add(id); });
+      });
       ids = ids.filter(function (id) { return regionSet.has(id); });
     }
-    if (f.conflict) {
+    if (f.conflict.length) {
       ids = ids.filter(function (id) {
-        return manifest.sections[id].conflict_zones.indexOf(f.conflict) !== -1;
+        return f.conflict.some(function (key) {
+          return manifest.sections[id].conflict_zones.indexOf(key) !== -1;
+        });
       });
     }
-    if (f.category) {
-      ids = ids.filter(function (id) { return manifest.sections[id].category === f.category; });
+    if (f.category.length) {
+      ids = ids.filter(function (id) { return f.category.indexOf(manifest.sections[id].category) !== -1; });
     }
     if (f.from) {
       ids = ids.filter(function (id) { return manifest.sections[id].date >= f.from; });
@@ -1068,17 +1635,15 @@ _TOPIC_JS_TEMPLATE = """
     return (LANG === "he" ? "עד " : LANG === "de" ? "Bis " : "Until ") + formatLongDate(to);
   }
 
+  function labelsFor(keys, dict) {
+    return keys.map(function (key) { return (dict[key] || {})[LABEL_KEY] || key; });
+  }
+
   function renderTitle(manifest, f, count) {
     var parts = [];
-    if (f.category && manifest.categories[f.category]) {
-      parts.push(manifest.categories[f.category][LABEL_KEY]);
-    }
-    if (f.region && manifest.regions[f.region]) {
-      parts.push(manifest.regions[f.region][LABEL_KEY]);
-    }
-    if (f.conflict && manifest.conflict_zones[f.conflict]) {
-      parts.push(manifest.conflict_zones[f.conflict][LABEL_KEY]);
-    }
+    parts = parts.concat(labelsFor(f.category, manifest.categories));
+    parts = parts.concat(labelsFor(f.region, manifest.regions));
+    parts = parts.concat(labelsFor(f.conflict, manifest.conflict_zones));
     var rangeLabel = formatRange(f.from, f.to);
     if (rangeLabel) parts.push(rangeLabel);
 
@@ -2100,6 +2665,12 @@ def run() -> None:
             out_dir.mkdir(parents=True, exist_ok=True)
             (out_dir / "topic.html").write_text(topic_html, encoding="utf-8")
         print(f"  wrote topic.html for '{lang}'")
+
+        filter_html = build_filter_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "filter.html").write_text(filter_html, encoding="utf-8")
+        print(f"  wrote filter.html for '{lang}'")
 
         # German joined the trilingual set on 2026-09-22 (previously accessibility.html/
         # terms.html/the homepage stayed he/en-only) - all three now build for every
