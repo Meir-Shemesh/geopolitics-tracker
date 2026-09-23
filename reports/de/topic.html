@@ -165,6 +165,7 @@
   .report-title { margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }
 
   .topic-body { max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }
+  .topic-count { margin: 0 0 1.2rem; font-size: .85rem; color: var(--text-muted); }
 
   .topic-result {
     display: flex;
@@ -174,12 +175,9 @@
     border: 1px solid var(--border);
     border-inline-start: 4px solid var(--cat-color, var(--border));
     border-radius: .8rem;
-    padding: 1rem 1.2rem;
-    margin-bottom: .9rem;
-    text-decoration: none;
-    color: inherit;
+    padding: 1.1rem 1.3rem 1.3rem;
+    margin-bottom: 1.1rem;
   }
-  .topic-result:hover { border-color: var(--masthead-accent); }
   .topic-result-meta { display: flex; align-items: center; gap: .6rem; }
   .category-dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
   .category-label {
@@ -192,9 +190,37 @@
     white-space: nowrap;
   }
   .topic-result-date { font-size: .78rem; color: var(--text-muted); font-weight: 600; margin-inline-start: auto; }
-  .topic-result-title { margin: 0; font-size: 1.05rem; font-weight: 700; }
-  .topic-result-sources { margin: 0; font-size: .82rem; color: var(--text-muted); }
-  .topic-empty { color: var(--text-muted); font-size: .95rem; }
+  .permalink-icon {
+    font-size: .82rem;
+    text-decoration: none;
+    opacity: .5;
+    line-height: 1;
+  }
+  .permalink-icon:hover, .permalink-icon:focus-visible { opacity: 1; }
+  .topic-result-title { margin: .2rem 0 0; font-size: 1.2rem; font-weight: 700; line-height: 1.4; }
+  .topic-result-text { margin: 0; font-size: 1rem; line-height: 1.85; color: var(--text); }
+  .topic-result-sources {
+    margin: .3rem 0 0;
+    font-size: .82rem;
+    color: var(--text-muted);
+    padding-top: .6rem;
+    border-top: 1px solid var(--border);
+  }
+  .topic-empty, .topic-loading { color: var(--text-muted); font-size: .95rem; text-align: center; padding: 1rem 0; }
+  .load-more-btn {
+    display: block;
+    margin: .5rem auto 0;
+    padding: .65rem 1.6rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-family: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .load-more-btn:hover, .load-more-btn:focus-visible { border-color: var(--masthead-accent); color: var(--masthead-accent); }
 
   
   .site-footer {
@@ -234,7 +260,10 @@
       <h1 class="report-title" id="topic-title">Wird geladen…</h1>
     </div>
   </header>
-  <main class="topic-body" id="topic-results"></main>
+  <main class="topic-body">
+    <p class="topic-count" id="topic-count"></p>
+    <div id="topic-results"></div>
+  </main>
 
   <footer class="site-footer">
     <a class="footer-link" href="accessibility.html">Barrierefreiheitserklärung</a>
@@ -269,14 +298,121 @@
     to: params.get("to"),
   };
 
+  // Pagination: a filter can match dozens of sections, and each is now shown
+  // with full content (not just a title), so rendering everything matched in
+  // one pass would both bloat the DOM and force fetching every content file
+  // up front. PAGE_SIZE items are rendered per batch instead - full content
+  // stays inline and the user still reads straight down the page without
+  // leaving it (per the brief), they just click "load more" every 15 items
+  // instead of the page loading 100+ full posts at once. A click-to-expand
+  // per item was considered and rejected: it would hide content that's
+  // supposed to already be visible while scrolling, which is the opposite of
+  // what was asked for here.
+  var PAGE_SIZE = 15;
+  var allIds = [];
+  var shownCount = 0;
+  var contentCache = {}; // section id (string) -> {topic_label, comparison_text}
+  var contentFetches = {}; // date -> Promise, so a date already loaded (or in
+                            // flight) for an earlier batch is never re-fetched
+  var loadMoreBtn = null;
+  var currentManifest = null;
+
   fetch(PREFIX + "assets/data/manifest.json")
     .then(function (r) { return r.json(); })
     .then(function (manifest) {
-      var ids = filterSections(manifest, filters);
-      renderTitle(manifest, filters);
-      renderResults(manifest, ids);
+      currentManifest = manifest;
+      allIds = filterSections(manifest, filters);
+      renderTitle(manifest, filters, allIds.length);
+      if (!allIds.length) {
+        renderEmptyState();
+        return;
+      }
+      loadNextBatch();
     })
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  function contentUrlFor(date) {
+    return PREFIX + "assets/data/content/" + date + "_" + LANG + ".json";
+  }
+
+  // Fetches only the content files a given batch actually needs (grouped by
+  // date, deduplicated against files already fetched for a previous batch) -
+  // never the whole filtered set's dates up front. The same function would
+  // serve a future "export matched results to PDF" feature just as well: it
+  // takes any list of dates and guarantees their content is in contentCache
+  // when it resolves, regardless of how the caller assembled that list.
+  function ensureContentLoaded(dates) {
+    var promises = dates.map(function (date) {
+      if (!contentFetches[date]) {
+        contentFetches[date] = fetch(contentUrlFor(date))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            Object.keys(data).forEach(function (sid) { contentCache[sid] = data[sid]; });
+          })
+          .catch(function (err) { console.error("Failed to load content for " + date, err); });
+      }
+      return contentFetches[date];
+    });
+    return Promise.all(promises);
+  }
+
+  function uniqueDates(list) {
+    var seen = {};
+    var out = [];
+    list.forEach(function (d) {
+      if (!seen[d]) { seen[d] = true; out.push(d); }
+    });
+    return out;
+  }
+
+  function loadNextBatch() {
+    var container = document.getElementById("topic-results");
+    if (!container) return;
+    var batch = allIds.slice(shownCount, shownCount + PAGE_SIZE);
+    if (!batch.length) return;
+
+    var loading = document.createElement("p");
+    loading.className = "topic-loading";
+    loading.textContent = LANG === "he" ? "טוען…" : LANG === "de" ? "Wird geladen…" : "Loading…";
+    container.appendChild(loading);
+
+    var dates = uniqueDates(batch.map(function (id) { return currentManifest.sections[id].date; }));
+    ensureContentLoaded(dates).then(function () {
+      loading.remove();
+      batch.forEach(function (id) { renderItem(container, id); });
+      shownCount += batch.length;
+      updateLoadMoreButton(container);
+    });
+  }
+
+  function updateLoadMoreButton(container) {
+    var remaining = allIds.length - shownCount;
+    if (remaining <= 0) {
+      if (loadMoreBtn) loadMoreBtn.style.display = "none";
+      return;
+    }
+    if (!loadMoreBtn) {
+      loadMoreBtn = document.createElement("button");
+      loadMoreBtn.type = "button";
+      loadMoreBtn.className = "load-more-btn";
+      loadMoreBtn.addEventListener("click", loadNextBatch);
+    }
+    var label = LANG === "he" ? "טען עוד" : LANG === "de" ? "Mehr laden" : "Load more";
+    loadMoreBtn.textContent = label + " (" + remaining + ")";
+    loadMoreBtn.style.display = "";
+    container.appendChild(loadMoreBtn); // re-appending an existing node moves it to the end
+  }
+
+  function renderEmptyState() {
+    var container = document.getElementById("topic-results");
+    if (!container) return;
+    var empty = document.createElement("p");
+    empty.className = "topic-empty";
+    empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
+      : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
+      : "No results match this filter.";
+    container.appendChild(empty);
+  }
 
   function filterSections(manifest, f) {
     var ids = Object.keys(manifest.sections).map(Number);
@@ -351,7 +487,7 @@
     return (LANG === "he" ? "עד " : LANG === "de" ? "Bis " : "Until ") + formatLongDate(to);
   }
 
-  function renderTitle(manifest, f) {
+  function renderTitle(manifest, f, count) {
     var parts = [];
     if (f.category && manifest.categories[f.category]) {
       parts.push(manifest.categories[f.category][LABEL_KEY]);
@@ -371,64 +507,72 @@
     if (titleEl) titleEl.textContent = title;
     var suffix = LANG === "he" ? " - גאופוליטיקה יומי" : LANG === "de" ? " - Tägliche Geopolitik" : " - Daily Geopolitics";
     document.title = title + suffix;
+
+    var countEl = document.getElementById("topic-count");
+    if (countEl) {
+      countEl.textContent = LANG === "he" ? count + " תוצאות"
+        : LANG === "de" ? count + " Ergebnisse"
+        : count + " result" + (count === 1 ? "" : "s");
+    }
   }
 
-  function renderResults(manifest, ids) {
-    var container = document.getElementById("topic-results");
-    if (!container) return;
+  function renderItem(container, id) {
+    var section = currentManifest.sections[id];
+    if (!section) return;
+    var content = contentCache[id];
 
-    if (!ids.length) {
-      var empty = document.createElement("p");
-      empty.className = "topic-empty";
-      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
-        : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
-        : "No results match this filter.";
-      container.appendChild(empty);
-      return;
-    }
+    var item = document.createElement("article");
+    item.className = "topic-result";
+    item.dataset.category = section.category;
 
-    ids.forEach(function (id) {
-      var section = manifest.sections[id];
-      if (!section) return;
+    var meta = document.createElement("div");
+    meta.className = "topic-result-meta";
 
-      var item = document.createElement("a");
-      item.className = "topic-result";
-      item.href = hrefFor(section);
-      item.dataset.category = section.category;
+    var dot = document.createElement("span");
+    dot.className = "category-dot";
 
-      var meta = document.createElement("div");
-      meta.className = "topic-result-meta";
+    var label = document.createElement("span");
+    label.className = "category-label";
+    var catInfo = currentManifest.categories[section.category];
+    label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
 
-      var dot = document.createElement("span");
-      dot.className = "category-dot";
+    var dateBadge = document.createElement("span");
+    dateBadge.className = "topic-result-date";
+    dateBadge.textContent = formatShortDate(section.date);
 
-      var label = document.createElement("span");
-      label.className = "category-label";
-      var catInfo = manifest.categories[section.category];
-      label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
+    var permalink = document.createElement("a");
+    permalink.className = "permalink-icon";
+    permalink.href = hrefFor(section);
+    var permalinkLabel = LANG === "he" ? "קישור ישיר לממצא זה בדוח המקורי"
+      : LANG === "de" ? "Permalink zu diesem Eintrag im Originalbericht"
+      : "Permalink to this item in the original report";
+    permalink.title = permalinkLabel;
+    permalink.setAttribute("aria-label", permalinkLabel);
+    permalink.textContent = "🔗";
 
-      var dateBadge = document.createElement("span");
-      dateBadge.className = "topic-result-date";
-      dateBadge.textContent = formatShortDate(section.date);
+    meta.appendChild(dot);
+    meta.appendChild(label);
+    meta.appendChild(dateBadge);
+    meta.appendChild(permalink);
 
-      meta.appendChild(dot);
-      meta.appendChild(label);
-      meta.appendChild(dateBadge);
+    var title = document.createElement("h2");
+    title.className = "topic-result-title";
+    title.textContent = content ? content.topic_label : topicFor(section);
 
-      var title = document.createElement("p");
-      title.className = "topic-result-title";
-      title.textContent = topicFor(section);
+    var text = document.createElement("p");
+    text.className = "topic-result-text";
+    text.textContent = content ? content.comparison_text : "";
 
-      var sources = document.createElement("p");
-      sources.className = "topic-result-sources";
-      var names = manifest.newspaper_display_names || {};
-      sources.textContent = section.sources.map(function (s) { return names[s] || s; }).join(", ");
+    var sources = document.createElement("p");
+    sources.className = "topic-result-sources";
+    var names = currentManifest.newspaper_display_names || {};
+    sources.textContent = section.sources.map(function (s) { return names[s] || s; }).join(", ");
 
-      item.appendChild(meta);
-      item.appendChild(title);
-      item.appendChild(sources);
-      container.appendChild(item);
-    });
+    item.appendChild(meta);
+    item.appendChild(title);
+    item.appendChild(text);
+    item.appendChild(sources);
+    container.appendChild(item);
   }
 })();
 </script>

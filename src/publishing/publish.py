@@ -60,6 +60,7 @@ LOGO_SOURCE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "assets" / 
 FAVICON_SOURCE_DIR = Path(__file__).resolve().parents[2] / "scripts" / "assets"
 MAP_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "map" / "world.svg"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
+CONTENT_DIR_RELATIVE = Path("assets") / "data" / "content"
 
 
 def build_index_html(
@@ -768,6 +769,7 @@ def build_topic_html(lang: str) -> str:
   .report-title {{ margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }}
 
   .topic-body {{ max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }}
+  .topic-count {{ margin: 0 0 1.2rem; font-size: .85rem; color: var(--text-muted); }}
 
   .topic-result {{
     display: flex;
@@ -777,12 +779,9 @@ def build_topic_html(lang: str) -> str:
     border: 1px solid var(--border);
     border-inline-start: 4px solid var(--cat-color, var(--border));
     border-radius: .8rem;
-    padding: 1rem 1.2rem;
-    margin-bottom: .9rem;
-    text-decoration: none;
-    color: inherit;
+    padding: 1.1rem 1.3rem 1.3rem;
+    margin-bottom: 1.1rem;
   }}
-  .topic-result:hover {{ border-color: var(--masthead-accent); }}
   .topic-result-meta {{ display: flex; align-items: center; gap: .6rem; }}
   .category-dot {{ width: .5rem; height: .5rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }}
   .category-label {{
@@ -795,9 +794,37 @@ def build_topic_html(lang: str) -> str:
     white-space: nowrap;
   }}
   .topic-result-date {{ font-size: .78rem; color: var(--text-muted); font-weight: 600; margin-inline-start: auto; }}
-  .topic-result-title {{ margin: 0; font-size: 1.05rem; font-weight: 700; }}
-  .topic-result-sources {{ margin: 0; font-size: .82rem; color: var(--text-muted); }}
-  .topic-empty {{ color: var(--text-muted); font-size: .95rem; }}
+  .permalink-icon {{
+    font-size: .82rem;
+    text-decoration: none;
+    opacity: .5;
+    line-height: 1;
+  }}
+  .permalink-icon:hover, .permalink-icon:focus-visible {{ opacity: 1; }}
+  .topic-result-title {{ margin: .2rem 0 0; font-size: 1.2rem; font-weight: 700; line-height: 1.4; }}
+  .topic-result-text {{ margin: 0; font-size: 1rem; line-height: 1.85; color: var(--text); }}
+  .topic-result-sources {{
+    margin: .3rem 0 0;
+    font-size: .82rem;
+    color: var(--text-muted);
+    padding-top: .6rem;
+    border-top: 1px solid var(--border);
+  }}
+  .topic-empty, .topic-loading {{ color: var(--text-muted); font-size: .95rem; text-align: center; padding: 1rem 0; }}
+  .load-more-btn {{
+    display: block;
+    margin: .5rem auto 0;
+    padding: .65rem 1.6rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-family: inherit;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }}
+  .load-more-btn:hover, .load-more-btn:focus-visible {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
 
   {shared_chrome_css()}
 </style>
@@ -810,7 +837,10 @@ def build_topic_html(lang: str) -> str:
       <h1 class="report-title" id="topic-title">{esc(loading_label)}</h1>
     </div>
   </header>
-  <main class="topic-body" id="topic-results"></main>
+  <main class="topic-body">
+    <p class="topic-count" id="topic-count"></p>
+    <div id="topic-results"></div>
+  </main>
 {build_footer_html(lang, *footer_hrefs_for(lang))}
   <script>{js_code}</script>
 </body>
@@ -849,14 +879,121 @@ _TOPIC_JS_TEMPLATE = """
     to: params.get("to"),
   };
 
+  // Pagination: a filter can match dozens of sections, and each is now shown
+  // with full content (not just a title), so rendering everything matched in
+  // one pass would both bloat the DOM and force fetching every content file
+  // up front. PAGE_SIZE items are rendered per batch instead - full content
+  // stays inline and the user still reads straight down the page without
+  // leaving it (per the brief), they just click "load more" every 15 items
+  // instead of the page loading 100+ full posts at once. A click-to-expand
+  // per item was considered and rejected: it would hide content that's
+  // supposed to already be visible while scrolling, which is the opposite of
+  // what was asked for here.
+  var PAGE_SIZE = 15;
+  var allIds = [];
+  var shownCount = 0;
+  var contentCache = {}; // section id (string) -> {topic_label, comparison_text}
+  var contentFetches = {}; // date -> Promise, so a date already loaded (or in
+                            // flight) for an earlier batch is never re-fetched
+  var loadMoreBtn = null;
+  var currentManifest = null;
+
   fetch(PREFIX + "assets/data/manifest.json")
     .then(function (r) { return r.json(); })
     .then(function (manifest) {
-      var ids = filterSections(manifest, filters);
-      renderTitle(manifest, filters);
-      renderResults(manifest, ids);
+      currentManifest = manifest;
+      allIds = filterSections(manifest, filters);
+      renderTitle(manifest, filters, allIds.length);
+      if (!allIds.length) {
+        renderEmptyState();
+        return;
+      }
+      loadNextBatch();
     })
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  function contentUrlFor(date) {
+    return PREFIX + "assets/data/content/" + date + "_" + LANG + ".json";
+  }
+
+  // Fetches only the content files a given batch actually needs (grouped by
+  // date, deduplicated against files already fetched for a previous batch) -
+  // never the whole filtered set's dates up front. The same function would
+  // serve a future "export matched results to PDF" feature just as well: it
+  // takes any list of dates and guarantees their content is in contentCache
+  // when it resolves, regardless of how the caller assembled that list.
+  function ensureContentLoaded(dates) {
+    var promises = dates.map(function (date) {
+      if (!contentFetches[date]) {
+        contentFetches[date] = fetch(contentUrlFor(date))
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            Object.keys(data).forEach(function (sid) { contentCache[sid] = data[sid]; });
+          })
+          .catch(function (err) { console.error("Failed to load content for " + date, err); });
+      }
+      return contentFetches[date];
+    });
+    return Promise.all(promises);
+  }
+
+  function uniqueDates(list) {
+    var seen = {};
+    var out = [];
+    list.forEach(function (d) {
+      if (!seen[d]) { seen[d] = true; out.push(d); }
+    });
+    return out;
+  }
+
+  function loadNextBatch() {
+    var container = document.getElementById("topic-results");
+    if (!container) return;
+    var batch = allIds.slice(shownCount, shownCount + PAGE_SIZE);
+    if (!batch.length) return;
+
+    var loading = document.createElement("p");
+    loading.className = "topic-loading";
+    loading.textContent = LANG === "he" ? "טוען…" : LANG === "de" ? "Wird geladen…" : "Loading…";
+    container.appendChild(loading);
+
+    var dates = uniqueDates(batch.map(function (id) { return currentManifest.sections[id].date; }));
+    ensureContentLoaded(dates).then(function () {
+      loading.remove();
+      batch.forEach(function (id) { renderItem(container, id); });
+      shownCount += batch.length;
+      updateLoadMoreButton(container);
+    });
+  }
+
+  function updateLoadMoreButton(container) {
+    var remaining = allIds.length - shownCount;
+    if (remaining <= 0) {
+      if (loadMoreBtn) loadMoreBtn.style.display = "none";
+      return;
+    }
+    if (!loadMoreBtn) {
+      loadMoreBtn = document.createElement("button");
+      loadMoreBtn.type = "button";
+      loadMoreBtn.className = "load-more-btn";
+      loadMoreBtn.addEventListener("click", loadNextBatch);
+    }
+    var label = LANG === "he" ? "טען עוד" : LANG === "de" ? "Mehr laden" : "Load more";
+    loadMoreBtn.textContent = label + " (" + remaining + ")";
+    loadMoreBtn.style.display = "";
+    container.appendChild(loadMoreBtn); // re-appending an existing node moves it to the end
+  }
+
+  function renderEmptyState() {
+    var container = document.getElementById("topic-results");
+    if (!container) return;
+    var empty = document.createElement("p");
+    empty.className = "topic-empty";
+    empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
+      : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
+      : "No results match this filter.";
+    container.appendChild(empty);
+  }
 
   function filterSections(manifest, f) {
     var ids = Object.keys(manifest.sections).map(Number);
@@ -931,7 +1068,7 @@ _TOPIC_JS_TEMPLATE = """
     return (LANG === "he" ? "עד " : LANG === "de" ? "Bis " : "Until ") + formatLongDate(to);
   }
 
-  function renderTitle(manifest, f) {
+  function renderTitle(manifest, f, count) {
     var parts = [];
     if (f.category && manifest.categories[f.category]) {
       parts.push(manifest.categories[f.category][LABEL_KEY]);
@@ -951,64 +1088,72 @@ _TOPIC_JS_TEMPLATE = """
     if (titleEl) titleEl.textContent = title;
     var suffix = LANG === "he" ? " - גאופוליטיקה יומי" : LANG === "de" ? " - Tägliche Geopolitik" : " - Daily Geopolitics";
     document.title = title + suffix;
+
+    var countEl = document.getElementById("topic-count");
+    if (countEl) {
+      countEl.textContent = LANG === "he" ? count + " תוצאות"
+        : LANG === "de" ? count + " Ergebnisse"
+        : count + " result" + (count === 1 ? "" : "s");
+    }
   }
 
-  function renderResults(manifest, ids) {
-    var container = document.getElementById("topic-results");
-    if (!container) return;
+  function renderItem(container, id) {
+    var section = currentManifest.sections[id];
+    if (!section) return;
+    var content = contentCache[id];
 
-    if (!ids.length) {
-      var empty = document.createElement("p");
-      empty.className = "topic-empty";
-      empty.textContent = LANG === "he" ? "לא נמצאו תוצאות התואמות את הסינון."
-        : LANG === "de" ? "Keine Ergebnisse entsprechen diesem Filter."
-        : "No results match this filter.";
-      container.appendChild(empty);
-      return;
-    }
+    var item = document.createElement("article");
+    item.className = "topic-result";
+    item.dataset.category = section.category;
 
-    ids.forEach(function (id) {
-      var section = manifest.sections[id];
-      if (!section) return;
+    var meta = document.createElement("div");
+    meta.className = "topic-result-meta";
 
-      var item = document.createElement("a");
-      item.className = "topic-result";
-      item.href = hrefFor(section);
-      item.dataset.category = section.category;
+    var dot = document.createElement("span");
+    dot.className = "category-dot";
 
-      var meta = document.createElement("div");
-      meta.className = "topic-result-meta";
+    var label = document.createElement("span");
+    label.className = "category-label";
+    var catInfo = currentManifest.categories[section.category];
+    label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
 
-      var dot = document.createElement("span");
-      dot.className = "category-dot";
+    var dateBadge = document.createElement("span");
+    dateBadge.className = "topic-result-date";
+    dateBadge.textContent = formatShortDate(section.date);
 
-      var label = document.createElement("span");
-      label.className = "category-label";
-      var catInfo = manifest.categories[section.category];
-      label.textContent = catInfo ? catInfo[LABEL_KEY] : section.category;
+    var permalink = document.createElement("a");
+    permalink.className = "permalink-icon";
+    permalink.href = hrefFor(section);
+    var permalinkLabel = LANG === "he" ? "קישור ישיר לממצא זה בדוח המקורי"
+      : LANG === "de" ? "Permalink zu diesem Eintrag im Originalbericht"
+      : "Permalink to this item in the original report";
+    permalink.title = permalinkLabel;
+    permalink.setAttribute("aria-label", permalinkLabel);
+    permalink.textContent = "🔗";
 
-      var dateBadge = document.createElement("span");
-      dateBadge.className = "topic-result-date";
-      dateBadge.textContent = formatShortDate(section.date);
+    meta.appendChild(dot);
+    meta.appendChild(label);
+    meta.appendChild(dateBadge);
+    meta.appendChild(permalink);
 
-      meta.appendChild(dot);
-      meta.appendChild(label);
-      meta.appendChild(dateBadge);
+    var title = document.createElement("h2");
+    title.className = "topic-result-title";
+    title.textContent = content ? content.topic_label : topicFor(section);
 
-      var title = document.createElement("p");
-      title.className = "topic-result-title";
-      title.textContent = topicFor(section);
+    var text = document.createElement("p");
+    text.className = "topic-result-text";
+    text.textContent = content ? content.comparison_text : "";
 
-      var sources = document.createElement("p");
-      sources.className = "topic-result-sources";
-      var names = manifest.newspaper_display_names || {};
-      sources.textContent = section.sources.map(function (s) { return names[s] || s; }).join(", ");
+    var sources = document.createElement("p");
+    sources.className = "topic-result-sources";
+    var names = currentManifest.newspaper_display_names || {};
+    sources.textContent = section.sources.map(function (s) { return names[s] || s; }).join(", ");
 
-      item.appendChild(meta);
-      item.appendChild(title);
-      item.appendChild(sources);
-      container.appendChild(item);
-    });
+    item.appendChild(meta);
+    item.appendChild(title);
+    item.appendChild(text);
+    item.appendChild(sources);
+    container.appendChild(item);
   }
 })();
 """
@@ -1860,6 +2005,50 @@ def _write_manifest(manifest: dict) -> None:
         dest.write_text(manifest_json, encoding="utf-8")
 
 
+def _write_section_content_files(conn, entries: list[tuple[str, list[str]]]) -> None:
+    """The raw-text sibling of build_manifest()'s `sections` index.
+
+    manifest.json's `sections` deliberately never carries comparison_text (see
+    build_manifest()'s docstring) so it stays small as the archive grows -
+    that invariant doesn't change here. Full trilingual content (topic_label +
+    comparison_text) instead lands in one small JSON file per report date per
+    language, assets/data/content/{date}_{lang}.json, keyed by section id.
+    This is what topic.html's filtered results list fetches lazily, one file
+    per distinct date actually needed for the page/batch currently on screen -
+    never all dates at once, and never embedded in manifest.json.
+
+    Splitting by BOTH date and language (not one combined file per date, or
+    one giant all-dates file) keeps each fetch small regardless of how large
+    the archive grows or how many languages exist: measured on the 2026-09-22
+    archive (31 dates, 1538 sections), a single date's content in one language
+    is 5-180KB (median ~35-50KB) of raw text, vs. 586KB for all 3 languages
+    combined in the worst-case date - and a monolithic all-dates file would
+    already be several MB and only grow. Same per-date grouping the pipeline
+    already uses elsewhere (render_report(conn, date), get_report_sections_for_date)
+    - not a new unit of work, just a new (smaller, text-only) output format for
+    an existing one. A future consumer needing this same "everything about X
+    between date A and B" query server-side (e.g. weekly-digest synthesis)
+    would query report_sections directly via SQL, not read these JSON files -
+    these exist purely as a browser-fetchable cache of the same underlying
+    rows, generated at publish time like every other docs/ artifact.
+    """
+    for report_date, _sources in entries:
+        by_lang: dict[str, dict[str, dict]] = {lang: {} for lang in ALL_LANGS}
+        for s in get_report_sections_for_date(conn, report_date):
+            section_id = str(s["id"])
+            for lang in ALL_LANGS:
+                by_lang[lang][section_id] = {
+                    "topic_label": s[f"topic_label_{lang}"],
+                    "comparison_text": s[f"comparison_text_{lang}"],
+                }
+        for lang, content in by_lang.items():
+            payload = json.dumps(content, ensure_ascii=False)
+            for base_dir in (DOCS_DIR, REPORTS_DIR):
+                dest = base_dir / CONTENT_DIR_RELATIVE / f"{report_date}_{lang}.json"
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(payload, encoding="utf-8")
+
+
 def run() -> None:
     conn = get_connection()
     init_db(conn)
@@ -1880,12 +2069,12 @@ def run() -> None:
     # build_homepage_html() now needs manifest["countries"] to statically
     # tag the map's accessibility markup - see _load_map_svg_inline().
     manifest = build_manifest(conn, entries)
+    _write_section_content_files(conn, entries)
     conn.close()
 
-    # German (added 2026-09-22) covers archive/about/topic - the pages explicitly in
-    # scope for the trilingual expansion (see CLAUDE.md) - but not accessibility.html/
-    # terms.html or the homepage, which stay bilingual for now; those two blocks below
-    # are guarded accordingly rather than looping ALL_LANGS unconditionally.
+    # All three languages build every page type below - German joined
+    # archive/about/topic/accessibility/terms/homepage together on 2026-09-22
+    # (see CLAUDE.md); no per-page-type language guard remains.
     for lang in ALL_LANGS:
         archive_html = build_index_html(
             entries,
@@ -1950,6 +2139,7 @@ def run() -> None:
 
     _write_manifest(manifest)
     print(f"  wrote manifest.json ({len(manifest['sections'])} section(s), {len(manifest['countries'])} countrie(s))")
+    print(f"  wrote {len(entries) * len(ALL_LANGS)} section-content file(s) under assets/data/content/")
 
     print(f"\nPublish complete: {len(entries)} report date(s) -> {DOCS_DIR}")
 
