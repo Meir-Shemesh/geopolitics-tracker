@@ -1311,20 +1311,24 @@ def build_topic_html(lang: str) -> str:
 
   {shared_chrome_css()}
 
-  /* Export/print (2026-09-24) - browser print only, no server-side generation.
-     One rule set for every result count: hide interactive-only chrome (nav,
-     footer already via shared_chrome_css, filter panel, load-more, the export
-     controls themselves) and strip card decoration to save ink. A SEPARATE
-     compact mode (body.print-compact-mode, set by JS when the filtered count
-     exceeds COMPACT_PRINT_THRESHOLD - see _TOPIC_JS_TEMPLATE) swaps each full
-     card for the one-line date/source/headline summary already computed at
-     render time (.print-compact-line) instead of the full comparison text -
-     printing hundreds of full multi-sentence comparisons defeats the point of
-     a reference export, so large sets get a dense list instead. Small/medium
-     sets keep the full readable card, matching this page's whole premise
-     (full content inline, not just titles) - see PROJECT_LOG for why 150 was
-     chosen as the same number as the size heads-up threshold, not a second
-     unrelated constant. */
+  /* Export/print (2026-09-24, compact threshold raised 2026-09-24 after real
+     usage feedback - see PROJECT_LOG) - browser print only, no server-side
+     generation. One rule set for every result count: hide interactive-only
+     chrome (nav, footer already via shared_chrome_css, filter panel,
+     load-more, the export controls themselves) and strip card decoration to
+     save ink. A SEPARATE compact mode (body.print-compact-mode, set by JS
+     when the filtered count exceeds COMPACT_PRINT_THRESHOLD - see
+     _TOPIC_JS_TEMPLATE) swaps each full card for the one-line
+     date/source/headline summary already computed at render time
+     (.print-compact-line) instead of the full comparison text - printing
+     hundreds of full multi-sentence comparisons defeats the point of a
+     reference export, so very large sets get a dense list instead.
+     Small/medium sets (now up to 500, not 150 - a real 182-result export
+     reducing to headline-only lines felt wrong in practice) keep the full
+     readable card, matching this page's whole premise (full content inline,
+     not just titles). This is now a SEPARATE, higher threshold than the
+     export note's size heads-up wording (still ~150) - see PROJECT_LOG for
+     why they started as one shared number and were split apart. */
   @media print {{
     .top-nav, .filter-panel-wrapper, .load-more-btn, .topic-loading,
     .filter-suggestion-banner, .export-controls, .permalink-icon {{ display: none !important; }}
@@ -1444,15 +1448,26 @@ _TOPIC_JS_TEMPLATE = """
   // literally zero - a 4-dimension AND filter can easily land on 1-2 results
   // even though each dimension alone has plenty.
   var FEW_RESULTS_THRESHOLD = 5;
-  // Export/print (2026-09-24): same number as the "large result set" heads-up
-  // note below and as the print stylesheet's compact-mode switch - one
-  // "large" threshold, not three unrelated constants that could drift apart.
-  // See PROJECT_LOG for why 150 specifically.
-  var COMPACT_PRINT_THRESHOLD = 150;
-  // Rough estimate only (compact print line at 9pt/1.4 line-height on
-  // A4/Letter with normal margins) - used purely to phrase the heads-up note
-  // ("roughly N pages"), never to block or cap anything.
-  var LINES_PER_PAGE_ESTIMATE = 45;
+  // Export/print, two SEPARATE thresholds (split 2026-09-24 after real usage
+  // feedback - originally one shared number, 150, for both; see PROJECT_LOG).
+  // EXPORT_NOTE_THRESHOLD: above this, the on-screen note switches to the
+  // explicit size heads-up wording - unchanged from the original spec (~150).
+  var EXPORT_NOTE_THRESHOLD = 150;
+  // COMPACT_PRINT_THRESHOLD: above this, @media print swaps full cards for
+  // one-line summaries (body.print-compact-mode). Raised 150 -> 500: a
+  // 182-result export triggering headline-only printing felt wrong in
+  // practice - reducing genuinely browsable-sized result sets (not just
+  // whole-archive-sized ones like a common region's 896) to bare headlines
+  // defeated the point of a reading-list export. 500 is still well short of
+  // the largest real filters seen (e.g. "Europe" ~900), so those still get
+  // the compact list they need to stay usable as a reference export.
+  var COMPACT_PRINT_THRESHOLD = 500;
+  // Rough estimates only, for the heads-up note's "roughly N pages" - which
+  // constant applies depends on which print layout will actually be used
+  // (see updateExportNote()), never to block or cap anything.
+  var LINES_PER_PAGE_ESTIMATE = 45; // compact mode: one line/result at 9pt
+  var FULL_CARD_RESULTS_PER_PAGE_ESTIMATE = 4; // full-card mode: much rougher,
+                                                 // comparison-text length varies a lot
   var allIds = [];
   var shownCount = 0;
   var contentCache = {}; // section id (string) -> {topic_label, comparison_text}
@@ -1507,13 +1522,18 @@ _TOPIC_JS_TEMPLATE = """
       noteEl.textContent = "";
       return;
     }
-    if (count <= COMPACT_PRINT_THRESHOLD) {
+    if (count <= EXPORT_NOTE_THRESHOLD) {
       noteEl.textContent = LANG === "he" ? "ייצוא " + count + " תוצאות"
         : LANG === "de" ? count + " Ergebnisse exportieren"
         : "Exporting " + count + " result" + (count === 1 ? "" : "s");
       return;
     }
-    var pages = Math.max(1, Math.round(count / LINES_PER_PAGE_ESTIMATE));
+    // Page estimate must match whichever layout will actually print - above
+    // COMPACT_PRINT_THRESHOLD that's the dense one-line-per-result mode,
+    // below it (but still over EXPORT_NOTE_THRESHOLD) it's still full cards,
+    // which fit far fewer per page.
+    var perPage = count > COMPACT_PRINT_THRESHOLD ? LINES_PER_PAGE_ESTIMATE : FULL_CARD_RESULTS_PER_PAGE_ESTIMATE;
+    var pages = Math.max(1, Math.round(count / perPage));
     noteEl.textContent = LANG === "he" ? "זה יכלול כ-" + count + " תוצאות, בערך " + pages + " עמודים"
       : LANG === "de" ? "Dies umfasst etwa " + count + " Ergebnisse, ungefähr " + pages + " Seiten"
       : "This will include ~" + count + " results across roughly " + pages + " pages";
