@@ -54,7 +54,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `python -m src.analysis.screen` - שלב א' של Analysis (סינון רחב, Haiku). אופציונלי: `--file <מחרוזת בשם הקובץ>` להגבלה לקובץ יחיד לצורך בדיקה.
 - `python -m src.analysis.analyze` - שלב ב' של Analysis (ניתוח מעמיק, Sonnet, כולל תיוג גיאוגרפי). אופציונלי: `--file-id <int>` להגבלה לקובץ יחיד לצורך בדיקה.
 - `python -m src.analysis.geo_tag_backfill` - מתייג בדיעבד מאמרים קיימים שחסר להם תיוג גיאוגרפי (בקבוצות, Haiku זול). אופציונלי: `--date <YYYY-MM-DD>` להגבלה לתאריך יחיד לצורך בדיקה. בטוח להרצה חוזרת - מאמר שכבר תויג לא מתעבד שוב.
-- `python -m src.reporting.synthesize --date <YYYY-MM-DD>` - שלב א' של Reporting. אופציונלי: `--force` למחיקה ובנייה מחדש של דוח קיים לאותו תאריך.
+- `python -m src.reporting.synthesize --date <YYYY-MM-DD>` - שלב א' של Reporting. אופציונלי: `--force` למחיקה ובנייה מחדש של דוח קיים לאותו תאריך; `--dry-run` להרצה בלי כתיבה ל-DB; `--stage1-model <model-id>` להרצת שלב 1 (קיבוץ-לנושאים בלבד, לא שלב 2) עם מודל אחר - ברירת-מחדל היא מודל-הייצור (`claude-sonnet-5`, `tool_choice` כפוי), ללא הדגל אין שום שינוי-התנהגות. לניסויים מבוקרים בלבד (ראו PROJECT_LOG 4.48 להיסטוריה: `claude-opus-5-5` דורש `tool_choice: auto` דווקא - הבחירה בקוד תלויה-מודל, לא ערך קבוע אחד לכולם).
 - `python -m src.reporting.render --date <YYYY-MM-DD>` - שלב ב' של Reporting, מפיק 4 קבצים (HTML+PDF × עברית+אנגלית) מתוך דוח שכבר נבנה ע"י `synthesize.py`.
 - `python -m src.publishing.publish` - שלב Publishing, בונה/מעדכן את `docs/` מתוך כל התאריכים הקיימים ב-`reports/`. בלי דגלים, תמיד דורס.
 - `python -m unittest discover -s tests -v` - הטסטים (מהשורש; שניות ספורות, בלי API ובלי `tracker.db`).

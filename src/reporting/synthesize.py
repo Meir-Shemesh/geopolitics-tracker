@@ -132,22 +132,45 @@ def format_articles_compact(articles) -> str:
     return "\n\n".join(blocks)
 
 
-def group_articles_into_topics(client: anthropic.Anthropic, articles) -> tuple[list[dict], dict]:
+def group_articles_into_topics(client: anthropic.Anthropic, articles, model: str = MODEL) -> tuple[list[dict], dict]:
+    """`model` defaults to the production Stage 1 model (MODEL) - the parameter
+    exists so a controlled experiment can swap just this one call (e.g. to
+    compare Sonnet vs. Opus on the known "mostly unassigned" failure mode,
+    2026-09-23) without touching Stage 2 or any other part of the pipeline.
+    Not wired to any production behavior change unless --stage1-model is
+    passed explicitly - see run()'s argparse default.
+
+    tool_choice is model-conditional, not a single fixed value - discovered
+    2026-09-23 running the model-comparison experiment referenced above, in
+    that order:
+    1. claude-opus-5-5 rejects forced tool_choice outright (400 "tool_choice:
+       type 'tool' and 'any' are not supported for this model" - the same
+       restriction the Fable 5.1 family has), so it requires {"type": "auto"}
+       plus an explicit "call the tool" instruction.
+    2. Switching Sonnet to that same "auto" mode as a blanket fix broke
+       Sonnet badly: repeated real runs on the 2026-09-18/21 inputs went from
+       8/8 successful under forced tool_choice to 3/8 under auto, each
+       failure burning the full 16,000-token output budget on free-text
+       reasoning instead of calling the tool. Forced tool_choice measurably
+       helps Sonnet specifically - auto is a requirement for Opus 5.5, not a
+       general improvement, and reverting Sonnet to forced was necessary to
+       avoid a real reliability regression in production."""
     articles_text = format_articles_compact(articles)
+    forced_tool_choice_incompatible = model == "claude-opus-5-5"
+    tool_choice = {"type": "auto"} if forced_tool_choice_incompatible else {"type": "tool", "name": "record_topic_groups"}
+    user_content = f"Today's articles ({len(articles)} total):\n\n{articles_text}"
+    if forced_tool_choice_incompatible:
+        user_content += "\n\nCall record_topic_groups exactly once with your grouping - do not respond with plain text."
+
     response = client.messages.create(
-        model=MODEL,
+        model=model,
         max_tokens=16000,  # well under the ~21,333 non-streaming cutoff for this model
         thinking={"type": "adaptive"},
         output_config={"effort": "medium"},
         system=STAGE1_SYSTEM_PROMPT,
         tools=[GROUP_TOOL],
-        tool_choice={"type": "tool", "name": "record_topic_groups"},
-        messages=[
-            {
-                "role": "user",
-                "content": f"Today's articles ({len(articles)} total):\n\n{articles_text}",
-            }
-        ],
+        tool_choice=tool_choice,
+        messages=[{"role": "user", "content": user_content}],
     )
     usage = {
         "input_tokens": response.usage.input_tokens,
@@ -155,7 +178,13 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles) -> tuple[l
         "cache_creation_input_tokens": getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
         "cache_read_input_tokens": getattr(response.usage, "cache_read_input_tokens", 0) or 0,
     }
-    tool_use = next(b for b in response.content if b.type == "tool_use")
+    tool_use = next((b for b in response.content if b.type == "tool_use"), None)
+    if tool_use is None:
+        print(
+            f"  warning: stage-1 grouping response had no tool_use block at all "
+            f"(stop_reason={response.stop_reason}) - treating as 0 topics."
+        )
+        return [], usage
     topics = tool_use.input.get("topics")
     if not isinstance(topics, list):
         print(
@@ -297,15 +326,21 @@ def compute_missing_ids(sections, valid_ids: set) -> set:
     return valid_ids - seen
 
 
-def synthesize_day_two_stage(client: anthropic.Anthropic, articles) -> tuple[list[dict], list[dict]]:
+def synthesize_day_two_stage(
+    client: anthropic.Anthropic, articles, stage1_model: str = MODEL
+) -> tuple[list[dict], list[dict]]:
     """Returns (sections, usage_log). sections omits any article stage 1 didn't assign,
     or whose topic failed stage 2 twice - run()'s existing fallback loop covers those,
-    unchanged, exactly as it already does for any other gap."""
+    unchanged, exactly as it already does for any other gap.
+
+    stage1_model only ever affects the two group_articles_into_topics() calls
+    below (initial attempt + retry) - Stage 2 (write_topic_comparison) always
+    uses MODEL regardless, per the 2026-09-23 experiment's explicit scope."""
     valid_ids = {a["id"] for a in articles}
     articles_by_id = {a["id"]: a for a in articles}
     usage_log: list[dict] = []
 
-    topics, stage1_usage = group_articles_into_topics(client, articles)
+    topics, stage1_usage = group_articles_into_topics(client, articles, model=stage1_model)
     usage_log.append({**stage1_usage, "stage": 1})
     unassigned = compute_missing_ids(topics, valid_ids)
     ratio = (len(unassigned) / len(valid_ids)) if valid_ids else 0
@@ -315,7 +350,7 @@ def synthesize_day_two_stage(client: anthropic.Anthropic, articles) -> tuple[lis
             f"  stage 1: {ratio:.0%} of articles unassigned exceeds {GROUPING_RATIO_THRESHOLD:.0%} "
             f"- retrying grouping once."
         )
-        retry_topics, retry_usage = group_articles_into_topics(client, articles)
+        retry_topics, retry_usage = group_articles_into_topics(client, articles, model=stage1_model)
         usage_log.append({**retry_usage, "stage": 1})
         retry_unassigned = compute_missing_ids(retry_topics, valid_ids)
         retry_ratio = (len(retry_unassigned) / len(valid_ids)) if valid_ids else 0
@@ -371,7 +406,7 @@ def synthesize_day_two_stage(client: anthropic.Anthropic, articles) -> tuple[lis
     return sections, usage_log
 
 
-def run(report_date: str, force: bool = False, dry_run: bool = False) -> None:
+def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_model: str = MODEL) -> None:
     load_dotenv()
 
     conn = get_connection()
@@ -403,11 +438,13 @@ def run(report_date: str, force: bool = False, dry_run: bool = False) -> None:
         f"Synthesizing {report_date}{' (DRY RUN - no DB writes)' if dry_run else ''}: "
         f"{len(articles)} article(s) from {len(sources)} source(s) ({', '.join(sources)})."
     )
+    if stage1_model != MODEL:
+        print(f"  *** EXPERIMENT: stage 1 running with model={stage1_model} instead of the production default ({MODEL}) ***")
 
     client = anthropic.Anthropic()
     valid_ids = {a["id"] for a in articles}
 
-    sections, usage_log = synthesize_day_two_stage(client, articles)
+    sections, usage_log = synthesize_day_two_stage(client, articles, stage1_model=stage1_model)
     missing = compute_missing_ids(sections, valid_ids)
     coverage_ratio = 1 - ((len(missing) / len(valid_ids)) if valid_ids else 0)
     print(
@@ -515,5 +552,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Run both stages and print results/usage stats without writing to the DB at all.",
     )
+    parser.add_argument(
+        "--stage1-model",
+        default=MODEL,
+        help=(
+            "Model for stage 1 (topic grouping) only - stage 2 always uses the production "
+            f"model ({MODEL}) regardless. Defaults to the production model, so omitting this "
+            "flag changes nothing. For controlled experiments only - see PROJECT_LOG 2026-09-23."
+        ),
+    )
     args = parser.parse_args()
-    run(report_date=args.date, force=args.force, dry_run=args.dry_run)
+    run(report_date=args.date, force=args.force, dry_run=args.dry_run, stage1_model=args.stage1_model)
