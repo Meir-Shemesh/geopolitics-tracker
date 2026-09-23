@@ -33,6 +33,7 @@ from src.reporting.render import (
     CATEGORY_LABELS,
     CONTACT_EMAIL,
     CONTACT_LABEL,
+    FILTER_LABEL,
     FAVICON_FILENAMES,
     FONT_FAMILY,
     FONT_FILENAME,
@@ -72,6 +73,7 @@ def build_index_html(
     asset_prefix: str,
     accessibility_href: str = "accessibility.html",
     terms_href: str = "terms.html",
+    filter_href: str = "filter.html",
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
@@ -212,6 +214,7 @@ def build_index_html(
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
+      <a class="top-nav-link" href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
       {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
       <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
     </div>
@@ -2001,9 +2004,10 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     # topic.html has the same root-copy quirk as about.html (lives only under
     # docs/{lang}/, never at the site root) - same fix as about_href above.
     topic_prefix = "he/" if is_root else ""
-    # accessibility.html/terms.html follow the same no-root-copy convention.
+    # accessibility.html/terms.html/filter.html follow the same no-root-copy convention.
     accessibility_href = "he/accessibility.html" if is_root else "accessibility.html"
     terms_href = "he/terms.html" if is_root else "terms.html"
+    filter_href = "he/filter.html" if is_root else "filter.html"
 
     page_title = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     eyebrow = page_title
@@ -2303,6 +2307,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   <div class="home-top-bar">
     <img class="home-logo" src="{asset_prefix}assets/images/MS_Logo.png" alt="">
     <div class="home-top-bar-links">
+      <a href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
       {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
       <a href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
     </div>
@@ -2700,6 +2705,7 @@ def run() -> None:
         asset_prefix="",
         accessibility_href="he/accessibility.html",
         terms_href="he/terms.html",
+        filter_href="he/filter.html",
     )
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")
