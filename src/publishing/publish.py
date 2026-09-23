@@ -1132,6 +1132,7 @@ def build_topic_html(lang: str) -> str:
     eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     loading_label = {"he": "טוען…", "en": "Loading…", "de": "Wird geladen…"}[lang]
     edit_filter_label = {"he": "ערוך סינון", "en": "Edit filter", "de": "Filter bearbeiten"}[lang]
+    export_label = {"he": "ייצוא / הדפסה", "en": "Export / Print", "de": "Exportieren / Drucken"}[lang]
 
     # The panel embeds the exact same builder component as the standalone
     # filter.html page (_filter_builder_form_html() + _FILTER_BUILDER_JS_TEMPLATE)
@@ -1289,9 +1290,70 @@ def build_topic_html(lang: str) -> str:
   }}
   .load-more-btn:hover, .load-more-btn:focus-visible {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
 
+  .export-controls {{ display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; margin: -.4rem 0 1.4rem; }}
+  .export-print-btn {{
+    font-family: inherit;
+    font-size: .85rem;
+    font-weight: 600;
+    padding: .5rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    background: var(--bg-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }}
+  .export-print-btn:hover, .export-print-btn:focus-visible {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
+  .export-print-btn:disabled {{ opacity: .5; cursor: default; }}
+  .export-note {{ font-size: .8rem; color: var(--text-muted); }}
+  .print-compact-line {{ display: none; }}
+
   {_filter_builder_css()}
 
   {shared_chrome_css()}
+
+  /* Export/print (2026-09-24) - browser print only, no server-side generation.
+     One rule set for every result count: hide interactive-only chrome (nav,
+     footer already via shared_chrome_css, filter panel, load-more, the export
+     controls themselves) and strip card decoration to save ink. A SEPARATE
+     compact mode (body.print-compact-mode, set by JS when the filtered count
+     exceeds COMPACT_PRINT_THRESHOLD - see _TOPIC_JS_TEMPLATE) swaps each full
+     card for the one-line date/source/headline summary already computed at
+     render time (.print-compact-line) instead of the full comparison text -
+     printing hundreds of full multi-sentence comparisons defeats the point of
+     a reference export, so large sets get a dense list instead. Small/medium
+     sets keep the full readable card, matching this page's whole premise
+     (full content inline, not just titles) - see PROJECT_LOG for why 150 was
+     chosen as the same number as the size heads-up threshold, not a second
+     unrelated constant. */
+  @media print {{
+    .top-nav, .filter-panel-wrapper, .load-more-btn, .topic-loading,
+    .filter-suggestion-banner, .export-controls, .permalink-icon {{ display: none !important; }}
+
+    body {{ background: #fff; color: #000; }}
+    .masthead {{ border-bottom-color: #000; }}
+    .topic-result {{
+      border: none;
+      border-inline-start: none;
+      border-bottom: 1px solid #999;
+      border-radius: 0;
+      background: none;
+      padding: .6rem 0;
+      margin: 0;
+      break-inside: avoid;
+    }}
+    .topic-result-sources {{ border-top: none; padding-top: 0; }}
+
+    body.print-compact-mode .topic-result {{ padding: .12rem 0; }}
+    body.print-compact-mode .topic-result-meta,
+    body.print-compact-mode .topic-result-title,
+    body.print-compact-mode .topic-result-text,
+    body.print-compact-mode .topic-result-sources {{ display: none; }}
+    body.print-compact-mode .print-compact-line {{
+      display: block;
+      font-size: 9pt;
+      line-height: 1.4;
+    }}
+  }}
 </style>
 </head>
 <body>
@@ -1310,6 +1372,10 @@ def build_topic_html(lang: str) -> str:
   </div>
   <main class="topic-body">
     <p class="topic-count" id="topic-count"></p>
+    <div class="export-controls">
+      <button type="button" class="export-print-btn" id="export-print-btn" disabled>{esc(export_label)}</button>
+      <span class="export-note" id="export-note"></span>
+    </div>
     <div id="topic-results"></div>
   </main>
 {build_footer_html(lang, *footer_hrefs_for(lang))}
@@ -1378,6 +1444,15 @@ _TOPIC_JS_TEMPLATE = """
   // literally zero - a 4-dimension AND filter can easily land on 1-2 results
   // even though each dimension alone has plenty.
   var FEW_RESULTS_THRESHOLD = 5;
+  // Export/print (2026-09-24): same number as the "large result set" heads-up
+  // note below and as the print stylesheet's compact-mode switch - one
+  // "large" threshold, not three unrelated constants that could drift apart.
+  // See PROJECT_LOG for why 150 specifically.
+  var COMPACT_PRINT_THRESHOLD = 150;
+  // Rough estimate only (compact print line at 9pt/1.4 line-height on
+  // A4/Letter with normal margins) - used purely to phrase the heads-up note
+  // ("roughly N pages"), never to block or cap anything.
+  var LINES_PER_PAGE_ESTIMATE = 45;
   var allIds = [];
   var shownCount = 0;
   var contentCache = {}; // section id (string) -> {topic_label, comparison_text}
@@ -1399,6 +1474,8 @@ _TOPIC_JS_TEMPLATE = """
 
       allIds = filterSections(manifest, filters);
       renderTitle(manifest, filters, allIds.length);
+      document.body.classList.toggle("print-compact-mode", allIds.length > COMPACT_PRINT_THRESHOLD);
+      wireExportButton();
       var container = document.getElementById("topic-results");
       if (!allIds.length) {
         renderFilterBanner(container, filters, manifest, "empty");
@@ -1416,6 +1493,50 @@ _TOPIC_JS_TEMPLATE = """
     var panel = document.getElementById("filter-builder-panel");
     if (!btn || !panel) return;
     btn.addEventListener("click", function () { panel.hidden = !panel.hidden; });
+  }
+
+  // Soft warning, never a hard cap: for large result sets the note just says
+  // so, in words, before the click - no confirmation dialog, no disabled
+  // button past a size limit. Printing itself is unaffected by count; only
+  // the wording and the compact-vs-full layout (see the @media print CSS)
+  // change.
+  function updateExportNote(count) {
+    var noteEl = document.getElementById("export-note");
+    if (!noteEl) return;
+    if (!count) {
+      noteEl.textContent = "";
+      return;
+    }
+    if (count <= COMPACT_PRINT_THRESHOLD) {
+      noteEl.textContent = LANG === "he" ? "ייצוא " + count + " תוצאות"
+        : LANG === "de" ? count + " Ergebnisse exportieren"
+        : "Exporting " + count + " result" + (count === 1 ? "" : "s");
+      return;
+    }
+    var pages = Math.max(1, Math.round(count / LINES_PER_PAGE_ESTIMATE));
+    noteEl.textContent = LANG === "he" ? "זה יכלול כ-" + count + " תוצאות, בערך " + pages + " עמודים"
+      : LANG === "de" ? "Dies umfasst etwa " + count + " Ergebnisse, ungefähr " + pages + " Seiten"
+      : "This will include ~" + count + " results across roughly " + pages + " pages";
+  }
+
+  function wireExportButton() {
+    var btn = document.getElementById("export-print-btn");
+    if (!btn) return;
+    updateExportNote(allIds.length);
+    btn.disabled = !allIds.length;
+    if (btn.dataset.wired) return; // filters don't change without a full page load, but guard anyway
+    btn.dataset.wired = "1";
+    var defaultLabel = btn.textContent;
+    var loadingLabel = LANG === "he" ? "מכין…" : LANG === "de" ? "Wird vorbereitet…" : "Preparing…";
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      btn.textContent = loadingLabel;
+      loadAllRemaining().then(function () {
+        btn.textContent = defaultLabel;
+        btn.disabled = false;
+        window.print();
+      });
+    });
   }
 
   function contentUrlFor(date) {
@@ -1454,9 +1575,9 @@ _TOPIC_JS_TEMPLATE = """
 
   function loadNextBatch() {
     var container = document.getElementById("topic-results");
-    if (!container) return;
+    if (!container) return Promise.resolve();
     var batch = allIds.slice(shownCount, shownCount + PAGE_SIZE);
-    if (!batch.length) return;
+    if (!batch.length) return Promise.resolve();
 
     var loading = document.createElement("p");
     loading.className = "topic-loading";
@@ -1464,12 +1585,28 @@ _TOPIC_JS_TEMPLATE = """
     container.appendChild(loading);
 
     var dates = uniqueDates(batch.map(function (id) { return currentManifest.sections[id].date; }));
-    ensureContentLoaded(dates).then(function () {
+    // Returns the promise (not fire-and-forget) so callers - specifically the
+    // export/print button's "load everything, then print" sequence below -
+    // can chain onto real completion instead of guessing a delay.
+    return ensureContentLoaded(dates).then(function () {
       loading.remove();
       batch.forEach(function (id) { renderItem(container, id); });
       shownCount += batch.length;
       updateLoadMoreButton(container);
     });
+  }
+
+  // Recursively drains every remaining batch (beyond whatever pagination has
+  // already loaded on screen) before the export/print button calls
+  // window.print() - printing only ever captures what's actually in the DOM,
+  // and pagination deliberately keeps most of a large result set un-rendered
+  // until "load more" is clicked. Sequential, not parallel, batches: content
+  // fetches are already deduped/cached per date (ensureContentLoaded), so
+  // this costs nothing extra beyond normal pagination, just runs it to
+  // completion instead of one click at a time.
+  function loadAllRemaining() {
+    if (shownCount >= allIds.length) return Promise.resolve();
+    return loadNextBatch().then(loadAllRemaining);
   }
 
   function updateLoadMoreButton(container) {
@@ -1715,12 +1852,22 @@ _TOPIC_JS_TEMPLATE = """
     var sources = document.createElement("p");
     sources.className = "topic-result-sources";
     var names = currentManifest.newspaper_display_names || {};
-    sources.textContent = section.sources.map(function (s) { return names[s] || s; }).join(", ");
+    var sourcesText = section.sources.map(function (s) { return names[s] || s; }).join(", ");
+    sources.textContent = sourcesText;
+
+    // Print-only (see @media print / body.print-compact-mode): a single
+    // "date · sources · headline" line, precomputed here rather than derived
+    // from the full card via CSS, so the print stylesheet just toggles
+    // visibility instead of trying to reassemble text across elements.
+    var printLine = document.createElement("p");
+    printLine.className = "print-compact-line";
+    printLine.textContent = formatShortDate(section.date) + " · " + sourcesText + " · " + (content ? content.topic_label : topicFor(section));
 
     item.appendChild(meta);
     item.appendChild(title);
     item.appendChild(text);
     item.appendChild(sources);
+    item.appendChild(printLine);
     container.appendChild(item);
   }
 })();
