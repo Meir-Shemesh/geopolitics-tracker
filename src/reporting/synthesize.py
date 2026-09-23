@@ -19,6 +19,7 @@ Independent one-shot run - not a long-running daemon.
 
 import argparse
 import json
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -289,15 +290,61 @@ def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_artic
     return usage, comparison
 
 
+# Cheap symptom-catching guard (2026-09-24, PROJECT_LOG action item 45) - NOT
+# full content-quality validation, and not a claim about root cause (still
+# unknown, and only two real data points exist - see PROJECT_LOG). Catches
+# the two concrete failure shapes actually observed in the wild: a
+# comparison_text field that's suspiciously short (a single word or a bare
+# number, e.g. "0" or "only"), or one carrying a leftover HTML/XML tag
+# fragment (e.g. "</ant") - both look like truncated/malformed model output,
+# not a legitimate short-but-complete sentence (the shortest real comparisons
+# seen in production run well over 100 characters).
+SUSPICIOUS_OUTPUT_MIN_LENGTH = 50
+_SUSPICIOUS_TAG_FRAGMENT = re.compile(r"</\w+")
+_SUSPICIOUS_BARE_NUMBER = re.compile(r"^\d+$")
+
+
+def _looks_suspicious(text: str) -> bool:
+    if not text or len(text) < SUSPICIOUS_OUTPUT_MIN_LENGTH:
+        return True
+    return bool(_SUSPICIOUS_TAG_FRAGMENT.search(text) or _SUSPICIOUS_BARE_NUMBER.match(text.strip()))
+
+
 def write_topic_comparison_with_retry(client, topic, topic_articles):
     """One quick retry on failure; returns None (not an exception) if both attempts fail -
     the caller treats that topic's articles as needing individual fallback, exactly like
-    any article stage 1 never assigned. A single topic's failure must never block the rest."""
+    any article stage 1 never assigned. A single topic's failure must never block the rest.
+
+    Retries once (not just on exceptions, since 2026-09-24) when the response
+    came back successfully but comparison_text_he/en/de looks suspicious per
+    _looks_suspicious() - a single automatic retry, per the explicit scope
+    given for this guard. If the retry is ALSO suspicious (or throws), this
+    still returns None rather than accepting known-bad content into a real
+    section - falling through to the same existing per-article fallback any
+    other kind of stage-2 failure already uses, not a new failure path."""
     for attempt in range(2):
         try:
-            return write_topic_comparison(client, topic, topic_articles)
+            usage, comparison = write_topic_comparison(client, topic, topic_articles)
         except Exception as exc:
             print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} failed: {exc}")
+            continue
+        suspicious_langs = [
+            lang for lang in ("he", "en", "de")
+            if _looks_suspicious(comparison[f"comparison_text_{lang}"])
+        ]
+        if suspicious_langs and attempt == 0:
+            print(
+                f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} produced suspicious "
+                f"output in: {', '.join(suspicious_langs)} - retrying once."
+            )
+            continue
+        if suspicious_langs:
+            print(
+                f"  topic '{topic['topic_label_en']}' still suspicious after retry "
+                f"({', '.join(suspicious_langs)}) - treating as failed, falling back per-article."
+            )
+            return None
+        return usage, comparison
     return None
 
 
