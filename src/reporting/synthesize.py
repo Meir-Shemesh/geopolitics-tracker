@@ -209,6 +209,8 @@ STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor for a geopolitical news-mo
 
 Your task: write a comparative analysis (a few sentences to a short paragraph) of how the sources covering this topic frame it differently - their differing emphasis, stance, or angle - not a neutral summary of "what happened." If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), treat them as ONE voice for that newspaper in your narrative - do not present that newspaper's position on the same event twice, even though you were given both ids. If only one source covers the topic, describe that source's stance/angle on its own.
 
+Attribution: some articles carry an "author (byline)" line - this marks a named opinion columnist or a signed letter/op-ed, not straight institutional reporting. When an article has a named author, attribute its claim/stance to that PERSON, not to the newspaper as an institution - for example "In his column in The Los Angeles Times, Jonah Goldberg argues..." or "In a letter to The Guardian, Mergen Mongush writes...", never "The Los Angeles Times argues..." for that same piece. Reserve institutional phrasing ("The Guardian reports...", "Die Welt argues...") for articles with no author line - these are presumed to be unsigned reporting or an unsigned editorial position, where attributing the newspaper itself is correct. When a topic mixes both (a signed column alongside unsigned reporting from other sources), attribute each article according to its own author line - do not let one override the other.
+
 Reference sources by name only - never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en/de, in any language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report..." - never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one into the other (and not a translation of comparison_text_he or comparison_text_en into German either - compose comparison_text_de independently, from the same source articles).
 
 Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt", "The New York Times International", "The Wall Street Journal", "Los Angeles Times", "USA Today", "The Washington Post", "The Economist", "Der Spiegel". This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name.
@@ -240,8 +242,11 @@ COMPARE_TOOL = {
 def format_articles_for_prompt(articles) -> str:
     blocks = []
     for a in articles:
+        author = (a["author"] or "").strip()
+        author_line = f"  author (byline): {author}\n" if author else ""
         blocks.append(
             f"id={a['id']} | newspaper={a['newspaper']} | headline: {a['headline']}\n"
+            f"{author_line}"
             f"  original topic tag: {a['region_topic']}\n"
             f"  stance: {a['stance_summary']}\n"
             f'  excerpt: "{a["key_excerpt"]}"'

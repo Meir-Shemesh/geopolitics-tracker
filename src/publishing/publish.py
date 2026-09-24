@@ -15,7 +15,7 @@ same convention as render.py.
 import json
 import re
 import shutil
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from src.common.about_content import CONTENT, render_sections_html
@@ -62,6 +62,17 @@ FAVICON_SOURCE_DIR = Path(__file__).resolve().parents[2] / "scripts" / "assets"
 MAP_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "map" / "world.svg"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
 CONTENT_DIR_RELATIVE = Path("assets") / "data" / "content"
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DB_PATH = PROJECT_ROOT / "data" / "processed" / "tracker.db"
+# Sibling of the repo (established 2026-09-20, PROJECT_LOG 4.44's README) - already
+# outside git, already inside the project's own OneDrive-synced folder tree. Not
+# moved here - see PROJECT_LOG for why an explicit dated-snapshot mechanism is still
+# worth having even though OneDrive already mirrors the live file continuously.
+BACKUP_DIR = PROJECT_ROOT.parent / "geopolitics-tracker-backups"
+BACKUP_FILENAME_RE = re.compile(r"^tracker_(\d{4}-\d{2}-\d{2})\.db$")
+BACKUP_RECENT_DAYS = 14  # keep every daily backup this fresh, in full
+BACKUP_MAX_DAYS = 60  # beyond BACKUP_RECENT_DAYS but within this, keep Sundays only
 
 
 def build_index_html(
@@ -2786,6 +2797,83 @@ def _write_section_content_files(conn, entries: list[tuple[str, list[str]]]) -> 
                 dest.write_text(payload, encoding="utf-8")
 
 
+def _apply_backup_retention() -> None:
+    """Thins BACKUP_DIR's dated tracker_*.db snapshots so the set doesn't grow
+    without bound as the live DB itself grows (109MB and rising as of
+    2026-09-24 - see PROJECT_LOG). Policy: every daily snapshot from the last
+    BACKUP_RECENT_DAYS is kept in full; beyond that and within BACKUP_MAX_DAYS,
+    only Sundays survive; beyond BACKUP_MAX_DAYS, none do. The single most
+    recent snapshot is never deleted, full stop, regardless of what the policy
+    computes for it - a safety invariant, not just the expected outcome of the
+    date math, in case of a clock issue or a bug here."""
+    if not BACKUP_DIR.exists():
+        return
+    dated_files: list[tuple[date, Path]] = []
+    for p in BACKUP_DIR.iterdir():
+        m = BACKUP_FILENAME_RE.match(p.name)
+        if not m:
+            continue
+        try:
+            dated_files.append((date.fromisoformat(m.group(1)), p))
+        except ValueError:
+            continue
+    if not dated_files:
+        return
+
+    most_recent = max(d for d, _ in dated_files)
+    today = date.today()
+
+    for d, p in dated_files:
+        if d == most_recent:
+            continue
+        age_days = (today - d).days
+        if age_days <= BACKUP_RECENT_DAYS:
+            keep = True
+        elif age_days <= BACKUP_MAX_DAYS:
+            keep = d.weekday() == 6  # Sunday
+        else:
+            keep = False
+        if not keep:
+            try:
+                p.unlink()
+                print(f"  backup retention: removed {p.name} (age {age_days}d, outside retention policy)")
+            except Exception as exc:
+                print(f"  *** WARNING: could not remove old backup {p.name}: {exc} ***")
+
+
+def backup_database() -> None:
+    """Copies the live tracker.db to BACKUP_DIR (a sibling of the repo,
+    established 2026-09-20 - see that folder's README.txt) with a run-date
+    filename, then applies retention. Called once at the very end of a
+    successful run() - after publish, never blocking it. A backup failure of
+    any kind is logged as a warning and swallowed, not raised: this function
+    runs after docs/ has already been written, so failing loudly here would
+    make an otherwise-successful publish look broken over what is, at worst,
+    one missed backup opportunity - the next run tries again tomorrow.
+
+    Why a dedicated mechanism at all, given the whole project already lives
+    inside OneDrive (which mirrors tracker.db's current bytes continuously)?
+    OneDrive sync gives redundancy against losing this one machine, but not
+    recoverability to a specific earlier point in time (e.g. "put the DB back
+    to how it was right after 2026-09-22's run, before some later script
+    touched a row") - that needs actual dated, distinct snapshots, which is
+    exactly what this provides and OneDrive's own sync does not, by itself."""
+    try:
+        if not DB_PATH.exists():
+            print(f"  backup skipped: {DB_PATH} not found")
+            return
+        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+        dest = BACKUP_DIR / f"tracker_{date.today().isoformat()}.db"
+        if dest.exists():
+            print(f"  backup: {dest.name} already exists for today - not overwriting")
+        else:
+            shutil.copy2(DB_PATH, dest)
+            print(f"  backup: wrote {dest}")
+        _apply_backup_retention()
+    except Exception as exc:
+        print(f"  *** WARNING: DB backup failed ({exc}) - pipeline result above is unaffected ***")
+
+
 def run() -> None:
     conn = get_connection()
     init_db(conn)
@@ -2886,6 +2974,8 @@ def run() -> None:
     print(f"  wrote {len(entries) * len(ALL_LANGS)} section-content file(s) under assets/data/content/")
 
     print(f"\nPublish complete: {len(entries)} report date(s) -> {DOCS_DIR}")
+
+    backup_database()
 
 
 if __name__ == "__main__":

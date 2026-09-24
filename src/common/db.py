@@ -336,7 +336,7 @@ def insert_article(
 
 def get_articles_for_date(conn: sqlite3.Connection, report_date: str):
     query = f"""
-        SELECT a.id, a.newspaper, a.headline, a.region_topic, a.stance_summary, a.key_excerpt
+        SELECT a.id, a.newspaper, a.headline, a.region_topic, a.stance_summary, a.key_excerpt, a.author
         FROM articles a
         JOIN downloaded_files df ON df.id = a.file_id
         WHERE {REPORT_DATE_SQL} = ?
