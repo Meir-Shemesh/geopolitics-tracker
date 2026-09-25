@@ -2857,18 +2857,26 @@ def backup_database() -> None:
     recoverability to a specific earlier point in time (e.g. "put the DB back
     to how it was right after 2026-09-22's run, before some later script
     touched a row") - that needs actual dated, distinct snapshots, which is
-    exactly what this provides and OneDrive's own sync does not, by itself."""
+    exactly what this provides and OneDrive's own sync does not, by itself.
+
+    Always overwrites today's dated file if one already exists (changed
+    2026-09-25 - see PROJECT_LOG action item 53/4.54): a day with more than
+    one successful publish run (not rare - 2026-09-24 had several) used to
+    keep only the FIRST run's snapshot for that whole day, silently going
+    stale relative to every later run the same day. The retention policy
+    (BACKUP_RECENT_DAYS/BACKUP_MAX_DAYS, below) is keyed on the file's
+    calendar date either way, so overwriting same-day doesn't change how
+    many distinct days of history are kept - only which moment within
+    "today" the day's single snapshot reflects (the latest, not the first)."""
     try:
         if not DB_PATH.exists():
             print(f"  backup skipped: {DB_PATH} not found")
             return
         BACKUP_DIR.mkdir(parents=True, exist_ok=True)
         dest = BACKUP_DIR / f"tracker_{date.today().isoformat()}.db"
-        if dest.exists():
-            print(f"  backup: {dest.name} already exists for today - not overwriting")
-        else:
-            shutil.copy2(DB_PATH, dest)
-            print(f"  backup: wrote {dest}")
+        overwriting = dest.exists()
+        shutil.copy2(DB_PATH, dest)
+        print(f"  backup: {'overwrote' if overwriting else 'wrote'} {dest} (latest state as of this run)")
         _apply_backup_retention()
     except Exception as exc:
         print(f"  *** WARNING: DB backup failed ({exc}) - pipeline result above is unaffected ***")
