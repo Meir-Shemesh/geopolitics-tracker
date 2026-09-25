@@ -9,6 +9,7 @@ output. One-shot run - not a long-running daemon.
 """
 
 import argparse
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -55,7 +56,9 @@ For every distinct piece of geopolitical opinion, analysis, or commentary you ca
 
 A piece qualifies as "geopolitical" only if it concerns international relations, foreign policy, cross-border conflicts, diplomacy, sanctions, geopolitical economics, or a similar international/cross-border dimension. Exclude opinion pieces about purely domestic policy that have no such dimension, even if they are legitimate, substantive political commentary - for example, exclude an op-ed arguing about a domestic pension reform, or one about retail workers' wages and unionization, if neither has an international angle. Also exclude news-brief items, factual reporting without an opinion angle, and content unrelated to geopolitics (culture, sport, lifestyle, etc.).
 
-If nothing on the page qualifies, call record_articles with an empty articles list.""".format(country_list=country_list_prompt_text())
+If nothing on the page qualifies, call record_articles with an empty articles list.
+
+Enforcement of the geopolitical bar above (2026-09-25, PROJECT_LOG 4.56/4.57 - tested against 7 real cases where this was previously violated): if a piece does not meet it, do NOT include it in the articles list with a stance_summary explaining that it "is not applicable" or "is non-geopolitical" or similar - that is a contradiction (an excluded piece should never appear in your output at all). Catching yourself about to write a stance_summary that says a piece isn't geopolitical is itself the signal to leave that piece out of the articles list entirely, not to include it anyway with a caveat.""".format(country_list=country_list_prompt_text())
 
 ANALYZE_TOOL = {
     "name": "record_articles",
@@ -99,7 +102,67 @@ ANALYZE_TOOL = {
 }
 
 
-def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str) -> list[dict]:
+# Structural signature check (not content-based) for a Letters to the Editor
+# page - confirmed present, in the first ~200 chars where the page's own
+# running header/section label sits, in WSJ ("LETTERS TO THE EDITOR") and
+# Süddeutsche Zeitung ("Leserbriefe"/"LESERBRIEFE") via a full-archive scan
+# (2026-09-25, PROJECT_LOG 4.55/4.56). Die Welt showed no equivalent marker
+# across several German synonyms tried in that scan - a known, undocumented
+# gap, not assumed covered; is_letters_page() returns False for a Die Welt
+# letters page, same as for any newspaper not in this list, and that page
+# falls through to ordinary per-item judgment with no extra scrutiny.
+LETTERS_PAGE_MARKERS = ("LETTERS TO THE EDITOR", "LESERBRIEFE", "Leserbriefe")
+
+
+def is_letters_page(raw_text: str) -> bool:
+    head = raw_text[:200]
+    return any(m in head for m in LETTERS_PAGE_MARKERS)
+
+
+_LETTERS_PAGE_NOTE = (
+    "Note: this page has been structurally identified as a Letters to the Editor page. "
+    "Most reader letters are personal opinions on domestic matters with no international "
+    "dimension and should be excluded per the rules above - apply this scrutiny to each "
+    "letter individually, not by excluding the whole page: a letter that substantively "
+    "concerns international relations, foreign policy, sanctions, or a named cross-border "
+    "conflict still qualifies and should be included normally.\n"
+)
+
+# Code-level safety net (2026-09-25, PROJECT_LOG 4.56/4.57) for the same
+# instability the enforcement instruction above targets - confirmed non-
+# deterministic across repeated calls on at least one dense, multi-item page
+# during testing (the same page returned three different subsets of its
+# content across three calls, one of them re-including a piece the model had
+# excluded before). Anchored at the start of stance_summary (not a bare
+# substring-anywhere check) because every real observed case took this exact
+# shape - "Not applicable - ...", "N/A - this is...", "Not geopolitical -
+# excluded.", "Not a geopolitical piece; excluded from analysis." - an
+# anchored match is far less likely to misfire on a legitimate article whose
+# stance_summary happens to discuss geopolitical relevance deeper in the
+# text. Same generic-code-safety-net pattern as _looks_suspicious() in
+# synthesize.py - a backstop for the prompt instruction, not a replacement
+# for it.
+_SELF_EXCLUSION_RE = re.compile(
+    r"^(not applicable|n/a\b|not geopolitical|non-geopolitical|not a geopolitical)",
+    re.IGNORECASE,
+)
+
+
+def filter_self_tagged_articles(articles: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Returns (kept, excluded). An article is excluded only when its own
+    stance_summary opens by saying it isn't geopolitical/applicable - the
+    model's own words, not a judgment call made here."""
+    kept, excluded = [], []
+    for a in articles:
+        if _SELF_EXCLUSION_RE.match(a["stance_summary"].strip()):
+            excluded.append(a)
+        else:
+            kept.append(a)
+    return kept, excluded
+
+
+def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_letters_page_: bool = False) -> list[dict]:
+    letters_note = _LETTERS_PAGE_NOTE if is_letters_page_ else ""
     response = client.messages.create(
         model=MODEL,
         max_tokens=8192,
@@ -108,7 +171,7 @@ def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str) -> 
         system=SYSTEM_PROMPT,
         tools=[ANALYZE_TOOL],
         tool_choice={"type": "tool", "name": "record_articles"},
-        messages=[{"role": "user", "content": f"Newspaper: {newspaper}\nPage text:\n\n{raw_text}"}],
+        messages=[{"role": "user", "content": f"Newspaper: {newspaper}\n{letters_note}Page text:\n\n{raw_text}"}],
     )
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return tool_use.input["articles"]
@@ -126,13 +189,15 @@ def run(file_id: int | None = None) -> None:
     pages_analyzed = 0
     pages_failed = 0
     total_articles = 0
+    total_self_excluded = 0
 
     for page in pages:
         newspaper = page["newspaper"]
         language = NEWSPAPER_LANGUAGES.get(newspaper, "")
+        letters_page = is_letters_page(page["raw_text"])
 
         try:
-            articles = analyze_page(client, newspaper, page["raw_text"])
+            articles = analyze_page(client, newspaper, page["raw_text"], is_letters_page_=letters_page)
             if not isinstance(articles, list):
                 raise TypeError(f"expected a list of articles, got {type(articles).__name__}")
             required_keys = {
@@ -151,6 +216,14 @@ def run(file_id: int | None = None) -> None:
             pages_failed += 1
             print(f"  failed: file_id={page['file_id']} page={page['page_number']} ({exc})")
             continue
+
+        articles, self_excluded = filter_self_tagged_articles(articles)
+        for a in self_excluded:
+            print(
+                f"  auto-excluded (self-tagged non-geopolitical): file_id={page['file_id']} "
+                f"page={page['page_number']} headline={a['headline']!r}"
+            )
+        total_self_excluded += len(self_excluded)
 
         now = datetime.now(timezone.utc).isoformat()
         for article in articles:
@@ -179,7 +252,8 @@ def run(file_id: int | None = None) -> None:
 
     print(
         f"\nAnalysis: {pages_analyzed} page(s) analyzed, {pages_failed} page(s) failed, "
-        f"{total_articles} article(s) identified in total"
+        f"{total_articles} article(s) identified in total, "
+        f"{total_self_excluded} article(s) auto-excluded (self-tagged non-geopolitical)"
     )
 
 
