@@ -138,6 +138,30 @@ def guess_newspaper(file_name: str) -> str | None:
     return None
 
 
+# Sources temporarily suspended from download pending investigation - distinct
+# in kind from a permanent dead-source exclusion baked directly into
+# guess_newspaper() above (NYT): guess_newspaper() still correctly identifies
+# a suspended source as itself (it isn't "not an MVP source"), this set is
+# checked separately in fetch_channel(), and the expectation is this set goes
+# back to empty once the root cause is understood or resolved - not that an
+# entry stays here indefinitely. See PROJECT_LOG 4.59/4.60 for the
+# investigation each entry is tracking.
+SUSPENDED_SOURCES: set[str] = {
+    # Added 2026-09-26: tradingref.com-family corruption 3 days running
+    # (23.9 id=225, 24.9 id=235, 25.9 id=246 - two different defect shapes,
+    # same problem family - see PROJECT_LOG 4.59/4.60), all excluded from
+    # Screening by hand each day rather than caught before download. This is
+    # a suspension-for-investigation, not a conclusion that the source itself
+    # is unsustainable like NYT (whose failure was structural - image-only
+    # end to end, confirmed across two different editions). Remove this entry
+    # once the corruption's root cause is understood or resolved, whichever
+    # comes first - not once WSJ "just happens" to come back clean one day
+    # (25.9's WSJ file that DID come back clean was the Weekend edition, a
+    # different product from the daily one that's actually been failing).
+    "Wall Street Journal",
+}
+
+
 async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int = 200) -> dict:
     print(f"  connecting to {channel}...", flush=True)
     entity = await client.get_entity(channel)
@@ -147,6 +171,8 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
     found = 0
     skipped_not_mvp = 0
     skipped_existing = 0
+    skipped_suspended = 0
+    skipped_download_failed = 0
     downloaded = 0
     scanned = 0
 
@@ -166,6 +192,9 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
         if newspaper is None:
             skipped_not_mvp += 1
             continue
+        if newspaper in SUSPENDED_SOURCES:
+            skipped_suspended += 1
+            continue
 
         if is_downloaded(conn, channel, message.id):
             skipped_existing += 1
@@ -183,6 +212,7 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
         # unexplained ~3-hour one with nothing printed in between.
         print(f"  downloading: {file_name}...", flush=True)
         download_start = datetime.now(timezone.utc)
+        download_failed = False
         while True:
             try:
                 await client.download_media(message, file=str(local_path))
@@ -190,6 +220,24 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
             except FloodWaitError as e:
                 print(f"  flood-wait: Telegram asked us to sleep {e.seconds}s before retrying {file_name}", flush=True)
                 await asyncio.sleep(e.seconds)
+            except Exception as exc:
+                # 2026-09-26: a message can be persistently undownloadable from
+                # Telegram's own side (seen here: repeated internal-server
+                # timeouts on one file, reproduced identically across two
+                # separate whole-script runs - not a one-off network blip that
+                # a bare retry would clear). Previously any non-FloodWaitError
+                # exception here crashed fetch_channel() entirely, silently
+                # losing every other message still left to scan that run. Skip
+                # just this one message instead - is_downloaded() stays False
+                # for it, so it's retried fresh (not silently abandoned) the
+                # next time fetch.py runs, same as any other not-yet-downloaded
+                # message.
+                print(f"  *** WARNING: download failed for {file_name} ({exc}) - skipping this message, not the whole run ***", flush=True)
+                skipped_download_failed += 1
+                download_failed = True
+                break
+        if download_failed:
+            continue
         download_seconds = (datetime.now(timezone.utc) - download_start).total_seconds()
 
         mark_downloaded(
@@ -209,6 +257,8 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
         "found": found,
         "skipped_not_mvp": skipped_not_mvp,
         "skipped_existing": skipped_existing,
+        "skipped_suspended": skipped_suspended,
+        "skipped_download_failed": skipped_download_failed,
         "downloaded": downloaded,
     }
 
@@ -234,6 +284,8 @@ async def run() -> None:
         f"\n{CHANNEL}: found {stats['found']} PDF(s), "
         f"skipped {stats['skipped_not_mvp']} (not an MVP source), "
         f"skipped {stats['skipped_existing']} (already downloaded), "
+        f"skipped {stats['skipped_suspended']} (source suspended - see SUSPENDED_SOURCES), "
+        f"skipped {stats['skipped_download_failed']} (download failed - will retry next run), "
         f"downloaded {stats['downloaded']} new"
     )
 
