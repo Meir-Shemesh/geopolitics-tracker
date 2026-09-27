@@ -258,6 +258,168 @@ def category_css() -> str:
     )
 
 
+# Site-wide base color tokens (2026-09-27 palette refresh, approved from design
+# mockups before rollout - see PROJECT_LOG). Single source of truth for every
+# page's :root block, consumed via theme_tokens_css() below instead of each
+# page builder hardcoding its own near-duplicate copy - 7 separate hardcoded
+# blocks (1 here, 6 in publish.py) had drifted into existence before this
+# refresh. Not every page uses every token (--pill-*/--chip-selected-text are
+# report/homepage-specific) - an unused custom property is harmless, so the
+# same full union applies everywhere rather than tracking a bespoke per-page
+# subset.
+#
+# --pill-bg/--pill-text/--pill-border deliberately reuse --bg-elevated/--text/
+# --border rather than getting distinct values of their own - the refresh's
+# design brief only specified the 7 primary tokens below (plus the new
+# --accent2); dark-mode --pill-text was already identical to dark-mode --text
+# under the pre-refresh palette, so this isn't a new pattern. --chip-selected-
+# text (publish.py's homepage-only token) keeps its pre-refresh values
+# unchanged (#ffffff light / #2a1210 dark) - checked by hand against the new
+# --masthead-accent values before keeping them (WCAG contrast ~8.23:1 light,
+# ~5.53:1 dark, both clear of the 4.5:1 AA minimum for normal text).
+LIGHT_TOKENS = {
+    "--bg": "#e8dfc9",
+    "--bg-elevated": "#fffbf2",
+    "--text": "#1c1712",
+    "--text-muted": "#5f5240",
+    "--border": "#cdb98d",
+    "--masthead-accent": "#8f2c22",
+    "--accent2": "#a8702f",
+    "--pill-bg": "#fffbf2",
+    "--pill-text": "#1c1712",
+    "--pill-border": "#cdb98d",
+    "--chip-selected-text": "#ffffff",
+}
+
+DARK_TOKENS = {
+    "--bg": "#1b1815",
+    "--bg-elevated": "#242019",
+    "--text": "#f1ebe0",
+    "--text-muted": "#b6ac98",
+    "--border": "#3c3527",
+    "--masthead-accent": "#df6f5f",
+    "--accent2": "#dba75c",
+    "--pill-bg": "#242019",
+    "--pill-text": "#f1ebe0",
+    "--pill-border": "#3c3527",
+    "--chip-selected-text": "#2a1210",
+}
+
+
+def theme_tokens_css() -> str:
+    """The standard 3-block token structure (bare :root for light, the
+    prefers-color-scheme+:not([data-theme="light"]) pair for automatic dark,
+    and :root[data-theme="dark"] for the manual toggle - see CLAUDE.md's
+    theming rule) built once from LIGHT_TOKENS/DARK_TOKENS above. Every page
+    builder calls this instead of hardcoding its own copy of the same three
+    blocks, so a future palette change touches one place, not seven."""
+    light_body = "\n    ".join(f"{k}: {v};" for k, v in LIGHT_TOKENS.items())
+    dark_body_nested = "\n      ".join(f"{k}: {v};" for k, v in DARK_TOKENS.items())
+    dark_body_flat = "\n    ".join(f"{k}: {v};" for k, v in DARK_TOKENS.items())
+    return f"""  :root {{
+    {light_body}
+  }}
+
+  @media (prefers-color-scheme: dark) {{
+    :root:not([data-theme="light"]) {{
+      {dark_body_nested}
+    }}
+  }}
+  :root[data-theme="dark"] {{
+    {dark_body_flat}
+  }}"""
+
+
+def print_force_light_css() -> str:
+    """A :root rule, meant to be nested inside an @media print block, that
+    pins every color token (base + per-category) back to its light value with
+    !important. Printing must never reflect a live page's dark-mode state -
+    system-level (prefers-color-scheme) or the manual toggle's localStorage
+    choice - whether that's WeasyPrint's server-side PDF render (which never
+    sees a dark [data-theme] anyway, so this is a no-op safety net there) or a
+    real visitor hitting Ctrl+P / topic.html's own window.print() export on a
+    page they'd switched to dark. Both :root[data-theme="dark"] and the
+    :not([data-theme="light"]) media-query pairing carry selector specificity
+    (0,2,0) - a plain @media print { :root {...} } at (0,1,0) would not
+    reliably beat them without !important, so this follows the same
+    !important convention already used elsewhere in this codebase for must-
+    win-regardless-of-cascade print overrides (e.g. .section-body[hidden]
+    above). Custom properties resolve at the point of use, so overriding the
+    --tok-{key}-color/-bg category tokens here is enough to also fix any
+    element that reads them through --cat-color/--cat-bg (see category_css())
+    - no need to also override those derived properties separately."""
+    base = "\n    ".join(f"{k}: {v} !important;" for k, v in LIGHT_TOKENS.items())
+    category = "\n    ".join(
+        f"--tok-{key}-color: {color} !important;\n    --tok-{key}-bg: {bg} !important;"
+        for key, (color, bg, _, _) in CATEGORY_STYLES.items()
+    )
+    return f"""  :root {{
+    {base}
+    {category}
+  }}"""
+
+
+THEME_TOGGLE_LABEL = {"he": "מצב כהה", "en": "Dark mode", "de": "Dunkelmodus"}
+
+
+def theme_toggle_html(lang: str) -> str:
+    """A small circular toggle button, styled like the existing nav pills -
+    click flips :root[data-theme] between "light"/"dark" (see
+    THEME_TOGGLE_SCRIPT_HTML) and remembers the choice in localStorage. No
+    stored choice at all (the default, and what a fresh visitor/incognito
+    window sees) leaves data-theme unset, so prefers-color-scheme keeps
+    deciding exactly as before this refresh - this button only ever *adds* an
+    override, it never replaces the automatic system-preference behavior. The
+    two icon spans are shown/hidden by the SAME three-block CSS selectors as
+    the color tokens (see the .theme-toggle rules in shared_chrome_css())
+    rather than by JS, so the visible icon can never drift out of sync with
+    the actually-active theme. aria-pressed starts at "false" in the markup
+    and is corrected on load by __syncThemeToggles() (see
+    THEME_TOGGLE_SCRIPT_HTML) - never left to guess client state at build
+    time, since the real answer depends on the visitor's own localStorage/OS
+    setting, neither of which exists at build time."""
+    label = esc(THEME_TOGGLE_LABEL[lang])
+    return (
+        f'<button type="button" class="theme-toggle" onclick="__toggleTheme()" '
+        f'aria-label="{label}" aria-pressed="false">'
+        f'<span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span>'
+        f'<span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span>'
+        f"</button>"
+    )
+
+
+THEME_TOGGLE_SCRIPT_HTML = """<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>"""
+
+
 def esc(text: str) -> str:
     return html.escape(text)
 
@@ -298,11 +460,12 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
         for other in other_langs(lang) if other in lang_hrefs
     )
     contact_link = f'\n      <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>'
+    toggle_button = f"\n      {theme_toggle_html(lang)}"
     return f"""
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{filter_link}{lang_links}{pdf_link}{contact_link}
+      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{filter_link}{lang_links}{pdf_link}{contact_link}{toggle_button}
     </div>
   </nav>"""
 
@@ -356,8 +519,39 @@ def shared_chrome_css() -> str:
     outline: 2px solid var(--masthead-accent);
     outline-offset: 2px;
   }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
   @media print {
     .site-footer { display: none; }
+    .theme-toggle { display: none; }
   }"""
 
 
@@ -517,6 +711,7 @@ def build_report_html(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html("../")}
 <style>
@@ -524,42 +719,7 @@ def build_report_html(
 
   {category_css()}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-    --pill-bg: #ffffff;
-    --pill-text: #3a352e;
-    --pill-border: #ddd3c2;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-      --pill-bg: #2a2620;
-      --pill-text: #ece7dd;
-      --pill-border: #453f33;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-    --pill-bg: #2a2620;
-    --pill-text: #ece7dd;
-    --pill-border: #453f33;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -832,6 +992,7 @@ def build_report_html(
       margin: 2cm 1.8cm;
       @bottom-center {{ content: counter(page) " / " counter(pages); font-size: 9px; color: #888; }}
     }}
+{print_force_light_css()}
     body {{ background: #fff; }}
     .top-nav {{ display: none; }}
     .category-nav {{ display: none; }}

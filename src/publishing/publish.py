@@ -42,6 +42,7 @@ from src.reporting.render import (
     LOGO_LINK_LABEL,
     NEWSPAPER_DISPLAY_NAMES,
     OTHER_LANG,
+    THEME_TOGGLE_SCRIPT_HTML,
     build_footer_html,
     build_nav_html,
     category_css,
@@ -50,8 +51,11 @@ from src.reporting.render import (
     font_face_css,
     footer_hrefs_for,
     other_langs,
+    print_force_light_css,
     section_coverage,
     shared_chrome_css,
+    theme_toggle_html,
+    theme_tokens_css,
 )
 
 REPORTS_DIR = Path(__file__).resolve().parents[2] / "reports"
@@ -112,38 +116,13 @@ def build_index_html(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html(asset_prefix)}
 <style>
   {font_face_css(font_relative_path)}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -228,6 +207,7 @@ def build_index_html(
       <a class="top-nav-link" href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
       {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
       <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
+      {theme_toggle_html(lang)}
     </div>
   </nav>
   <header class="masthead">
@@ -264,38 +244,13 @@ def build_about_html(lang: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html("../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -433,38 +388,13 @@ def _build_static_page_html(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html("../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -1013,6 +943,7 @@ def build_filter_html(lang: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html("../")}
 <style>
@@ -1020,33 +951,7 @@ def build_filter_html(lang: str) -> str:
 
   {category_css()}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -1159,6 +1064,7 @@ def build_topic_html(lang: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html("../")}
 <style>
@@ -1166,33 +1072,7 @@ def build_topic_html(lang: str) -> str:
 
   {category_css()}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -1341,9 +1221,19 @@ def build_topic_html(lang: str) -> str:
      export note's size heads-up wording (still ~150) - see PROJECT_LOG for
      why they started as one shared number and were split apart. */
   @media print {{
+{print_force_light_css()}
     .top-nav, .filter-panel-wrapper, .load-more-btn, .topic-loading,
     .filter-suggestion-banner, .export-controls, .permalink-icon {{ display: none !important; }}
 
+    /* body/masthead below are still hardcoded to plain black/white rather than
+       reading the tokens print_force_light_css() just pinned above - that's
+       deliberate, not a leftover: this print layout already intentionally
+       strips all color for a plain paper look (see .topic-result below, which
+       also drops to plain #999 borders/no background), so it was never
+       theme-dependent color to begin with. print_force_light_css() exists
+       here specifically to close the *category-badge* gap (--tok-{{key}}-
+       color/-bg, read through --cat-color/--cat-bg on .category-badge) - the
+       one thing on this page that WAS still theme-dependent in print. */
     body {{ background: #fff; color: #000; }}
     .masthead {{ border-bottom-color: #000; }}
     .topic-result {{
@@ -2249,6 +2139,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html(asset_prefix)}
 <style>
@@ -2256,41 +2147,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 
   {category_css()}
 
-  :root {{
-    --bg: #f3efe8;
-    --bg-elevated: #fffdfa;
-    --text: #221f1b;
-    --text-muted: #6d675e;
-    --border: #e4ddd0;
-    --masthead-accent: #7a2e2a;
-    --chip-selected-text: #ffffff;
-  }}
-
-  @media (prefers-color-scheme: dark) {{
-    :root:not([data-theme="light"]) {{
-      --bg: #16140f;
-      --bg-elevated: #211e18;
-      --text: #ece7dd;
-      --text-muted: #a89f91;
-      --border: #3a352b;
-      --masthead-accent: #d68b86;
-      /* --masthead-accent flips to a light dusty pink in dark mode, so the
-         selected-chip text (previously hardcoded white) needs its own
-         theme-aware token too - white-on-light-pink measured at 2.66:1 in a
-         2026-09-16 WCAG audit, well under the 4.5:1 minimum; this dark value
-         measures 6.62:1 against the dark-mode accent. */
-      --chip-selected-text: #2a1210;
-    }}
-  }}
-  :root[data-theme="dark"] {{
-    --bg: #16140f;
-    --bg-elevated: #211e18;
-    --text: #ece7dd;
-    --text-muted: #a89f91;
-    --border: #3a352b;
-    --masthead-accent: #d68b86;
-    --chip-selected-text: #2a1210;
-  }}
+{theme_tokens_css()}
 
   * {{ box-sizing: border-box; }}
 
@@ -2488,6 +2345,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
       <a href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
       {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
       <a href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
+      {theme_toggle_html(lang)}
     </div>
   </div>
   <header class="masthead">
