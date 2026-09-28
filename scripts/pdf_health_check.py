@@ -24,6 +24,7 @@ Run before Screening on newly downloaded files:
 Read-only against tracker.db and the raw PDF files - never modifies either.
 """
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -92,7 +93,13 @@ def _print_result(label: str, r: dict) -> None:
     print(f"  [{verdict:7s}] {label}  ({reason_str})")
 
 
-def run(file_name_contains: str | None = None) -> None:
+def run(file_name_contains: str | None = None, as_json: bool = False) -> dict:
+    """Returns {"checked": [...], "ok": [...], "suspects": [...]} - each entry
+    {"id", "file_name"} - so a caller (like scripts/daily_autorun.py) can act
+    on the verdict programmatically instead of scraping the printed text.
+    `as_json` only changes what's printed to stdout, not what's returned -
+    the human-readable path (as_json=False, the pre-existing default) is
+    unchanged so existing manual usage keeps working exactly as before."""
     conn = get_connection()
     init_db(conn)
     if file_name_contains:
@@ -106,24 +113,33 @@ def run(file_name_contains: str | None = None) -> None:
         ).fetchall()
     conn.close()
 
+    summary = {"checked": [], "ok": [], "suspects": []}
     if not rows:
-        print("No matching files found (nothing pending extraction, or --file matched nothing).")
-        return
+        if as_json:
+            print(json.dumps(summary))
+        else:
+            print("No matching files found (nothing pending extraction, or --file matched nothing).")
+        return summary
 
-    print(f"Checking {len(rows)} file(s)...\n")
-    suspects = []
+    if not as_json:
+        print(f"Checking {len(rows)} file(s)...\n")
     for row in rows:
         result = check_pdf(Path(row["local_path"]))
-        label = f"id={row['id']:<4d} {row['file_name']}"
-        _print_result(label, result)
-        if result["suspect"]:
-            suspects.append((row["id"], row["file_name"]))
+        entry = {"id": row["id"], "file_name": row["file_name"]}
+        summary["checked"].append(entry)
+        (summary["suspects"] if result["suspect"] else summary["ok"]).append(entry)
+        if not as_json:
+            _print_result(f"id={row['id']:<4d} {row['file_name']}", result)
 
-    print(f"\nVERDICT: {len(suspects)} suspect file(s) of {len(rows)} checked.")
-    if suspects:
-        print("Do not run Screening on these until reviewed:")
-        for file_id, file_name in suspects:
-            print(f"  id={file_id}  {file_name}")
+    if as_json:
+        print(json.dumps(summary))
+    else:
+        print(f"\nVERDICT: {len(summary['suspects'])} suspect file(s) of {len(summary['checked'])} checked.")
+        if summary["suspects"]:
+            print("Do not run Screening on these until reviewed:")
+            for entry in summary["suspects"]:
+                print(f"  id={entry['id']}  {entry['file_name']}")
+    return summary
 
 
 if __name__ == "__main__":
@@ -133,5 +149,10 @@ if __name__ == "__main__":
         dest="file_name_contains",
         help="Limit to the one file whose file_name contains this substring (for testing on a sample).",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print a single JSON summary line instead of the human-readable report (for scripted callers).",
+    )
     args = parser.parse_args()
-    run(file_name_contains=args.file_name_contains)
+    run(file_name_contains=args.file_name_contains, as_json=args.json)
