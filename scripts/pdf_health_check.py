@@ -30,7 +30,7 @@ from pathlib import Path
 
 import pdfplumber
 
-from src.common.db import get_connection, init_db
+from src.common.db import REPORT_DATE_SQL, get_connection, init_db
 
 sys.stdout.reconfigure(encoding="utf-8")
 
@@ -93,16 +93,30 @@ def _print_result(label: str, r: dict) -> None:
     print(f"  [{verdict:7s}] {label}  ({reason_str})")
 
 
-def run(file_name_contains: str | None = None, as_json: bool = False) -> dict:
+def run(file_name_contains: str | None = None, as_json: bool = False, report_date: str | None = None) -> dict:
     """Returns {"checked": [...], "ok": [...], "suspects": [...]} - each entry
     {"id", "file_name"} - so a caller (like scripts/daily_autorun.py) can act
     on the verdict programmatically instead of scraping the printed text.
     `as_json` only changes what's printed to stdout, not what's returned -
     the human-readable path (as_json=False, the pre-existing default) is
-    unchanged so existing manual usage keeps working exactly as before."""
+    unchanged so existing manual usage keeps working exactly as before.
+
+    `report_date` scopes by REPORT_DATE_SQL instead of the default
+    extraction_status='pending' filter - added for scripts/daily_autorun.py:
+    a file that was already extracted earlier the same day (e.g. by a manual
+    check before the automated run, as happened once in testing) would be
+    silently invisible to the pending-only query, defeating the whole point
+    of checking it before Screening. Scoping by date instead of status means
+    "was this downloaded today" rather than "is it still waiting its turn" -
+    robust regardless of what already touched the file today."""
     conn = get_connection()
     init_db(conn)
-    if file_name_contains:
+    if report_date:
+        rows = conn.execute(
+            f"SELECT id, file_name, local_path FROM downloaded_files df WHERE {REPORT_DATE_SQL} = ?",
+            (report_date,),
+        ).fetchall()
+    elif file_name_contains:
         rows = conn.execute(
             "SELECT id, file_name, local_path FROM downloaded_files WHERE file_name LIKE ?",
             (f"%{file_name_contains}%",),
@@ -154,5 +168,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Print a single JSON summary line instead of the human-readable report (for scripted callers).",
     )
+    parser.add_argument(
+        "--date",
+        dest="report_date",
+        help="Check every file whose REPORT_DATE_SQL matches this YYYY-MM-DD, regardless of "
+             "extraction_status - overrides --file and the default pending-only scope.",
+    )
     args = parser.parse_args()
-    run(file_name_contains=args.file_name_contains, as_json=args.json)
+    run(file_name_contains=args.file_name_contains, as_json=args.json, report_date=args.report_date)

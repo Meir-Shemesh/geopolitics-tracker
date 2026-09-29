@@ -310,7 +310,10 @@ def main() -> int:
         suspects: list[dict] = []
         good_files: list[dict] = []
         if day_ok:
-            r = run_step(log, "pdf_health_check", ["scripts.pdf_health_check", "--json"])
+            # --date (not the default pending-only scope) so this is robust even if something
+            # already extracted one of today's files before this step ran (observed once in
+            # testing - see scripts/pdf_health_check.py's --date docstring for why).
+            r = run_step(log, "pdf_health_check", ["scripts.pdf_health_check", "--date", today, "--json"])
             results["pdf_health_check"] = r
             day_ok = r.ok
             if day_ok:
