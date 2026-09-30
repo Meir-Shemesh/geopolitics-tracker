@@ -161,6 +161,28 @@ SUSPENDED_SOURCES: set[str] = {
     "Wall Street Journal",
 }
 
+# Individual Telegram messages excluded from download, distinct in kind from
+# SUSPENDED_SOURCES above: this suspends one specific message (a persistent
+# per-file problem), not an entire newspaper. Checked by message_id, before
+# ever attempting the download - each retry here costs real time (Telegram's
+# own internal retries run for minutes before giving up), for no realistic
+# chance of success. Kept as an explicit, reviewable set - never silently
+# dropped from history - so an entry can be removed by hand if Telegram's own
+# side is ever fixed; nothing here should be assumed permanent.
+SKIPPED_MESSAGE_IDS: set[int] = {
+    # Added 2026-09-30: "The Guardian Weekly - 25 September 2026.pdf" (msg
+    # id=30055, posted 2026-09-26). Reproduced identically across >=4
+    # independent daily fetch.py runs (27-30.9) and again in an isolated,
+    # deliberately-generous test (120s per-request timeout, no normal retry
+    # ceiling) - still failed after 389s with the same GetFileRequest-level
+    # timeout. File metadata (size 44.2MB, mime_type, dc_id=5) looks entirely
+    # normal - other files of the same or larger size downloaded fine in the
+    # same timeframe - so this isn't explained by file size. Looks like a
+    # persistent, file-specific problem on Telegram's serving side, not a
+    # transient network blip a future attempt would clear - see PROJECT_LOG.
+    30055,
+}
+
 
 async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int = 200) -> dict:
     print(f"  connecting to {channel}...", flush=True)
@@ -172,6 +194,7 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
     skipped_not_mvp = 0
     skipped_existing = 0
     skipped_suspended = 0
+    skipped_message_skiplist = 0
     skipped_download_failed = 0
     downloaded = 0
     scanned = 0
@@ -194,6 +217,9 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
             continue
         if newspaper in SUSPENDED_SOURCES:
             skipped_suspended += 1
+            continue
+        if message.id in SKIPPED_MESSAGE_IDS:
+            skipped_message_skiplist += 1
             continue
 
         if is_downloaded(conn, channel, message.id):
@@ -258,6 +284,7 @@ async def fetch_channel(client: TelegramClient, channel: str, conn, limit: int =
         "skipped_not_mvp": skipped_not_mvp,
         "skipped_existing": skipped_existing,
         "skipped_suspended": skipped_suspended,
+        "skipped_message_skiplist": skipped_message_skiplist,
         "skipped_download_failed": skipped_download_failed,
         "downloaded": downloaded,
     }
@@ -285,6 +312,7 @@ async def run() -> None:
         f"skipped {stats['skipped_not_mvp']} (not an MVP source), "
         f"skipped {stats['skipped_existing']} (already downloaded), "
         f"skipped {stats['skipped_suspended']} (source suspended - see SUSPENDED_SOURCES), "
+        f"skipped {stats['skipped_message_skiplist']} (message on permanent skip-list - see SKIPPED_MESSAGE_IDS), "
         f"skipped {stats['skipped_download_failed']} (download failed - will retry next run), "
         f"downloaded {stats['downloaded']} new"
     )

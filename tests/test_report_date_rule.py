@@ -51,8 +51,10 @@ class TempDbTestCase(unittest.TestCase):
 
 class ReportDateForDownloadTest(unittest.TestCase):
     def test_uses_the_calendar_day_in_the_given_timezone(self):
-        # 22:30 UTC is 01:30 the next day in Israel: the pipeline run belongs to the local day.
-        self.assertEqual(db.report_date_for_download("2026-09-19T22:30:00+00:00", ISRAEL), "2026-09-20")
+        # 22:30 UTC is 01:30 the next day in Israel - inside the cutoff window (see
+        # ReportDateCutoffTest below for that behavior); pick a daytime hour here so
+        # this test is purely about timezone conversion, not the cutoff rule.
+        self.assertEqual(db.report_date_for_download("2026-09-19T12:30:00+00:00", ISRAEL), "2026-09-19")
         self.assertEqual(db.report_date_for_download("2026-09-19T22:30:00+00:00", timezone.utc), "2026-09-19")
 
     def test_backlog_download_lands_on_the_download_day(self):
@@ -63,9 +65,80 @@ class ReportDateForDownloadTest(unittest.TestCase):
         self.assertEqual(db.report_date_for_download("2026-09-19T17:42:13.167901+00:00", ISRAEL), "2026-09-19")
 
     def test_default_timezone_is_the_system_local_one(self):
-        stamp = "2026-09-19T22:30:00+00:00"
+        stamp = "2026-09-19T12:30:00+00:00"
         expected = datetime.fromisoformat(stamp).astimezone().date().isoformat()
         self.assertEqual(db.report_date_for_download(stamp), expected)
+
+
+class ReportDateCutoffTest(unittest.TestCase):
+    """PROJECT_LOG: two real incidents (2026-09-21/22, 2026-09-29/30) where a
+    download landed shortly after local midnight and got the wrong report_date
+    with the old no-cutoff rule, needing a manual one-off DB fix each time."""
+
+    def test_shifts_to_the_previous_day_with_no_filename_hint(self):
+        # 00:42 local (2026-09-22), no parseable date in the name - the safe default.
+        self.assertEqual(
+            db.report_date_for_download("2026-09-21T21:42:00+00:00", ISRAEL, file_name="unlabeled.pdf"),
+            "2026-09-21",
+        )
+
+    def test_filename_hint_confirms_the_shift(self):
+        # Real case from 2026-09-29/30: downloaded 00:31 local on the 30th, filename
+        # says the 29th - hint agrees with the plain cutoff-shift.
+        self.assertEqual(
+            db.report_date_for_download(
+                "2026-09-29T21:31:32+00:00", ISRAEL, file_name="The Washington Post - September 29, 2026.pdf"
+            ),
+            "2026-09-29",
+        )
+        # same real incident, the "_DDMM.pdf" convention instead of a month name
+        self.assertEqual(
+            db.report_date_for_download("2026-09-29T21:39:55+00:00", ISRAEL, file_name="The Daily Telegraph_2909.pdf"),
+            "2026-09-29",
+        )
+        # the double-space/no-comma variant seen in the 2026-09-21/22 incident
+        self.assertEqual(
+            db.report_date_for_download(
+                "2026-09-21T21:59:51+00:00", ISRAEL, file_name="The Guardian  UK - September 21 2026.pdf"
+            ),
+            "2026-09-21",
+        )
+
+    def test_filename_hint_suppresses_the_shift(self):
+        # Real case from 2026-09-29/30: "USA Today Sports Weekly_3009.pdf" downloaded
+        # at 00:29 local on the 30th genuinely IS the 30th's edition (the filename
+        # says so) - must NOT be shifted back to the 29th just because of the hour.
+        self.assertEqual(
+            db.report_date_for_download(
+                "2026-09-29T21:29:05+00:00", ISRAEL, file_name="USA Today Sports Weekly_3009.pdf"
+            ),
+            "2026-09-30",
+        )
+
+    def test_unparseable_hint_falls_back_to_the_plain_shift(self):
+        # Filename has digits but doesn't match either known date convention.
+        self.assertEqual(
+            db.report_date_for_download("2026-09-21T21:42:00+00:00", ISRAEL, file_name="Some Newspaper 42.pdf"),
+            "2026-09-21",
+        )
+
+    def test_exact_cutoff_boundary(self):
+        # 03:00:00 local exactly - NOT shifted (the rule is "before", not "at or before").
+        self.assertEqual(db.report_date_for_download("2026-09-22T00:00:00+00:00", ISRAEL), "2026-09-22")
+        # One second earlier - shifted.
+        self.assertEqual(db.report_date_for_download("2026-09-21T23:59:59+00:00", ISRAEL), "2026-09-21")
+
+    def test_ordinary_daytime_downloads_are_unaffected(self):
+        # Regression guard: nothing about this rule should touch a normal-hour
+        # download, hint or no hint, backlog or same-day.
+        self.assertEqual(
+            db.report_date_for_download("2026-09-21T12:00:00+00:00", ISRAEL, file_name="LA Times_2109.pdf"),
+            "2026-09-21",
+        )
+        self.assertEqual(
+            db.report_date_for_download("2026-09-21T12:00:00+00:00", ISRAEL, file_name="USA Today Sports Weekly_2809.pdf"),
+            "2026-09-21",
+        )
 
 
 class MarkDownloadedTest(TempDbTestCase):
@@ -75,7 +148,7 @@ class MarkDownloadedTest(TempDbTestCase):
                 self.conn, "test", 1, "TE-2026-09-19-PDF WEB.pdf", "Economist",
                 "2026-09-17T23:09:38+00:00", "2026-09-20T05:00:00+00:00", "/tmp/x.pdf",
             )
-        helper.assert_called_once_with("2026-09-20T05:00:00+00:00")
+        helper.assert_called_once_with("2026-09-20T05:00:00+00:00", file_name="TE-2026-09-19-PDF WEB.pdf")
         row = self.conn.execute("SELECT published_at, report_date FROM downloaded_files").fetchone()
         self.assertEqual(row["report_date"], "2026-09-20")
         self.assertTrue(row["published_at"].startswith("2026-09-17"))  # upload time is still recorded, untouched

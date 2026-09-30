@@ -7,8 +7,10 @@ new column here is enough for existing tracker.db files to pick it up on the
 next run, with no manual migration step or need to delete the DB.
 """
 
+import re
 import sqlite3
-from datetime import datetime, tzinfo
+from datetime import date as date_cls
+from datetime import datetime, timedelta, tzinfo
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "tracker.db"
@@ -156,12 +158,88 @@ def is_downloaded(conn: sqlite3.Connection, channel: str, message_id: int) -> bo
 REPORT_DATE_SQL = "COALESCE(df.report_date, date(df.published_at))"
 
 
-def report_date_for_download(downloaded_at: str, tz: tzinfo | None = None) -> str:
+# Local hour before which a download is presumed to be spillover from the
+# previous day's edition, not a genuinely-new same-day post - see
+# report_date_for_download()'s docstring and PROJECT_LOG for the two real
+# occurrences (2026-09-21/22 and 2026-09-29/30) that motivated this. 3 is not
+# arbitrary: every real early-morning download observed so far (both
+# incidents, 16 rows total) has landed well before it (00:27-01:03 local),
+# and it matches the boundary CLAUDE.md was already informally tracking
+# ("0/168 downloads had fallen 00:00-03:00 local") before this was a real rule.
+REPORT_DATE_CUTOFF_HOUR = 3
+
+_MONTH_NAMES = [
+    "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december",
+]
+_MONTH_NUMBER = {name: i + 1 for i, name in enumerate(_MONTH_NAMES)}
+_MONTH_PATTERN = "|".join(_MONTH_NAMES)
+
+# Two filename date conventions actually observed across MVP sources (see
+# PROJECT_LOG for the full 16-row sanity check this was validated against):
+#   "..._DDMM.pdf"                  e.g. "USA Today_2909.pdf" -> day=29, month=09
+#   "...DD Month YYYY..." (comma optional, extra whitespace tolerated)
+#                                   e.g. "Die Welt - 29 September 2026.pdf"
+#   "...Month DD, YYYY..." (comma optional)
+#                                   e.g. "The Washington Post - September 29, 2026.pdf"
+_SUFFIX_DDMM_RE = re.compile(r"_(\d{2})(\d{2})\.pdf$", re.IGNORECASE)
+_DAY_MONTH_YEAR_RE = re.compile(r"(\d{1,2})\s+(" + _MONTH_PATTERN + r")\s+(\d{4})", re.IGNORECASE)
+_MONTH_DAY_YEAR_RE = re.compile(r"(" + _MONTH_PATTERN + r")\s+(\d{1,2}),?\s+(\d{4})", re.IGNORECASE)
+
+
+def _filename_date_hint(file_name: str) -> date_cls | None:
+    """Best-effort day+month (+year, when the filename has one) extracted from
+    a file name, or None if neither known convention matches. Deliberately
+    narrow - this is NOT a general filename-to-date parser (that approach was
+    already rejected as the *primary* report-date rule, see CLAUDE.md action
+    item 29: filenames are too inconsistent across sources to carry that
+    weight). It exists only to break the tie inside the cutoff-hour window
+    below, where the two candidate days are already known - never called
+    anywhere else."""
+    m = _SUFFIX_DDMM_RE.search(file_name)
+    if m:
+        day, month = int(m.group(1)), int(m.group(2))
+        return day, month, None
+    m = _DAY_MONTH_YEAR_RE.search(file_name)
+    if m:
+        day, month, year = int(m.group(1)), _MONTH_NUMBER[m.group(2).lower()], int(m.group(3))
+        return day, month, year
+    m = _MONTH_DAY_YEAR_RE.search(file_name)
+    if m:
+        month, day, year = _MONTH_NUMBER[m.group(1).lower()], int(m.group(2)), int(m.group(3))
+        return day, month, year
+    return None
+
+
+def report_date_for_download(downloaded_at: str, tz: tzinfo | None = None, file_name: str | None = None) -> str:
     """Calendar day of an ISO-8601 download timestamp in `tz` (default: the system's local timezone).
 
     `tz` exists so tests can pin a timezone instead of depending on the machine they run on.
+
+    Before REPORT_DATE_CUTOFF_HOUR local time, the download is presumed to be
+    spillover from the previous day's edition rather than a genuinely-new
+    same-day post (see PROJECT_LOG for the two real incidents this rule
+    answers) - UNLESS `file_name` carries an explicit date that names the
+    *actual* download day itself, in which case the shift is suppressed (e.g.
+    "USA Today Sports Weekly_3009.pdf" downloaded at 00:29 local on the 30th
+    genuinely is the 30th's edition, not 29th spillover - a real case from the
+    2026-09-30 incident). If the filename names neither candidate day, or
+    can't be parsed by either known convention, this falls back to the plain
+    cutoff-shift - the safe default the two real incidents both needed.
     """
-    return datetime.fromisoformat(downloaded_at).astimezone(tz).date().isoformat()
+    local_dt = datetime.fromisoformat(downloaded_at).astimezone(tz)
+    if local_dt.hour >= REPORT_DATE_CUTOFF_HOUR:
+        return local_dt.date().isoformat()
+
+    actual_day = local_dt.date()
+    previous_day = actual_day - timedelta(days=1)
+    hint = _filename_date_hint(file_name) if file_name else None
+    if hint is not None:
+        day, month, year = hint
+        for candidate in (actual_day, previous_day):
+            if candidate.day == day and candidate.month == month and (year is None or candidate.year == year):
+                return candidate.isoformat()
+    return previous_day.isoformat()
 
 
 def mark_downloaded(
@@ -188,7 +266,7 @@ def mark_downloaded(
             published_at,
             downloaded_at,
             local_path,
-            report_date_for_download(downloaded_at),
+            report_date_for_download(downloaded_at, file_name=file_name),
         ),
     )
     conn.commit()
