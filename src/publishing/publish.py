@@ -636,8 +636,6 @@ def build_privacy_html(lang: str) -> str:
         page_title = "מדיניות פרטיות - גאופוליטיקה יומי"
         heading = "מדיניות פרטיות"
         body_html = f"""
-    <p><strong>הערה: זוהי טיוטה ראשונית למדיניות פרטיות, ולא ייעוץ משפטי. הנוסח
-    טרם נבדק על ידי עורך דין, ועשוי להתעדכן בעקבות בדיקה כזו.</strong></p>
     <h2>1. אילו נתונים נאספים</h2>
     <p>האתר אוסף נתוני-שימוש מצרפיים בלבד, לצורך סטטיסטיקה כללית על הקוראים שלו:</p>
     <ul>
@@ -653,15 +651,29 @@ def build_privacy_html(lang: str) -> str:
     "טביעת-אצבע" של הדפדפן, ולא באמצעות חישוב קבוע (hash) על כתובת ה-IP. אין
     מעקב אחר משתמשים בין אתרים (cross-site tracking), ואין פרופיל אישי הנבנה
     עבור אף מבקר.</p>
-    <h2>3. טיפול בכתובת IP</h2>
+    <h2>3. שימור נתונים</h2>
+    <p>הנתונים המצרפיים המתוארים לעיל נשמרים ללא הגבלת זמן. מכיוון שמדובר
+    בנתונים אגרגטיביים-אנונימיים בלבד, שאינם מאפשרים זיהוי של משתמש בודד,
+    שימור ארוך-טווח אינו יוצר סיכון-פרטיות נוסף לאף משתמש.</p>
+    <h2>4. טיפול בכתובת IP</h2>
     <p>כתובת ה-IP של כל בקשה משמשת באופן רגעי בלבד, לצורך זיהוי המדינה שממנה
     מגיעה הבקשה. לאחר השימוש הרגעי הזה כתובת ה-IP עצמה נמחקת ואינה נשמרת -
     במאגר הנתונים נשמר רק קוד-המדינה שחושב ממנה, לעולם לא כתובת ה-IP הגולמית.</p>
-    <h2>4. מי מפעיל את האתר</h2>
+    <p>מעבר לכך, ספקי-התשתית של האתר - Cloudflare (המפעיל את שירות האנליטיקס
+    המצרפי) ו-GitHub Pages (המארח את האתר עצמו) - מעבדים את כתובת ה-IP באופן
+    זמני וברמת ה-edge שלהם, לצורך תפעולי בסיסי של השירות (כגון ניתוב-תעבורה
+    והגנה מפני התקפות). עיבוד זה נפרד לחלוטין מקוד האנליטיקס של האתר עצמו
+    (cf-analytics), שאינו ניגש לכתובת ה-IP כלל, וכפוף למדיניות-הפרטיות של
+    אותם ספקים עצמם.</p>
+    <h2>5. מי מפעיל את האתר</h2>
     <p>האתר מופעל ונכתב על ידי מאיר שמש, כפרויקט אישי. לכל שאלה או בקשה
     הקשורה לפרטיות ולנתונים הנאספים, ניתן לפנות ל:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a>.</p>
-    <h2>5. חוק הגנת הפרטיות (תיקון 13) ו-GDPR</h2>
+    <p>האתר מופעל כיום כפרויקט אישי, שאינו מסחרי. בעל האתר שומר לעצמו את
+    הזכות להפוך את האתר, כולו או חלקו, לפעילות מסחרית בעתיד - ובמקרה כזה,
+    מדיניות הפרטיות תעודכן בהתאם לפני כל שינוי כאמור, ותשקף את מעמדו המסחרי
+    המעודכן של האתר ואת ההשלכות הנובעות מכך על עיבוד הנתונים.</p>
+    <h2>6. חוק הגנת הפרטיות (תיקון 13) ו-GDPR</h2>
     <p>זהו פרויקט אישי קטן ולא-מסחרי, המיועד לקוראים מישראל וממדינות נוספות.
     הנתונים הנאספים מצרפיים ואנונימיים במובהק - אינם מאפשרים זיהוי של מבקר
     ספציפי - ולכן רמת הסיכון לפרטיות נמוכה מאוד. עם זאת, ולמען גילוי נאות:</p>
@@ -678,10 +690,6 @@ def build_privacy_html(lang: str) -> str:
         page_title = "Datenschutzerklärung - Tägliche Geopolitik"
         heading = "Datenschutzerklärung"
         body_html = f"""
-    <p><strong>Hinweis: Dies ist ein erster Entwurf einer Datenschutzerklärung,
-    keine Rechtsberatung. Der Text wurde noch nicht von einer Anwältin bzw.
-    einem Anwalt geprüft und kann nach einer solchen Prüfung noch aktualisiert
-    werden.</strong></p>
     <h2>1. Welche Daten werden erhoben</h2>
     <p>Diese Website erhebt ausschließlich aggregierte Nutzungsstatistiken, für
     eine allgemeine Leserschaftsanalyse:</p>
@@ -699,18 +707,39 @@ def build_privacy_html(lang: str) -> str:
     einen festen Hash der IP-Adresse. Es findet kein websiteübergreifendes
     Tracking statt, und es wird kein persönliches Profil für Besucherinnen
     oder Besucher erstellt.</p>
-    <h2>3. Umgang mit IP-Adressen</h2>
+    <h2>3. Aufbewahrung der Daten</h2>
+    <p>Die oben beschriebenen aggregierten Daten werden zeitlich unbegrenzt
+    aufbewahrt. Da es sich ausschließlich um aggregierte, anonyme Daten
+    handelt, die keine Identifizierung einer einzelnen Nutzerin bzw. eines
+    einzelnen Nutzers ermöglichen, stellt eine langfristige Aufbewahrung kein
+    zusätzliches Datenschutzrisiko dar.</p>
+    <h2>4. Umgang mit IP-Adressen</h2>
     <p>Die IP-Adresse jeder Anfrage wird nur für einen Moment verwendet, um
     festzustellen, aus welchem Land die Anfrage stammt. Danach wird die
     IP-Adresse selbst verworfen und nicht gespeichert - in der Datenbank wird
     ausschließlich der daraus ermittelte Ländercode gespeichert, niemals die
     rohe IP-Adresse.</p>
-    <h2>4. Wer diese Website betreibt</h2>
+    <p>Darüber hinaus verarbeiten die Infrastrukturanbieter dieser Website -
+    Cloudflare (das den aggregierten Analysedienst betreibt) und GitHub Pages
+    (das die Website selbst hostet) - IP-Adressen vorübergehend auf ihrer
+    eigenen Edge-Ebene, für grundlegende betriebliche Zwecke des Dienstes
+    (etwa Traffic-Routing und Schutz vor Angriffen). Diese Verarbeitung ist
+    vollständig getrennt vom eigentlichen Analyse-Code der Website
+    (cf-analytics), der überhaupt nicht auf die IP-Adresse zugreift, und
+    unterliegt den jeweils eigenen Datenschutzerklärungen dieser Anbieter.</p>
+    <h2>5. Wer diese Website betreibt</h2>
     <p>Diese Website wird von Meir Shemesh als persönliches Projekt betrieben
     und verfasst. Für Fragen oder Anliegen zum Datenschutz oder zu den
     erhobenen Daten:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a>.</p>
-    <h2>5. Israelisches Datenschutzrecht und DSGVO</h2>
+    <p>Diese Website wird derzeit als persönliches, nicht-kommerzielles
+    Projekt betrieben. Der Betreiber der Website behält sich das Recht vor,
+    die Website ganz oder teilweise künftig in eine kommerzielle Tätigkeit
+    umzuwandeln - in einem solchen Fall wird diese Datenschutzerklärung vor
+    jeder derartigen Änderung entsprechend aktualisiert, um den aktualisierten
+    kommerziellen Status der Website und die sich daraus ergebenden
+    Auswirkungen auf die Datenverarbeitung widerzuspiegeln.</p>
+    <h2>6. Israelisches Datenschutzrecht und DSGVO</h2>
     <p>Dies ist ein kleines, nicht-kommerzielles persönliches Projekt für
     Leserinnen und Leser in Israel und anderswo. Die erhobenen Daten sind
     echt aggregiert und anonym - sie lassen keine Identifizierung einer
@@ -732,9 +761,6 @@ def build_privacy_html(lang: str) -> str:
         page_title = "Privacy Policy - Daily Geopolitics"
         heading = "Privacy Policy"
         body_html = f"""
-    <p><strong>Note: this is an initial draft privacy policy, not legal
-    advice. The text has not yet been reviewed by a lawyer, and may be
-    updated following such a review.</strong></p>
     <h2>1. What data is collected</h2>
     <p>This site collects aggregate usage statistics only, for general
     readership analytics:</p>
@@ -751,17 +777,36 @@ def build_privacy_html(lang: str) -> str:
     person - not via a cookie, not via browser fingerprinting, and not via a
     fixed hash of an IP address. There is no cross-site tracking, and no
     personal profile is built for any visitor.</p>
-    <h2>3. How IP addresses are handled</h2>
+    <h2>3. Data retention</h2>
+    <p>The aggregate data described above is kept indefinitely. Because this
+    data is genuinely aggregate and anonymous, and does not allow
+    identification of an individual user, long-term retention does not
+    create any additional privacy risk to any user.</p>
+    <h2>4. How IP addresses are handled</h2>
     <p>Each request's IP address is used only momentarily, to determine
     which country the request came from. After this momentary use, the IP
     address itself is discarded and not stored - only the resulting country
     code is kept in the database, never the raw IP address.</p>
-    <h2>4. Who operates this site</h2>
+    <p>Beyond this, the site's infrastructure providers - Cloudflare (which
+    operates the aggregate analytics service) and GitHub Pages (which hosts
+    the site itself) - process IP addresses momentarily at their own edge
+    level, for basic operational purposes of the service (such as traffic
+    routing and protection against attacks). This processing is entirely
+    separate from the site's own analytics code (cf-analytics), which does
+    not access the IP address at all, and is subject to those providers' own
+    privacy policies.</p>
+    <h2>5. Who operates this site</h2>
     <p>This site is operated and written by Meir Shemesh, as a personal
     project. For any question or request related to privacy or the data
     collected, contact:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a>.</p>
-    <h2>5. Israeli privacy law and GDPR</h2>
+    <p>This site currently operates as a personal, non-commercial project.
+    The site owner reserves the right to turn the site, in whole or in part,
+    into a commercial activity in the future - and in such a case, this
+    privacy policy will be updated accordingly before any such change takes
+    effect, to reflect the site's updated commercial status and the
+    resulting implications for data processing.</p>
+    <h2>6. Israeli privacy law and GDPR</h2>
     <p>This is a small, non-commercial personal project intended for readers
     in Israel and elsewhere. The data collected is genuinely aggregate and
     anonymous - it cannot be used to identify a specific visitor - so the
