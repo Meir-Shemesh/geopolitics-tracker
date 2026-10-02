@@ -39,10 +39,13 @@ npx --yes wrangler d1 create geopolitics-analytics-db
 
 npx --yes wrangler d1 execute geopolitics-analytics-db --remote --file=schema.sql
 
-npx --yes wrangler secret put STATS_VIEW_TOKEN
-# -> paste a long random token when prompted (e.g. `openssl rand -hex 32`) -
-#    this gates GET /stats, is stored only in Cloudflare's own secret store,
-#    never in wrangler.toml or .env, and is never printed/logged by any step here.
+npx --yes wrangler secret put ADMIN_DASHBOARD_PASSWORD
+# -> paste a password when prompted - this gates GET /admin/analytics via
+#    HTTP Basic Auth, is stored only in Cloudflare's own secret store, never
+#    in wrangler.toml or .env, and is never printed/logged by any step here.
+#    Unlike a token in a URL, Basic Auth credentials aren't exposed in browser
+#    history or (typically) server/proxy logs - this replaced the original
+#    GET /stats?token=... design (2026-10-02) for exactly that reason.
 
 npx --yes wrangler deploy
 # -> prints the live *.workers.dev URL - needed for the next step
@@ -63,7 +66,20 @@ footer/contact/privacy-page change.
 
 ## Viewing the data
 
-`https://<worker-url>/stats?token=<STATS_VIEW_TOKEN>` - optionally
-`&days=N` (default 30). Plain HTML summary table, not a dashboard - total
-views, top countries, language breakdown, top referrers, device family,
-browser family.
+**Dashboard**: `https://<worker-url>/admin/analytics` - protected by HTTP
+Basic Auth (any username, password = `ADMIN_DASHBOARD_PASSWORD`). Not linked
+from anywhere on the public site, lives entirely on this Worker's own origin
+(never on geopolitics.meirshemesh.com), and serves a `noindex, nofollow` meta
+tag plus a disallow-all `/robots.txt` as defense in depth - Basic Auth is
+still the real enforcement, this just reduces incidental crawl/discovery
+noise. Takes `?days=7|30|90|all` (default 30). Shows a daily-visits trend
+(inline SVG bar chart, no client library) plus 5 independent breakdown
+tables (country, language, referrer, device family, browser family) - and
+states explicitly, in the page itself, that no cross-tabulation between
+these is possible (no unified per-visit record exists - see schema.sql).
+
+**Scheduled summary emails**: `scripts/analytics_report.py --period
+weekly|monthly` (run from the project root, not here) queries this same D1
+database directly over Cloudflare's REST API - no Node/wrangler needed for
+that - and emails a summary via the project's existing Gmail SMTP mechanism.
+See that script's own docstring for details.

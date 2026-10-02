@@ -12,23 +12,31 @@ Fires daily at 15:00 *local* (Israel) time, including through DST changes:
 schtasks' /ST time is stored and evaluated in local wall-clock time by
 Windows itself, so no manual UTC offset math is needed or wanted here.
 
-Registers TWO scheduled tasks, not one (added 2026-09-30, see PROJECT_LOG):
-  1. GeopoliticsTrackerDailyAutorun (15:00) - runs
+Registers FOUR scheduled tasks (added 2026-09-30, extended 2026-10-02 - see
+PROJECT_LOG):
+  1. GeopoliticsTrackerDailyAutorun (daily, 15:00) - runs
      scripts/run_daily_autorun_launcher.bat, which itself sends a "run
      started" email BEFORE attempting to launch daily_autorun.py, then
      launches it.
-  2. GeopoliticsTrackerRunProgressCheck (15:10, ten minutes later) - a fully
-     SEPARATE task, not depending on task 1's process in any way. Runs
-     scripts/scheduler_notify.py check-progress, which looks for today's
-     automation_state/logs/{date}.log and sends an alarm email if it's
-     missing (daily_autorun.py's log_open() is one of the very first things
-     it does, so a missing log 10 minutes in means it almost certainly
-     crashed before doing anything meaningful).
-  Both the launcher .bat and scheduler_notify.py are deliberately
+  2. GeopoliticsTrackerRunProgressCheck (daily, 15:10, ten minutes later) -
+     a fully SEPARATE task, not depending on task 1's process in any way.
+     Runs scripts/scheduler_notify.py check-progress, which looks for
+     today's automation_state/logs/{date}.log and sends an alarm email if
+     it's missing (daily_autorun.py's log_open() is one of the very first
+     things it does, so a missing log 10 minutes in means it almost
+     certainly crashed before doing anything meaningful).
+  3. GeopoliticsAnalyticsWeeklyReport (weekly, Monday 08:00) - runs
+     scripts/analytics_report.py --period weekly.
+  4. GeopoliticsAnalyticsMonthlyReport (monthly, day 1, 08:00) - runs
+     scripts/analytics_report.py --period monthly.
+  Tasks 1-2's launcher .bat and scheduler_notify.py are deliberately
   independent of daily_autorun.py's own code/imports - see their own
   file-header comments for why (in short: 2026-09-30's real failure was a
   crash at Python's own import-resolution stage, before any of
   daily_autorun.py's code, including its own send_email(), had run).
+  Tasks 3-4 (analytics_report.py) carry the same same-machine-must-be-on
+  constraint as tasks 1-2 - an explicit, accepted tradeoff (see that
+  script's own docstring) rather than adding a cloud-side email provider.
 
 Quoting note (2026-09-30): schtasks.exe's /TR value needs to look like
 `"<path with spaces>" <extra args>` - i.e. it needs its OWN embedded quotes
@@ -89,8 +97,9 @@ $ProjectRoot = "C:\Users\meir\OneDrive\Documents\Claude Projects\geopolitics-tra
 $PythonExe = Join-Path $ProjectRoot "venv\Scripts\python.exe"
 $LauncherBat = Join-Path $ProjectRoot "scripts\run_daily_autorun_launcher.bat"
 $NotifyScript = Join-Path $ProjectRoot "scripts\scheduler_notify.py"
+$AnalyticsReportScript = Join-Path $ProjectRoot "scripts\analytics_report.py"
 
-foreach ($p in @($PythonExe, $LauncherBat, $NotifyScript)) {
+foreach ($p in @($PythonExe, $LauncherBat, $NotifyScript, $AnalyticsReportScript)) {
     if (-not (Test-Path $p)) {
         Write-Error "Required file not found: $p - check ProjectRoot before continuing."
         exit 1
@@ -104,11 +113,11 @@ $RunAsUser = "$env:COMPUTERNAME\$env:USERNAME"
 function Register-OneTask {
     param(
         [string]$TaskName,
-        [string]$TrValue,   # the exact value schtasks' /TR should receive (already \"-escaped if it needs it)
-        [string]$StartTime  # HH:MM
+        [string]$TrValue,      # the exact value schtasks' /TR should receive (already \"-escaped if it needs it)
+        [string]$ScheduleArgs  # e.g. "/SC DAILY /ST 15:00" or "/SC WEEKLY /D MON /ST 08:00"
     )
 
-    $FullCommandLine = "schtasks /Create /TN `"$TaskName`" /TR `"$TrValue`" /SC DAILY /ST $StartTime " +
+    $FullCommandLine = "schtasks /Create /TN `"$TaskName`" /TR `"$TrValue`" $ScheduleArgs " +
                         "/RU `"$RunAsUser`" /RP * /RL LIMITED /F"
 
     # Quote-marked preview: every literal " becomes <Q>, every literal \ becomes <B> -
@@ -117,7 +126,7 @@ function Register-OneTask {
     # an argument's own boundaries.
     $MarkedPreview = $FullCommandLine.Replace('"', '<Q>').Replace('\', '<B>')
 
-    Write-Host "--- Registering '$TaskName' (daily at $StartTime) ---" -ForegroundColor Cyan
+    Write-Host "--- Registering '$TaskName' ($ScheduleArgs) ---" -ForegroundColor Cyan
     Write-Host "About to run the following command (review before it executes):" -ForegroundColor Cyan
     Write-Host $FullCommandLine -ForegroundColor Yellow
     Write-Host ""
@@ -134,7 +143,7 @@ function Register-OneTask {
 
     if ($LASTEXITCODE -eq 0) {
         Write-Output ""
-        Write-Output "Task '$TaskName' registered: fires daily at $StartTime local time, runs whether logged on or not."
+        Write-Output "Task '$TaskName' registered ($ScheduleArgs), runs whether logged on or not."
         Write-Output "Verify: schtasks /Query /TN `"$TaskName`" /V /FO LIST"
         Write-Output "Disable without deleting: schtasks /Change /TN `"$TaskName`" /Disable"
         Write-Output "Delete entirely: schtasks /Delete /TN `"$TaskName`" /F"
@@ -151,14 +160,25 @@ function Register-OneTask {
 # shape exists). \" escaping needed here (see the quoting note above) since
 # the .bat path contains spaces.
 $Tr1 = "\`"$LauncherBat\`""
-$ok1 = Register-OneTask -TaskName "GeopoliticsTrackerDailyAutorun" -TrValue $Tr1 -StartTime "15:00"
+$ok1 = Register-OneTask -TaskName "GeopoliticsTrackerDailyAutorun" -TrValue $Tr1 -ScheduleArgs "/SC DAILY /ST 15:00"
 
 # --- Task 2: progress check, ten minutes later, fully independent of task 1.
 $Tr2 = "\`"$PythonExe\`" \`"$NotifyScript\`" check-progress"
-$ok2 = Register-OneTask -TaskName "GeopoliticsTrackerRunProgressCheck" -TrValue $Tr2 -StartTime "15:10"
+$ok2 = Register-OneTask -TaskName "GeopoliticsTrackerRunProgressCheck" -TrValue $Tr2 -ScheduleArgs "/SC DAILY /ST 15:10"
 
-if ($ok1 -and $ok2) {
-    Write-Output "Both tasks registered successfully."
+# --- Task 3: weekly analytics summary email, Monday mornings - matches
+# analytics_report.py's own "7 days ending yesterday" window, so a Monday
+# run summarizes the just-finished Mon-Sun week.
+$Tr3 = "\`"$PythonExe\`" \`"$AnalyticsReportScript\`" --period weekly"
+$ok3 = Register-OneTask -TaskName "GeopoliticsAnalyticsWeeklyReport" -TrValue $Tr3 -ScheduleArgs "/SC WEEKLY /D MON /ST 08:00"
+
+# --- Task 4: monthly analytics summary email, the 1st of each month -
+# matches analytics_report.py's own "previous full calendar month" window.
+$Tr4 = "\`"$PythonExe\`" \`"$AnalyticsReportScript\`" --period monthly"
+$ok4 = Register-OneTask -TaskName "GeopoliticsAnalyticsMonthlyReport" -TrValue $Tr4 -ScheduleArgs "/SC MONTHLY /D 1 /ST 08:00"
+
+if ($ok1 -and $ok2 -and $ok3 -and $ok4) {
+    Write-Output "All four tasks registered successfully."
 } else {
     Write-Error "At least one task failed to register - see the errors above before relying on this."
 }
