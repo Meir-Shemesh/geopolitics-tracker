@@ -89,6 +89,7 @@ def build_index_html(
     accessibility_href: str = "accessibility.html",
     terms_href: str = "terms.html",
     filter_href: str = "filter.html",
+    privacy_href: str = "privacy.html",
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
@@ -219,7 +220,7 @@ def build_index_html(
   <main class="archive-list">
 {cards_html}
   </main>
-{build_footer_html(lang, accessibility_href, terms_href)}
+{build_footer_html(lang, accessibility_href, terms_href, privacy_href)}
 </body>
 </html>
 """
@@ -468,6 +469,12 @@ def _build_static_page_html(
 # owner (2026-09-16), not invented; change here only at his explicit request.
 ACCESSIBILITY_CONTACT_EMAIL = "meir@meirshemesh.com"
 
+# Professional/general contact channels (added 2026-10-02, PROJECT_LOG) - shown
+# alongside the accessibility-report email in the same "Contact us" section,
+# given directly by the site owner, not invented.
+PROFESSIONAL_LINKEDIN_URL = "https://www.linkedin.com/in/meir-shemesh-a18633aa/"
+PROFESSIONAL_HOMEPAGE_URL = "https://meirshemesh.com"
+
 
 def build_accessibility_html(lang: str) -> str:
     if lang == "he":
@@ -488,6 +495,12 @@ def build_accessibility_html(lang: str) -> str:
     <h2>יצירת קשר</h2>
     <p>נתקלתם בבעיית נגישות באתר? אנא כתבו אלינו:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
+    <p>לפניות מקצועיות, הארות או הערות בנושאי תוכן הדוחות - ניתן לפנות באותה
+    כתובת מייל, או דרך:</p>
+    <ul>
+      <li><a href="{PROFESSIONAL_LINKEDIN_URL}" target="_blank" rel="noopener">לינקדאין</a></li>
+      <li><a href="{PROFESSIONAL_HOMEPAGE_URL}" target="_blank" rel="noopener">אתר הבית</a></li>
+    </ul>
     <p>עודכן לאחרונה: ספטמבר 2026.</p>"""
     elif lang == "de":
         page_title = "Barrierefreiheitserklärung - Tägliche Geopolitik"
@@ -511,6 +524,13 @@ def build_accessibility_html(lang: str) -> str:
     <p>Ein Barrierefreiheitsproblem auf dieser Website festgestellt? Bitte
     schreiben Sie uns:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
+    <p>Für berufliche Anfragen, Anregungen oder Anmerkungen zu den
+    Berichtsinhalten erreichen Sie uns unter derselben E-Mail-Adresse oder
+    über:</p>
+    <ul>
+      <li><a href="{PROFESSIONAL_LINKEDIN_URL}" target="_blank" rel="noopener">LinkedIn</a></li>
+      <li><a href="{PROFESSIONAL_HOMEPAGE_URL}" target="_blank" rel="noopener">Persönliche Website</a></li>
+    </ul>
     <p>Zuletzt aktualisiert: September 2026.</p>"""
     else:
         page_title = "Accessibility Statement - Daily Geopolitics"
@@ -532,6 +552,12 @@ def build_accessibility_html(lang: str) -> str:
     <h2>Contact us</h2>
     <p>Encountered an accessibility issue on this site? Please write to us:
     <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a></p>
+    <p>For professional inquiries, feedback, or comments on the reports'
+    content, you can reach us at the same email address, or via:</p>
+    <ul>
+      <li><a href="{PROFESSIONAL_LINKEDIN_URL}" target="_blank" rel="noopener">LinkedIn</a></li>
+      <li><a href="{PROFESSIONAL_HOMEPAGE_URL}" target="_blank" rel="noopener">Personal website</a></li>
+    </ul>
     <p>Last updated: September 2026.</p>"""
 
     return _build_static_page_html(lang, page_title, heading, body_html, "accessibility.html")
@@ -599,6 +625,160 @@ def build_terms_html(lang: str) -> str:
     notice.</p>"""
 
     return _build_static_page_html(lang, page_title, heading, body_html, "terms.html")
+
+
+# Draft privacy policy (added 2026-10-02, PROJECT_LOG) - describes the aggregate-only,
+# no-cookie, no-raw-IP-storage analytics approach decided for the site. Explicitly
+# marked as an initial draft pending lawyer review in all 3 languages - not to be
+# treated as finalized legal advice.
+def build_privacy_html(lang: str) -> str:
+    if lang == "he":
+        page_title = "מדיניות פרטיות - גאופוליטיקה יומי"
+        heading = "מדיניות פרטיות"
+        body_html = f"""
+    <p><strong>הערה: זוהי טיוטה ראשונית למדיניות פרטיות, ולא ייעוץ משפטי. הנוסח
+    טרם נבדק על ידי עורך דין, ועשוי להתעדכן בעקבות בדיקה כזו.</strong></p>
+    <h2>1. אילו נתונים נאספים</h2>
+    <p>האתר אוסף נתוני-שימוש מצרפיים בלבד, לצורך סטטיסטיקה כללית על הקוראים שלו:</p>
+    <ul>
+      <li>מספר צפיות/ביקורים ביום</li>
+      <li>שפת הדפדפן (מכותרת ה-Accept-Language)</li>
+      <li>מדינת המקור (מזוהה לפי כתובת ה-IP, ברמת מדינה בלבד)</li>
+      <li>כתובת-ההפניה (referrer) - מאיזה עמוד או אתר הגעתם</li>
+      <li>סוג מכשיר ומשפחת דפדפן, ברמה כללית (למשל נייד/מחשב, Chrome/Safari/Firefox)</li>
+    </ul>
+    <h2>2. מה לא נאסף</h2>
+    <p>האתר אינו משתמש בעוגיות (cookies), ואינו יוצר כל מזהה קבוע או ייחודי
+    שמאפשר לשייך ביקורים שונים לאותו אדם - לא באמצעות עוגייה, לא באמצעות
+    "טביעת-אצבע" של הדפדפן, ולא באמצעות חישוב קבוע (hash) על כתובת ה-IP. אין
+    מעקב אחר משתמשים בין אתרים (cross-site tracking), ואין פרופיל אישי הנבנה
+    עבור אף מבקר.</p>
+    <h2>3. טיפול בכתובת IP</h2>
+    <p>כתובת ה-IP של כל בקשה משמשת באופן רגעי בלבד, לצורך זיהוי המדינה שממנה
+    מגיעה הבקשה. לאחר השימוש הרגעי הזה כתובת ה-IP עצמה נמחקת ואינה נשמרת -
+    במאגר הנתונים נשמר רק קוד-המדינה שחושב ממנה, לעולם לא כתובת ה-IP הגולמית.</p>
+    <h2>4. מי מפעיל את האתר</h2>
+    <p>האתר מופעל ונכתב על ידי מאיר שמש, כפרויקט אישי. לכל שאלה או בקשה
+    הקשורה לפרטיות ולנתונים הנאספים, ניתן לפנות ל:
+    <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a>.</p>
+    <h2>5. חוק הגנת הפרטיות (תיקון 13) ו-GDPR</h2>
+    <p>זהו פרויקט אישי קטן ולא-מסחרי, המיועד לקוראים מישראל וממדינות נוספות.
+    הנתונים הנאספים מצרפיים ואנונימיים במובהק - אינם מאפשרים זיהוי של מבקר
+    ספציפי - ולכן רמת הסיכון לפרטיות נמוכה מאוד. עם זאת, ולמען גילוי נאות:</p>
+    <p>בישראל חל חוק הגנת הפרטיות, התשמ"א-1981, לרבות תיקון 13 (בתוקף משנת
+    2025), שהחמיר את חובות האבטחה והדיווח על מאגרי מידע. האתר פועל לפי עקרון
+    צמצום-הנתונים (data minimization) - נאסף רק המינימום הנדרש לסטטיסטיקה
+    כללית, ולא יותר.</p>
+    <p>לקוראים מחוץ לישראל, ובפרט באיחוד האירופי: האתר אינו אוסף "נתונים
+    אישיים" כהגדרתם בתקנת ה-GDPR (Regulation (EU) 2016/679), שכן הנתונים
+    הנאספים מצרפיים ואינם ניתנים לשיוך למבקר מזוהה או ניתן-לזיהוי. לכל שאלה
+    בנושא ניתן לפנות לכתובת המייל שלעיל.</p>
+    <p>עודכן לאחרונה: אוקטובר 2026.</p>"""
+    elif lang == "de":
+        page_title = "Datenschutzerklärung - Tägliche Geopolitik"
+        heading = "Datenschutzerklärung"
+        body_html = f"""
+    <p><strong>Hinweis: Dies ist ein erster Entwurf einer Datenschutzerklärung,
+    keine Rechtsberatung. Der Text wurde noch nicht von einer Anwältin bzw.
+    einem Anwalt geprüft und kann nach einer solchen Prüfung noch aktualisiert
+    werden.</strong></p>
+    <h2>1. Welche Daten werden erhoben</h2>
+    <p>Diese Website erhebt ausschließlich aggregierte Nutzungsstatistiken, für
+    eine allgemeine Leserschaftsanalyse:</p>
+    <ul>
+      <li>Anzahl der Seitenaufrufe/Besuche pro Tag</li>
+      <li>Browsersprache (aus dem Accept-Language-Header)</li>
+      <li>Herkunftsland (anhand der IP-Adresse ermittelt, nur auf Länderebene)</li>
+      <li>Referrer - von welcher Seite bzw. Website aus Sie gekommen sind</li>
+      <li>Grobe Geräte- und Browserfamilie (z. B. mobil/Desktop, Chrome/Safari/Firefox)</li>
+    </ul>
+    <h2>2. Was nicht erhoben wird</h2>
+    <p>Diese Website verwendet keine Cookies und erstellt keine dauerhafte oder
+    eindeutige Kennung, die verschiedene Besuche derselben Person zuordnen
+    würde - weder über ein Cookie, noch über Browser-Fingerprinting, noch über
+    einen festen Hash der IP-Adresse. Es findet kein websiteübergreifendes
+    Tracking statt, und es wird kein persönliches Profil für Besucherinnen
+    oder Besucher erstellt.</p>
+    <h2>3. Umgang mit IP-Adressen</h2>
+    <p>Die IP-Adresse jeder Anfrage wird nur für einen Moment verwendet, um
+    festzustellen, aus welchem Land die Anfrage stammt. Danach wird die
+    IP-Adresse selbst verworfen und nicht gespeichert - in der Datenbank wird
+    ausschließlich der daraus ermittelte Ländercode gespeichert, niemals die
+    rohe IP-Adresse.</p>
+    <h2>4. Wer diese Website betreibt</h2>
+    <p>Diese Website wird von Meir Shemesh als persönliches Projekt betrieben
+    und verfasst. Für Fragen oder Anliegen zum Datenschutz oder zu den
+    erhobenen Daten:
+    <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a>.</p>
+    <h2>5. Israelisches Datenschutzrecht und DSGVO</h2>
+    <p>Dies ist ein kleines, nicht-kommerzielles persönliches Projekt für
+    Leserinnen und Leser in Israel und anderswo. Die erhobenen Daten sind
+    echt aggregiert und anonym - sie lassen keine Identifizierung einer
+    bestimmten besuchenden Person zu -, sodass das Datenschutzrisiko sehr
+    gering ist. Der Vollständigkeit halber:</p>
+    <p>In Israel gilt das Datenschutzgesetz (Privacy Protection Law),
+    5741-1981, einschließlich der Novelle 13 (in Kraft seit 2025), die die
+    Sicherheits- und Meldepflichten für Datenbanken verschärft hat. Diese
+    Website folgt dem Grundsatz der Datenminimierung - es wird nur erhoben,
+    was für allgemeine Statistiken nötig ist, nicht mehr.</p>
+    <p>Für Leserinnen und Leser außerhalb Israels, insbesondere in der
+    Europäischen Union: Diese Website erhebt keine „personenbezogenen Daten"
+    im Sinne der DSGVO (Verordnung (EU) 2016/679), da die erhobenen Daten
+    aggregiert sind und keiner identifizierten oder identifizierbaren Person
+    zugeordnet werden können. Bei Fragen hierzu können Sie sich gerne an die
+    oben genannte E-Mail-Adresse wenden.</p>
+    <p>Zuletzt aktualisiert: Oktober 2026.</p>"""
+    else:
+        page_title = "Privacy Policy - Daily Geopolitics"
+        heading = "Privacy Policy"
+        body_html = f"""
+    <p><strong>Note: this is an initial draft privacy policy, not legal
+    advice. The text has not yet been reviewed by a lawyer, and may be
+    updated following such a review.</strong></p>
+    <h2>1. What data is collected</h2>
+    <p>This site collects aggregate usage statistics only, for general
+    readership analytics:</p>
+    <ul>
+      <li>Number of page views/visits per day</li>
+      <li>Browser language (from the Accept-Language header)</li>
+      <li>Country of origin (identified from the IP address, at country level only)</li>
+      <li>Referrer - which page or site you arrived from</li>
+      <li>Broad device and browser family (e.g. mobile/desktop, Chrome/Safari/Firefox)</li>
+    </ul>
+    <h2>2. What is not collected</h2>
+    <p>This site does not use cookies, and does not create any persistent or
+    unique identifier that would let different visits be linked to the same
+    person - not via a cookie, not via browser fingerprinting, and not via a
+    fixed hash of an IP address. There is no cross-site tracking, and no
+    personal profile is built for any visitor.</p>
+    <h2>3. How IP addresses are handled</h2>
+    <p>Each request's IP address is used only momentarily, to determine
+    which country the request came from. After this momentary use, the IP
+    address itself is discarded and not stored - only the resulting country
+    code is kept in the database, never the raw IP address.</p>
+    <h2>4. Who operates this site</h2>
+    <p>This site is operated and written by Meir Shemesh, as a personal
+    project. For any question or request related to privacy or the data
+    collected, contact:
+    <a href="mailto:{ACCESSIBILITY_CONTACT_EMAIL}">{ACCESSIBILITY_CONTACT_EMAIL}</a>.</p>
+    <h2>5. Israeli privacy law and GDPR</h2>
+    <p>This is a small, non-commercial personal project intended for readers
+    in Israel and elsewhere. The data collected is genuinely aggregate and
+    anonymous - it cannot be used to identify a specific visitor - so the
+    privacy risk is very low. For transparency, however:</p>
+    <p>In Israel, the Privacy Protection Law, 5741-1981, applies, including
+    Amendment 13 (in effect since 2025), which tightened security and
+    reporting obligations for databases. This site follows a data-
+    minimization principle - collecting only what is needed for general
+    statistics, and nothing more.</p>
+    <p>For readers outside Israel, in particular in the European Union: this
+    site does not collect "personal data" as defined under the GDPR
+    (Regulation (EU) 2016/679), since the data collected is aggregate and
+    cannot be linked to an identified or identifiable visitor. Any questions
+    on this can be directed to the email address above.</p>
+    <p>Last updated: October 2026.</p>"""
+
+    return _build_static_page_html(lang, page_title, heading, body_html, "privacy.html")
 
 
 FILTER_FORM_LABELS = {
@@ -2072,9 +2252,10 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     # topic.html has the same root-copy quirk as about.html (lives only under
     # docs/{lang}/, never at the site root) - same fix as about_href above.
     topic_prefix = "he/" if is_root else ""
-    # accessibility.html/terms.html/filter.html follow the same no-root-copy convention.
+    # accessibility.html/terms.html/privacy.html/filter.html follow the same no-root-copy convention.
     accessibility_href = "he/accessibility.html" if is_root else "accessibility.html"
     terms_href = "he/terms.html" if is_root else "terms.html"
+    privacy_href = "he/privacy.html" if is_root else "privacy.html"
     filter_href = "he/filter.html" if is_root else "filter.html"
 
     page_title = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
@@ -2375,7 +2556,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     </section>
     <div class="results-panel" id="results-panel"></div>
   </main>
-{build_footer_html(lang, accessibility_href, terms_href)}
+{build_footer_html(lang, accessibility_href, terms_href, privacy_href)}
   <script>{js_code}</script>
 </body>
 </html>
@@ -2813,6 +2994,12 @@ def run() -> None:
             (out_dir / "terms.html").write_text(terms_html, encoding="utf-8")
         print(f"  wrote terms.html for '{lang}'")
 
+        privacy_html = build_privacy_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "privacy.html").write_text(privacy_html, encoding="utf-8")
+        print(f"  wrote privacy.html for '{lang}'")
+
         homepage_html = build_homepage_html(lang, is_root=False, countries=manifest["countries"])
         (DOCS_DIR / lang / "index.html").write_text(homepage_html, encoding="utf-8")
         print(f"  wrote index.html (homepage) for '{lang}'")
@@ -2827,6 +3014,7 @@ def run() -> None:
         accessibility_href="he/accessibility.html",
         terms_href="he/terms.html",
         filter_href="he/filter.html",
+        privacy_href="he/privacy.html",
     )
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")

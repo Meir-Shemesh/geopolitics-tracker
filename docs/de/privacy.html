@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<title>Datenschutzerklärung - Tägliche Geopolitik</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+  .top-nav-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .report-title { margin: 0; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }
+
+  .static-body { max-width: 44rem; margin: 0 auto; padding: 2.25rem 1.5rem 4rem; }
+  .static-body h2 { margin: 1.9rem 0 1.1rem; font-size: 1.2rem; font-weight: 700; color: var(--masthead-accent); }
+  .static-body h2:first-child { margin-top: 0; }
+  .static-body p { margin: 0 0 1.1rem; font-size: 1rem; }
+  .static-body a { color: var(--masthead-accent); }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Tägliche Geopolitik - Startseite"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="archive.html">← Alle Berichte</a>
+      <a class="top-nav-link" href="filter.html">Erweiterte Filterung</a>
+      <a class="top-nav-link top-nav-lang-link" href="../he/privacy.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/privacy.html">English</a>
+      <a class="top-nav-link" href="mailto:meir@meirshemesh.com">Kontakt</a>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dunkelmodus" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">Tägliche Geopolitik</p>
+      <h1 class="report-title">Datenschutzerklärung</h1>
+    </div>
+  </header>
+  <main class="static-body">
+
+    <p><strong>Hinweis: Dies ist ein erster Entwurf einer Datenschutzerklärung,
+    keine Rechtsberatung. Der Text wurde noch nicht von einer Anwältin bzw.
+    einem Anwalt geprüft und kann nach einer solchen Prüfung noch aktualisiert
+    werden.</strong></p>
+    <h2>1. Welche Daten werden erhoben</h2>
+    <p>Diese Website erhebt ausschließlich aggregierte Nutzungsstatistiken, für
+    eine allgemeine Leserschaftsanalyse:</p>
+    <ul>
+      <li>Anzahl der Seitenaufrufe/Besuche pro Tag</li>
+      <li>Browsersprache (aus dem Accept-Language-Header)</li>
+      <li>Herkunftsland (anhand der IP-Adresse ermittelt, nur auf Länderebene)</li>
+      <li>Referrer - von welcher Seite bzw. Website aus Sie gekommen sind</li>
+      <li>Grobe Geräte- und Browserfamilie (z. B. mobil/Desktop, Chrome/Safari/Firefox)</li>
+    </ul>
+    <h2>2. Was nicht erhoben wird</h2>
+    <p>Diese Website verwendet keine Cookies und erstellt keine dauerhafte oder
+    eindeutige Kennung, die verschiedene Besuche derselben Person zuordnen
+    würde - weder über ein Cookie, noch über Browser-Fingerprinting, noch über
+    einen festen Hash der IP-Adresse. Es findet kein websiteübergreifendes
+    Tracking statt, und es wird kein persönliches Profil für Besucherinnen
+    oder Besucher erstellt.</p>
+    <h2>3. Umgang mit IP-Adressen</h2>
+    <p>Die IP-Adresse jeder Anfrage wird nur für einen Moment verwendet, um
+    festzustellen, aus welchem Land die Anfrage stammt. Danach wird die
+    IP-Adresse selbst verworfen und nicht gespeichert - in der Datenbank wird
+    ausschließlich der daraus ermittelte Ländercode gespeichert, niemals die
+    rohe IP-Adresse.</p>
+    <h2>4. Wer diese Website betreibt</h2>
+    <p>Diese Website wird von Meir Shemesh als persönliches Projekt betrieben
+    und verfasst. Für Fragen oder Anliegen zum Datenschutz oder zu den
+    erhobenen Daten:
+    <a href="mailto:meir@meirshemesh.com">meir@meirshemesh.com</a>.</p>
+    <h2>5. Israelisches Datenschutzrecht und DSGVO</h2>
+    <p>Dies ist ein kleines, nicht-kommerzielles persönliches Projekt für
+    Leserinnen und Leser in Israel und anderswo. Die erhobenen Daten sind
+    echt aggregiert und anonym - sie lassen keine Identifizierung einer
+    bestimmten besuchenden Person zu -, sodass das Datenschutzrisiko sehr
+    gering ist. Der Vollständigkeit halber:</p>
+    <p>In Israel gilt das Datenschutzgesetz (Privacy Protection Law),
+    5741-1981, einschließlich der Novelle 13 (in Kraft seit 2025), die die
+    Sicherheits- und Meldepflichten für Datenbanken verschärft hat. Diese
+    Website folgt dem Grundsatz der Datenminimierung - es wird nur erhoben,
+    was für allgemeine Statistiken nötig ist, nicht mehr.</p>
+    <p>Für Leserinnen und Leser außerhalb Israels, insbesondere in der
+    Europäischen Union: Diese Website erhebt keine „personenbezogenen Daten"
+    im Sinne der DSGVO (Verordnung (EU) 2016/679), da die erhobenen Daten
+    aggregiert sind und keiner identifizierten oder identifizierbaren Person
+    zugeordnet werden können. Bei Fragen hierzu können Sie sich gerne an die
+    oben genannte E-Mail-Adresse wenden.</p>
+    <p>Zuletzt aktualisiert: Oktober 2026.</p>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Barrierefreiheitserklärung</a>
+    <a class="footer-link" href="terms.html">Nutzungsbedingungen</a>
+    <a class="footer-link" href="privacy.html">Datenschutzerklärung</a>
+  </footer>
+</body>
+</html>

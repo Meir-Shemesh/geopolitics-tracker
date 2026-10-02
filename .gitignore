@@ -8,6 +8,13 @@ venv/
 # Environment / secrets
 .env
 *.session
+# Telethon's SQLite rollback journal for the session file above - a transient
+# artifact left behind when a fetch.py run is killed mid-transaction (e.g. a
+# timeout) rather than exiting cleanly; *.session alone doesn't match this
+# suffixed variant. Found untracked on 2026-10-02 after the day's hung/killed
+# fetch run - not itself a security-sensitive file like *.session, just never
+# meant to be versioned either.
+*.session-journal
 
 # Raw data (PDFs too heavy for git)
 data/raw/*

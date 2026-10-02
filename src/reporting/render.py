@@ -474,24 +474,28 @@ def build_footer_html(
     lang: str,
     accessibility_href: str = "accessibility.html",
     terms_href: str = "terms.html",
+    privacy_href: str = "privacy.html",
 ) -> str:
     accessibility_label = {
         "he": "הצהרת נגישות", "en": "Accessibility statement", "de": "Barrierefreiheitserklärung",
     }[lang]
     terms_label = {"he": "תנאי שימוש", "en": "Terms of use", "de": "Nutzungsbedingungen"}[lang]
+    privacy_label = {"he": "מדיניות פרטיות", "en": "Privacy policy", "de": "Datenschutzerklärung"}[lang]
     return f"""
   <footer class="site-footer">
     <a class="footer-link" href="{esc(accessibility_href)}">{esc(accessibility_label)}</a>
     <a class="footer-link" href="{esc(terms_href)}">{esc(terms_label)}</a>
+    <a class="footer-link" href="{esc(privacy_href)}">{esc(privacy_label)}</a>
   </footer>"""
 
 
-def footer_hrefs_for(lang: str) -> tuple[str, str]:
-    """(accessibility_href, terms_href) for build_footer_html - same-folder-relative
-    for all three languages. German got its own accessibility.html/terms.html on
-    2026-09-22 (same day as the rest of the trilingual expansion, just a later pass -
-    see CLAUDE.md), so this no longer needs a de->en fallback."""
-    return "accessibility.html", "terms.html"
+def footer_hrefs_for(lang: str) -> tuple[str, str, str]:
+    """(accessibility_href, terms_href, privacy_href) for build_footer_html - same-
+    folder-relative for all three languages. German got its own accessibility.html/
+    terms.html on 2026-09-22 (same day as the rest of the trilingual expansion, just
+    a later pass - see CLAUDE.md), so this no longer needs a de->en fallback.
+    privacy.html (added 2026-10-02) follows the exact same no-root-copy convention."""
+    return "accessibility.html", "terms.html", "privacy.html"
 
 
 def shared_chrome_css() -> str:
