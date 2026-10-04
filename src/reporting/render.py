@@ -677,12 +677,36 @@ def _build_category_nav_html(category_nav: list[tuple[str, int]], lang: str) -> 
   </nav>"""
 
 
+def _revision_note_html(lang: str, created_at: str | None, updated_at: str | None) -> str:
+    """Small, generic revision note - shown only when a report has been
+    rebuilt (synthesize.py --force) over a date that was already published
+    AND the rebuild landed on a different calendar day than the original
+    publish. A same-day rebuild is normal same-day operation (see CLAUDE.md's
+    standing distinction between that and reopening a stable archive date),
+    not a revision worth flagging to a reader who may have seen the earlier
+    version. Deliberately generic wording - not tied to any one specific past
+    change - since this is a reusable mechanism, not a one-off patch."""
+    if not updated_at or not created_at:
+        return ""
+    if created_at[:10] == updated_at[:10]:
+        return ""
+    date_str = FORMAT_DATE[lang](updated_at[:10])
+    text = {
+        "he": f"עודכן לאחרונה ב-{date_str} (עדכון רטרואקטיבי בעקבות שינוי בשלב הניתוח)",
+        "en": f"Last updated {date_str} (retroactive update following an analysis-stage change)",
+        "de": f"Zuletzt aktualisiert am {date_str} (rückwirkende Aktualisierung nach einer Änderung der Analysephase)",
+    }[lang]
+    return f'<p class="revision-note">{esc(text)}</p>\n      '
+
+
 def build_report_html(
     report_date: str,
     sources: list[str],
     sections: list[dict],
     lang: str,
     category_nav: list[tuple[str, int]],
+    created_at: str | None = None,
+    updated_at: str | None = None,
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
@@ -697,6 +721,7 @@ def build_report_html(
     sources_label = {
         "he": "עיתונים שנסקרו היום:", "en": "Sources covering today:", "de": "Heutige Quellen:",
     }[lang]
+    revision_note = _revision_note_html(lang, created_at, updated_at)
 
     source_pills = "".join(f"<li>{esc(NEWSPAPER_DISPLAY_NAMES.get(s, s))}</li>" for s in sources)
 
@@ -826,6 +851,7 @@ def build_report_html(
     text-transform: uppercase;
   }}
   .report-title {{ margin: 0 0 1.5rem; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }}
+  .revision-note {{ margin: -1rem 0 1.5rem; font-size: .85rem; color: var(--text-muted); font-style: italic; }}
   .sources-row {{ display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }}
   .sources-label {{ font-size: .85rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }}
   .sources-pills {{ list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; }}
@@ -1050,7 +1076,7 @@ def build_report_html(
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
       <h1 class="report-title">{esc(page_title)}</h1>
-      <div class="sources-row">
+      {revision_note}<div class="sources-row">
         <span class="sources-label">{esc(sources_label)}</span>
         <ul class="sources-pills">{source_pills}</ul>
       </div>
@@ -1214,7 +1240,10 @@ def render_report(conn, report_date: str) -> None:
     ]
 
     for lang in render_langs:
-        html_str = build_report_html(report_date, sources, sections, lang, category_nav)
+        html_str = build_report_html(
+            report_date, sources, sections, lang, category_nav,
+            created_at=report_row["created_at"], updated_at=report_row["updated_at"],
+        )
 
         out_dir = REPORTS_DIR / lang
         out_dir.mkdir(parents=True, exist_ok=True)

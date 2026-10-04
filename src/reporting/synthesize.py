@@ -32,6 +32,7 @@ from src.common.db import (
     delete_report,
     get_articles_for_date,
     get_connection,
+    get_report,
     get_sources_for_date,
     init_db,
     insert_report,
@@ -464,12 +465,17 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
     conn = get_connection()
     init_db(conn)
 
+    # Captured BEFORE delete_report() wipes the row - preserves the original
+    # first-publish timestamp across a --force rebuild (see TABLE_COLUMNS note
+    # on reports.updated_at). None for a date that has never been built before.
+    original_created_at: str | None = None
     if not dry_run and report_exists(conn, report_date):
         if not force:
             print(f"Report for {report_date} already exists - skipping (use --force to rebuild).")
             conn.close()
             return
         print(f"Report for {report_date} already exists - deleting and rebuilding (--force).")
+        original_created_at = get_report(conn, report_date)["created_at"]
         delete_report(conn, report_date)
 
     sources = get_sources_for_date(conn, report_date)
@@ -535,7 +541,13 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
         return
 
     now = datetime.now(timezone.utc).isoformat()
-    insert_report(conn, report_date, json.dumps(sources, ensure_ascii=False), now)
+    insert_report(
+        conn,
+        report_date,
+        json.dumps(sources, ensure_ascii=False),
+        created_at=original_created_at or now,
+        updated_at=now if original_created_at else None,
+    )
 
     seen_ids = set()
     for section in sections:

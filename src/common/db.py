@@ -75,6 +75,15 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "report_date": "TEXT PRIMARY KEY",
         "sources_included": "TEXT NOT NULL",
         "created_at": "TEXT NOT NULL",
+        # Set only when a report is rebuilt over an already-published date
+        # (synthesize.py --force on a date that already has a report) - NULL
+        # for a report that has only ever been built once. created_at is
+        # preserved as the ORIGINAL publish timestamp across rebuilds;
+        # updated_at tracks the latest rebuild. render.py shows a small
+        # revision note only when the two fall on different calendar days -
+        # a same-day rebuild is normal same-day operation (see CLAUDE.md),
+        # not a retroactive revision worth flagging to readers.
+        "updated_at": "TEXT",
     },
     "report_sections": {
         "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -452,10 +461,16 @@ def delete_report(conn: sqlite3.Connection, report_date: str) -> None:
     conn.commit()
 
 
-def insert_report(conn: sqlite3.Connection, report_date: str, sources_included: str, created_at: str) -> None:
+def insert_report(
+    conn: sqlite3.Connection,
+    report_date: str,
+    sources_included: str,
+    created_at: str,
+    updated_at: str | None = None,
+) -> None:
     conn.execute(
-        "INSERT INTO reports (report_date, sources_included, created_at) VALUES (?, ?, ?)",
-        (report_date, sources_included, created_at),
+        "INSERT INTO reports (report_date, sources_included, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        (report_date, sources_included, created_at, updated_at),
     )
     conn.commit()
 
@@ -496,7 +511,7 @@ def link_section_article(conn: sqlite3.Connection, section_id: int, article_id: 
 
 def get_report(conn: sqlite3.Connection, report_date: str):
     return conn.execute(
-        "SELECT report_date, sources_included, created_at FROM reports WHERE report_date = ?",
+        "SELECT report_date, sources_included, created_at, updated_at FROM reports WHERE report_date = ?",
         (report_date,),
     ).fetchone()
 
