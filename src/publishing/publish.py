@@ -2056,9 +2056,35 @@ _HOMEPAGE_JS_TEMPLATE = """
     return section[TOPIC_KEY];
   }
 
+  // Shared "how much coverage" color scale - one function instead of two
+  // near-identical color-mix() calculations (map + timeline), so the same
+  // intensity always reads as the same color across both modules. Capped at
+  // 55% (not higher) per the 2026-09-16 WCAG audit on the timeline's own
+  // text-over-fill contrast - kept here for the map too even though it has
+  // no text over the fill, for one consistent scale rather than two.
+  function coverageColor(intensity) {
+    var pct = Math.round(20 + intensity * 35);
+    return "color-mix(in srgb, var(--masthead-accent) " + pct + "%, var(--bg-elevated))";
+  }
+
+  function positionTooltip(tooltip, ev) {
+    var offset = 14;
+    var x = ev.clientX + offset;
+    var y = ev.clientY + offset;
+    var maxX = window.innerWidth - tooltip.offsetWidth - 8;
+    var maxY = window.innerHeight - tooltip.offsetHeight - 8;
+    tooltip.style.left = Math.max(0, Math.min(x, maxX)) + "px";
+    tooltip.style.top = Math.max(0, Math.min(y, maxY)) + "px";
+  }
+
   function renderMap(manifest) {
     var svg = document.getElementById("world-map");
     if (!svg) return;
+    var tooltip = document.getElementById("map-tooltip");
+    var maxCount = 0;
+    Object.keys(manifest.countries).forEach(function (code) {
+      maxCount = Math.max(maxCount, manifest.countries[code].section_ids.length);
+    });
     var candidates = svg.querySelectorAll("[id]");
     candidates.forEach(function (el) {
       if (el.id.length !== 2) return;
@@ -2066,6 +2092,8 @@ _HOMEPAGE_JS_TEMPLATE = """
       var country = manifest.countries[code];
       if (!country) return;
       el.classList.add("has-coverage");
+      var intensity = maxCount ? country.section_ids.length / maxCount : 0;
+      el.style.fill = coverageColor(intensity);
       var titleEl = el.querySelector("title");
       if (titleEl) {
         titleEl.textContent = country[LABEL_KEY];
@@ -2073,6 +2101,25 @@ _HOMEPAGE_JS_TEMPLATE = """
       el.addEventListener("click", function () {
         selectCountry(manifest, code);
       });
+      if (tooltip) {
+        // Reads the same aria-label text already set at build time (see
+        // _load_map_svg_inline/_tag_country_element) instead of duplicating
+        // the "N reports" phrasing in JS - one source of truth for both
+        // screen-reader and mouse users. pointer-events:none on the tooltip
+        // itself (CSS) keeps it from ever intercepting the click/hover that
+        // is actually on the country shape underneath it.
+        el.addEventListener("mouseenter", function (ev) {
+          tooltip.textContent = el.getAttribute("aria-label") || country[LABEL_KEY];
+          tooltip.style.display = "block";
+          positionTooltip(tooltip, ev);
+        });
+        el.addEventListener("mousemove", function (ev) {
+          positionTooltip(tooltip, ev);
+        });
+        el.addEventListener("mouseleave", function () {
+          tooltip.style.display = "none";
+        });
+      }
     });
   }
 
@@ -2090,13 +2137,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       var cell = document.createElement("div");
       cell.className = "timeline-cell";
       cell.dataset.date = d;
-      // Capped at 55 (not 80) since a 2026-09-16 WCAG audit measured --text
-      // against this color-mix at the old max and found it fell to ~3:1 in
-      // both themes on the highest-coverage days - below the 4.5:1 minimum,
-      // and ironically on the most-important cells to actually read. 55 keeps
-      // every intensity level at or above 4.75:1 in both themes.
-      var pct = Math.round(20 + intensity * 35);
-      cell.style.background = "color-mix(in srgb, var(--masthead-accent) " + pct + "%, var(--bg-elevated))";
+      cell.style.background = coverageColor(intensity);
       cell.textContent = formatShortDate(d);
       cell.addEventListener("click", function () {
         selectDate(manifest, d);
@@ -2354,6 +2395,8 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
             "weiter unten auf der Seite aufgeführt."
         ),
     }[lang]
+    legend_low = {"he": "כיסוי מצומצם", "en": "Light coverage", "de": "Geringe Berichterstattung"}[lang]
+    legend_high = {"he": "כיסוי נרחב", "en": "Extensive coverage", "de": "Umfassende Berichterstattung"}[lang]
     js_code = (
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
@@ -2469,7 +2512,52 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   .circlexx, .subxx, .noxx, .unxx {{ opacity: 0; }}
   .landxx.has-coverage {{ fill: var(--masthead-accent); cursor: pointer; }}
   .landxx.has-coverage:hover {{ opacity: .8; }}
-  .landxx.is-selected {{ stroke: #f4b942; stroke-width: 2.5; }}
+  /* non-scaling-stroke: the embedded map's viewBox is 2776x1163 user units -
+     without this, a stroke-width here is in that huge coordinate space and
+     renders as a sub-pixel hairline on a normally-sized map regardless of
+     the number. With it, stroke-width is read in real output pixels instead,
+     independent of viewBox/zoom - measured visually (Playwright) at a few
+     widths before settling on 3. */
+  .landxx.is-selected {{ stroke: #f4b942; stroke-width: 3; vector-effect: non-scaling-stroke; }}
+
+  .map-legend {{
+    direction: ltr; /* a continuous low->high color scale, not text - always
+      reads left-to-right regardless of page language, same fix already used
+      for citation boxes elsewhere in the site. */
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .75rem;
+    font-size: .72rem;
+    color: var(--text-muted);
+  }}
+  .map-legend-bar {{
+    width: 110px;
+    height: 10px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--masthead-accent) 20%, var(--bg-elevated)),
+      color-mix(in srgb, var(--masthead-accent) 55%, var(--bg-elevated))
+    );
+  }}
+
+  .map-tooltip {{
+    position: fixed;
+    display: none;
+    pointer-events: none;
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: .4rem;
+    padding: .35rem .65rem;
+    font-size: .78rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+    max-width: 220px;
+    z-index: 20;
+  }}
 
   .region-chips {{
     display: flex;
@@ -2596,6 +2684,12 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     <section class="home-module map-module">
       <p class="sr-only" id="map-description">{esc(map_description)}</p>
       {map_svg}
+      <div class="map-legend" aria-hidden="true">
+        <span>{esc(legend_low)}</span>
+        <span class="map-legend-bar"></span>
+        <span>{esc(legend_high)}</span>
+      </div>
+      <div class="map-tooltip" id="map-tooltip" aria-hidden="true"></div>
       <div class="region-chips" id="region-chips"></div>
       <div class="region-chips" id="conflict-chips"></div>
     </section>
@@ -2696,11 +2790,20 @@ def _load_map_svg_inline(lang: str, countries: dict) -> str:
             if country is None:
                 return f'<{tag} id="{code}" aria-hidden="true"'
             name = country[{"he": "name_he", "en": "name_en", "de": "name_de"}[lang]]
-            label = {
-                "he": f"{name} - יש כיסוי חדשותי, לחץ לסינון",
-                "en": f"{name} - has news coverage, click to filter",
-                "de": f"{name} - hat Nachrichtenberichterstattung, zum Filtern klicken",
-            }[lang]
+            # Report count, not just "has coverage" - gives mouse users (via the
+            # custom tooltip that reads this same attribute, see renderMap() in
+            # _HOMEPAGE_JS_TEMPLATE) the same concrete number screen-reader users
+            # already got, instead of the vaguer phrasing this replaces.
+            count = len(country["section_ids"])
+            if lang == "he":
+                word = "דיווח" if count == 1 else "דיווחים"
+                label = f"{name} - {count} {word}, לחץ לסינון"
+            elif lang == "de":
+                word = "Bericht" if count == 1 else "Berichte"
+                label = f"{name} - {count} {word}, zum Filtern klicken"
+            else:
+                word = "report" if count == 1 else "reports"
+                label = f"{name} - {count} {word}, click to filter"
             # role="img" - not "button" - because aria-label is only reliably
             # exposed on an element that has *some* valid role (axe flags
             # aria-label on a bare path/g with none), and these aren't
