@@ -28,6 +28,7 @@ from src.common.db import (
     init_db,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION, REGION_LABELS
+from src.common.trends import build_country_week_trends, eligible_countries
 from src.reporting.render import (
     ALL_LANGS,
     CATEGORY_LABELS,
@@ -65,6 +66,7 @@ LOGO_SOURCE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "assets" / 
 FAVICON_SOURCE_DIR = Path(__file__).resolve().parents[2] / "scripts" / "assets"
 MAP_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "map" / "world.svg"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
+TRENDS_RELATIVE_PATH = Path("assets") / "data" / "trends.json"
 CONTENT_DIR_RELATIVE = Path("assets") / "data" / "content"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -1248,6 +1250,528 @@ def build_filter_html(lang: str) -> str:
 {build_footer_html(lang, *footer_hrefs_for(lang))}
   <script>{builder_js}</script>
   <script>{bootstrap_js}</script>
+</body>
+</html>
+"""
+
+
+_TRENDS_LABELS = {
+    "he": {
+        "page_title": "מגמות סיקור (בטא) - גאופוליטיקה יומי",
+        "eyebrow": "גאופוליטיקה יומי",
+        "heading": "מגמות סיקור לפי מדינה",
+        "beta_badge": "בטא",
+        "beta_note": "הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.",
+        "ranked_intro": "מה זז השבוע",
+        "ranked_subtitle": "שינוי במספר המקורות הייחודיים שסיקרו כל מדינה, מול השבוע הקודם",
+        "col_country": "מדינה",
+        "col_change": "שינוי שבועי",
+        "backlog_banner": "השבוע האחרון כולל השלמת-פרסום של ימים שהתעכבו - המספרים לא משקפים שבוע רגיל, והדירוג למטה מושפע מכך.",
+        "backlog_point_note": "שבוע זה כולל השלמת ימים שלא פורסמו בזמן - המספר לא משקף שבוע רגיל.",
+        "back_to_list": "חזרה לרשימה",
+        "legend_selected": "המדינה הנבחרת",
+        "legend_others": "מדינות זמינות אחרות",
+        "new_label": "חדש",
+        "week_of": "שבוע של",
+        "sources_label": "מקורות",
+        "table_caption": "מקורות ייחודיים שסיקרו את {country}, לפי שבוע",
+        "loading": "טוען…",
+    },
+    "en": {
+        "page_title": "Coverage Trends (Beta) - Daily Geopolitics",
+        "eyebrow": "Daily Geopolitics",
+        "heading": "Coverage Trends by Country",
+        "beta_badge": "Beta",
+        "beta_note": "The archive currently spans about 7 weeks of data - longer-term trends will become more reliable as it grows.",
+        "ranked_intro": "What moved this week",
+        "ranked_subtitle": "Change in distinct sources covering each country, vs. the previous week",
+        "col_country": "Country",
+        "col_change": "Weekly change",
+        "backlog_banner": "The most recent week includes catch-up publishing for days that were delayed - the numbers don't reflect a typical week, and the ranking below is affected.",
+        "backlog_point_note": "This week includes catch-up publishing for days that were delayed - the number doesn't reflect a typical week.",
+        "back_to_list": "Back to list",
+        "legend_selected": "Selected country",
+        "legend_others": "Other available countries",
+        "new_label": "New",
+        "week_of": "Week of",
+        "sources_label": "sources",
+        "table_caption": "Distinct sources covering {country}, by week",
+        "loading": "Loading…",
+    },
+    "de": {
+        "page_title": "Berichterstattungstrends (Beta) - Tägliche Geopolitik",
+        "eyebrow": "Tägliche Geopolitik",
+        "heading": "Berichterstattungstrends nach Land",
+        "beta_badge": "Beta",
+        "beta_note": "Das Archiv umfasst derzeit etwa 7 Wochen an Daten - längerfristige Trends werden zuverlässiger, je größer das Archiv wird.",
+        "ranked_intro": "Was sich diese Woche bewegt hat",
+        "ranked_subtitle": "Veränderung der eindeutigen Quellen pro Land im Vergleich zur Vorwoche",
+        "col_country": "Land",
+        "col_change": "Wöchentliche Veränderung",
+        "backlog_banner": "Die letzte Woche enthält nachträglich veröffentlichte, verspätete Tage - die Zahlen entsprechen keiner normalen Woche, und die Rangliste unten ist davon betroffen.",
+        "backlog_point_note": "Diese Woche enthält nachträglich veröffentlichte, verspätete Tage - die Zahl entspricht keiner normalen Woche.",
+        "back_to_list": "Zurück zur Liste",
+        "legend_selected": "Ausgewähltes Land",
+        "legend_others": "Andere verfügbare Länder",
+        "new_label": "Neu",
+        "week_of": "Woche vom",
+        "sources_label": "Quellen",
+        "table_caption": "Eindeutige Quellen, die {country} abdeckten, nach Woche",
+        "loading": "Wird geladen…",
+    },
+}
+
+
+_TRENDS_JS_TEMPLATE = """
+(function () {
+  var LABELS = __LABELS__;
+  var LANG = "__LANG__";
+  var NAME_KEY = "name_" + LANG;
+  var container = document.getElementById("trends-root");
+
+  function fmtWeek(w) {
+    return LABELS.week_of + " " + w.start;
+  }
+
+  function pctChange(prev, last) {
+    if (prev === 0) return last > 0 ? null : 0; // null => "New"
+    return ((last - prev) / prev) * 100;
+  }
+
+  function renderRanked(data) {
+    var weeks = data.weeks;
+    var lastIdx = weeks.length - 1;
+    var prevIdx = weeks.length - 2;
+    var lastWeek = weeks[lastIdx];
+
+    var banner = document.getElementById("backlog-banner");
+    if (lastWeek && lastWeek.has_backlog) {
+      banner.textContent = LABELS.backlog_banner;
+      banner.hidden = false;
+    }
+
+    var rows = data.countries.map(function (c) {
+      var last = c.n_sources[lastIdx] || 0;
+      var prev = prevIdx >= 0 ? (c.n_sources[prevIdx] || 0) : 0;
+      var pct = pctChange(prev, last);
+      return { code: c.code, name: c[NAME_KEY], last: last, prev: prev, pct: pct };
+    });
+    rows.sort(function (a, b) {
+      var av = a.pct === null ? Infinity : a.pct;
+      var bv = b.pct === null ? Infinity : b.pct;
+      return bv - av;
+    });
+
+    var tbody = document.getElementById("ranked-body");
+    tbody.innerHTML = "";
+    var maxAbsPct = Math.max.apply(null, rows.map(function (r) { return r.pct === null ? 0 : Math.abs(r.pct); }).concat([1]));
+
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.className = "ranked-row";
+      tr.tabIndex = 0;
+      tr.setAttribute("role", "button");
+
+      var tdName = document.createElement("td");
+      tdName.className = "ranked-name";
+      tdName.textContent = r.name;
+      tr.appendChild(tdName);
+
+      var tdChange = document.createElement("td");
+      tdChange.className = "ranked-change";
+      var isNew = r.pct === null;
+      var isUp = !isNew && r.pct > 0;
+      var barWrap = document.createElement("span");
+      barWrap.className = "change-bar-wrap";
+      var bar = document.createElement("span");
+      bar.className = "change-bar " + (isNew || isUp ? "change-up" : "change-down");
+      var widthPct = isNew ? 100 : Math.min(100, Math.round((Math.abs(r.pct) / maxAbsPct) * 100));
+      bar.style.width = widthPct + "%";
+      barWrap.appendChild(bar);
+      var label = document.createElement("span");
+      label.className = "change-label " + (isNew || isUp ? "change-up-text" : "change-down-text");
+      label.textContent = isNew ? LABELS.new_label : (isUp ? "+" : "") + Math.round(r.pct) + "%";
+      tdChange.appendChild(barWrap);
+      tdChange.appendChild(label);
+      tr.appendChild(tdChange);
+
+      tr.addEventListener("click", function () { openExpanded(data, r.code); });
+      tr.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openExpanded(data, r.code); }
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openExpanded(data, code) {
+    document.getElementById("ranked-view").hidden = true;
+    var panel = document.getElementById("expanded-view");
+    panel.hidden = false;
+    renderChart(data, code);
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function closeExpanded() {
+    document.getElementById("expanded-view").hidden = true;
+    document.getElementById("ranked-view").hidden = false;
+  }
+
+  function renderChart(data, selectedCode) {
+    var weeks = data.weeks;
+    var selected = data.countries.find(function (c) { return c.code === selectedCode; });
+    document.getElementById("expanded-title").textContent = selected[NAME_KEY];
+
+    var W = 760, H = 320, padL = 36, padR = 16, padT = 16, padB = 36;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var globalMax = 1;
+    data.countries.forEach(function (c) {
+      c.n_sources.forEach(function (v) { if (v > globalMax) globalMax = v; });
+    });
+
+    function x(i) { return padL + (weeks.length === 1 ? 0 : (i / (weeks.length - 1)) * plotW); }
+    function y(v) { return padT + plotH - (v / globalMax) * plotH; }
+
+    var svgParts = [];
+    svgParts.push('<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + selected[NAME_KEY] + '" preserveAspectRatio="xMidYMid meet">');
+
+    // gridlines (recessive)
+    for (var gy = 0; gy <= 4; gy++) {
+      var yy = padT + (gy / 4) * plotH;
+      svgParts.push('<line x1="' + padL + '" y1="' + yy + '" x2="' + (W - padR) + '" y2="' + yy + '" class="chart-grid"/>');
+    }
+
+    // background (non-selected) lines
+    data.countries.forEach(function (c) {
+      if (c.code === selectedCode) return;
+      var pts = c.n_sources.map(function (v, i) { return x(i) + "," + y(v); }).join(" ");
+      svgParts.push('<polyline points="' + pts + '" class="chart-line-muted"/>');
+    });
+
+    // selected line - drawn as individual segments so a backlog-adjacent
+    // segment can get its own dash-array without affecting the whole line.
+    for (var i = 0; i < weeks.length - 1; i++) {
+      var segBacklog = weeks[i].has_backlog || weeks[i + 1].has_backlog;
+      svgParts.push(
+        '<line x1="' + x(i) + '" y1="' + y(selected.n_sources[i]) + '" x2="' + x(i + 1) + '" y2="' + y(selected.n_sources[i + 1]) + '" ' +
+        'class="chart-line-selected' + (segBacklog ? ' chart-line-backlog' : '') + '"/>'
+      );
+    }
+
+    // markers + invisible larger hit-targets for hover/focus
+    weeks.forEach(function (w, i) {
+      var cx = x(i), cy = y(selected.n_sources[i]);
+      var markerClass = w.has_backlog ? "chart-point chart-point-backlog" : "chart-point";
+      svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="5" class="' + markerClass + '" data-i="' + i + '"/>');
+      svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="14" class="chart-hit" data-i="' + i + '" tabindex="0" role="img" aria-label="' +
+        fmtWeek(w) + ': ' + selected.n_sources[i] + ' ' + LABELS.sources_label + (w.has_backlog ? '. ' + LABELS.backlog_point_note : '') + '"/>');
+    });
+
+    svgParts.push('</svg>');
+    var chartEl = document.getElementById("chart-svg");
+    chartEl.innerHTML = svgParts.join("");
+
+    var tooltip = document.getElementById("chart-tooltip");
+    chartEl.querySelectorAll(".chart-hit").forEach(function (hit) {
+      var i = parseInt(hit.getAttribute("data-i"), 10);
+      var w = weeks[i];
+      var text = fmtWeek(w) + ": " + selected.n_sources[i] + " " + LABELS.sources_label +
+        (w.has_backlog ? " — " + LABELS.backlog_point_note : "");
+      function show(evt) {
+        tooltip.textContent = text;
+        tooltip.hidden = false;
+        var rect = chartEl.getBoundingClientRect();
+        var px = (evt.clientX !== undefined ? evt.clientX : rect.left + rect.width / 2) - rect.left;
+        tooltip.style.left = Math.min(Math.max(px, 60), rect.width - 60) + "px";
+      }
+      hit.addEventListener("mouseenter", show);
+      hit.addEventListener("focus", show);
+      hit.addEventListener("mouseleave", function () { tooltip.hidden = true; });
+      hit.addEventListener("blur", function () { tooltip.hidden = true; });
+    });
+
+    // Accessible data table alongside the chart (not toggled - always present)
+    var thead = document.getElementById("data-table-head");
+    var tbody = document.getElementById("data-table-body");
+    document.getElementById("data-table-caption").textContent = LABELS.table_caption.replace("{country}", selected[NAME_KEY]);
+    thead.innerHTML = "<tr><th></th>" + weeks.map(function (w) { return "<th>" + w.start + "</th>"; }).join("") + "</tr>";
+    var rowCells = weeks.map(function (w, i) {
+      var v = selected.n_sources[i];
+      return "<td>" + v + (w.has_backlog ? " *" : "") + "</td>";
+    }).join("");
+    tbody.innerHTML = "<tr><th>" + LABELS.sources_label + "</th>" + rowCells + "</tr>";
+
+    var footnote = document.getElementById("data-table-footnote");
+    if (weeks.some(function (w) { return w.has_backlog; })) {
+      footnote.textContent = "* " + LABELS.backlog_point_note;
+      footnote.hidden = false;
+    } else {
+      footnote.hidden = true;
+    }
+  }
+
+  document.getElementById("back-to-list").addEventListener("click", closeExpanded);
+
+  fetch("../assets/data/trends.json")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      document.getElementById("trends-loading").hidden = true;
+      document.getElementById("ranked-view").hidden = false;
+      renderRanked(data);
+    })
+    .catch(function (err) {
+      console.error("Failed to load trends.json", err);
+      document.getElementById("trends-loading").textContent = "⚠";
+    });
+})();
+"""
+
+
+def build_trends_html(lang: str) -> str:
+    """Standalone coverage-trends page (src/common/trends.py's groundwork,
+    PROJECT_LOG 4.78/4.79) - docs/{lang}/trends.html only, no root copy, same
+    convention as about.html/topic.html/filter.html (a destination, not a
+    primary landing page). NOT linked from the homepage or top-nav yet - that
+    is a separate, not-yet-made decision; this page exists and is reachable
+    by direct URL only, same bootstrapping stage about.html/topic.html went
+    through before they were wired in.
+
+    Deliberately NOT a per-country categorical palette: the spec this was
+    built against treats the 10 non-selected countries as recessive
+    background context, not an identity each reader needs to tell apart from
+    the others (see the module's own JS - one highlight color for whichever
+    country is selected, one neutral muted tone for the rest). Validated
+    with the dataviz skill's palette checker: the one real two-color job on
+    this page (the up/down change indicator) passes all checks in both
+    themes; an 11-way categorical attempt at reusing CATEGORY_STYLES did not
+    (two colors landed near-identical under CVD simulation) - see the
+    build session's notes for the rejected intermediate palettes.
+    """
+    is_he = lang == "he"
+    dir_attr = "rtl" if is_he else "ltr"
+    L = _TRENDS_LABELS[lang]
+
+    js_code = _TRENDS_JS_TEMPLATE.replace("__LABELS__", json.dumps(L, ensure_ascii=False)).replace("__LANG__", lang)
+
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
+<title>{esc(L['page_title'])}</title>
+{favicon_links_html("../")}
+<style>
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
+
+{theme_tokens_css()}
+
+  :root {{ --trend-down: #1066a3; --trend-muted-line: var(--border); }}
+  @media (prefers-color-scheme: dark) {{
+    :root:not([data-theme="light"]) {{ --trend-down: #4a93c2; --trend-muted-line: #6e624a; }}
+  }}
+  :root[data-theme="dark"] {{ --trend-down: #4a93c2; --trend-muted-line: #6e624a; }}
+
+  * {{ box-sizing: border-box; }}
+
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
+    line-height: 1.7;
+  }}
+
+  .top-nav {{
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
+  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+
+  .masthead {{
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }}
+  .masthead-inner {{ max-width: 48rem; margin: 0 auto; }}
+  .eyebrow {{
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }}
+  .trends-heading-row {{ display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }}
+  .report-title {{ margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }}
+  .beta-badge {{
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--chip-selected-text);
+    background: var(--masthead-accent);
+    border-radius: .4rem;
+    padding: .2rem .55rem;
+  }}
+  .beta-note {{ margin: .6rem 0 0; font-size: .88rem; color: var(--text-muted); max-width: 40rem; }}
+
+  .trends-body {{ max-width: 48rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }}
+
+  .banner {{
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--trend-down);
+    background: var(--bg-elevated);
+    border-radius: .5rem;
+    padding: .85rem 1rem;
+    font-size: .9rem;
+    margin-bottom: 1.5rem;
+  }}
+
+  .ranked-intro {{ margin: 0 0 .2rem; font-size: 1.3rem; font-weight: 800; }}
+  .ranked-subtitle {{ margin: 0 0 1.2rem; font-size: .88rem; color: var(--text-muted); }}
+
+  table {{ width: 100%; border-collapse: collapse; }}
+  .ranked-row {{ cursor: pointer; border-bottom: 1px solid var(--border); }}
+  .ranked-row:hover, .ranked-row:focus {{ background: var(--bg-elevated); outline: none; }}
+  .ranked-row td {{ padding: .75rem .4rem; }}
+  .ranked-name {{ font-weight: 700; white-space: nowrap; }}
+  .ranked-change {{ width: 60%; direction: ltr; }}
+  .change-bar-wrap {{
+    display: inline-block;
+    width: 55%;
+    height: .55rem;
+    background: var(--border);
+    border-radius: .3rem;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-inline-end: .6rem;
+  }}
+  .change-bar {{ display: block; height: 100%; }}
+  .change-up {{ background: var(--masthead-accent); }}
+  .change-down {{ background: var(--trend-down); }}
+  .change-label {{ font-weight: 700; font-variant-numeric: tabular-nums; }}
+  .change-up-text {{ color: var(--masthead-accent); }}
+  .change-down-text {{ color: var(--trend-down); }}
+
+  #trends-loading {{ color: var(--text-muted); padding: 2rem 0; }}
+
+  .expanded-header {{ display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }}
+  #expanded-title {{ margin: 0; font-size: 1.3rem; font-weight: 800; }}
+  .back-btn {{
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: .4rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: .85rem;
+    padding: .4rem .8rem;
+    cursor: pointer;
+  }}
+  .back-btn:hover {{ border-color: var(--masthead-accent); color: var(--masthead-accent); }}
+
+  .chart-legend {{ display: flex; gap: 1.2rem; font-size: .82rem; color: var(--text-muted); margin-bottom: .6rem; direction: ltr; }}
+  .legend-swatch {{ display: inline-block; width: 1.4rem; height: 2px; vertical-align: middle; margin-inline-end: .4rem; }}
+  .legend-selected .legend-swatch {{ background: var(--masthead-accent); height: 3px; }}
+  .legend-others .legend-swatch {{ background: var(--trend-muted-line); }}
+
+  .chart-wrap {{ position: relative; direction: ltr; }}
+  #chart-svg svg {{ width: 100%; height: auto; display: block; }}
+  .chart-grid {{ stroke: var(--border); stroke-width: 1; }}
+  .chart-line-muted {{ fill: none; stroke: var(--trend-muted-line); stroke-width: 1.5; opacity: .75; }}
+  .chart-line-selected {{ fill: none; stroke: var(--masthead-accent); stroke-width: 3; stroke-linecap: round; }}
+  .chart-line-backlog {{ stroke-dasharray: 5 4; }}
+  .chart-point {{ fill: var(--masthead-accent); stroke: var(--bg-elevated); stroke-width: 1.5; }}
+  .chart-point-backlog {{ fill: var(--bg-elevated); stroke: var(--masthead-accent); stroke-width: 2; stroke-dasharray: 2 2; }}
+  .chart-hit {{ fill: transparent; cursor: pointer; }}
+  .chart-hit:focus {{ outline: 2px solid var(--masthead-accent); outline-offset: 2px; }}
+
+  #chart-tooltip {{
+    position: absolute;
+    top: -.5rem;
+    transform: translate(-50%, -100%);
+    background: var(--text);
+    color: var(--bg);
+    font-size: .8rem;
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    white-space: nowrap;
+    pointer-events: none;
+  }}
+
+  .data-table-wrap {{ margin-top: 1.5rem; overflow-x: auto; direction: ltr; }}
+  .data-table-wrap table {{ font-size: .82rem; }}
+  .data-table-wrap th, .data-table-wrap td {{ border: 1px solid var(--border); padding: .4rem .5rem; text-align: center; }}
+  .data-table-wrap caption {{ caption-side: top; text-align: start; font-size: .82rem; color: var(--text-muted); margin-bottom: .4rem; }}
+  .table-footnote {{ font-size: .8rem; color: var(--text-muted); margin: .6rem 0 0; }}
+
+  {shared_chrome_css()}
+</style>
+</head>
+<body>
+{build_nav_html("archive.html", {o: f"../{o}/trends.html" for o in other_langs(lang)}, lang)}
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">{esc(L['eyebrow'])}</p>
+      <div class="trends-heading-row">
+        <h1 class="report-title">{esc(L['heading'])}</h1>
+        <span class="beta-badge">{esc(L['beta_badge'])}</span>
+      </div>
+      <p class="beta-note">{esc(L['beta_note'])}</p>
+    </div>
+  </header>
+  <main class="trends-body">
+    <p id="trends-loading">{esc(L['loading'])}</p>
+    <div id="banner-backlog-wrap">
+      <p class="banner" id="backlog-banner" hidden></p>
+    </div>
+
+    <section id="ranked-view" hidden>
+      <h2 class="ranked-intro">{esc(L['ranked_intro'])}</h2>
+      <p class="ranked-subtitle">{esc(L['ranked_subtitle'])}</p>
+      <table>
+        <thead>
+          <tr><th>{esc(L['col_country'])}</th><th>{esc(L['col_change'])}</th></tr>
+        </thead>
+        <tbody id="ranked-body"></tbody>
+      </table>
+    </section>
+
+    <section id="expanded-view" hidden>
+      <div class="expanded-header">
+        <h2 id="expanded-title"></h2>
+        <button class="back-btn" id="back-to-list" type="button">{esc(L['back_to_list'])}</button>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-selected"><span class="legend-swatch"></span>{esc(L['legend_selected'])}</span>
+        <span class="legend-others"><span class="legend-swatch"></span>{esc(L['legend_others'])}</span>
+      </div>
+      <div class="chart-wrap">
+        <div id="chart-svg"></div>
+        <div id="chart-tooltip" hidden></div>
+      </div>
+      <div class="data-table-wrap">
+        <table>
+          <caption id="data-table-caption"></caption>
+          <thead id="data-table-head"></thead>
+          <tbody id="data-table-body"></tbody>
+        </table>
+        <p class="table-footnote" id="data-table-footnote" dir="{dir_attr}" hidden></p>
+      </div>
+    </section>
+  </main>
+{build_footer_html(lang, *footer_hrefs_for(lang))}
+  <script>{js_code}</script>
 </body>
 </html>
 """
@@ -2940,6 +3464,71 @@ def _write_manifest(manifest: dict) -> None:
         dest.write_text(manifest_json, encoding="utf-8")
 
 
+def build_trends_json(conn) -> dict:
+    """Static data file for trends.html (src/common/trends.py's groundwork,
+    PROJECT_LOG 4.78/4.79) - built once here, fetched client-side like every
+    other data file on this site, never baked into the HTML. Separate from
+    manifest.json (different shape/purpose, same reasoning as the per-date
+    content/{date}_{lang}.json split: keep each data file lean for what it's
+    actually for).
+
+    Week metadata (start/end/has_backlog/backlog_dates) lives ONCE at the top
+    level, not duplicated per country - it is identical across every country
+    series since detect_backlog_dates() flags a report-date regardless of
+    which country it's queried for. Each country's n_sources array is
+    index-aligned 1:1 with "weeks" (0 for a week with no data, though that
+    should be rare for countries that cleared eligible_countries()'s density
+    gate in the first place).
+    """
+    weeks_trends = build_country_week_trends(conn)
+    elig = eligible_countries(conn)
+
+    weeks: list[dict] = []
+    if elig:
+        any_country = next(iter(elig))
+        weeks = [
+            {
+                "start": w["week_start"],
+                "end": w["week_end"],
+                "has_backlog": w["has_backlog"],
+                "backlog_dates": w["backlog_dates"],
+            }
+            for w in weeks_trends.get(any_country, [])
+        ]
+
+    countries = []
+    for code in elig:
+        by_week = {w["week_start"]: w["n_sources"] for w in weeks_trends.get(code, [])}
+        n_sources = [by_week.get(w["start"], 0) for w in weeks]
+        info = COUNTRY_LIST.get(code, {})
+        countries.append(
+            {
+                "code": code,
+                "name_he": info.get("name_he", code),
+                "name_en": info.get("name_en", code),
+                "name_de": info.get("name_de", code),
+                "n_sources": n_sources,
+            }
+        )
+    # Most-covered-overall first - a sensible stable default order; the page's
+    # own ranked view re-sorts by week-over-week change client-side anyway.
+    countries.sort(key=lambda c: -sum(c["n_sources"]))
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "weeks": weeks,
+        "countries": countries,
+    }
+
+
+def _write_trends_json(data: dict) -> None:
+    trends_json = json.dumps(data, ensure_ascii=False)
+    for base_dir in (DOCS_DIR, REPORTS_DIR):
+        dest = base_dir / TRENDS_RELATIVE_PATH
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(trends_json, encoding="utf-8")
+
+
 def _write_section_content_files(conn, entries: list[tuple[str, list[str]]]) -> None:
     """The raw-text sibling of build_manifest()'s `sections` index.
 
@@ -3089,6 +3678,7 @@ def run() -> None:
     # build_homepage_html() now needs manifest["countries"] to statically
     # tag the map's accessibility markup - see _load_map_svg_inline().
     manifest = build_manifest(conn, entries)
+    trends_data = build_trends_json(conn)
     _write_section_content_files(conn, entries)
     conn.close()
 
@@ -3126,6 +3716,12 @@ def run() -> None:
             out_dir.mkdir(parents=True, exist_ok=True)
             (out_dir / "filter.html").write_text(filter_html, encoding="utf-8")
         print(f"  wrote filter.html for '{lang}'")
+
+        trends_html = build_trends_html(lang)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "trends.html").write_text(trends_html, encoding="utf-8")
+        print(f"  wrote trends.html for '{lang}'")
 
         # German joined the trilingual set on 2026-09-22 (previously accessibility.html/
         # terms.html/the homepage stayed he/en-only) - all three now build for every
@@ -3174,6 +3770,9 @@ def run() -> None:
     _write_manifest(manifest)
     print(f"  wrote manifest.json ({len(manifest['sections'])} section(s), {len(manifest['countries'])} countrie(s))")
     print(f"  wrote {len(entries) * len(ALL_LANGS)} section-content file(s) under assets/data/content/")
+
+    _write_trends_json(trends_data)
+    print(f"  wrote trends.json ({len(trends_data['countries'])} eligible countrie(s), {len(trends_data['weeks'])} week(s))")
 
     print(f"\nPublish complete: {len(entries)} report date(s) -> {DOCS_DIR}")
 
