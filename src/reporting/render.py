@@ -431,6 +431,7 @@ PDF_LABEL = {"he": "⬇ הורד PDF", "en": "⬇ Download PDF", "de": "⬇ PDF 
 CONTACT_EMAIL = "meir@meirshemesh.com"
 CONTACT_LABEL = {"he": "צור קשר", "en": "Contact", "de": "Kontakt"}
 FILTER_LABEL = {"he": "סינון מתקדם", "en": "Advanced filter", "de": "Erweiterte Filterung"}
+TRENDS_LABEL = {"he": "מגמות", "en": "Trends", "de": "Trends"}
 
 
 def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_href: str | None = None) -> str:
@@ -455,6 +456,7 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
     if pdf_href is not None:
         pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(PDF_LABEL[lang])}</a>'
     filter_link = f'\n      <a class="top-nav-link" href="filter.html">{esc(FILTER_LABEL[lang])}</a>'
+    trends_link = f'\n      <a class="top-nav-link" href="trends.html">{esc(TRENDS_LABEL[lang])}</a>'
     lang_links = "".join(
         f'\n      <a class="top-nav-link top-nav-lang-link" href="{esc(lang_hrefs[other])}">{esc(LANG_LABEL[other])}</a>'
         for other in other_langs(lang) if other in lang_hrefs
@@ -465,7 +467,7 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
   <nav class="top-nav">
     <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{filter_link}{lang_links}{pdf_link}{contact_link}{toggle_button}
+      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{filter_link}{trends_link}{lang_links}{pdf_link}{contact_link}{toggle_button}
     </div>
   </nav>"""
 

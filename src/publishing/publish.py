@@ -44,6 +44,7 @@ from src.reporting.render import (
     NEWSPAPER_DISPLAY_NAMES,
     OTHER_LANG,
     THEME_TOGGLE_SCRIPT_HTML,
+    TRENDS_LABEL,
     build_footer_html,
     build_nav_html,
     category_css,
@@ -92,6 +93,7 @@ def build_index_html(
     terms_href: str = "terms.html",
     filter_href: str = "filter.html",
     privacy_href: str = "privacy.html",
+    trends_href: str = "trends.html",
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
@@ -208,6 +210,7 @@ def build_index_html(
     <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
     <div class="top-nav-links">
       <a class="top-nav-link" href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
+      <a class="top-nav-link" href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>
       {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
       <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
       {theme_toggle_html(lang)}
@@ -2551,11 +2554,20 @@ _HOMEPAGE_JS_TEMPLATE = """
   var LANG = "__LANG__";
   var PREFIX = "__PREFIX__";
   var TOPIC_PREFIX = "__TOPIC_PREFIX__";
+  var TRENDS_HREF = "__TRENDS_HREF__";
 
   fetch(PREFIX + "assets/data/manifest.json")
     .then(function (r) { return r.json(); })
     .then(init)
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  // Independent fetch/catch from the manifest above - a trends.json hiccup
+  // (or an archive still too young to have any eligible country yet) must
+  // never take down the rest of the homepage with it.
+  fetch(PREFIX + "assets/data/trends.json")
+    .then(function (r) { return r.json(); })
+    .then(renderTrendsCard)
+    .catch(function (err) { console.error("Failed to load trends.json", err); });
 
   function init(manifest) {
     renderMap(manifest);
@@ -2695,6 +2707,62 @@ _HOMEPAGE_JS_TEMPLATE = """
     link.appendChild(numberEl);
     link.appendChild(previewEl);
     link.appendChild(cta);
+    card.appendChild(link);
+  }
+
+  // Deliberately no visible heading on this card (same "layout itself
+  // communicates the role" principle as the map/timeline modules) - the
+  // mini line-chart IS the label. The country shown is whichever one
+  // trends.json already sorted first (most total coverage overall, see
+  // build_trends_json()'s own sort) - a stable, data-driven pick, not a
+  // hardcoded country. A screen-reader-only description still names it,
+  // so the card is never silent to assistive tech despite having no
+  // visible text of its own.
+  function buildSparklinePoints(values, w, h, pad) {
+    var max = 0;
+    for (var i = 0; i < values.length; i++) {
+      if (values[i] > max) max = values[i];
+    }
+    if (max === 0) max = 1;
+    var n = values.length;
+    var pts = [];
+    for (var j = 0; j < n; j++) {
+      var x = n > 1 ? (j / (n - 1)) * (w - pad * 2) + pad : w / 2;
+      var y = h - pad - (values[j] / max) * (h - pad * 2);
+      pts.push(x.toFixed(1) + "," + y.toFixed(1));
+    }
+    return pts.join(" ");
+  }
+
+  function renderTrendsCard(data) {
+    var card = document.getElementById("trends-card");
+    var desc = document.getElementById("trends-description");
+    if (!card || !data || !data.countries || !data.countries.length) return;
+    var country = data.countries[0];
+    var points = buildSparklinePoints(country.n_sources, 100, 44, 4);
+
+    var label = (
+      LANG === "he" ? "מגמות סיקור - " + country.name_he + " - למסך המגמות המלא" :
+      LANG === "de" ? "Berichterstattungstrends - " + country.name_de + " - zur vollständigen Trendseite" :
+      "Coverage trends - " + country.name_en + " - to the full trends page"
+    );
+    if (desc) desc.textContent = label;
+
+    var link = document.createElement("a");
+    link.href = TRENDS_HREF;
+    link.setAttribute("aria-label", label);
+
+    var svgNS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", "trends-card-spark");
+    svg.setAttribute("viewBox", "0 0 100 44");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("aria-hidden", "true");
+    var polyline = document.createElementNS(svgNS, "polyline");
+    polyline.setAttribute("points", points);
+    svg.appendChild(polyline);
+
+    link.appendChild(svg);
     card.appendChild(link);
   }
 
@@ -2867,6 +2935,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     terms_href = "he/terms.html" if is_root else "terms.html"
     privacy_href = "he/privacy.html" if is_root else "privacy.html"
     filter_href = "he/filter.html" if is_root else "filter.html"
+    trends_href = "he/trends.html" if is_root else "trends.html"
 
     page_title = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     eyebrow = page_title
@@ -2925,6 +2994,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
         .replace("__TOPIC_PREFIX__", topic_prefix)
+        .replace("__TRENDS_HREF__", trends_href)
     )
 
     return f"""<!doctype html>
@@ -2994,7 +3064,8 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 
   .home-top-row {{
     display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
     gap: 1.25rem;
     margin-bottom: 1.25rem;
   }}
@@ -3012,6 +3083,12 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     flex-direction: column;
     min-height: 260px;
   }}
+  /* Shrunk to roughly half its former footprint (was 2fr of 3fr total width,
+     now 1fr of 3; min-height likewise ~halved) to make room for the new
+     trends-module alongside it in the same row - see "align-items: start"
+     above, which lets this card stay short instead of stretching to match
+     its taller siblings. */
+  .timeline-module {{ min-height: 130px; }}
   .module-link {{ font-size: .78rem; color: var(--masthead-accent); text-decoration: none; white-space: nowrap; }}
   .module-link:hover {{ text-decoration: underline; }}
 
@@ -3138,6 +3215,16 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   }}
   .latest-card-cta {{ margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
+  /* No visible heading by design (see renderTrendsCard()'s own comment) -
+     the mini line-chart is the only content; the module border brightens
+     on hover (via :has(), same affordance archive-card/result-item give
+     their own clickable cards) so it still reads as a link. */
+  .trends-module:has(a:hover) {{ border-color: var(--masthead-accent); }}
+  .trends-card {{ flex: 1; display: flex; }}
+  .trends-card a {{ display: flex; flex: 1; align-items: center; }}
+  .trends-card-spark {{ width: 100%; height: auto; display: block; }}
+  .trends-card-spark polyline {{ fill: none; stroke: var(--masthead-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }}
+
   .results-heading {{ font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }}
   .results-full-link {{
     display: inline-block;
@@ -3181,6 +3268,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     <img class="home-logo" src="{asset_prefix}assets/images/MS_Logo.png" alt="">
     <div class="home-top-bar-links">
       <a href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
+      <a href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>
       {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
       <a href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
       {theme_toggle_html(lang)}
@@ -3203,6 +3291,10 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
       </section>
       <section class="home-module latest-module">
         <div class="latest-card" id="latest-card"></div>
+      </section>
+      <section class="home-module trends-module" id="trends-module">
+        <p class="sr-only" id="trends-description"></p>
+        <div class="trends-card" id="trends-card"></div>
       </section>
     </div>
     <section class="home-module map-module">
@@ -3759,6 +3851,7 @@ def run() -> None:
         terms_href="he/terms.html",
         filter_href="he/filter.html",
         privacy_href="he/privacy.html",
+        trends_href="he/trends.html",
     )
     (DOCS_DIR / "archive.html").write_text(root_archive_html, encoding="utf-8")
     print(f"  wrote {DOCS_DIR / 'archive.html'} (root, Hebrew default)")
