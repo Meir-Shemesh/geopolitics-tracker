@@ -372,11 +372,49 @@ def build_fallback_section(article) -> dict:
     }
 
 
-def compute_missing_ids(sections, valid_ids: set) -> set:
+def compute_missing_ids(sections, valid_ids: set, key: str = "article_ids") -> set:
     seen = set()
     for section in sections:
-        seen.update(a for a in section["article_ids"] if a in valid_ids)
+        seen.update(a for a in section[key] if a in valid_ids)
     return valid_ids - seen
+
+
+def compute_duplicate_ids(topics, key: str = "article_ids") -> set:
+    """Ids present in more than one topic's id-list within the SAME stage-1
+    grouping call - a distinct failure mode from compute_missing_ids() above
+    (which only catches ids absent from every topic; a duplicated id is never
+    "missing", so that check alone can't see this). Confirmed happening in
+    production (2026-10-07 diagnostic, see PROJECT_LOG): 116 duplicate-article
+    instances across 20/45 archived dates, concentrated on high-volume days -
+    one 2026-09-18 article ended up cited under three unrelated published
+    topics. Not retroactively fixed in the existing archive - see "Known
+    limitations" on the site and PROJECT_LOG for that decision.
+
+    `key` defaults to "article_ids" (this module's own topic/section shape)
+    but is overridable - scripts/biweekly_stage1_dryrun.py reuses this same
+    function with key="section_ids" for its cross-day map step rather than
+    re-implementing the same three lines."""
+    seen = set()
+    dupes = set()
+    for topic in topics:
+        for item_id in topic.get(key, []):
+            if item_id in seen:
+                dupes.add(item_id)
+            seen.add(item_id)
+    return dupes
+
+
+def compute_stage1_problem_ratio(topics, valid_ids: set, key: str = "article_ids") -> tuple[set, set, float]:
+    """Combines both known stage-1 grouping failure modes into the single
+    ratio that already drives GROUPING_RATIO_THRESHOLD's retry-once policy -
+    missing ids and duplicate-assigned ids are different problems, but they
+    share one retry mechanism, not two separate ones (duplication was simply
+    invisible to it before this existed). An id can't be both at once, so the
+    union's size is just their sum."""
+    missing = compute_missing_ids(topics, valid_ids, key=key)
+    duplicated = compute_duplicate_ids(topics, key=key)
+    ratio = ((len(missing) + len(duplicated)) / len(valid_ids)) if valid_ids else 0
+    return missing, duplicated, ratio
 
 
 def synthesize_day_two_stage(
@@ -395,28 +433,32 @@ def synthesize_day_two_stage(
 
     topics, stage1_usage = group_articles_into_topics(client, articles, model=stage1_model)
     usage_log.append({**stage1_usage, "stage": 1})
-    unassigned = compute_missing_ids(topics, valid_ids)
-    ratio = (len(unassigned) / len(valid_ids)) if valid_ids else 0
+    missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids)
 
     if ratio > GROUPING_RATIO_THRESHOLD:
         print(
-            f"  stage 1: {ratio:.0%} of articles unassigned exceeds {GROUPING_RATIO_THRESHOLD:.0%} "
-            f"- retrying grouping once."
+            f"  stage 1: {len(missing)} unassigned + {len(duplicated)} duplicate-assigned "
+            f"({ratio:.0%} of articles) exceeds {GROUPING_RATIO_THRESHOLD:.0%} - retrying grouping once."
         )
         retry_topics, retry_usage = group_articles_into_topics(client, articles, model=stage1_model)
         usage_log.append({**retry_usage, "stage": 1})
-        retry_unassigned = compute_missing_ids(retry_topics, valid_ids)
-        retry_ratio = (len(retry_unassigned) / len(valid_ids)) if valid_ids else 0
+        retry_missing, retry_duplicated, retry_ratio = compute_stage1_problem_ratio(retry_topics, valid_ids)
         if retry_ratio < ratio:
             print(f"  stage 1 retry improved coverage ({ratio:.0%} -> {retry_ratio:.0%}) - using the retry result.")
-            topics, ratio = retry_topics, retry_ratio
+            topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
         else:
             print(f"  stage 1 retry did not improve coverage ({ratio:.0%} -> {retry_ratio:.0%}) - keeping the original grouping.")
         if ratio > GROUPING_RATIO_THRESHOLD:
             print(
-                f"  *** QUALITY WARNING ***: stage-1 unassigned ratio {ratio:.0%} still exceeds "
-                f"{GROUPING_RATIO_THRESHOLD:.0%} after retry - accepting as-is, needs human review."
+                f"  *** QUALITY WARNING ***: stage-1 unassigned+duplicated ratio {ratio:.0%} still exceeds "
+                f"{GROUPING_RATIO_THRESHOLD:.0%} after retry ({len(missing)} missing, {len(duplicated)} duplicated) "
+                f"- accepting as-is, needs human review."
             )
+    elif duplicated:
+        # Below retry threshold overall, but still worth a visible trace in the
+        # log - duplicates were silently invisible before compute_duplicate_ids()
+        # existed, so even a quiet case shouldn't pass with zero mention.
+        print(f"  stage 1: {len(duplicated)} article(s) duplicate-assigned across topics (below retry threshold).")
     print(f"  stage 1: {len(topics)} topic(s) grouped from {len(articles)} article(s).")
 
     if not topics:

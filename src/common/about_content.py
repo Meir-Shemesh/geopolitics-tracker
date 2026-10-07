@@ -189,7 +189,11 @@ CONTENT = {
                         "אימות עובדתי - הטקסט מסכם את מה שכל מקור טוען, לא בודק אם זה נכון; "
                         "מספרים וציטוטים משקפים את המקור, לא אומתו באופן עצמאי. כל דוח "
                         "נכתב מחדש כיחידה עצמאית - אין עדיין זיכרון בין ימים, כך שמעקב אחרי "
-                        "איך נושא מתפתח דורש קריאה ידנית של כמה דוחות.",
+                        "איך נושא מתפתח דורש קריאה ידנית של כמה דוחות. לעיתים נדירות "
+                        "(בעיקר בימים עם נפח-פרסום חריג) אותו מאמר משויך בטעות ליותר מנושא "
+                        "אחד באותו דוח ומוצג פעמיים - כפל-תצוגה בלבד, לא טעות עובדתית; "
+                        "המנגנון תוקן קדימה, אך דוחות קיימים בארכיון לא עברו תיקון "
+                        "רטרואקטיבי.",
                     ),
                 ],
             },
@@ -381,7 +385,12 @@ CONTENT = {
                         "verification. Each report is written from scratch as a "
                         "standalone unit - there's no memory between days yet, so "
                         "tracking how a topic evolves still requires manually reading "
-                        "several reports.",
+                        "several reports. Rarely (mostly on unusually high-volume days), "
+                        "the same article is mistakenly grouped under more than one topic "
+                        "in the same report and appears twice - a display duplication, not "
+                        "a factual error; the underlying mechanism has been fixed going "
+                        "forward, but existing reports in the archive were not "
+                        "retroactively corrected.",
                     ),
                 ],
             },
@@ -588,7 +597,13 @@ CONTENT = {
                         "wird als eigenständige Einheit neu verfasst - es gibt noch kein "
                         "Gedächtnis zwischen den Tagen, sodass die Verfolgung, wie sich ein "
                         "Thema entwickelt, weiterhin das manuelle Lesen mehrerer Berichte "
-                        "erfordert.",
+                        "erfordert. In seltenen Fällen (vor allem an Tagen mit "
+                        "ungewöhnlich hohem Publikationsvolumen) wird derselbe Artikel "
+                        "versehentlich mehr als einem Thema im selben Bericht zugeordnet "
+                        "und erscheint doppelt - eine Darstellungsdopplung, kein "
+                        "Sachfehler; der zugrunde liegende Mechanismus wurde für künftige "
+                        "Berichte behoben, bestehende Berichte im Archiv wurden jedoch "
+                        "nicht rückwirkend korrigiert.",
                     ),
                 ],
             },
