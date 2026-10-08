@@ -2755,20 +2755,11 @@ _HOMEPAGE_JS_TEMPLATE = """
   var LANG = "__LANG__";
   var PREFIX = "__PREFIX__";
   var TOPIC_PREFIX = "__TOPIC_PREFIX__";
-  var TRENDS_HREF = "__TRENDS_HREF__";
 
   fetch(PREFIX + "assets/data/manifest.json")
     .then(function (r) { return r.json(); })
     .then(init)
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
-
-  // Independent fetch/catch from the manifest above - a trends.json hiccup
-  // (or an archive still too young to have any eligible country yet) must
-  // never take down the rest of the homepage with it.
-  fetch(PREFIX + "assets/data/trends.json")
-    .then(function (r) { return r.json(); })
-    .then(renderTrendsCard)
-    .catch(function (err) { console.error("Failed to load trends.json", err); });
 
   function init(manifest) {
     renderMap(manifest);
@@ -2908,78 +2899,6 @@ _HOMEPAGE_JS_TEMPLATE = """
     link.appendChild(numberEl);
     link.appendChild(previewEl);
     link.appendChild(cta);
-    card.appendChild(link);
-  }
-
-  // Redesigned (PROJECT_LOG 4.8x) from a bare, textless sparkline into the
-  // site's primary entry point to "Trends" (biweekly narrative reports +
-  // the coverage-trends chart) - the previous version relied entirely on
-  // "the mini line-chart IS the label," which real feedback found unclear.
-  // Now mirrors latest-card's own title/description/CTA structure so it
-  // reads at the same glance, with the sparkline kept as a small
-  // supporting visual (data-driven, not hardcoded - same country-pick
-  // logic as before) rather than the card's only content.
-  function buildSparklinePoints(values, w, h, pad) {
-    var max = 0;
-    for (var i = 0; i < values.length; i++) {
-      if (values[i] > max) max = values[i];
-    }
-    if (max === 0) max = 1;
-    var n = values.length;
-    var pts = [];
-    for (var j = 0; j < n; j++) {
-      var x = n > 1 ? (j / (n - 1)) * (w - pad * 2) + pad : w / 2;
-      var y = h - pad - (values[j] / max) * (h - pad * 2);
-      pts.push(x.toFixed(1) + "," + y.toFixed(1));
-    }
-    return pts.join(" ");
-  }
-
-  function renderTrendsCard(data) {
-    var card = document.getElementById("trends-card");
-    if (!card) return;
-
-    var title = LANG === "he" ? "מגמות" : LANG === "de" ? "Trends" : "Trends";
-    var desc = (
-      LANG === "he" ? "דוחות מגמות דו-שבועיים וניתוח סיקור לפי מדינה" :
-      LANG === "de" ? "Zweiwöchentliche Trendberichte und Berichterstattungsanalyse nach Land" :
-      "Biweekly trend reports and coverage analysis by country"
-    );
-    var cta = LANG === "he" ? "לצפייה ←" : LANG === "de" ? "Ansehen →" : "View →";
-
-    var link = document.createElement("a");
-    link.href = TRENDS_HREF;
-
-    var titleEl = document.createElement("p");
-    titleEl.className = "trends-card-title";
-    titleEl.textContent = title;
-    link.appendChild(titleEl);
-
-    var descEl = document.createElement("p");
-    descEl.className = "trends-card-desc";
-    descEl.textContent = desc;
-    link.appendChild(descEl);
-
-    if (data && data.countries && data.countries.length) {
-      var country = data.countries[0];
-      var points = buildSparklinePoints(country.n_sources, 100, 24, 3);
-      var svgNS = "http://www.w3.org/2000/svg";
-      var svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("class", "trends-card-spark");
-      svg.setAttribute("viewBox", "0 0 100 24");
-      svg.setAttribute("preserveAspectRatio", "none");
-      svg.setAttribute("aria-hidden", "true");
-      var polyline = document.createElementNS(svgNS, "polyline");
-      polyline.setAttribute("points", points);
-      svg.appendChild(polyline);
-      link.appendChild(svg);
-    }
-
-    var ctaEl = document.createElement("p");
-    ctaEl.className = "trends-card-cta";
-    ctaEl.textContent = cta;
-    link.appendChild(ctaEl);
-
     card.appendChild(link);
   }
 
@@ -3207,11 +3126,17 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     }[lang]
     legend_low = {"he": "כיסוי מצומצם", "en": "Light coverage", "de": "Geringe Berichterstattung"}[lang]
     legend_high = {"he": "כיסוי נרחב", "en": "Extensive coverage", "de": "Umfassende Berichterstattung"}[lang]
+    trends_card_title = {"he": "מגמות", "en": "Trends", "de": "Trends"}[lang]
+    trends_card_desc = {
+        "he": "דוחות מגמות דו-שבועיים וניתוח סיקור לפי מדינה",
+        "en": "Biweekly trend reports and coverage analysis by country",
+        "de": "Zweiwöchentliche Trendberichte und Berichterstattungsanalyse nach Land",
+    }[lang]
+    trends_card_cta = {"he": "לצפייה ←", "en": "View →", "de": "Ansehen →"}[lang]
     js_code = (
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
         .replace("__TOPIC_PREFIX__", topic_prefix)
-        .replace("__TRENDS_HREF__", trends_href)
     )
 
     return f"""<!doctype html>
@@ -3436,14 +3361,20 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
      description/CTA structure - same visual prominence as the other home-
      module cards, per explicit feedback that a bare sparkline alone wasn't
      clear. The module border still brightens on hover (via :has(), same
-     affordance archive-card/result-item give their own clickable cards). */
+     affordance archive-card/result-item give their own clickable cards).
+     Rendered fully server-side now (no fetch/JS) - the icon is a plain
+     static "ascending bars" glyph, not a data-driven chart: a second round
+     of feedback found the original sparkline (built from one country's
+     real weekly source-counts) still unreadable as information, so this
+     deliberately stops pretending to convey data at this size and instead
+     just symbolizes "trend" the way an arrow or rising-stairs icon would. */
   .trends-module:has(a:hover) {{ border-color: var(--masthead-accent); }}
   .trends-card {{ display: flex; flex: 1; }}
   .trends-card a {{ display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; text-decoration: none; color: inherit; }}
   .trends-card-title {{ margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; color: var(--masthead-accent); }}
+  .trends-card-icon {{ width: 56px; height: 22px; display: block; }}
+  .trends-card-icon rect {{ fill: var(--masthead-accent); }}
   .trends-card-desc {{ margin: 0; font-size: .88rem; color: var(--text); }}
-  .trends-card-spark {{ width: 100%; height: 24px; display: block; }}
-  .trends-card-spark polyline {{ fill: none; stroke: var(--masthead-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }}
   .trends-card-cta {{ margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
   .results-heading {{ font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }}
@@ -3514,7 +3445,18 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
         <div class="latest-card" id="latest-card"></div>
       </section>
       <section class="home-module trends-module" id="trends-module">
-        <div class="trends-card" id="trends-card"></div>
+        <div class="trends-card">
+          <a href="{esc(trends_href)}">
+            <p class="trends-card-title">{esc(trends_card_title)}</p>
+            <svg class="trends-card-icon" viewBox="0 0 100 40" aria-hidden="true">
+              <rect x="12" y="22" width="18" height="14" rx="2"></rect>
+              <rect x="41" y="14" width="18" height="22" rx="2"></rect>
+              <rect x="70" y="6" width="18" height="30" rx="2"></rect>
+            </svg>
+            <p class="trends-card-desc">{esc(trends_card_desc)}</p>
+            <p class="trends-card-cta">{esc(trends_card_cta)}</p>
+          </a>
+        </div>
       </section>
     </div>
     <section class="home-module map-module">
