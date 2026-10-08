@@ -19,6 +19,7 @@ Writes nothing to the DB and publishes nothing - this is read-only against
 tracker.db plus two real (paid) Claude API call batches (map + reduce), printed to
 stdout and saved to a local JSON file in scripts/output/ for inspection.
 """
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -29,7 +30,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from src.common.db import get_connection
-from src.reporting.synthesize import GROUPING_RATIO_THRESHOLD, compute_stage1_problem_ratio
+from src.reporting.synthesize import compute_stage1_problem_ratio
 
 load_dotenv()
 
@@ -38,6 +39,20 @@ WINDOW_END = "2026-09-16"
 TARGET_TOKENS_PER_MAP_WINDOW = 45000
 MODEL = "claude-sonnet-5"
 GIST_CHARS = 280  # how much of comparison_text_en each compact item carries
+
+# Deliberately SEPARATE from synthesize.py's GROUPING_RATIO_THRESHOLD (20%) -
+# that one is calibrated for daily Stage 1's near-total-failure days (e.g.
+# 2026-09-18's ~100%-unassigned first attempt) and does NOT touch this
+# constant. This one is calibrated from THIS script's own measured ratios
+# (2026-10-07 diagnostic): map window 1 = 39/339 = 11.50%, map window 2 =
+# 13/345 = 3.77%, and reduce's own output (retrospectively computed from the
+# un-retried run) = 66/684 = 9.65% - including the two concrete cases (daily
+# section_ids 1337 and 1706) where reduce itself assigned the same id to two
+# different final topics, independent of anything inherited from daily. 8%
+# sits strictly between the one clean-looking window (3.77%) and the two
+# problem cases (9.65%, 11.50%), so it retries exactly the cases that showed
+# the problem without forcing a pointless retry on the window that didn't.
+BIWEEKLY_GROUPING_RATIO_THRESHOLD = 0.08
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 
@@ -176,7 +191,11 @@ def build_windows(client, rows_by_date):
 
 
 def call_map_once(client, dates, rows, user_content):
-    response = client.messages.create(
+    # Streaming (not .create()) per house convention for any high-max_tokens call -
+    # the Anthropic SDK itself refuses a non-streaming call once max_tokens is high
+    # enough that the request could plausibly exceed its 10-minute client-side
+    # timeout (hit in practice on the reduce call, see call_reduce_once below).
+    with client.messages.stream(
         model=MODEL,
         max_tokens=16000,
         thinking={"type": "adaptive"},
@@ -185,7 +204,8 @@ def call_map_once(client, dates, rows, user_content):
         tools=[MAP_TOOL],
         tool_choice={"type": "tool", "name": "record_subwindow_topic_groups"},
         messages=[{"role": "user", "content": user_content}],
-    )
+    ) as stream:
+        response = stream.get_final_message()
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
@@ -193,10 +213,11 @@ def call_map_once(client, dates, rows, user_content):
 
 
 def run_map(client, window_idx, dates, rows_by_date):
-    """Same missing+duplicate retry policy as daily Stage 1
-    (compute_stage1_problem_ratio/GROUPING_RATIO_THRESHOLD, reused directly
-    from synthesize.py, not re-implemented) - this is exactly the check that
-    was missing when this script first ran and found 13 missing + 53
+    """Same missing+duplicate detection as daily Stage 1 (compute_stage1_problem_ratio,
+    reused directly from synthesize.py, not re-implemented) but gated by this
+    script's OWN BIWEEKLY_GROUPING_RATIO_THRESHOLD, not synthesize.py's 20% -
+    this is exactly the check that was missing when this script first ran and
+    found 13 missing + 53
     duplicated section ids out of 684 in a single-shot, no-retry attempt."""
     rows = []
     for d in dates:
@@ -208,11 +229,13 @@ def run_map(client, window_idx, dates, rows_by_date):
     topics, usage = call_map_once(client, dates, rows, user_content)
     missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids, key="section_ids")
     usages = [usage]
+    retries = 0
 
-    if ratio > GROUPING_RATIO_THRESHOLD:
+    if ratio > BIWEEKLY_GROUPING_RATIO_THRESHOLD:
+        retries += 1
         print(
             f"  [map window {window_idx}] {dates[0]}..{dates[-1]}: {len(missing)} missing + "
-            f"{len(duplicated)} duplicated ({ratio:.0%}) exceeds {GROUPING_RATIO_THRESHOLD:.0%} - retrying once."
+            f"{len(duplicated)} duplicated ({ratio:.1%}) exceeds {BIWEEKLY_GROUPING_RATIO_THRESHOLD:.0%} - retrying once."
         )
         retry_topics, retry_usage = call_map_once(client, dates, rows, user_content)
         usages.append(retry_usage)
@@ -220,13 +243,13 @@ def run_map(client, window_idx, dates, rows_by_date):
             retry_topics, valid_ids, key="section_ids"
         )
         if retry_ratio < ratio:
-            print(f"    retry improved ({ratio:.0%} -> {retry_ratio:.0%}) - using the retry result.")
+            print(f"    retry improved ({ratio:.1%} -> {retry_ratio:.1%}) - using the retry result.")
             topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
         else:
-            print(f"    retry did not improve ({ratio:.0%} -> {retry_ratio:.0%}) - keeping the original grouping.")
-        if ratio > GROUPING_RATIO_THRESHOLD:
+            print(f"    retry did not improve ({ratio:.1%} -> {retry_ratio:.1%}) - keeping the original grouping.")
+        if ratio > BIWEEKLY_GROUPING_RATIO_THRESHOLD:
             print(
-                f"    *** QUALITY WARNING ***: still {ratio:.0%} after retry "
+                f"    *** QUALITY WARNING ***: still {ratio:.1%} after retry "
                 f"({len(missing)} missing, {len(duplicated)} duplicated) - accepting as-is."
             )
 
@@ -239,13 +262,54 @@ def run_map(client, window_idx, dates, rows_by_date):
         f"{total_usage['input_tokens']} input tok across {len(usages)} call(s)) -> {len(topics)} topic(s), "
         f"final: {len(missing)} missing, {len(duplicated)} duplicated"
     )
-    return topics, total_usage
+    return topics, total_usage, retries
+
+
+def call_reduce_once(client, user_content):
+    # Streaming (not .create()) - at max_tokens=24000 the Anthropic SDK itself
+    # raises "Streaming is required for operations that may take longer than
+    # 10 minutes" on a plain .create() call. .get_final_message() collects the
+    # full streamed response so the rest of this function is unchanged.
+    with client.messages.stream(
+        model=MODEL,
+        # Bumped from 16000 to 24000 (2026-10-08) after a real P3 failure: with
+        # 472 day-span topic groups as input (vs P2's ~453-476, similar
+        # magnitude but apparently right at the edge), the response hit
+        # max_tokens before completing a tool_use block at all on BOTH the
+        # original attempt and the (blind) retry - stop_reason="max_tokens",
+        # zero topics recovered either time. The existing retry only checks
+        # missing/duplicated counts, not stop_reason, so a token-budget
+        # failure isn't something a blind retry of the identical prompt can
+        # fix - more headroom is the actual fix.
+        max_tokens=24000,
+        thinking={"type": "adaptive"},
+        output_config={"effort": "medium"},
+        system=REDUCE_SYSTEM_PROMPT,
+        tools=[REDUCE_TOOL],
+        tool_choice={"type": "tool", "name": "record_final_topic_groups"},
+        messages=[{"role": "user", "content": user_content}],
+    ) as stream:
+        response = stream.get_final_message()
+    tool_use = next((b for b in response.content if b.type == "tool_use"), None)
+    topics = tool_use.input.get("topics", []) if tool_use else []
+    usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
+    if response.stop_reason != "tool_use":
+        print(f"    [reduce call] non-tool_use stop_reason: {response.stop_reason!r} "
+              f"({'got' if tool_use else 'no'} tool_use block, {len(topics)} topic(s) recovered)")
+    return topics, usage
 
 
 def run_reduce(client, map_results, sections_by_id):
     """map_results: list of (window_label, topics) where each topic has
     topic_label_en + section_ids. Builds one compact entry per day-span topic,
-    carrying a gist from its FIRST contributing section for semantic signal."""
+    carrying a gist from its FIRST contributing section for semantic signal.
+
+    Same BIWEEKLY_GROUPING_RATIO_THRESHOLD retry policy as run_map() above -
+    added 2026-10-07 after a section_id-level diagnostic found reduce's own
+    output (not inherited from any map window) had assigned two daily
+    section_ids (1337, 1706) to two different final topics each. valid_ids
+    here is the FULL P2 universe (all non-fallback section ids), since
+    reduce's job is to place every one of them into exactly one final topic."""
     lines = []
     for window_label, topics in map_results:
         for t in topics:
@@ -263,24 +327,50 @@ def run_reduce(client, map_results, sections_by_id):
     tokens = count_tokens(client, REDUCE_SYSTEM_PROMPT, user_content)
     print(f"  [reduce] input: {len(lines)} day-span topic group(s), {tokens} tokens")
 
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=16000,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "medium"},
-        system=REDUCE_SYSTEM_PROMPT,
-        tools=[REDUCE_TOOL],
-        tool_choice={"type": "tool", "name": "record_final_topic_groups"},
-        messages=[{"role": "user", "content": user_content}],
-    )
-    tool_use = next((b for b in response.content if b.type == "tool_use"), None)
-    topics = tool_use.input.get("topics", []) if tool_use else []
-    usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
-    print(f"  [reduce] -> {len(topics)} final topic(s), output={usage['output_tokens']} tok")
-    return topics, usage
+    valid_ids = set(sections_by_id.keys())
+    topics, usage = call_reduce_once(client, user_content)
+    missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids, key="section_ids")
+    usages = [usage]
+    retries = 0
+
+    if ratio > BIWEEKLY_GROUPING_RATIO_THRESHOLD:
+        retries += 1
+        print(
+            f"  [reduce] {len(missing)} missing + {len(duplicated)} duplicated ({ratio:.1%}) exceeds "
+            f"{BIWEEKLY_GROUPING_RATIO_THRESHOLD:.0%} - retrying once."
+        )
+        retry_topics, retry_usage = call_reduce_once(client, user_content)
+        usages.append(retry_usage)
+        retry_missing, retry_duplicated, retry_ratio = compute_stage1_problem_ratio(
+            retry_topics, valid_ids, key="section_ids"
+        )
+        if retry_ratio < ratio:
+            print(f"    retry improved ({ratio:.1%} -> {retry_ratio:.1%}) - using the retry result.")
+            topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
+        else:
+            print(f"    retry did not improve ({ratio:.1%} -> {retry_ratio:.1%}) - keeping the original grouping.")
+        if ratio > BIWEEKLY_GROUPING_RATIO_THRESHOLD:
+            print(
+                f"    *** QUALITY WARNING ***: still {ratio:.1%} after retry "
+                f"({len(missing)} missing, {len(duplicated)} duplicated) - accepting as-is."
+            )
+
+    total_usage = {
+        "input_tokens": sum(u["input_tokens"] for u in usages),
+        "output_tokens": sum(u["output_tokens"] for u in usages),
+    }
+    print(f"  [reduce] -> {len(topics)} final topic(s), final: {len(missing)} missing, "
+          f"{len(duplicated)} duplicated, output={total_usage['output_tokens']} tok across {len(usages)} call(s)")
+    return topics, total_usage, retries
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Biweekly Stage 1 map-reduce dry-run.")
+    parser.add_argument("--start", default=WINDOW_START, help="Period start date, YYYY-MM-DD (default: P2's start).")
+    parser.add_argument("--end", default=WINDOW_END, help="Period end date, YYYY-MM-DD (default: P2's end).")
+    args = parser.parse_args()
+    window_start, window_end = args.start, args.end
+
     conn = get_connection()
     rows = conn.execute(
         """
@@ -289,7 +379,7 @@ def main():
         WHERE report_date BETWEEN ? AND ? AND category != 'additional_coverage'
         ORDER BY report_date, id
         """,
-        (WINDOW_START, WINDOW_END),
+        (window_start, window_end),
     ).fetchall()
     conn.close()
 
@@ -298,8 +388,8 @@ def main():
     for r in rows:
         rows_by_date.setdefault(r["report_date"], []).append(r)
 
-    print(f"P2 dry-run: {len(rows)} non-fallback sections across {len(rows_by_date)} day(s) "
-          f"({WINDOW_START}..{WINDOW_END}).")
+    print(f"Biweekly stage-1 dry-run: {len(rows)} non-fallback sections across {len(rows_by_date)} day(s) "
+          f"({window_start}..{window_end}).")
 
     client = anthropic.Anthropic()
 
@@ -313,12 +403,17 @@ def main():
     print("\n--- running map calls ---")
     map_results = []
     total_map_usage = {"input_tokens": 0, "output_tokens": 0}
+    total_map_retries = 0
+    retry_log = []
     for i, dates in enumerate(windows, 1):
-        topics, usage = run_map(client, i, dates, rows_by_date)
+        topics, usage, retries = run_map(client, i, dates, rows_by_date)
         label = f"W{i}({dates[0]}..{dates[-1]})"
         map_results.append((label, topics))
         total_map_usage["input_tokens"] += usage["input_tokens"]
         total_map_usage["output_tokens"] += usage["output_tokens"]
+        total_map_retries += retries
+        if retries:
+            retry_log.append(f"map window {i} ({dates[0]}..{dates[-1]}): retried {retries}x")
 
     # Sanity check: every section id assigned exactly once across all map outputs.
     all_assigned = []
@@ -331,9 +426,16 @@ def main():
           f"{len(missing)} missing, {len(dupes)} duplicated.")
     if missing:
         print(f"  missing ids: {sorted(missing)[:20]}{' ...' if len(missing) > 20 else ''}")
+    if dupes:
+        print(f"  duplicated ids (across map windows): {sorted(dupes)}")
 
     print("\n--- running reduce call ---")
-    final_topics, reduce_usage = run_reduce(client, map_results, sections_by_id)
+    final_topics, reduce_usage, reduce_retries = run_reduce(client, map_results, sections_by_id)
+    if reduce_retries:
+        retry_log.append(f"reduce: retried {reduce_retries}x")
+    total_retries = total_map_retries + reduce_retries
+    print(f"\n  retry summary: {total_retries} total retr{'y' if total_retries==1 else 'ies'} fired"
+          + (f" - {'; '.join(retry_log)}" if retry_log else " - none."))
 
     # Coverage check on the final merged list too.
     final_assigned = []
@@ -361,12 +463,38 @@ def main():
 
     print(f"\nfinal coverage check: {len(set(final_assigned))}/{len(sections_by_id)} ids assigned, "
           f"{len(final_missing)} missing, {len(final_dupes)} duplicated.")
+    if final_dupes:
+        print(f"  final duplicated ids: {sorted(final_dupes)}")
+    # The two concrete section_ids the 2026-10-07 diagnostic found reduce had
+    # assigned to two different final topics (1337, 1706, both P2-only ids) -
+    # only meaningful when this run's own valid_ids actually cover them, since
+    # this script is now reused for other periods too (P1, P3, ...) where
+    # these specific ids don't exist and would trivially print "resolved".
+    for known_id in (1337, 1706):
+        if known_id not in sections_by_id:
+            continue
+        hit = known_id in final_dupes
+        print(f"  known-problem section {known_id}: {'STILL duplicated' if hit else 'resolved (no longer duplicated)'}")
 
     day_counts = [e["n_distinct_days"] for e in enriched]
-    print(f"\ndistinct-day-count distribution across final topics: "
-          f"max={max(day_counts)}, mean={sum(day_counts)/len(day_counts):.2f}, "
-          f"topics spanning >=5 days: {sum(1 for x in day_counts if x >= 5)}, "
-          f">=8 days: {sum(1 for x in day_counts if x >= 8)}")
+    if day_counts:
+        print(f"\ndistinct-day-count distribution across final topics: "
+              f"max={max(day_counts)}, mean={sum(day_counts)/len(day_counts):.2f}, "
+              f"topics spanning >=5 days: {sum(1 for x in day_counts if x >= 5)}, "
+              f">=8 days: {sum(1 for x in day_counts if x >= 8)}")
+    else:
+        # Guards against a crash that actually happened (2026-10-08, P3 run):
+        # reduce returned 0 final topics (hit max_tokens before completing a
+        # tool_use block, on both the original attempt and the retry) and the
+        # script died here on max() of an empty list - BEFORE the output file
+        # below was ever written, silently throwing away the already-good,
+        # already-paid-for map results along with it. Reduce's own max_tokens
+        # was raised separately (see call_reduce_once) as the likely real fix,
+        # but this guard stays regardless - a future run()-time anomaly should
+        # never again be able to discard completed map work by crashing before
+        # the file write.
+        print("\n*** REDUCE PRODUCED 0 FINAL TOPICS *** - map results are still written below for "
+              "inspection/retry, but there is no final topic list this run.")
 
     total_cost_tokens = {
         "map_input": total_map_usage["input_tokens"],
@@ -377,12 +505,21 @@ def main():
     print(f"\ntotal usage: {total_cost_tokens}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUTPUT_DIR / "biweekly_stage1_dryrun_P2.json"
+    out_path = OUTPUT_DIR / f"biweekly_stage1_dryrun_{window_start}_{window_end}.json"
     out_path.write_text(
         json.dumps(
             {
-                "window": [WINDOW_START, WINDOW_END],
-                "map_windows": [{"dates": d} for d in windows],
+                "window": [window_start, window_end],
+                "biweekly_grouping_ratio_threshold": BIWEEKLY_GROUPING_RATIO_THRESHOLD,
+                # Raw per-window map output persisted (not just dates) so a
+                # specific duplicated/missing id can be traced back to which
+                # window produced it, without re-running the API calls -
+                # added 2026-10-07 after not being able to answer that
+                # question from the previous run's saved file.
+                "map_windows": [
+                    {"dates": d, "topics": map_results[idx][1]} for idx, d in enumerate(windows)
+                ],
+                "retries_fired": {"map": total_map_retries, "reduce": reduce_retries, "log": retry_log},
                 "final_topics": enriched,
                 "usage": total_cost_tokens,
             },
