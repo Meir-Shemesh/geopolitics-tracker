@@ -20,8 +20,11 @@ from pathlib import Path
 
 from src.common.about_content import CONTENT, render_sections_html
 from src.common.db import (
+    get_all_biweekly_periods,
     get_all_reports,
+    get_biweekly_topics_for_period,
     get_connection,
+    get_dates_and_sources_for_biweekly_topic,
     get_geo_tags_for_section,
     get_report_sections_for_date,
     get_section_articles,
@@ -29,6 +32,7 @@ from src.common.db import (
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION, REGION_LABELS
 from src.common.trends import build_country_week_trends, eligible_countries
+from src.reporting.render_biweekly import build_biweekly_report_html, format_period_range, period_filename
 from src.reporting.render import (
     ALL_LANGS,
     CATEGORY_LABELS,
@@ -1529,14 +1533,18 @@ _TRENDS_JS_TEMPLATE = """
 """
 
 
-def build_trends_html(lang: str) -> str:
-    """Standalone coverage-trends page (src/common/trends.py's groundwork,
-    PROJECT_LOG 4.78/4.79) - docs/{lang}/trends.html only, no root copy, same
+def build_trends_chart_html(lang: str) -> str:
+    """Standalone coverage-trends CHART page (src/common/trends.py's groundwork,
+    PROJECT_LOG 4.78/4.79) - docs/{lang}/trendschart.html only, no root copy, same
     convention as about.html/topic.html/filter.html (a destination, not a
-    primary landing page). NOT linked from the homepage or top-nav yet - that
-    is a separate, not-yet-made decision; this page exists and is reachable
-    by direct URL only, same bootstrapping stage about.html/topic.html went
-    through before they were wired in.
+    primary landing page). Reached from the new trends.html HUB page (PROJECT_LOG
+    4.8x) as its "existing graphic view" card, not from the top-nav directly
+    anymore - the top-nav "Trends" link now goes to the hub instead (same literal
+    href value, "trends.html", unchanged in build_nav_html() - only what's SERVED
+    at that path changed, so none of the other ~50 pages that link there needed
+    regeneration for this). Content/logic of this page itself is explicitly
+    UNCHANGED by that reshuffle (still beta-badged, still not redesigned) - only
+    its filename and its own back-link/lang-switch hrefs moved.
 
     Deliberately NOT a per-country categorical palette: the spec this was
     built against treats the 10 non-selected countries as recessive
@@ -1722,7 +1730,7 @@ def build_trends_html(lang: str) -> str:
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", {o: f"../{o}/trends.html" for o in other_langs(lang)}, lang)}
+{build_nav_html("trends.html", {o: f"../{o}/trendschart.html" for o in other_langs(lang)}, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(L['eyebrow'])}</p>
@@ -1775,6 +1783,199 @@ def build_trends_html(lang: str) -> str:
   </main>
 {build_footer_html(lang, *footer_hrefs_for(lang))}
   <script>{js_code}</script>
+</body>
+</html>
+"""
+
+
+_TRENDS_HUB_LABELS = {
+    "he": {
+        "page_title": "מגמות - גאופוליטיקה יומי",
+        "eyebrow": "גאופוליטיקה יומי",
+        "heading": "מגמות",
+        "tagline": "כיסוי גאופוליטי לאורך זמן - דוחות נרטיביים דו-שבועיים, וניתוח-מגמות גיאוגרפי",
+        "periods_heading": "דוחות מגמות דו-שבועיים",
+        "no_periods": "עדיין לא פורסמו דוחות דו-שבועיים.",
+        "topics_word": "נושאים",
+        "chart_card_title": "ניתוח-מגמות גיאוגרפי (גרסה ראשונית)",
+        "chart_card_body": "תצוגה גרפית של עוצמת-הסיקור לפי מדינה לאורך זמן. גרסה ראשונית - עוברת עיצוב מחדש בהמשך.",
+        "chart_card_cta": "לתצוגה ←",
+    },
+    "en": {
+        "page_title": "Trends - Daily Geopolitics",
+        "eyebrow": "Daily Geopolitics",
+        "heading": "Trends",
+        "tagline": "Geopolitical coverage over time - biweekly narrative reports, and geographic trend analysis",
+        "periods_heading": "Biweekly Trends Reports",
+        "no_periods": "No biweekly reports have been published yet.",
+        "topics_word": "topics",
+        "chart_card_title": "Geographic Trend Analysis (Initial Version)",
+        "chart_card_body": "A chart view of coverage intensity by country over time. Initial version - a redesign is planned.",
+        "chart_card_cta": "View ←",
+    },
+    "de": {
+        "page_title": "Trends - Tägliche Geopolitik",
+        "eyebrow": "Tägliche Geopolitik",
+        "heading": "Trends",
+        "tagline": "Geopolitische Berichterstattung im Zeitverlauf - zweiwöchentliche Erzählberichte und geografische Trendanalyse",
+        "periods_heading": "Zweiwöchentliche Trendberichte",
+        "no_periods": "Es wurden noch keine zweiwöchentlichen Berichte veröffentlicht.",
+        "topics_word": "Themen",
+        "chart_card_title": "Geografische Trendanalyse (Erste Version)",
+        "chart_card_body": "Eine Diagrammansicht der Berichterstattungsintensität nach Land im Zeitverlauf. Erste Version - eine Neugestaltung ist geplant.",
+        "chart_card_cta": "Ansehen ←",
+    },
+}
+
+
+def build_trends_hub_html(lang: str, periods: list[dict]) -> str:
+    """The new primary entry point for all "Trends" content (PROJECT_LOG 4.8x) -
+    docs/{lang}/trends.html, same filename/href the top-nav "Trends" link and the
+    homepage banner already point to (see build_nav_html()/build_homepage_html()),
+    so neither needed to change. Two sections, per the spec: (1) an index of
+    biweekly narrative reports, newest first, baked in at build time (same
+    precedent as archive.html's own per-date listing - not a runtime fetch,
+    since this page is already rebuilt by publish.py every time a new period is
+    written); (2) a card linking out to the existing coverage-trends CHART page
+    (trendschart.html, see build_trends_chart_html() - explicitly unmodified
+    content/logic), clearly labeled as an initial version pending its own future
+    redesign. `periods` is a list of biweekly_periods DB rows (dict-like) plus an
+    injected "topic_count" key, newest-end_date-first."""
+    is_he = lang == "he"
+    dir_attr = "rtl" if is_he else "ltr"
+    L = _TRENDS_HUB_LABELS[lang]
+
+    period_cards = []
+    for p in periods:
+        range_label = format_period_range(p["start_date"], p["end_date"], lang)
+        href = period_filename(p["start_date"], p["end_date"], lang)
+        overview = p[f"overview_{lang}"]
+        period_cards.append(f"""
+      <a class="period-card" href="{esc(href)}">
+        <p class="period-card-range">{esc(range_label)}</p>
+        <p class="period-card-overview">{esc(overview)}</p>
+        <p class="period-card-count">{p['topic_count']} {esc(L['topics_word'])}</p>
+      </a>""")
+    periods_html = "".join(period_cards) if period_cards else f'<p class="no-periods">{esc(L["no_periods"])}</p>'
+
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
+<title>{esc(L['page_title'])}</title>
+{favicon_links_html("../")}
+<style>
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
+
+{theme_tokens_css()}
+
+  * {{ box-sizing: border-box; }}
+  body {{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "{FONT_FAMILY}", system-ui, sans-serif;
+    line-height: 1.7;
+  }}
+
+  .top-nav {{
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
+  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+
+  .masthead {{
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }}
+  .masthead-inner {{ max-width: 44rem; margin: 0 auto; }}
+  .eyebrow {{
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }}
+  .report-title {{ margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }}
+  .tagline {{ margin: .6rem 0 0; font-size: 1.02rem; color: var(--text-muted); max-width: 38rem; }}
+
+  main {{ max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }}
+  .section-heading {{ font-size: 1.1rem; font-weight: 700; margin: 0 0 1rem; }}
+
+  .period-card {{
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1rem;
+  }}
+  .period-card:hover {{ border-color: var(--masthead-accent); }}
+  .period-card-range {{ margin: 0 0 .4rem; font-size: 1.1rem; font-weight: 700; color: var(--masthead-accent); }}
+  .period-card-overview {{
+    margin: 0 0 .5rem;
+    font-size: .92rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }}
+  .period-card-count {{ margin: 0; font-size: .78rem; color: var(--text-muted); }}
+  .no-periods {{ color: var(--text-muted); font-size: .92rem; }}
+
+  .chart-card {{
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.3rem;
+    margin-top: 1.75rem;
+  }}
+  .chart-card:hover {{ border-color: var(--masthead-accent); }}
+  .chart-card-title {{ margin: 0 0 .4rem; font-size: 1.02rem; font-weight: 700; }}
+  .chart-card-body {{ margin: 0 0 .5rem; font-size: .88rem; color: var(--text-muted); }}
+  .chart-card-cta {{ margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
+
+  {shared_chrome_css()}
+</style>
+</head>
+<body>
+{build_nav_html("archive.html", {o: f"../{o}/trends.html" for o in other_langs(lang)}, lang)}
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">{esc(L['eyebrow'])}</p>
+      <h1 class="report-title">{esc(L['heading'])}</h1>
+      <p class="tagline">{esc(L['tagline'])}</p>
+    </div>
+  </header>
+  <main>
+    <h2 class="section-heading">{esc(L['periods_heading'])}</h2>
+    {periods_html}
+    <a class="chart-card" href="trendschart.html">
+      <p class="chart-card-title">{esc(L['chart_card_title'])}</p>
+      <p class="chart-card-body">{esc(L['chart_card_body'])}</p>
+      <p class="chart-card-cta">{esc(L['chart_card_cta'])}</p>
+    </a>
+  </main>
+{build_footer_html(lang, *footer_hrefs_for(lang))}
 </body>
 </html>
 """
@@ -2710,14 +2911,14 @@ _HOMEPAGE_JS_TEMPLATE = """
     card.appendChild(link);
   }
 
-  // Deliberately no visible heading on this card (same "layout itself
-  // communicates the role" principle as the map/timeline modules) - the
-  // mini line-chart IS the label. The country shown is whichever one
-  // trends.json already sorted first (most total coverage overall, see
-  // build_trends_json()'s own sort) - a stable, data-driven pick, not a
-  // hardcoded country. A screen-reader-only description still names it,
-  // so the card is never silent to assistive tech despite having no
-  // visible text of its own.
+  // Redesigned (PROJECT_LOG 4.8x) from a bare, textless sparkline into the
+  // site's primary entry point to "Trends" (biweekly narrative reports +
+  // the coverage-trends chart) - the previous version relied entirely on
+  // "the mini line-chart IS the label," which real feedback found unclear.
+  // Now mirrors latest-card's own title/description/CTA structure so it
+  // reads at the same glance, with the sparkline kept as a small
+  // supporting visual (data-driven, not hardcoded - same country-pick
+  // logic as before) rather than the card's only content.
   function buildSparklinePoints(values, w, h, pad) {
     var max = 0;
     for (var i = 0; i < values.length; i++) {
@@ -2736,33 +2937,49 @@ _HOMEPAGE_JS_TEMPLATE = """
 
   function renderTrendsCard(data) {
     var card = document.getElementById("trends-card");
-    var desc = document.getElementById("trends-description");
-    if (!card || !data || !data.countries || !data.countries.length) return;
-    var country = data.countries[0];
-    var points = buildSparklinePoints(country.n_sources, 100, 44, 4);
+    if (!card) return;
 
-    var label = (
-      LANG === "he" ? "מגמות סיקור - " + country.name_he + " - למסך המגמות המלא" :
-      LANG === "de" ? "Berichterstattungstrends - " + country.name_de + " - zur vollständigen Trendseite" :
-      "Coverage trends - " + country.name_en + " - to the full trends page"
+    var title = LANG === "he" ? "מגמות" : LANG === "de" ? "Trends" : "Trends";
+    var desc = (
+      LANG === "he" ? "דוחות מגמות דו-שבועיים וניתוח סיקור לפי מדינה" :
+      LANG === "de" ? "Zweiwöchentliche Trendberichte und Berichterstattungsanalyse nach Land" :
+      "Biweekly trend reports and coverage analysis by country"
     );
-    if (desc) desc.textContent = label;
+    var cta = LANG === "he" ? "לצפייה ←" : LANG === "de" ? "Ansehen →" : "View →";
 
     var link = document.createElement("a");
     link.href = TRENDS_HREF;
-    link.setAttribute("aria-label", label);
 
-    var svgNS = "http://www.w3.org/2000/svg";
-    var svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("class", "trends-card-spark");
-    svg.setAttribute("viewBox", "0 0 100 44");
-    svg.setAttribute("preserveAspectRatio", "none");
-    svg.setAttribute("aria-hidden", "true");
-    var polyline = document.createElementNS(svgNS, "polyline");
-    polyline.setAttribute("points", points);
-    svg.appendChild(polyline);
+    var titleEl = document.createElement("p");
+    titleEl.className = "trends-card-title";
+    titleEl.textContent = title;
+    link.appendChild(titleEl);
 
-    link.appendChild(svg);
+    var descEl = document.createElement("p");
+    descEl.className = "trends-card-desc";
+    descEl.textContent = desc;
+    link.appendChild(descEl);
+
+    if (data && data.countries && data.countries.length) {
+      var country = data.countries[0];
+      var points = buildSparklinePoints(country.n_sources, 100, 24, 3);
+      var svgNS = "http://www.w3.org/2000/svg";
+      var svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("class", "trends-card-spark");
+      svg.setAttribute("viewBox", "0 0 100 24");
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.setAttribute("aria-hidden", "true");
+      var polyline = document.createElementNS(svgNS, "polyline");
+      polyline.setAttribute("points", points);
+      svg.appendChild(polyline);
+      link.appendChild(svg);
+    }
+
+    var ctaEl = document.createElement("p");
+    ctaEl.className = "trends-card-cta";
+    ctaEl.textContent = cta;
+    link.appendChild(ctaEl);
+
     card.appendChild(link);
   }
 
@@ -3215,15 +3432,19 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   }}
   .latest-card-cta {{ margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
-  /* No visible heading by design (see renderTrendsCard()'s own comment) -
-     the mini line-chart is the only content; the module border brightens
-     on hover (via :has(), same affordance archive-card/result-item give
-     their own clickable cards) so it still reads as a link. */
+  /* Redesigned (PROJECT_LOG 4.8x) to match latest-card's own title/
+     description/CTA structure - same visual prominence as the other home-
+     module cards, per explicit feedback that a bare sparkline alone wasn't
+     clear. The module border still brightens on hover (via :has(), same
+     affordance archive-card/result-item give their own clickable cards). */
   .trends-module:has(a:hover) {{ border-color: var(--masthead-accent); }}
-  .trends-card {{ flex: 1; display: flex; }}
-  .trends-card a {{ display: flex; flex: 1; align-items: center; }}
-  .trends-card-spark {{ width: 100%; height: auto; display: block; }}
+  .trends-card {{ display: flex; flex: 1; }}
+  .trends-card a {{ display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; text-decoration: none; color: inherit; }}
+  .trends-card-title {{ margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; color: var(--masthead-accent); }}
+  .trends-card-desc {{ margin: 0; font-size: .88rem; color: var(--text); }}
+  .trends-card-spark {{ width: 100%; height: 24px; display: block; }}
   .trends-card-spark polyline {{ fill: none; stroke: var(--masthead-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }}
+  .trends-card-cta {{ margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
   .results-heading {{ font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }}
   .results-full-link {{
@@ -3293,7 +3514,6 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
         <div class="latest-card" id="latest-card"></div>
       </section>
       <section class="home-module trends-module" id="trends-module">
-        <p class="sr-only" id="trends-description"></p>
         <div class="trends-card" id="trends-card"></div>
       </section>
     </div>
@@ -3772,6 +3992,19 @@ def run() -> None:
     manifest = build_manifest(conn, entries)
     trends_data = build_trends_json(conn)
     _write_section_content_files(conn, entries)
+
+    # Biweekly narrative-trends reports (src/reporting/synthesize_biweekly.py) -
+    # pre-fetched here, same reason as manifest/trends_data above: conn closes
+    # before the per-language loop below, and this data isn't language-specific
+    # (only its rendering into HTML is).
+    biweekly_periods_data = []
+    for p in get_all_biweekly_periods(conn):
+        topics = []
+        for t in get_biweekly_topics_for_period(conn, p["id"]):
+            days, sources = get_dates_and_sources_for_biweekly_topic(conn, t["id"])
+            topics.append({**dict(t), "_days": days, "_sources": sources})
+        biweekly_periods_data.append({**dict(p), "topics": topics, "topic_count": len(topics)})
+
     conn.close()
 
     # All three languages build every page type below - German joined
@@ -3809,11 +4042,27 @@ def run() -> None:
             (out_dir / "filter.html").write_text(filter_html, encoding="utf-8")
         print(f"  wrote filter.html for '{lang}'")
 
-        trends_html = build_trends_html(lang)
+        trends_chart_html = build_trends_chart_html(lang)
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
-            (out_dir / "trends.html").write_text(trends_html, encoding="utf-8")
-        print(f"  wrote trends.html for '{lang}'")
+            (out_dir / "trendschart.html").write_text(trends_chart_html, encoding="utf-8")
+        print(f"  wrote trendschart.html for '{lang}'")
+
+        trends_hub_html = build_trends_hub_html(lang, biweekly_periods_data)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / "trends.html").write_text(trends_hub_html, encoding="utf-8")
+        print(f"  wrote trends.html (hub) for '{lang}'")
+
+        for period in biweekly_periods_data:
+            dates_sources_by_topic = {t["id"]: (t["_days"], t["_sources"]) for t in period["topics"]}
+            biweekly_html = build_biweekly_report_html(period, period["topics"], dates_sources_by_topic, lang)
+            out_name = period_filename(period["start_date"], period["end_date"], lang)
+            for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+                out_dir.mkdir(parents=True, exist_ok=True)
+                (out_dir / out_name).write_text(biweekly_html, encoding="utf-8")
+        if biweekly_periods_data:
+            print(f"  wrote {len(biweekly_periods_data)} biweekly report page(s) for '{lang}'")
 
         # German joined the trilingual set on 2026-09-22 (previously accessibility.html/
         # terms.html/the homepage stayed he/en-only) - all three now build for every

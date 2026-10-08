@@ -11,7 +11,13 @@ PROJECT_LOG for 2026-09-27/28's manual autonomous runs):
     unittest (sanity gate) -> fetch -> pdf_health_check -> extract
     -> screen (per-file, excluding anything pdf_health_check flagged SUSPECT)
     -> analyze -> synthesize (one retry on failure) -> orphan_review (report-only)
-    -> render -> publish -> git add/commit/push
+    -> render -> [biweekly, conditional] -> publish -> git add/commit/push
+
+    The biweekly step (src.reporting.synthesize_biweekly + src.reporting.render_biweekly,
+    see CLAUDE.md "דוח דו-שבועי") only does anything on the one day in 14 that closes a
+    period (src.common.biweekly.period_closing_on) - every other day it's a fast no-op.
+    It runs after the daily render so that day's own report already exists (a biweekly
+    topic can link to it), and before publish so one publish/commit covers both.
 
 Failure policy (see CLAUDE.md-style reasoning in comments below):
   - A single source failing inside fetch/screen/analyze (a bad download, a
@@ -24,6 +30,14 @@ Failure policy (see CLAUDE.md-style reasoning in comments below):
     aborts the day entirely: no render, no publish, no commit. Every other
     step gets zero retries - same "don't push partial state" policy, just
     without the extra retry step.py.py.
+  - The conditional biweekly step is NON-FATAL to the day: if it fails (or
+    partially fails), the wrapper logs it, sends a distinct note in the email
+    summary, and continues straight to publish/commit for the DAILY report
+    regardless - readers depend on the daily report every day, not on the
+    biweekly report landing exactly on its one day in 14, so a biweekly
+    hiccup must never block it. There is no retry for this step; a failed
+    period can always be re-run by hand later via
+    `python -m src.reporting.synthesize_biweekly --start ... --end ...`.
   - Two consecutive failed days trips the kill-switch: the scheduled task
     disables itself (both a state-file flag AND the actual Windows task, so
     a stray manual re-trigger can't silently resume without notice) and an
@@ -47,6 +61,8 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
+from src.common.biweekly import period_closing_on  # noqa: E402
 VENV_PYTHON = PROJECT_ROOT / "venv" / "Scripts" / "python.exe"
 
 STATE_DIR = PROJECT_ROOT / "automation_state"
@@ -76,6 +92,13 @@ TIMEOUTS = {
     "synthesize": 20 * 60,
     "orphan_review": 5 * 60,
     "render": 15 * 60,
+    # The map-reduce (Stage 1) + per-topic narrative writing (Stage 2) for a
+    # full 14-day period - measured in practice at a few minutes for a normal
+    # period (P1/P2/P3 dry-runs, see PROJECT_LOG), generous headroom above
+    # that. No separate "render_biweekly" step exists - publish.py already
+    # queries every biweekly_periods row from the DB on every run and builds
+    # its HTML pages unconditionally, same as it does for daily reports.
+    "synthesize_biweekly": 20 * 60,
     "publish": 10 * 60,
     "git": 5 * 60,
 }
@@ -370,6 +393,19 @@ def main() -> int:
             results["render"] = r
             day_ok = r.ok
 
+        # --- biweekly report: conditional, non-fatal (see docstring/failure policy) ---
+        biweekly_note = "not due today"
+        if day_ok:
+            due = period_closing_on(date.fromisoformat(today))
+            if due is not None:
+                start, end = due[0].isoformat(), due[1].isoformat()
+                log(f"Biweekly period due today: {start}..{end}")
+                r = run_step(log, "synthesize_biweekly", ["src.reporting.synthesize_biweekly"])
+                results["synthesize_biweekly"] = r
+                biweekly_note = "OK" if r.ok else f"FAILED (exit={r.returncode}) - daily report continues regardless"
+                if not r.ok:
+                    log("synthesize_biweekly failed - non-fatal, continuing to publish/commit the daily report anyway.")
+
         if day_ok:
             r = run_step(log, "publish", ["src.publishing.publish"])
             results["publish"] = r
@@ -412,6 +448,7 @@ def main() -> int:
             else:
                 status = "?"
             lines.append(f"  {name}: {status}")
+        lines.append(f"  biweekly report: {biweekly_note}")
         lines.append(f"  git: {'OK' if day_ok else 'FAILED'} ({git_note})")
         lines += [
             "",

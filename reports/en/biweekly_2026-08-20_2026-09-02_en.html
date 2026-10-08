@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<title>Biweekly Trends Report - August 20–2, 2026 - Daily Geopolitics</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+  .top-nav-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .biweekly-badge {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--masthead-accent);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    margin-bottom: .75rem;
+  }
+  /* direction:ltr - the date-range string ("30.9.2026-17.9") is almost
+     entirely Latin/numeric with no Hebrew characters of its own; left
+     undeclared inside an RTL masthead it bidi-reorders and overflows past
+     the viewport edge on narrow screens (same fix already used for
+     citation boxes elsewhere in this project, see render.py). */
+  .report-title { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; direction: ltr; text-align: left; }
+  .biweekly-overview {
+    max-width: 44rem;
+    margin: 1.5rem auto 0;
+    padding: 0 1.5rem;
+    font-size: 1.02rem;
+    color: var(--text-muted);
+  }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+
+  .biweekly-topic {
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .biweekly-topic:first-child { padding-top: 0; }
+  .biweekly-topic-title { margin: 0 0 .4rem; font-size: 1.3rem; font-weight: 700; }
+  /* overflow-wrap: a long comma-separated Latin-script source list mixed
+     with a short Hebrew/German prefix can overflow the viewport on narrow
+     screens instead of wrapping - same class of bidi-mixing issue the
+     citation boxes handle elsewhere in this project, fixed here with a
+     blunter, reliably-safe wrap rule rather than isolating direction. */
+  .biweekly-topic-byline { margin: 0 0 .8rem; font-size: .82rem; color: var(--text-muted); overflow-wrap: break-word; }
+  .biweekly-topic-text { margin: 0; font-size: 1rem; }
+  .biweekly-daily-links {
+    margin-top: .9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+    direction: ltr;
+  }
+  .biweekly-daily-links-label {
+    font-size: .78rem;
+    color: var(--text-muted);
+    margin-inline-end: .3rem;
+  }
+  .daily-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .2rem .65rem;
+  }
+  .daily-link:hover { border-color: var(--masthead-accent); text-decoration: underline; }
+
+  @media print {
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+  }
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Daily Geopolitics - home"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="trends.html">← All reports</a>
+      <a class="top-nav-link" href="filter.html">Advanced filter</a>
+      <a class="top-nav-link" href="trends.html">Trends</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-08-20_2026-09-02_he.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-08-20_2026-09-02_de.html">Deutsch</a>
+      <a class="top-nav-link" href="mailto:meir@meirshemesh.com">Contact</a>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dark mode" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <span class="biweekly-badge">Biweekly Trends Report</span>
+      <h1 class="report-title">August 20–2, 2026</h1>
+    </div>
+  </header>
+  <p class="biweekly-overview">Over the past two weeks, two broad currents dominated the agenda: economic strain and security escalation. On the economic side, the US-Canada trade war, turbulence in global bond markets, and fiscal anxieties in the UK all point to a renewed focus on economic stability and debt sustainability, while on the security side, continued strikes on Kyiv, fears of war with Iran, and growing Russian espionage and sabotage activity against Germany and NATO suggest an intensifying hybrid confrontation between Russia and the West. Running alongside these, domestic politics under pressure - AfD&#x27;s rise and the &quot;firewall&quot; debate in Germany, and internal Democratic Party struggles in the US - forms a secondary thread of democracies grappling with polarization, even as the US-China AI race underscores a parallel contest for technological and strategic dominance.</p>
+  <main>
+    
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">The US-Canada Trade War and Tariffs</h2>
+      <p class="biweekly-topic-byline">10 of 14 days · 10 sources: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Los Angeles Times, New York Times International, Süddeutsche Zeitung, USA Today, Wall Street Journal</p>
+      <p class="biweekly-topic-text">The core framing stayed stable - most outlets consistently portrayed Carney as standing firm against Trump - but over the two weeks a sharper cautionary counter-narrative emerged, warning that Canadian defiance could backfire. On August 20-21, The Guardian largely alone framed Canada as fighting for its sovereignty. By August 28-29, coverage had broadened considerably: The Economist emerged as the most persistent cautionary voice, repeatedly stressing that Canada is far more exposed than the US and cannot &quot;win&quot; a prolonged fight, while The New York Times International and Der Spiegel continued celebrating Carney as a model for Europe to emulate. The Wall Street Journal added a domestic American angle, branding the escalation &quot;the dumbest trade war&quot; as harmful to US manufacturers themselves.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-275">20.8</a><a class="daily-link" href="report_2026-08-21_en.html#section-311">21.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-378">23.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-234">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-401">25.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-440">26.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-449">26.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-492">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1991">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2041">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2120">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-980">29.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1040">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russia-Ukraine war: strikes on Kyiv and air defence</h2>
+      <p class="biweekly-topic-byline">7 of 14 days · 10 sources: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Los Angeles Times, New York Times International, Süddeutsche Zeitung, USA Today, Wall Street Journal</p>
+      <p class="biweekly-topic-text">Coverage shifted from a narrow humanitarian lens to a broader strategic one. On August 22, The Guardian centered on civilian suffering and dwindling Patriot interceptors; by August 28, framing had fragmented into multiple angles, with The Wall Street Journal describing mutual attrition, Der Spiegel exposing Russia&#x27;s train-hunting drones, and Los Angeles Times examining internal Russian economic strain. British outlets consistently stressed Western support and moral solidarity, while American papers leaned toward analyzing two-sided strategic dynamics rather than one-sided Ukrainian victimhood.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-22_en.html#section-341">22.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-237">24.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-443">26.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-478">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1981">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1982">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1985">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1989">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1990">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2049">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-968">29.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-1016">29.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1020">30.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1024">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">AI industry: US-China rivalry, regulation and risk</h2>
+      <p class="biweekly-topic-byline">7 of 14 days · 9 sources: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, New York Times International, Süddeutsche Zeitung, USA Today, Wall Street Journal</p>
+      <p class="biweekly-topic-text">Coverage shifted from broad framing of US-China AI competition at the start (August 20, Die Welt and Süddeutsche Zeitung on contrasting subsidy strategies) toward sharper, more concrete flashpoints by month&#x27;s end: by August 28-29, outlets reported a &quot;moral panic&quot; over data centers, a Chinese bot campaign against US AI infrastructure (The Daily Telegraph), China&#x27;s &quot;robot Olympics&quot; as power projection (The Guardian), and a court ruling against the Trump administration&#x27;s treatment of Anthropic. The Economist notably pushed back against &quot;doom&quot; narratives, contrasting with other sources&#x27; more alarmed tone.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-291">20.8</a><a class="daily-link" href="report_2026-08-21_en.html#section-315">21.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-351">22.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-352">22.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-247">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-405">25.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-413">25.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2001">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2015">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2017">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2074">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-967">29.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-972">29.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-993">29.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-995">29.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Iran: Sanctions, Economic Pressure and the Question of Regime Survival</h2>
+      <p class="biweekly-topic-byline">8 of 14 days · 8 sources: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal</p>
+      <p class="biweekly-topic-text">Coverage shifted from early, human-centered portraits of Iranian hardship and war fears toward a more analytical consensus by late August that US economic pressure is unlikely to topple the regime. On August 20, Die Welt depicted ordinary Iranians exhausted by hardship and fearful of war; by August 28-29, extensive Economist analysis instead argued Washington itself is reluctant to deploy full secondary sanctions against China for fear of destabilizing global finance, and that pressure might actually enrich the Revolutionary Guard rather than weaken it. The Daily Telegraph added a &quot;mutual miscalculation&quot; framing, with both Trump and Tehran misjudging each other&#x27;s resolve. A clear divide emerged: The Guardian and Süddeutsche Zeitung stressed American weakness and double standards toward China, while The Economist and The Wall Street Journal focused on the mechanics of sanctions evasion.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-283">20.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-346">22.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-389">23.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-246">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-400">25.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-409">25.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-437">26.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-438">26.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-1986">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-961">29.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Bond-market distrust and the unraveling of Western fiscal credibility</h2>
+      <p class="biweekly-topic-byline">9 of 14 days · 7 sources: Daily Telegraph, Der Spiegel, Die Welt, Guardian, New York Times International, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">Coverage began with country-specific fiscal warnings - the UK, Germany, then the US - and progressively broadened into a systemic narrative of eroding trust in Western fiscal governance itself. Early entries (August 20-24) from The Daily Telegraph and Die Welt focused on Bessent&#x27;s bond-market interventions, &quot;financial repression,&quot; and comparisons to Japan or banana republics. By August 28, framing diverged sharply by outlet: Der Spiegel blamed &quot;Trumponomics,&quot; The Wall Street Journal described a global test among &quot;bond vigilantes,&quot; while The New York Times International floated debt cancellation as a conceptual alternative. By August 30, The Daily Telegraph even inverted conventional rankings, naming France - not Italy - Europe&#x27;s biggest bond-market risk.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-278">20.8</a><a class="daily-link" href="report_2026-08-21_en.html#section-303">21.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-355">22.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-384">23.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-385">23.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-255">24.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-450">26.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-476">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2035">28.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1036">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Democrats and the 2026 Election Battle</h2>
+      <p class="biweekly-topic-byline">6 of 14 days · 6 sources: Daily Telegraph, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal</p>
+      <p class="biweekly-topic-text">Coverage shifted from discrete electoral flashpoints - Angie Nixon&#x27;s socialist primary upset in Florida (August 20) and German criticism of the Supreme Court&#x27;s voting ruling (August 26) - toward a sharper intra-party reckoning over the Democrats&#x27; ideological direction. By late August, especially around Abdul El-Sayed&#x27;s Michigan Senate bid (August 28-29), coverage centered on the DSA&#x27;s rising influence, with The Wall Street Journal framing it as a existential radicalization threat, while Los Angeles Times (August 30) kept a more measured horse-race framing, describing the Senate as a genuine toss-up rather than a referendum on ideology.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-288">20.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-252">24.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-441">26.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2067">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2125">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-1002">29.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1038">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Germany&#x27;s AfD surge and the fraying political &#x27;firewall&#x27;</h2>
+      <p class="biweekly-topic-byline">9 of 14 days · 5 sources: Daily Telegraph, Der Spiegel, Die Welt, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">Coverage shifted from broad cultural-political debate over the AfD&#x27;s rise toward sharper, more concrete calls for state action against it. In late August, Die Welt and Süddeutsche Zeitung still diverged - one stressing elite condescension toward the East, the other the party&#x27;s inegalitarian and economically damaging program - but by August 28-30 the framing hardened: Der Spiegel documented cultural institutions in Saxony-Anhalt refusing cooperation with a possible AfD government, Süddeutsche Zeitung&#x27;s Heribert Prantl explicitly urged the Federal President to pursue a constitutional ban under Article 21, and The Daily Telegraph reported Defence Minister Pistorius comparing the party&#x27;s &quot;völkisch&quot; wing to the pre-1933 Nazi threat. The story moved from values-based commentary to active debate over legal and institutional measures to contain the AfD.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-282">20.8</a><a class="daily-link" href="report_2026-08-21_en.html#section-312">21.8</a><a class="daily-link" href="report_2026-08-21_en.html#section-317">21.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-344">22.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-241">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-408">25.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-432">25.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-439">26.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-471">27.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-479">27.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-482">27.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-493">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2039">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2098">28.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1027">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russian Hybrid Threats and the Widening Front of Cyber-Sabotage</h2>
+      <p class="biweekly-topic-byline">8 of 14 days · 5 sources: Daily Telegraph, Die Welt, Economist, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Coverage shifted from a tightly German-centered espionage story to a broader, more politically charged cyber-threat narrative targeting the UK and US. Between August 22 and 27, Süddeutsche Zeitung and Die Welt anchored the story in concrete German cases - a Berlin-area weapons cache, the Leipzig drone sabotage, and the &quot;Russian House&quot; as an intelligence front - debating whether Berlin should respond forcefully or with calm restraint. By August 29-30, The Daily Telegraph reframed the threat as Iranian-led cyberattacks on Western infrastructure, using it to attack the UK government&#x27;s domestic spending priorities, while The Economist pushed back, arguing basic security failures, not sophisticated new tools, were the real vulnerability.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-22_en.html#section-342">22.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-236">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-397">25.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-412">25.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-442">26.8</a><a class="daily-link" href="report_2026-08-26_en.html#section-445">26.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-487">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2040">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-964">29.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1018">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Europe&#x27;s Migration Crisis and Asylum Policy</h2>
+      <p class="biweekly-topic-byline">7 of 14 days · 5 sources: Daily Telegraph, Der Spiegel, Die Welt, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Coverage shifted from framing a genuine structural collapse of the Dublin/Schengen system toward a more cynical view of the political disputes surrounding it. Around August 20-24, Die Welt described systemic breakdown demanding centralized EU solutions, while Süddeutsche Zeitung aired sharp ideological clashes between hardline deterrence and humanitarian critique. By August 27, however, Süddeutsche Zeitung argued the Germany-Italy returns dispute was largely manufactured for Salvini&#x27;s domestic politics, since both governments pursue similarly restrictive policies underneath the rhetoric. Die Welt kept treating the conflict as substantive and legal, while German outlets increasingly questioned the sincerity of the political theater itself.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-272">20.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-340">22.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-239">24.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-240">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-396">25.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-495">27.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-496">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2022">28.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1028">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">UK North Sea Energy and the Security-versus-Climate Divide</h2>
+      <p class="biweekly-topic-byline">8 of 14 days · 4 sources: Daily Telegraph, Die Welt, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">The core ideological split held steady throughout - The Daily Telegraph blaming punitive taxation and net-zero policy for undermining UK energy security, The Guardian countering that North Sea oil is economically obsolete and politically exploited - but the tone shifted from abstract climate-versus-economy argument toward concrete alarm. Entries from August 20-23 debated tax regimes, licensing and political symbolism; by August 24 The Guardian invoked Norway as a renewable model, and by August 28 The Daily Telegraph itself framed Norway as an unreliable prop, warning via Centrica&#x27;s chief executive of near-empty gas storage heading into winter. German outlets (Süddeutsche Zeitung, Die Welt) joined from August 24 onward with parallel gas-storage and climate-nationalism debates.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-20_en.html#section-277">20.8</a><a class="daily-link" href="report_2026-08-21_en.html#section-304">21.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-349">22.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-387">23.8</a><a class="daily-link" href="report_2026-08-24_en.html#section-243">24.8</a><a class="daily-link" href="report_2026-08-25_en.html#section-417">25.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-474">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2016">28.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Miliband vs. Israel: From Settlement Criticism to Diplomatic Standoff</h2>
+      <p class="biweekly-topic-byline">7 of 14 days · 4 sources: Daily Telegraph, Guardian, Süddeutsche Zeitung, USA Today</p>
+      <p class="biweekly-topic-text">Coverage shifted from a values debate - whether Miliband&#x27;s criticism of settlements was fair - to a concrete diplomatic confrontation with mutual threats. On August 21-23, The Daily Telegraph cast Miliband as patronising and politically motivated, while The Guardian and Süddeutsche Zeitung documented creeping annexation and settler violence. By August 27-30, with other outlets largely absent, The Daily Telegraph alone reported Israel threatening to expel British ceasefire-monitoring officers over any settlement trade ban, turning the dispute into a tangible bilateral standoff rather than an abstract policy disagreement.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-21_en.html#section-298">21.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-339">22.8</a><a class="daily-link" href="report_2026-08-22_en.html#section-359">22.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-379">23.8</a><a class="daily-link" href="report_2026-08-27_en.html#section-470">27.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2013">28.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2078">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-962">29.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1029">30.8</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">UK National Debt and Fiscal Policy</h2>
+      <p class="biweekly-topic-byline">5 of 14 days · 2 sources: Daily Telegraph, Economist</p>
+      <p class="biweekly-topic-text">Coverage began as a focused Daily Telegraph warning about unsustainable debt and welfare spending risking a 1970s-style crisis, but by late August it broadened into a wider critique spanning tax policy, business grievance, and productivity. On August 29 a genuine framing split emerged: The Daily Telegraph echoed business leaders blaming Labour&#x27;s &quot;anti-business&quot; policies, while The Economist used the same example (Mike Ashley) to argue Britain&#x27;s malaise reflects deeper structural stagnation, not just one government&#x27;s choices. By August 30, Telegraph pieces had extended the anti-tax argument into defence spending and security concerns.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">See in the daily reports:</span>
+        <a class="daily-link" href="report_2026-08-22_en.html#section-353">22.8</a><a class="daily-link" href="report_2026-08-23_en.html#section-385">23.8</a><a class="daily-link" href="report_2026-08-28_en.html#section-2010">28.8</a><a class="daily-link" href="report_2026-08-29_en.html#section-969">29.8</a><a class="daily-link" href="report_2026-08-30_en.html#section-1034">30.8</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Accessibility statement</a>
+    <a class="footer-link" href="terms.html">Terms of use</a>
+    <a class="footer-link" href="privacy.html">Privacy policy</a>
+  </footer>
+</body>
+</html>

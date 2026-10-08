@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<title>Zweiwöchentlicher Trendbericht - 17.–30. September 2026 - Tägliche Geopolitik</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+  .top-nav-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .biweekly-badge {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--masthead-accent);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    margin-bottom: .75rem;
+  }
+  /* direction:ltr - the date-range string ("30.9.2026-17.9") is almost
+     entirely Latin/numeric with no Hebrew characters of its own; left
+     undeclared inside an RTL masthead it bidi-reorders and overflows past
+     the viewport edge on narrow screens (same fix already used for
+     citation boxes elsewhere in this project, see render.py). */
+  .report-title { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; direction: ltr; text-align: left; }
+  .biweekly-overview {
+    max-width: 44rem;
+    margin: 1.5rem auto 0;
+    padding: 0 1.5rem;
+    font-size: 1.02rem;
+    color: var(--text-muted);
+  }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+
+  .biweekly-topic {
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .biweekly-topic:first-child { padding-top: 0; }
+  .biweekly-topic-title { margin: 0 0 .4rem; font-size: 1.3rem; font-weight: 700; }
+  /* overflow-wrap: a long comma-separated Latin-script source list mixed
+     with a short Hebrew/German prefix can overflow the viewport on narrow
+     screens instead of wrapping - same class of bidi-mixing issue the
+     citation boxes handle elsewhere in this project, fixed here with a
+     blunter, reliably-safe wrap rule rather than isolating direction. */
+  .biweekly-topic-byline { margin: 0 0 .8rem; font-size: .82rem; color: var(--text-muted); overflow-wrap: break-word; }
+  .biweekly-topic-text { margin: 0; font-size: 1rem; }
+  .biweekly-daily-links {
+    margin-top: .9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+    direction: ltr;
+  }
+  .biweekly-daily-links-label {
+    font-size: .78rem;
+    color: var(--text-muted);
+    margin-inline-end: .3rem;
+  }
+  .daily-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .2rem .65rem;
+  }
+  .daily-link:hover { border-color: var(--masthead-accent); text-decoration: underline; }
+
+  @media print {
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+  }
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Tägliche Geopolitik - Startseite"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="trends.html">← Alle Berichte</a>
+      <a class="top-nav-link" href="filter.html">Erweiterte Filterung</a>
+      <a class="top-nav-link" href="trends.html">Trends</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-09-17_2026-09-30_he.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-09-17_2026-09-30_en.html">English</a>
+      <a class="top-nav-link" href="mailto:meir@meirshemesh.com">Kontakt</a>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dunkelmodus" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <span class="biweekly-badge">Zweiwöchentlicher Trendbericht</span>
+      <h1 class="report-title">17.–30. September 2026</h1>
+    </div>
+  </header>
+  <p class="biweekly-overview">Die vergangenen zwei Wochen waren geprägt von einer sich ausweitenden Konfrontation zwischen Russland und dem Westen: Der intensivierte Drohnen-/Luftkrieg gegen die Ukraine ging einher mit zunehmender russischer hybrider Sabotage gegen NATO und Europa, während innenpolitisch Druck auf die russische Opposition vor den Duma-Wahlen wuchs. Parallel dazu deutet ein Bündel von Krisenherden - Houthis/Rotes Meer, der US-Iran-Konflikt und Venezuela - auf ein breiteres Muster amerikanischer Konfrontation mit Iran-nahen und gegnerischen Akteuren in mehreren Regionen zugleich hin. Daneben standen die Risiken und der globale Regulierungswettbewerb rund um KI sowie die turbulente deutsche Innenpolitik (BSW, AfD) als bedeutende, aber weitgehend eigenständige Themen ohne übergreifenden Zusammenhang.</p>
+  <main>
+    
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">KI-Risiken, Regulierung und globaler Wettlauf</h2>
+      <p class="biweekly-topic-byline">14 von 14 Tagen · 10 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von einer doppelten Bedrohungslogik - existenzielles Risiko versus Rückstand gegenüber China - hin zu einer wachsenden, zynischeren Lesart, die die Motive der Branche hinter ihren eigenen Warnungen hinterfragt. Mitte September warnten Die Welt und The Wall Street Journal vor unkontrollierter Superintelligenz, während The Daily Telegraph Europa drängte, gegenüber China und Amerika nicht zurückzufallen. Bis zum 30. September argumentierten Gunnar Herrmann, Max Muth und Jannis Brühl in der Süddeutsche Zeitung, die Weltuntergangswarnungen von Führungskräften dienten der &quot;regulatorischen Vereinnahmung&quot;, während Dace Potas in USA Today aus entgegengesetzter Richtung zu einem ähnlichen Schluss kam und Regulierungsforderungen als wettbewerbsfeindlich wertete. Durchgehend seziereten The Economist und Der Spiegel strukturelle Kooperationsprobleme zwischen den USA und China, während The Wall Street Journal und The Daily Telegraph gegenüber jeder koordinierten Regulierung am skeptischsten blieben.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1837">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2168">18.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2175">18.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2192">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2282">19.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2319">20.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2325">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2444">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2530">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2553">23.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2592">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2653">25.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2666">25.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2715">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2739">26.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2772">27.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2789">27.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2792">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2806">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2849">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2900">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Deutsche Innenpolitik: Aufstieg der AfD und die Krise der Mitte</h2>
+      <p class="biweekly-topic-byline">13 von 14 Tagen · 10 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung begann als scharfer Parteienstreit - Die Welt ließ auch Stimmen gegen eine Ausgrenzung der AfD zu, während Süddeutsche Zeitung durchgehend alarmiert blieb - und wandelte sich nach den Landtagswahlergebnissen vom 21./22. September zu einer Krisenanalyse des CDU-Niedergangs und der geschwächten Autorität von Kanzler Merz, wobei Schwesigs SPD-Kampagne als Gegenmodell diente. Gegen Ende September fächerte sich das Thema in engere Teilaspekte auf: akademische Freiheit (25. September), US-Einmischung in die Debatte um ein AfD-Verbot (29. September), Angriffe auf das Bauhaus sowie ein persönliches Zeugnis eines schwulen AfD-Wählers mit Migrationshintergrund (30. September) - ein Zeichen dafür, dass sich die Debatte vom institutionellen Parteienkampf hin zu breiteren gesellschaftlichen Folgen des AfD-Aufstiegs verschob. Die Welt bot durchgehend die vielfältigeren, teils etablissementkritischen Stimmen (Schneider am 24. September, Florescu am 30. September), während Süddeutsche Zeitung eine konstant kritischere Haltung gegenüber der Partei beibehielt.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1842">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2186">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2279">19.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2305">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2437">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2496">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2550">23.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2552">23.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2595">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2707">25.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2708">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2734">26.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2832">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2850">29.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2852">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2889">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Houthi-Kontrolle über Bab al-Mandab und die wachsenden geopolitischen Folgen</h2>
+      <p class="biweekly-topic-byline">9 von 14 Tagen · 10 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von einer regionalen Geschichte über saudische Demütigung hin zu einer breiteren globalen Wirtschafts- und Sicherheitserzählung. Am 17./18. September deuteten The Economist und Die Welt den Houthi-Vorstoß vor allem als Gewinn für Iran und Versagen westlicher Abschreckung. Bis zum 23./25. September warnten Die Welt, Der Spiegel und The Economist bereits vor einer drohenden &quot;doppelten Blockade&quot; von Hormuz und Bab al-Mandab mit Folgen für Welthandel und Energiepreise, während USA Today dies mit verschärften US-Sanktionen gegen Iran verknüpfte. Am 27. September ergänzte die Los Angeles Times eine humanitäre Perspektive - verarmte jemenitische Gemeinden an der Meerenge -, die zuvor kaum vorkam. Durchgehend betonten deutsche und britische Quellen Geopolitik und Energie, amerikanische eher die Belastung der US-saudischen Allianz.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1836">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2190">18.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2215">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2284">19.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2316">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2477">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2485">22.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2505">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2551">23.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2647">25.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2783">27.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russlands hybrider Krieg gegen NATO und Europa</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 9 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von frühen, eher abstrakten Warnungen vor einer &quot;koordinierten Kampagne&quot; hin zu zunehmend konkreten, geografisch verorteten Vorfällen und schärferen politischen Meinungsverschiedenheiten. Am 17./18. September rahmten Die Welt und The Daily Telegraph Russlands hybride Aktivitäten noch überwiegend strategisch-allgemein und kritisierten Europas &quot;Scheinmaßnahmen&quot;. Bis zum 25./29. September beschrieben The Economist, Die Welt und Süddeutsche Zeitung konkrete Vorfälle - geplante Drohnenangriffe auf Italien, Spanien und Frankreich, Satellitenstörtests, einen möglichen Vorstoß bei Narva, baltische Evakuierungspläne -, während der mutmaßliche Anschlagsplan auf die RAF Fairford die Berichterstattung spaltete: alarmiert beim Telegraph, skeptisch-faktenorientiert beim Guardian. Zunehmend stand die Frage im Vordergrund, wie Abschreckung gelingen kann, ohne selbst terroristisch zu handeln oder einen direkten Krieg zu riskieren.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1839">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2172">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2264">19.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2455">21.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2586">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2638">25.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2795">28.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2800">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2837">29.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2843">29.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Handelswaffenstillstand zwischen den USA und China und der Trump-Xi-Gipfel</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 9 Quellen: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von vorsichtigem Vertrauen in einen pragmatischen Waffenstillstand zu schärferer Kritik an einem Gipfel ohne greifbare Substanz. Am 18. September beschrieb The Economist den Waffenstillstand als fragil, aber tragfähig dank gegenseitiger Interessen. Bis zum 25./26. September nannten The Guardian, Los Angeles Times und The Economist den Gipfel &quot;Diplotainment&quot; beziehungsweise eine &quot;verwaltete Pattsituation&quot;, die Xi Legitimität ohne echte amerikanische Zugeständnisse verschaffte. Deutsche Blätter wie Die Welt und Süddeutsche Zeitung deuteten Trumps Wärme als Schwäche, während Fareed Zakaria in der Washington Post stattdessen &quot;verwaltete Interdependenz&quot; statt Kalter-Kriegs-Rhetorik forderte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2203">18.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2449">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2531">22.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2534">22.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2536">22.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2538">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2563">23.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2688">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2719">26.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Das Sicherheitsabkommen zwischen den USA, Dänemark und Grönland</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 9 Quellen: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung begann am 20./21. September als Debatte zwischen dänischem Spott über Trumps &quot;historischen&quot; Erfolg und amerikanischer Fokussierung auf strategischen Gewinn, wobei beide Seiten betonten, das Abkommen aktualisiere im Kern nur den Verteidigungspakt von 1951. Bis Ende September verengte sich die Berichterstattung auf Einzelstimmen: Die Welt (26. September) wertet es als klaren dänisch-grönländischen Sieg, während USA Today (29. September) argumentiert, Trumps Druck habe Grönland letztlich genützt - im Gegensatz zu The Economist (25. September), das anhaltenden Vertrauensschaden in der Nato betont, und The Guardian, das eher Erleichterung hervorhebt.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-20_de.html#section-2307">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2440">21.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2686">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2721">26.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2873">29.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russlands Drohnen- und Raketenkrieg gegen die Ukraine</h2>
+      <p class="biweekly-topic-byline">9 von 14 Tagen · 8 Quellen: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung begann am 18. September als eine weitgehend einheitliche analytische Stimme, fast ausschließlich von The Economist, die eine &quot;neue Phase des totalen Krieges&quot; mit wachsendem russischem Technologievorsprung bei Drohnen und Raketen beschrieb. In den folgenden Tagen verzweigte sich die Erzählung: Bis zum 30. September kamen wirtschaftliche Aspekte hinzu (The Guardian berichtete über Verluste von 45 Millionen Dollar pro Stunde durch Luftalarme), menschliche Zeugnisse (Süddeutsche Zeitung über Kiewer Bewohner und Flüchtlinge aus Cherson) sowie taktisch-technologische Durchbrüche, etwa ein Interview der The Daily Telegraph vom 28. September mit dem ukrainischen Drohnenkommandeur Robert Browdi, der eine Machtverschiebung feierte, zugleich aber vor einer unkontrollierbaren, KI-gesteuerten Eskalation warnte. Aus einer eng strategisch-technischen Rahmung entwickelte sich so ein vielschichtiges Bild eines Abnutzungskriegs gegen Zivilbevölkerung, Wirtschaft und Moral.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2196">18.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2452">21.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2554">23.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2584">24.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2725">26.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2764">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2799">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2842">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2888">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russlands inszenierte Parlamentswahl</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 8 Quellen: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einem vereinzelten, sympathisierenden Blick auf russische Oppositionsarbeit zu einem breiten, einhelligen Urteil über eine reine Scheinwahl. Am 17. September würdigte allein die Süddeutsche Zeitung Jabloko-Kandidaten; bis zum 22. September waren sich fünf Quellen - The Guardian, The Daily Telegraph, Los Angeles Times, Die Welt und Süddeutsche Zeitung - einig, dass die Wahl inszeniert war, wobei jede eigene Akzente setzte (NATO-Risiko, innere Kriegsmüdigkeit, EU-Sanktionen). Am 27. September verschärfte sich der Ton weiter: Vladimir Kara-Murza forderte in The Washington Post offen die Nichtanerkennung des &quot;gefälschten Parlaments&quot;.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1854">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2223">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2292">19.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2332">20.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2499">22.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2794">27.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Venezuelas Politik unter US-Einfluss</h2>
+      <p class="biweekly-topic-byline">9 von 14 Tagen · 7 Quellen: Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einer kritisch-analytischen Darstellung von Venezuelas Abhängigkeit von Washington hin zu wachsendem Misstrauen, ob die USA überhaupt an echtem demokratischem Wandel interessiert seien. Am 18. September schilderte The Guardian Delcy Rodríguez&#x27; politisches Überleben als Frage der Anbiederung an Trump statt demokratischer Legitimität; am 22. September forderte The Washington Post einen konkreten Wahlfahrplan statt freundlicher Fototermine. Bis zum 25. September verschärfte The Economist diese Kritik und beschrieb Trumps Zuneigung zu Rodríguez als ölgetrieben und die Oppositionsführerin María Corina Machado verdrängend, während Die Welt am 29. September offenen Verdacht berichtete, Washington wolle Machados Rückkehr gar nicht. Die Los Angeles Times setzte am 25. September einen Gegenakzent und deutete die Annäherung als hoffnungsvolle diplomatische Öffnung statt als besorgniserregendes Zugeständnis.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2231">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2295">19.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2473">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2546">22.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2581">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2661">25.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2675">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2747">26.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2812">28.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2815">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2848">29.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Der Verlauf des US-Iran-Konflikts</h2>
+      <p class="biweekly-topic-byline">7 von 14 Tagen · 7 Quellen: Daily Telegraph, Der Spiegel, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von breiter diplomatisch-strategischer Analyse hin zu engeren, oft auf einzelne Quellen gestützten operativen Beiträgen. Am 18. September diskutierten Der Spiegel und Süddeutsche Zeitung Verhandlungsaussichten und die Stabilität des Regimes; Ende September rückten The Wall Street Journal, Los Angeles Times und The Daily Telegraph die Straße von Hormuz, wirtschaftlichen Druck und neue Angriffsdrohungen in den Mittelpunkt, während am 29. und 30. September isolierte Meinungsbeiträge (Max Boot, Matthew Gould) ohne jede Quellenkontroverse erschienen - ein Wandel von diplomatischer Debatte zu zersplitterter, zunehmend US-zentrierter Einzelanalyse.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2178">18.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2522">22.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2726">26.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2781">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2798">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2838">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2918">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Trumps eskalierender Konflikt mit der Presse</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 6 Quellen: Daily Telegraph, Economist, Los Angeles Times, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einem isolierten Einzelfall zu einer Erzählung systematischer, autoritär anmutender Aushöhlung der Pressefreiheit. Am 19. September schilderte ein einzelner Bericht der Los Angeles Times den Ausschluss von CNN, MS NOW und Politico aus dem Weißen Haus noch als beispiellosen, aber begrenzten juristischen Übergriff. Bis zum 23./25. September bezeichnete die Süddeutsche Zeitung die Kampagne als &quot;ohne Vorbild&quot; in der modernen US-Geschichte und verknüpfte sie mit der Übernahme des Kennedy Center und Angriffen auf die Justiz, während The Economist vorhersagte, Trump werde diesen konkreten Kampf eher verlieren, trotz wachsendem institutionellem Flurschaden. Bis zum 27. September ging The Washington Post weiter: Kathleen Parker sah in Trumps eigenem Fernsehsender den Versuch, unabhängigen Journalismus durch staatliche Botschaften zu ersetzen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2256">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2291">19.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2466">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2491">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2564">23.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2672">25.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2768">27.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2865">29.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Der Sheeran-Macklemore-Streit und der Kulturkampf um Israel und Palästina</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 6 Quellen: Daily Telegraph, Der Spiegel, Guardian, Los Angeles Times, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einem engen Streit um Macklemores Ausschluss aus Sheerans Tour zu einer breiteren, zunehmend polarisierten Debatte darüber, ob Künstler politisch Stellung beziehen müssen. Am 17. September bot The Daily Telegraph noch einen ausgewogenen Blick auf beide Seiten, während The Guardian Zensur bereits einseitig pro-israelischem Druck zuschrieb. Bis zum 19./20. September verhärteten sich die Fronten: The Guardian warf Sheeran Heuchelei vor, während The Daily Telegraph Celebrity-Aktivismus verspottete und antizionistische Rhetorik auf sowjetische Propaganda zurückführte. Spätere Beiträge, etwa Leserbriefe vom 24. September, zeigten eher wachsende Unsicherheit als klare redaktionelle Schlüsse.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1831">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2185">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2278">19.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2306">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2457">21.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2607">24.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Britische Grenzpolitik und der Streit um die Kanalüberquerungen</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 6 Quellen: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von allgemeinen Forderungen nach härterer Durchsetzung hin zur konkreten Dokumentation eines politischen Scheiterns. Am 25. September verlangten Leserbriefe in The Daily Telegraph eine Grenzbehörde &quot;mit echten Zähnen&quot;; vom 27. bis 30. September berichtete dieselbe Zeitung bereits über das Scheitern selbst - französische Kräfte, die Bootsstarts nicht stoppen, und schließlich den Zusammenbruch des britisch-französischen &quot;One-in-one-out&quot;-Abkommens, eingeleitet mit dem nüchternen Zitat &quot;It&#x27;s over&quot;. Während The Daily Telegraph durchgehend die britisch-französische Durchsetzungsschwäche betonte, setzten The Economist und Die Welt deutlich andere Schwerpunkte auf Integration und europäische Systemfehler.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-25_de.html#section-2637">25.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2699">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2724">26.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2761">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2797">28.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2831">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2860">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2882">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Die eintrübenden Aussichten der Republikaner bei den Midterms</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 5 Quellen: Economist, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer vorsichtigen, umfragebasierten Einschätzung republikanischer Überlebenschancen hin zu einem wachsenden Konsens, dass Trump zu einer echten Wahlbelastung geworden sei. Am 18. September räumte The Economist den Republikanern noch rund 10 Prozent Chance ein, das Repräsentantenhaus zu halten, während die Süddeutsche Zeitung Trumps Gerrymandering als vorsorgliche Gegenstrategie beleuchtete. Bis zum 30. September zeichneten Los Angeles Times, Süddeutsche Zeitung und The Washington Post gemeinsam das Bild von Kandidaten, die sich aus echter Furcht öffentlich von Trump distanzieren, während The Washington Post zusätzlich neun gefährdete Senatssitze und selbst sichere republikanische Bundesstaaten als wackelig einstufte - eine deutliche Verschärfung gegenüber der anfänglichen Einschätzung einer &quot;moderaten Chance&quot;.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2209">18.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2544">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2573">23.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2623">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2702">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2745">26.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2786">27.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2906">30.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2916">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Gazakrieg: von ziviler Zerstörung zur Dokumentarfilm-Kontroverse</h2>
+      <p class="biweekly-topic-byline">7 von 14 Tagen · 5 Quellen: Daily Telegraph, Der Spiegel, Guardian, Los Angeles Times, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von der Zerstörung und den zivilen Opfern in Gaza hin zu einer innerisraelischen Geschichte über die Verfolgung der Dokumentarfilmer und Selbstkritik am Krieg. Am 17./18. September verband The Guardian humanitäre Katastrophen mit Drohungen gegen die &quot;NAZA&quot;-Regisseure; bis zum 19. September steigerten reine Guardian-Beiträge dies zu einer expliziten politischen Anklage gegen die israelische Regierung, ohne Gegenstimme. Am 25./26. September rückten wieder Zeugenberichte und Trümmer in den Fokus, während Der Spiegel die Angriffe auf die Filmemacher in den Kontext breiterer Siedlergewalt stellte - anders als The Guardian, der sie als Frage der Pressefreiheit rahmte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1833">17.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2225">18.9</a><a class="daily-link" href="report_2026-09-18_de.html#section-2236">18.9</a><a class="daily-link" href="report_2026-09-19_de.html#section-2281">19.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2590">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2692">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2720">26.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2821">28.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Globale Dieselkrise und ihre geopolitischen Folgen</h2>
+      <p class="biweekly-topic-byline">7 von 14 Tagen · 5 Quellen: Daily Telegraph, Economist, Guardian, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer technischen Schilderung eines geopolitischen Angebotsschocks hin zu scharfen politischen Schuldzuweisungen darüber, wer die Krise verursacht hat und wer dafür an der Wahlurne büßen wird. Am 20. September beschrieb The Daily Telegraph eine beispiellose Häufung von Störungen (Hormus, saudische Pipeline, Iran, Russland). Bis zum 29./30. September stritten USA Today und The Washington Post darüber, ob Trump Opfer oder Verursacher der Preisexplosion sei, während The Daily Telegraph seinen Kurs mit Herbert Hoover verglich. Britische Quellen betonen durchweg Schäden für Verbraucher und Fischer, amerikanische Quellen die innenpolitischen Folgen vor den Midterms.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-20_de.html#section-2315">20.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2596">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2641">25.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2759">27.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2775">27.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2790">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2807">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2840">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2890">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Angst vor Börsencrash und KI-Blase</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 5 Quellen: Daily Telegraph, Die Welt, Guardian, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verengte sich von einer breiten Liste paralleler Risiken hin zur Festlegung des KI-Booms selbst als Hauptursache. Am 19. September behandelte The Guardian den Iran-Krieg, die US-Schulden und eine KI-Blase als gleichrangige Gefahren; bis zum 24. September weiteten The Daily Telegraph, Die Welt und erneut The Guardian dies zu institutionellen Warnungen von OECD, IWF und IIF aus, wobei Larry Elliott explizit Parallelen zu 2008 zog. Bis zum 30. September sah Jeremy Warner in The Daily Telegraph steigende Zinsen vor allem durch KI-Infrastrukturinvestitionen verursacht, während die Kriege zur Nebensache wurden.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-19_de.html#section-2287">19.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2593">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2711">25.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2874">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2886">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Äthiopien: Eskalation des Tigray-Kriegs</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 5 Quellen: Daily Telegraph, Die Welt, Economist, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einer frühen Warnung, das Pretoria-Abkommen &quot;bröckele&quot; (Süddeutsche Zeitung, 24. September), hin zur Darstellung seines Zusammenbruchs als vollendete Tatsache mit weiter regionaler Eskalation. Bereits am 25. September sprechen The Economist und The Washington Post von einem gescheiterten Abkommen und drohender humanitärer Katastrophe; am 30. September weitet Die Welt den Rahmen noch aus und nennt Eritrea, Sudan, Ägypten, die VAE und Saudi-Arabien als beteiligte Mächte mit möglichen Folgen bis nach Europa. Auffällig bleibt, dass fast jede Meldung auf nur einer einzigen Quelle beruht.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-24_de.html#section-2612">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2678">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2728">26.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2834">28.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2893">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Berlins Wohnungspolitik und der Aufstieg der Linken</h2>
+      <p class="biweekly-topic-byline">7 von 14 Tagen · 4 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer allgemeinen kulturkritischen Klage über politischen Stillstand in Berlin zu einem scharfen, konkreten Streit über die Regierungsfähigkeit der Linken nach ihrem Wahlsieg. Am 18. September bezeichnete Der Spiegel das gesamte Berliner Parteienspektrum als &quot;unwählbar&quot;, weil es am Status quo festhalte; bis zum 25. und 28. September erhob Die Welt, etwa durch Güner Balci, Vorwürfe islamistischer und antisemitischer Unterwanderung, während Süddeutsche Zeitung zwischen Verteidigung des demokratischen Mandats und Forderungen nach Abgrenzung schwankte. The Daily Telegraph hingegen blieb durchgehend bei einer nüchternen wirtschaftspolitischen Perspektive auf Wohnungsenteignungen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2183">18.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2600">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2656">25.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2780">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2816">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2861">29.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2885">30.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2903">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Merz&#x27; angeschlagene Führungsstärke in der CDU</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 3 Quellen: Die Welt, Economist, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer ernsten, aber beherrschbaren Vertrauenskrise hin zum Bild eines gelähmten Kanzlers und einer sich von innen zersetzenden Partei. Am 17. September zeigte die Süddeutsche Zeitung Ministerpräsidenten, die Merz stützten, während Zweifel an seiner Stärke wuchsen. Bis zum 25. September prägte The Economist den Begriff &quot;Zombie-Kanzler&quot;, während die Süddeutsche Zeitung tieferliegende strukturelle Vertrauensverluste diagnostizierte; am 30. September warf Die Welt Merz und Verbündeten abgehobenes Verhalten vor, während die Süddeutsche Zeitung sein Zögern bei der Steinmeier-Nachfolge betonte. Die Welt konzentrierte sich durchgehend auf unmittelbare Machtkämpfe, die Süddeutsche Zeitung auf ein tieferes strukturelles Identitätsproblem der CDU.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-17_de.html#section-1856">17.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2594">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2681">25.9</a><a class="daily-link" href="report_2026-09-26_de.html#section-2731">26.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2891">30.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2910">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Burnhams Führungsanspruch und die EU-Wiederbeitrittsdebatte</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 2 Quellen: Daily Telegraph, Guardian</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einem einzelnen spekulativen Meinungsbeitrag zu einer vielschichtigen Auseinandersetzung mit mehreren Quellen über Burnhams Führungsanspruch. Die frühen Beiträge vom 20. und 22. September stammten allein von The Daily Telegraph und zeichneten Burnham als beliebt, aber orientierungslos und politisch berechnend. Bis zum 28. und 30. September weitete sich die Geschichte deutlich aus: Vier Telegraph-Beiträge am 28. September beleuchteten einen Labour-internen Streit über einen EU-Wiederbeitritt aus politischer, persönlicher und wirtschaftlicher Sicht, und nach Burnhams Parteitagsrede am 30. September präsentierte der Telegraph eine fast geschlossene Front aus Spott und ideologischer Alarmierung (&quot;Pastor Andy&quot;, Warnungen vor Staatssozialismus), während The Guardian, erst später eingestiegen, dieselbe Rede sachlich-technokratisch analysierte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-20_de.html#section-2320">20.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2492">22.9</a><a class="daily-link" href="report_2026-09-23_de.html#section-2559">23.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2575">24.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2606">24.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2633">25.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2765">27.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2805">28.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2880">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Grossbritanniens Haushaltskrise im Vorfeld des Budgets</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 2 Quellen: Daily Telegraph, Guardian</p>
+      <p class="biweekly-topic-text">Die Berichterstattung, fast ausschliesslich in The Daily Telegraph, beginnt mit einem scharfen ideologischen Alarmruf für drastische Ausgabenkürzungen (20. September) und bleibt durchgehend kritisch gegenüber fiskalischer Verantwortungslosigkeit, verschiebt sich aber zunehmend von allgemeinen Warnungen zu konkreten Budgetfragen: Am 27. September befasst sich Jeremy Warners Kolumne direkt mit den Haushaltsplänen der Kanzlerin. Am 29. September tritt erstmals The Guardian hinzu und schlägt mit vorsichtiger Zustimmung zu gezielter staatlicher Wohnungsbauförderung einen deutlich moderateren Ton an als die staatsskeptische Haltung des Telegraph.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-20_de.html#section-2323">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2439">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2495">22.9</a><a class="daily-link" href="report_2026-09-25_de.html#section-2634">25.9</a><a class="daily-link" href="report_2026-09-27_de.html#section-2778">27.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2841">29.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2847">29.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Deutschlands Autoindustrie zwischen chinesischer Konkurrenz und Eigenverschulden</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 2 Quellen: Daily Telegraph, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von der Darstellung Chinas als externem Sieger hin zu schärferer Selbstkritik am deutschen Missmanagement und schließlich zu pragmatischer Akzeptanz chinesischer Technologieführerschaft. Am 18. September zeichnete The Daily Telegraph China als bereits siegreich in der globalen Autoindustrie, begünstigt durch laxe westliche Handelspolitik. Am 21. und 24. September machte die Süddeutsche Zeitung dagegen Missmanagement und Selbstgefälligkeit der Konzerne verantwortlich und forderte zugleich eine harte europäische Haltung gegenüber China und US-Zöllen. Am 30. September beschrieb dieselbe Zeitung Volkswagens vertiefte Partnerschaft mit Gotion als pragmatischen, aber auch China-Überlegenheit eingestehenden Schritt.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-18_de.html#section-2173">18.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2470">21.9</a><a class="daily-link" href="report_2026-09-22_de.html#section-2493">22.9</a><a class="daily-link" href="report_2026-09-24_de.html#section-2620">24.9</a><a class="daily-link" href="report_2026-09-30_de.html#section-2911">30.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Debatte um Sklaverei-Reparationen für die Karibik</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 1 Quellen: Daily Telegraph</p>
+      <p class="biweekly-topic-text">Die Berichterstattung, ausschließlich von The Daily Telegraph, begann am 19. September mit einem Nachrichtenbericht über die koordinierte Reparationskampagne karibischer Staaten beim Commonwealth-Gipfel, begleitet von einem widersprechenden Meinungsbeitrag. In den folgenden Tagen verfestigte sich der Ton zu einer fast ausschließlich ablehnenden Haltung: Beiträge vom 21. und 28. September bezeichneten die Forderungen als moralisch fragwürdig und opportunistisch, während der Artikel vom 29. September Großbritanniens Marinekampagne gegen den Sklavenhandel als Gegengewicht zur Schulddebatte darstellte. Die Deutungslinie verschob sich somit von Dokumentation hin zu zunehmender Zurückweisung.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-09-19_de.html#section-2269">19.9</a><a class="daily-link" href="report_2026-09-20_de.html#section-2304">20.9</a><a class="daily-link" href="report_2026-09-21_de.html#section-2441">21.9</a><a class="daily-link" href="report_2026-09-28_de.html#section-2802">28.9</a><a class="daily-link" href="report_2026-09-29_de.html#section-2844">29.9</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Barrierefreiheitserklärung</a>
+    <a class="footer-link" href="terms.html">Nutzungsbedingungen</a>
+    <a class="footer-link" href="privacy.html">Datenschutzerklärung</a>
+  </footer>
+</body>
+</html>

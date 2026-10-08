@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<title>דוח מגמות דו-שבועי - 3.9–16.9.2026 - גאופוליטיקה יומי</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+  .top-nav-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .biweekly-badge {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--masthead-accent);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    margin-bottom: .75rem;
+  }
+  /* direction:ltr - the date-range string ("30.9.2026-17.9") is almost
+     entirely Latin/numeric with no Hebrew characters of its own; left
+     undeclared inside an RTL masthead it bidi-reorders and overflows past
+     the viewport edge on narrow screens (same fix already used for
+     citation boxes elsewhere in this project, see render.py). */
+  .report-title { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; direction: ltr; text-align: right; }
+  .biweekly-overview {
+    max-width: 44rem;
+    margin: 1.5rem auto 0;
+    padding: 0 1.5rem;
+    font-size: 1.02rem;
+    color: var(--text-muted);
+  }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+
+  .biweekly-topic {
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .biweekly-topic:first-child { padding-top: 0; }
+  .biweekly-topic-title { margin: 0 0 .4rem; font-size: 1.3rem; font-weight: 700; }
+  /* overflow-wrap: a long comma-separated Latin-script source list mixed
+     with a short Hebrew/German prefix can overflow the viewport on narrow
+     screens instead of wrapping - same class of bidi-mixing issue the
+     citation boxes handle elsewhere in this project, fixed here with a
+     blunter, reliably-safe wrap rule rather than isolating direction. */
+  .biweekly-topic-byline { margin: 0 0 .8rem; font-size: .82rem; color: var(--text-muted); overflow-wrap: break-word; }
+  .biweekly-topic-text { margin: 0; font-size: 1rem; }
+  .biweekly-daily-links {
+    margin-top: .9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+    direction: ltr;
+  }
+  .biweekly-daily-links-label {
+    font-size: .78rem;
+    color: var(--text-muted);
+    margin-inline-end: .3rem;
+  }
+  .daily-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .2rem .65rem;
+  }
+  .daily-link:hover { border-color: var(--masthead-accent); text-decoration: underline; }
+
+  @media print {
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+  }
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="גאופוליטיקה יומי - דף הבית"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="trends.html">← לכל הדוחות</a>
+      <a class="top-nav-link" href="filter.html">סינון מתקדם</a>
+      <a class="top-nav-link" href="trends.html">מגמות</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-09-03_2026-09-16_en.html">English</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-09-03_2026-09-16_de.html">Deutsch</a>
+      <a class="top-nav-link" href="mailto:meir@meirshemesh.com">צור קשר</a>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="מצב כהה" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <span class="biweekly-badge">דוח מגמות דו-שבועי</span>
+      <h1 class="report-title">3.9–16.9.2026</h1>
+    </div>
+  </header>
+  <p class="biweekly-overview">השבועיים האחרונים הדגישו ביטחון אירופי תחת לחץ: חבלת רחפנים ולוחמה היברידית רוסית נגד גרמניה ואירופה, לצד עליית ה-AfD בבחירות סקסוניה-אנהלט ומשבר תעשיית הרכב הגרמנית מול התחרות הסינית, מציירים יבשת המתמודדת בו-זמנית עם איומים חיצוניים ותסיסה פנימית. מקביל לכך, המתיחות בין איראן לארה&quot;ב במפרץ והמגעים המתווכים להסכם רוסיה-אוקראינה מראים שהדיפלומטיה הגדולה ממשיכה לנוע בלי פריצת דרך ברורה. מעבר לכך, אין דפוס מאחד יחיד שחוצה את רוב הנושאים - מדובר במגוון רחב של התפתחויות אזוריות ופנימיות, מ-11 בספטמבר ועד חששות הבטיחות סביב בינה מלאכותית.</p>
+  <main>
+    
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מלחמה היברידית רוסית נגד גרמניה ואירופה (פרשת לייפציג)</h2>
+      <p class="biweekly-topic-byline">10 מתוך 14 יום · 10 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מניתוח ממוקד אירוע בודד לדפוס אירופי רחב ומתמשך, כשהביקורת על חוסר המוכנות הגרמנית/אירופית רק הועצמה עם הזמן. ב-3 בספטמבר Der Spiegel ו-Süddeutsche Zeitung התמקדו בעיקר בפרשת לייפציג עצמה - זיהוי חשודים, סנקציות, הכחשות פוטין. עד 10-11 בספטמבר The Wall Street Journal תיאר את לייפציג כ&quot;מזל בלבד&quot; שמנע אסון, ו-The Daily Telegraph דיווח על רחפן חשוד ליד מטוסו של זלנסקי מעל מולדובה. ב-16 בספטמבר הסיפור כבר כלל גלי תקריות בים הבלטי - נורות תאורה נגד מסוק דני ופריצות רחפנים לליטא - הממוסגרות ככוונה שיטתית לבחון את נחישות המערב, עם חיזוק ברור יותר של ברית נאט&quot;ו.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1044">3.9</a><a class="daily-link" href="report_2026-09-03_he.html#section-1047">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1140">4.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1166">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1216">5.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1268">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1316">8.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1317">8.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1411">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1417">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1445">11.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1786">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1636">15.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1671">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1701">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">המלחמה בין איראן לארה&quot;ב והסלמת המפרץ ומצרי הורמוז</h2>
+      <p class="biweekly-topic-byline">14 מתוך 14 יום · 9 מקורות: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר ממוקד ההתלקחות הצבאית-מוסרית לכרוניקה כלכלית מתמשכת ללא פתרון באופק. ב-3 בספטמבר הדיווחים התרכזו באירוע הפתיחה - תקיפה אמריקאית שהרגה אזרחים בחתונה - עם האשמות &quot;פשע מלחמה&quot; (The Guardian) מול איום בהשמדת המשטר (The Daily Telegraph). עד אמצע התקופה (5-13 בספטמבר) הזירה המרכזית הפכה לכלכלית-אסטרטגית: Wall Street Journal תיאר מצור ימי מתיש בהורמוז, ו-The Economist (11 בספטמבר) חשף כיצד שני הצדדים מזייפים נתוני שיט. עד 15-16 בספטמבר הסיפור התרחב לחזית שנייה בים סוף דרך החות&#x27;ים, כש-Washington Post ו-Wall Street Journal מתארים &quot;חניקה&quot; כפולה של צווארי בקבוק אנרגיה עולמיים, ללא סימן לפתרון. בעוד התקשורת האמריקאית והבריטית ממשיכה להדגיש פעולה צבאית נחרצת, התקשורת הגרמנית (Süddeutsche Zeitung, Die Welt) ממקדת את הדיון במחירי דלק מקומיים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1055">3.9</a><a class="daily-link" href="report_2026-09-03_he.html#section-1086">3.9</a><a class="daily-link" href="report_2026-09-03_he.html#section-1121">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1145">4.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1171">4.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1180">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1205">5.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1207">5.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1230">5.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1237">5.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1260">6.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1261">6.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1270">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1310">8.9</a><a class="daily-link" href="report_2026-09-09_he.html#section-1355">9.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1385">10.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1393">10.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1398">10.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1415">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1462">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1482">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1496">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1513">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1525">12.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1529">12.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2139">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1789">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1639">15.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1643">15.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1670">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1696">16.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1703">16.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1705">16.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1706">16.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1707">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">25 שנה ל-11 בספטמבר: מהנצחה לחשבון נפש פוליטי</h2>
+      <p class="biweekly-topic-byline">9 מתוך 14 יום · 9 מקורות: Daily Telegraph, Der Spiegel, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">לאורך התקופה הסיקור עבר מהנצחה אישית וזיכרון רגשי לביקורת פוליטית חדה יותר על ה&quot;מלחמה בטרור&quot; ועל ניצולה בידי טראמפ. Der Spiegel (3 בספטמבר) ו-Süddeutsche Zeitung (5, 14 בספטמבר) טענו באופן עקבי שהמנגנון שהוקם אחרי הפיגועים לא נעלם אלא הפך לכלי פנימי של מעקב וגירוש. לעומת זאת The Wall Street Journal נע בין זיכרון אישי מרגש (5, 9 בספטמבר) לביקורת כלפי &quot;מבקרי אמריקה&quot; ולהגנה על המדיניות (10, 12 בספטמבר), ובמכתבים לעורך מ-16 בספטמבר אף הגן על הסולידריות האירופית שהמחבר המקורי ערער עליה. עד 11-13 בספטמבר, עם יום השנה עצמו, הסיקור הרחיב ממוקד-אמריקאי לדיון גלובלי בסדר העולמי, בסין וברוסיה.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1098">3.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1244">5.9</a><a class="daily-link" href="report_2026-09-09_he.html#section-1354">9.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1393">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1430">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1517">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1530">12.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2150">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1816">14.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1732">16.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1736">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">עליית ה-AfD בזקסן-אנהלט והשלכותיה</h2>
+      <p class="biweekly-topic-byline">10 מתוך 14 יום · 8 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">המסגור עבר מאזהרה טרום-בחירות לדיון על השלכות מוסדיות ממשיות. בתחילת ספטמבר (3-5.9) הדיווחים - בעיקר ב-Der Spiegel וב-Süddeutsche Zeitung - עסקו באזהרות מפני עליית ה-AfD ובקריאות לחסימתה. לאחר הניצחון המכריע ב-7-8.9, הכיסוי עבר לניתוח משבר מוסדי: Süddeutsche Zeitung דנה בסיכון שראש מחלקת מודיעין מטעם AfD יקבל שליטה בשירותי הביטחון, ו-The Washington Post (13.9) הדגיש כי שירותי המודיעין הגרמניים הגדירו רשמית את המפלגה כ&quot;קיצונית&quot;. עד 15.9 הדיון ב-Die Welt עבר לביקורת על פסילת מועמדי AfD ועל כישלון אסטרטגיית ה&quot;חומת האש&quot; עצמה - היפוך מוחלט מהמוקד המקורי של אזהרה מפני המפלגה. ניכר פער עיקבי: Die Welt נוטה להאשים את הממסד, בעוד Süddeutsche Zeitung ו-Der Spiegel ממשיכים להתריע מפני המפלגה עצמה.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1075">3.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1212">5.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1273">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1309">8.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1394">10.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1403">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1438">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1531">12.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2165">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1793">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1645">15.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">חששות בטיחות סביב בינה מלאכותית וקריאות להאטה</h2>
+      <p class="biweekly-topic-byline">8 מתוך 14 יום · 8 מקורות: Daily Telegraph, Die Welt, Economist, Guardian, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">המסגור עבר מדאגה קיומית משותפת לפילוג גלוי לגבי כנות הקריאות לבלימה. ב-8-10 בספטמבר הדיון עדיין נסב סביב הסיכון עצמו: The Daily Telegraph ו-Los Angeles Times התווכחו רק על מידת הדחיפות, ו-The Wall Street Journal תיאר בינה מלאכותית רקורסיבית כ&quot;מעצמה שלישית&quot; המחייבת שיתוף פעולה בין וושינגטון לבייג&#x27;ין. עד 14-15 בספטמבר הטון הפך לציני: The Daily Telegraph כינה את קריאות הבטיחות של Anthropic &quot;שבי רגולציה&quot; לפני הנפקתה, Süddeutsche Zeitung תהה אם האזהרות הן שיווק, ו-The Wall Street Journal תיאר חששות קיומיים כ&quot;שיגעון&quot; תעשייתי. ב-16 בספטמבר הקוטביות נשארה: The Washington Post ו-Süddeutsche Zeitung דרשו גוף פיקוח גלובלי בסגנון IAEA, בעוד The Wall Street Journal התעקש שהחוק הקיים מספיק.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-08_he.html#section-1315">8.9</a><a class="daily-link" href="report_2026-09-09_he.html#section-1352">9.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1410">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1450">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1504">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1540">12.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1788">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1644">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1710">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">תעשיית הרכב הגרמנית מול התחרות הסינית ותעריפי הסחר</h2>
+      <p class="biweekly-topic-byline">9 מתוך 14 יום · 7 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מהתמקדות בדרמה הפנים-תאגידית של פולקסווגן - קרבות כוח בהנהלה, פיטורים והאטת מקומית - לניתוח מבני רחב יותר על דעיכת התחרותיות הגרמנית מול סין. בתחילת התקופה (3-8 בספטמבר) Der Spiegel, Süddeutsche Zeitung וה-Wall Street Journal התמקדו בניהול המשבר של פולקסווגן עצמה, כאשר ה-Wall Street Journal ב-8 בספטמבר תיאר את ההסכם עם האיגודים כ&quot;הפוגה&quot; שטחית בלבד. עד 15-16 בספטמבר הדיון הורחב: Süddeutsche Zeitung ציטטה את איגוד IG Metall שתלה את המשבר בתחרות הסינית ובתעריפי טראמפ ולא בעלויות העבודה, בעוד Die Welt חזרה שוב ושוב לטענה שהבעיה האמיתית טמונה ברגולציה, במיסוי ובמדיניות האנרגיה הגרמנית. ההבדל המרכזי בין Die Welt לבין Süddeutsche Zeitung ו-IG Metall נותר עקבי: הראשונה מאשימה כשל פנים-גרמני, האחרונות מצביעות על סין וארה&quot;ב כגורמים חיצוניים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1092">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1170">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1220">5.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1256">6.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1313">8.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1344">8.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1447">11.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1811">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1672">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1714">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">שיחות השלום בחסות ארה&quot;ב בין רוסיה לאוקראינה (ויטקוף/קושנר)</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 7 מקורות: Daily Telegraph, Die Welt, Guardian, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">המסגור עבר מתקווה זהירה לדיפלומטיה לספקנות גוברת כלפי כנות המאמץ האמריקאי. ב-7 בספטמבר עוד תיארו Die Welt ו-The Guardian את מסעם של ויטקוף וקושנר כצעד זהיר אך אמיתי, בעוד Süddeutsche Zeitung כבר הזהירה מגישה עסקית ונאיבית כלפי פוטין. עד 12 בספטמבר The Washington Post תיאר את עצם הרעיון שפוטין הוא &quot;איש עסקים&quot; בר-עסקה כאשליה מסוכנת, ובאמצע ספטמבר The Daily Telegraph ו-Los Angeles Times תיארו את &quot;הפסקת האש האנרגטית&quot; הנטענת כחלולה וכלחץ אמריקאי על קייב ולא כהישג דיפלומטי אמיתי. ארצות הברית ממוסגרת כמתווכת בעלת אינטרסים, לא כמתווכת נייטרלית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-07_he.html#section-1265">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1337">8.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1479">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1561">12.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1783">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1640">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1699">16.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1704">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">תוכניות ישראל לעקירת תושבי עזה והתגובה הבריטית/אירופית</h2>
+      <p class="biweekly-topic-byline">10 מתוך 14 יום · 6 מקורות: Daily Telegraph, Der Spiegel, Guardian, Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">הסיפור עבר ממסגור חד-צדדי ואקטיביסטי, שנשען כמעט כולו על The Guardian וביקר את מדיניות ישראל ואת היסוס בריטניה לפעול, להתמודדות ישירה ומרובת-זוויות עם צעד בריטי קונקרטי - איסור הסחר עם ההתנחלויות - שהניב מחלוקת פנים-בריטית ותגובה ישראלית חריפה. ב-3-4 בספטמבר שלט הגוארדיאן בלעדית בניסוח ביקורתי על תוכניות גירוש ו&quot;טיהור אתני&quot;. עד 8-11 בספטמבר הסיפור התרחב: The Daily Telegraph הציג את הסנקציות כצעד מסוכן המסלים מתחים, The Wall Street Journal הדגיש את ההצדקה המוסרית הבריטית, ו-Süddeutsche Zeitung מיקד את תגובת הזעם הישראלית. עד 16 בספטמבר הביקורת התפצלה למישורים מוסדיים נפרדים - משפט, מדיניות חוץ אמריקאית ותרבות - כפי שעולה ממאמרים ב-The Guardian וב-The Washington Post. ההבדל המרכזי: עיתונים בריטים ואמריקאים נחלקו בין תמיכה עקרונית לביקורת על הסיכון המדיני הפנים-בריטי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1051">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1158">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1223">5.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1224">5.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1304">8.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1325">8.9</a><a class="daily-link" href="report_2026-09-09_he.html#section-1350">9.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1401">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1416">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1422">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1527">12.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1633">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1738">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מלחמת הסחר בין קנדה לארה&quot;ב וזהות קנדית מול טראמפ</h2>
+      <p class="biweekly-topic-byline">9 מתוך 14 יום · 6 מקורות: Die Welt, Economist, Guardian, Los Angeles Times, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מניתוח אסטרטגי-כלכלי לכיוון סיפור על זהות לאומית וחברה אזרחית. בתחילת התקופה, ב-3 בספטמבר, The Economist תיאר את תגמולי המכסים הקנדיים כמהלך מחושב של מינוף פוליטי נגד טראמפ, בעוד The Wall Street Journal כבר אז הציג זאויות של זהות קנדית מוגדרת בניגוד לארה&quot;ב. עד 11 בספטמבר שלושה עיתונים הציגו זוויות שונות לחלוטין - מדיווח עובדתי ב-The Guardian ועד הגנה תרבותית-חוקתית על קנדה ב-Wall Street Journal שכלל לא עסקה במכסים עצמם. עד 13-14 בספטמבר, The Washington Post תיעד תפנית מוחלטת: לא עוד מהלכי ממשלה אלא תנועת חרם עממית של אזרחים קנדים נגד מוצרים ונסיעות לארה&quot;ב, מתוך תחושת עלבון לאומי וערעור אמון.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1074">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1150">4.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1264">6.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1283">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1329">8.9</a><a class="daily-link" href="report_2026-09-09_he.html#section-1349">9.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1481">11.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2155">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1820">14.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">סכסוך הריבונות על פוקלנד/נפט (ארגנטינה-בריטניה-ארה&quot;ב)</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 6 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Economist, Guardian, Wall Street Journal</p>
+      <p class="biweekly-topic-text">הסיקור עבר מדיון פנים-בריטי צר על מוכנות צבאית והיסטוריה, שהגדיר The Daily Telegraph כמעט לבדו בתחילת התקופה, להסבר רב-מוקדי ובינלאומי יותר עד אמצע ספטמבר. ב-4-8 בספטמבר שלט The Daily Telegraph כמעט בלעדית, כשהעימות הפנימי בעמודיו נסב סביב נכונות בריטניה להגן על האיים. ב-11 בספטמבר התמונה התרחבה דרמטית: Der Spiegel הציג את טראמפ כמצית הסכסוך, The Guardian שילב זאת בדפוס נקמנות גלובלי של טראמפ, ואילו The Economist התמקד דווקא בקשיים הפנימיים של מיליי. עד 16 בספטמבר שב The Daily Telegraph להוביל, הפעם סביב חקירה פלילית ארגנטינאית נגד מנהלי חברות נפט.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-04_he.html#section-1135">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1192">5.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1253">6.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1271">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1306">8.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1436">11.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1719">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">ירידת הפופולריות של טראמפ לקראת הבחירות לקונגרס</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 5 מקורות: Daily Telegraph, Economist, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">המסגור עבר מביקורת מפלגתית חדה לקונצנזוס רחב יותר: ב-3 בספטמבר Los Angeles Times האשים את טראמפ בחבלה מכוונת בסיכויי הרפובליקנים, בעוד Wall Street Journal הציג ביקורת טקטית מצומצמת על הקמפיין. עד 11 בספטמבר כבר כמעט כל המקורות - The Economist, The Daily Telegraph, Süddeutsche Zeitung ו-Wall Street Journal - תיארו את טראמפ כנטל אסטרטגי על מפלגתו, בשל האינפלציה, מלחמת איראן וסכסוך המכסים. ההבדל המרכזי: Los Angeles Times התמקד בכשלים מוסדיים ומוסריים, ואילו Wall Street Journal הציע ניתוח אסטרטגי-תחרותי יותר.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1117">3.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1257">6.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1285">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1346">8.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1392">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1423">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1535">12.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1552">12.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הרתעה ציבורית מול מרכזי נתונים לבינה מלאכותית בארה&quot;ב</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 5 מקורות: Daily Telegraph, Economist, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">הסיקור עבר מהגנה אידאולוגית על מרכזי הנתונים לניתוח ביקורתי יותר של התגובות אליהם. ב-3 וב-4 בספטמבר, The Economist וה-The Wall Street Journal דחו את ההתנגדות הציבורית כ&quot;פאניקה מוסרית&quot; חסרת בסיס, שמתעלמת מהתועלת הכלכלית. אך עד 8 בספטמבר, אותו Wall Street Journal תיאר בספקנות כיצד התעשייה והממשל מייחסים את ההתנגדות להשפעה סינית זרה, במקום להכיר בדאגות אמיתיות סביב חשמל ומים; וב-10 בספטמבר Süddeutsche Zeitung תיארה את הנושא כבר כזירה פוליטית דו-מפלגתית לקראת הבחירות.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1053">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1185">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1245">5.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1315">8.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1345">8.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1399">10.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מדיניות חלל אירופית מול צבאיות החלל הגלובלית</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 5 מקורות: Daily Telegraph, Guardian, Los Angeles Times, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">הכיסוי החל ב-10-12 בספטמבר כדיון אירופי-פנימי - בעיקר ב-Süddeutsche Zeitung - על הצורך לאחד משאבים מול ארה&quot;ב וסין, עם זווית ביטחונית הולכת וגוברת (ראיון עם ראש ה-ESA אשבאכר על רוסיה כאיום היברידי). ב-13 בספטמבר, The Daily Telegraph כבר תיאר את בריטניה כמי שהפסידה את המרוץ והציע תפקיד של ספק נישה. עד 16 בספטמבר הנושא הפך גלובלי וגלוי: The Guardian, Los Angeles Times ו-The Wall Street Journal דנו בהודעת ארה&quot;ב על נשק בחלל, כשהבריטים מזהירים מפני מרוץ חימוש והאמריקאים מציגים זאת כהרתעה לגיטימית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-10_he.html#section-1408">10.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1497">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1547">12.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2141">13.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1700">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">פרשת מימון זר ותרומות לרפורם בריטניה</h2>
+      <p class="biweekly-topic-byline">9 מתוך 14 יום · 4 מקורות: Daily Telegraph, Economist, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיפור נפתח ב-5-8 בספטמבר כפרשה חוקית-מוסרית ממוקדת - The Guardian חשף הקלטות המראות לכאורה עקיפת איסור תרומות זרות, ותקף את פארג&#x27; באופן אישי, בעוד The Daily Telegraph ו-Süddeutsche Zeitung הציגו זאת כבעיית כשירות או צביעות מבנית. עד אמצע ספטמבר (13-16) הזירה התרחבה לדיון מבני רחב יותר: תורמים עצמם (בן דלו, ותורם של 36 מיליון ליש&quot;ט ב-13/9) כתבו ב-Telegraph הגנות פומביות על תרומותיהם, ואילו The Guardian (15-16/9) עבר מביקורת אישית על פארג&#x27; לדרישת מדיניות קונקרטית - הגבלת תרומות וחקיקה נגד כסף זר, בטענה ש&quot;הדמוקרטיה למכירה&quot;. כך הפרשה עברה משערוריה פרטנית לעימות אידאולוגי קבוע בין עיתונים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-05_he.html#section-1201">5.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1267">7.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1299">8.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1324">8.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1465">11.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1489">11.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1538">12.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2133">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1784">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1641">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1723">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">עסקת הנפט של טראמפ עם ונצואלה</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 4 מקורות: Economist, Guardian, Los Angeles Times, Wall Street Journal</p>
+      <p class="biweekly-topic-text">הסיקור נפתח ב-3 בספטמבר במבט רב-מקורי ומעורב - The Economist תיאר את העסקה כ&quot;נועזת אך מפוקפקת&quot;, The Wall Street Journal הזהיר מביסוס אוליגרכיה שאביסטית, The Guardian דיבר על &quot;דיפלומטיית אקדח&quot; ו-Los Angeles Times מסגר זאת כהזדמנות עסקית לשברון. עם הזמן הדיון צמצם לקול כמעט בלעדי של Los Angeles Times, שהעמיק את הביקורת: ב-7 בספטמבר תיאר כיצד העסקה מבצרת שלטון לא נבחר בראשות דלסי רודריגס, וב-13-14 בספטמבר הזהיר, תוך הקבלה להפיכת איראן ב-1953, מפני חזרה על טעויות היסטוריות אם ארה&quot;ב לא תכבד תוצאות בחירות אמיתיות.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1054">3.9</a><a class="daily-link" href="report_2026-09-03_he.html#section-1122">3.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1242">5.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1289">7.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1480">11.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2146">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1805">14.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">משבר החוב הריבוני: אירופה מול ארה&quot;ב, וצרפת כנקודת התורפה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 4 מקורות: Economist, Guardian, Süddeutsche Zeitung, Wall Street Journal</p>
+      <p class="biweekly-topic-text">המוקד עבר מדיון השוואתי רחב בין ארה&quot;ב לאירופה אל מיקוד הולך ומתחדד בצרפת לבדה ככשל פיסקלי נקודתי. ב-3 בספטמבר עדיין התקיימה מחלוקת חדה: The Economist הציג את אירופה, ובפרט צרפת, כבעיה החמורה יותר מבחינה מבנית, בעוד The Wall Street Journal טען שדווקא ארה&quot;ב היא מקור הדאגה העיקרי. עד 10 ו-14 בספטמבר, עם Süddeutsche Zeitung כמקור היחיד, הדיון צומצם לגמרי לצרפת, שתוארה כ&quot;האיש החולה של אירופה&quot; החדש בשל חובות, אבטלה וקיפאון כלכלי. בעוד The Wall Street Journal וה-Economist בחנו דינמיקות גלובליות והשוואתיות, Süddeutsche Zeitung מיקדה את הסיפור בכישלון הפוליטי הצרפתי הפנימי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1076">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1191">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1227">5.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1402">10.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1810">14.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">המשבר הפיסקלי בבריטניה ולחץ שוק האג&quot;ח</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 3 מקורות: Daily Telegraph, Guardian, Wall Street Journal</p>
+      <p class="biweekly-topic-text">הסיקור עבר מוויכוח רב-קולי בין The Daily Telegraph ל-The Guardian על שורש המשבר - בזבזנות פיסקלית מול כשל מנהיגות - לדומיננטיות כמעט מוחלטת של The Daily Telegraph, שחזר/ה שוב ושוב על אותה תביעה לקיצוצים ולמשמעת תקציבית (6-13 בספטמבר). עד ה-14-15 בספטמבר הצטרפו The Guardian ו-The Wall Street Journal שוב, אך עתה בדגש על גורמים חיצוניים - תעריפי טראמפ ומלחמת איראן - כמנוע המשבר, לא רק כשל מדיניות פנימי. כך נותרה מחלוקת מתמשכת בין הסברים פנים-בריטיים לבין הסברים גיאופוליטיים-חיצוניים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1089">3.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1248">6.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1308">8.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1312">8.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2145">13.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1785">14.9</a><a class="daily-link" href="report_2026-09-15_he.html#section-1642">15.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1721">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">אכיפת הגירה בארה&quot;ב: מדיכוי בוחרים לפיקוח על כוח</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Los Angeles Times, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">המוקד עבר מהאשמות בדיכוי בוחרים לביקורת ממוסדת יותר על התנהלות הרשויות. ב-4 וב-7 בספטמבר ה-Los Angeles Times טען בלהט שטענות ממשל טראמפ על הונאת בוחרים זרים הן למעשה כלי הפחדה, כשמתוך כ-190,000 רישומים שנבדקו נמצאה מעצר אחד בלבד. עד 10 ו-14 בספטמבר, The Wall Street Journal וה-Washington Post עברו לדון בהתנהלות ICE עצמה - ירי של סוכן ושימוש בכפפות הלם חשמליות - בטון זהיר יותר, הקורא לאחריות ופיקוח ולא לביטול הסמכות. כך המסגור נדד מהאשמות פוליטיות חריפות לדרישה מוסדית לרסן את כלי האכיפה.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-04_he.html#section-1169">4.9</a><a class="daily-link" href="report_2026-09-06_he.html#section-1257">6.9</a><a class="daily-link" href="report_2026-09-07_he.html#section-1285">7.9</a><a class="daily-link" href="report_2026-09-10_he.html#section-1409">10.9</a><a class="daily-link" href="report_2026-09-14_he.html#section-1821">14.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">בית המשפט העליון האמריקאי בין עצמאות שיפוטית ללחץ פוליטי</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Süddeutsche Zeitung, Wall Street Journal, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מדיון חד-צדדי ותיאורטי לעימות ישיר ורב-זוויתי. בתחילת התקופה (5–12 בספטמבר) רק The Wall Street Journal דן בנושא, בטורי דעה שתקפו מהלכים דמוקרטיים להרחבת בית המשפט כאיום על הפרדת הרשויות. עד 16 בספטמבר, לאחר שבית המשפט חסם את ניסיונו של טראמפ להגביל הצבעה בדואר, גם Süddeutsche Zeitung הצטרפה, וה-The Wall Street Journal עצמו הרחיב זווית וסיקר את התקפותיו של טראמפ על שופטים שמונו על ידו. ב-13 בספטמבר הוסיפה The Washington Post זווית נוספת, שקשרה פסיקה בנושא הריסת האגף המזרחי לדפוס הרסני רחב יותר של טראמפ. ככלל, Süddeutsche Zeitung הביעה גינוי חד-משמעי, בעוד The Wall Street Journal שמר על גישה מאוזנת יותר.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-05_he.html#section-1238">5.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1343">8.9</a><a class="daily-link" href="report_2026-09-12_he.html#section-1556">12.9</a><a class="daily-link" href="report_2026-09-13_he.html#section-2167">13.9</a><a class="daily-link" href="report_2026-09-16_he.html#section-1731">16.9</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">ויכוח התקציב והביטחון בבריטניה סביב בורנהאם</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 2 מקורות: Daily Telegraph, Guardian</p>
+      <p class="biweekly-topic-text">הסיקור עבר מביקורת ביטחונית-פיסקלית חד-צדדית לעימות פוליטי ישיר בין עיתונים על דמותו של בורנהאם, ולבסוף לניתוח מתחים פנים-ממשלתיים. ב-3-4 בספטמבר The Daily Telegraph תוקף בחריפות את בורנהאם כמסכן את הביטחון הלאומי מול רוסיה ומוביל לפשיטת רגל, בעוד The Guardian משיב באותו יום בהגנה על פופולריותו כניגוד מרענן לשמרנים. עד 11 בספטמבר הדיון ב-The Guardian מתמקד כבר לא בביקורת חיצונית אלא במתח הפנימי בין בורנהאם לשר האוצר הילי. ההבדל המרכזי: The Daily Telegraph ממסגר את הסיפור כסכנה ביטחונית-פיסקלית, ואילו The Guardian רואה בו סיפור פוליטי פנימי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-09-03_he.html#section-1081">3.9</a><a class="daily-link" href="report_2026-09-04_he.html#section-1142">4.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1196">5.9</a><a class="daily-link" href="report_2026-09-05_he.html#section-1202">5.9</a><a class="daily-link" href="report_2026-09-08_he.html#section-1311">8.9</a><a class="daily-link" href="report_2026-09-11_he.html#section-1483">11.9</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
+    <a class="footer-link" href="terms.html">תנאי שימוש</a>
+    <a class="footer-link" href="privacy.html">מדיניות פרטיות</a>
+  </footer>
+</body>
+</html>

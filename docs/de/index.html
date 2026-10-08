@@ -363,15 +363,19 @@
   }
   .latest-card-cta { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
 
-  /* No visible heading by design (see renderTrendsCard()'s own comment) -
-     the mini line-chart is the only content; the module border brightens
-     on hover (via :has(), same affordance archive-card/result-item give
-     their own clickable cards) so it still reads as a link. */
+  /* Redesigned (PROJECT_LOG 4.8x) to match latest-card's own title/
+     description/CTA structure - same visual prominence as the other home-
+     module cards, per explicit feedback that a bare sparkline alone wasn't
+     clear. The module border still brightens on hover (via :has(), same
+     affordance archive-card/result-item give their own clickable cards). */
   .trends-module:has(a:hover) { border-color: var(--masthead-accent); }
-  .trends-card { flex: 1; display: flex; }
-  .trends-card a { display: flex; flex: 1; align-items: center; }
-  .trends-card-spark { width: 100%; height: auto; display: block; }
+  .trends-card { display: flex; flex: 1; }
+  .trends-card a { display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; text-decoration: none; color: inherit; }
+  .trends-card-title { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; color: var(--masthead-accent); }
+  .trends-card-desc { margin: 0; font-size: .88rem; color: var(--text); }
+  .trends-card-spark { width: 100%; height: 24px; display: block; }
   .trends-card-spark polyline { fill: none; stroke: var(--masthead-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .trends-card-cta { margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
 
   .results-heading { font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }
   .results-full-link {
@@ -490,7 +494,6 @@
         <div class="latest-card" id="latest-card"></div>
       </section>
       <section class="home-module trends-module" id="trends-module">
-        <p class="sr-only" id="trends-description"></p>
         <div class="trends-card" id="trends-card"></div>
       </section>
     </div>
@@ -8773,14 +8776,14 @@
     card.appendChild(link);
   }
 
-  // Deliberately no visible heading on this card (same "layout itself
-  // communicates the role" principle as the map/timeline modules) - the
-  // mini line-chart IS the label. The country shown is whichever one
-  // trends.json already sorted first (most total coverage overall, see
-  // build_trends_json()'s own sort) - a stable, data-driven pick, not a
-  // hardcoded country. A screen-reader-only description still names it,
-  // so the card is never silent to assistive tech despite having no
-  // visible text of its own.
+  // Redesigned (PROJECT_LOG 4.8x) from a bare, textless sparkline into the
+  // site's primary entry point to "Trends" (biweekly narrative reports +
+  // the coverage-trends chart) - the previous version relied entirely on
+  // "the mini line-chart IS the label," which real feedback found unclear.
+  // Now mirrors latest-card's own title/description/CTA structure so it
+  // reads at the same glance, with the sparkline kept as a small
+  // supporting visual (data-driven, not hardcoded - same country-pick
+  // logic as before) rather than the card's only content.
   function buildSparklinePoints(values, w, h, pad) {
     var max = 0;
     for (var i = 0; i < values.length; i++) {
@@ -8799,33 +8802,49 @@
 
   function renderTrendsCard(data) {
     var card = document.getElementById("trends-card");
-    var desc = document.getElementById("trends-description");
-    if (!card || !data || !data.countries || !data.countries.length) return;
-    var country = data.countries[0];
-    var points = buildSparklinePoints(country.n_sources, 100, 44, 4);
+    if (!card) return;
 
-    var label = (
-      LANG === "he" ? "מגמות סיקור - " + country.name_he + " - למסך המגמות המלא" :
-      LANG === "de" ? "Berichterstattungstrends - " + country.name_de + " - zur vollständigen Trendseite" :
-      "Coverage trends - " + country.name_en + " - to the full trends page"
+    var title = LANG === "he" ? "מגמות" : LANG === "de" ? "Trends" : "Trends";
+    var desc = (
+      LANG === "he" ? "דוחות מגמות דו-שבועיים וניתוח סיקור לפי מדינה" :
+      LANG === "de" ? "Zweiwöchentliche Trendberichte und Berichterstattungsanalyse nach Land" :
+      "Biweekly trend reports and coverage analysis by country"
     );
-    if (desc) desc.textContent = label;
+    var cta = LANG === "he" ? "לצפייה ←" : LANG === "de" ? "Ansehen →" : "View →";
 
     var link = document.createElement("a");
     link.href = TRENDS_HREF;
-    link.setAttribute("aria-label", label);
 
-    var svgNS = "http://www.w3.org/2000/svg";
-    var svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("class", "trends-card-spark");
-    svg.setAttribute("viewBox", "0 0 100 44");
-    svg.setAttribute("preserveAspectRatio", "none");
-    svg.setAttribute("aria-hidden", "true");
-    var polyline = document.createElementNS(svgNS, "polyline");
-    polyline.setAttribute("points", points);
-    svg.appendChild(polyline);
+    var titleEl = document.createElement("p");
+    titleEl.className = "trends-card-title";
+    titleEl.textContent = title;
+    link.appendChild(titleEl);
 
-    link.appendChild(svg);
+    var descEl = document.createElement("p");
+    descEl.className = "trends-card-desc";
+    descEl.textContent = desc;
+    link.appendChild(descEl);
+
+    if (data && data.countries && data.countries.length) {
+      var country = data.countries[0];
+      var points = buildSparklinePoints(country.n_sources, 100, 24, 3);
+      var svgNS = "http://www.w3.org/2000/svg";
+      var svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("class", "trends-card-spark");
+      svg.setAttribute("viewBox", "0 0 100 24");
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.setAttribute("aria-hidden", "true");
+      var polyline = document.createElementNS(svgNS, "polyline");
+      polyline.setAttribute("points", points);
+      svg.appendChild(polyline);
+      link.appendChild(svg);
+    }
+
+    var ctaEl = document.createElement("p");
+    ctaEl.className = "trends-card-cta";
+    ctaEl.textContent = cta;
+    link.appendChild(ctaEl);
+
     card.appendChild(link);
   }
 

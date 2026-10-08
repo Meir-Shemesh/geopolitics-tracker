@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<title>מגמות סיקור (בטא) - גאופוליטיקה יומי</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  :root { --trend-down: #1066a3; --trend-muted-line: var(--border); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --trend-down: #4a93c2; --trend-muted-line: #6e624a; }
+  }
+  :root[data-theme="dark"] { --trend-down: #4a93c2; --trend-muted-line: #6e624a; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  .top-nav {
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link { color: var(--text-muted); text-decoration: none; font-weight: 500; }
+  .top-nav-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 48rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .trends-heading-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  .report-title { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }
+  .beta-badge {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--chip-selected-text);
+    background: var(--masthead-accent);
+    border-radius: .4rem;
+    padding: .2rem .55rem;
+  }
+  .beta-note { margin: .6rem 0 0; font-size: .88rem; color: var(--text-muted); max-width: 40rem; }
+
+  .trends-body { max-width: 48rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  .banner {
+    border: 1px solid var(--border);
+    border-inline-start: 4px solid var(--trend-down);
+    background: var(--bg-elevated);
+    border-radius: .5rem;
+    padding: .85rem 1rem;
+    font-size: .9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ranked-intro { margin: 0 0 .2rem; font-size: 1.3rem; font-weight: 800; }
+  .ranked-subtitle { margin: 0 0 1.2rem; font-size: .88rem; color: var(--text-muted); }
+
+  table { width: 100%; border-collapse: collapse; }
+  .ranked-row { cursor: pointer; border-bottom: 1px solid var(--border); }
+  .ranked-row:hover, .ranked-row:focus { background: var(--bg-elevated); outline: none; }
+  .ranked-row td { padding: .75rem .4rem; }
+  .ranked-name { font-weight: 700; white-space: nowrap; }
+  .ranked-change { width: 60%; direction: ltr; }
+  .change-bar-wrap {
+    display: inline-block;
+    width: 55%;
+    height: .55rem;
+    background: var(--border);
+    border-radius: .3rem;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-inline-end: .6rem;
+  }
+  .change-bar { display: block; height: 100%; }
+  .change-up { background: var(--masthead-accent); }
+  .change-down { background: var(--trend-down); }
+  .change-label { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .change-up-text { color: var(--masthead-accent); }
+  .change-down-text { color: var(--trend-down); }
+
+  #trends-loading { color: var(--text-muted); padding: 2rem 0; }
+
+  .expanded-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  #expanded-title { margin: 0; font-size: 1.3rem; font-weight: 800; }
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: .4rem;
+    color: var(--text);
+    font-family: inherit;
+    font-size: .85rem;
+    padding: .4rem .8rem;
+    cursor: pointer;
+  }
+  .back-btn:hover { border-color: var(--masthead-accent); color: var(--masthead-accent); }
+
+  .chart-legend { display: flex; gap: 1.2rem; font-size: .82rem; color: var(--text-muted); margin-bottom: .6rem; direction: ltr; }
+  .legend-swatch { display: inline-block; width: 1.4rem; height: 2px; vertical-align: middle; margin-inline-end: .4rem; }
+  .legend-selected .legend-swatch { background: var(--masthead-accent); height: 3px; }
+  .legend-others .legend-swatch { background: var(--trend-muted-line); }
+
+  .chart-wrap { position: relative; direction: ltr; }
+  #chart-svg svg { width: 100%; height: auto; display: block; }
+  .chart-grid { stroke: var(--border); stroke-width: 1; }
+  .chart-line-muted { fill: none; stroke: var(--trend-muted-line); stroke-width: 1.5; opacity: .75; }
+  .chart-line-selected { fill: none; stroke: var(--masthead-accent); stroke-width: 3; stroke-linecap: round; }
+  .chart-line-backlog { stroke-dasharray: 5 4; }
+  .chart-point { fill: var(--masthead-accent); stroke: var(--bg-elevated); stroke-width: 1.5; }
+  .chart-point-backlog { fill: var(--bg-elevated); stroke: var(--masthead-accent); stroke-width: 2; stroke-dasharray: 2 2; }
+  .chart-hit { fill: transparent; cursor: pointer; }
+  .chart-hit:focus { outline: 2px solid var(--masthead-accent); outline-offset: 2px; }
+
+  #chart-tooltip {
+    position: absolute;
+    top: -.5rem;
+    transform: translate(-50%, -100%);
+    background: var(--text);
+    color: var(--bg);
+    font-size: .8rem;
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .data-table-wrap { margin-top: 1.5rem; overflow-x: auto; direction: ltr; }
+  .data-table-wrap table { font-size: .82rem; }
+  .data-table-wrap th, .data-table-wrap td { border: 1px solid var(--border); padding: .4rem .5rem; text-align: center; }
+  .data-table-wrap caption { caption-side: top; text-align: start; font-size: .82rem; color: var(--text-muted); margin-bottom: .4rem; }
+  .table-footnote { font-size: .8rem; color: var(--text-muted); margin: .6rem 0 0; }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="גאופוליטיקה יומי - דף הבית"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      <a class="top-nav-link" href="trends.html">← לכל הדוחות</a>
+      <a class="top-nav-link" href="filter.html">סינון מתקדם</a>
+      <a class="top-nav-link" href="trends.html">מגמות</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/trendschart.html">English</a>
+      <a class="top-nav-link top-nav-lang-link" href="../de/trendschart.html">Deutsch</a>
+      <a class="top-nav-link" href="mailto:meir@meirshemesh.com">צור קשר</a>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="מצב כהה" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">גאופוליטיקה יומי</p>
+      <div class="trends-heading-row">
+        <h1 class="report-title">מגמות סיקור לפי מדינה</h1>
+        <span class="beta-badge">בטא</span>
+      </div>
+      <p class="beta-note">הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.</p>
+    </div>
+  </header>
+  <main class="trends-body">
+    <p id="trends-loading">טוען…</p>
+    <div id="banner-backlog-wrap">
+      <p class="banner" id="backlog-banner" hidden></p>
+    </div>
+
+    <section id="ranked-view" hidden>
+      <h2 class="ranked-intro">מה זז השבוע</h2>
+      <p class="ranked-subtitle">שינוי במספר המקורות הייחודיים שסיקרו כל מדינה, מול השבוע הקודם</p>
+      <table>
+        <thead>
+          <tr><th>מדינה</th><th>שינוי שבועי</th></tr>
+        </thead>
+        <tbody id="ranked-body"></tbody>
+      </table>
+    </section>
+
+    <section id="expanded-view" hidden>
+      <div class="expanded-header">
+        <h2 id="expanded-title"></h2>
+        <button class="back-btn" id="back-to-list" type="button">חזרה לרשימה</button>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-selected"><span class="legend-swatch"></span>המדינה הנבחרת</span>
+        <span class="legend-others"><span class="legend-swatch"></span>מדינות זמינות אחרות</span>
+      </div>
+      <div class="chart-wrap">
+        <div id="chart-svg"></div>
+        <div id="chart-tooltip" hidden></div>
+      </div>
+      <div class="data-table-wrap">
+        <table>
+          <caption id="data-table-caption"></caption>
+          <thead id="data-table-head"></thead>
+          <tbody id="data-table-body"></tbody>
+        </table>
+        <p class="table-footnote" id="data-table-footnote" dir="rtl" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
+    <a class="footer-link" href="terms.html">תנאי שימוש</a>
+    <a class="footer-link" href="privacy.html">מדיניות פרטיות</a>
+  </footer>
+  <script>
+(function () {
+  var LABELS = {"page_title": "מגמות סיקור (בטא) - גאופוליטיקה יומי", "eyebrow": "גאופוליטיקה יומי", "heading": "מגמות סיקור לפי מדינה", "beta_badge": "בטא", "beta_note": "הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.", "ranked_intro": "מה זז השבוע", "ranked_subtitle": "שינוי במספר המקורות הייחודיים שסיקרו כל מדינה, מול השבוע הקודם", "col_country": "מדינה", "col_change": "שינוי שבועי", "backlog_banner": "השבוע האחרון כולל השלמת-פרסום של ימים שהתעכבו - המספרים לא משקפים שבוע רגיל, והדירוג למטה מושפע מכך.", "backlog_point_note": "שבוע זה כולל השלמת ימים שלא פורסמו בזמן - המספר לא משקף שבוע רגיל.", "back_to_list": "חזרה לרשימה", "legend_selected": "המדינה הנבחרת", "legend_others": "מדינות זמינות אחרות", "new_label": "חדש", "week_of": "שבוע של", "sources_label": "מקורות", "table_caption": "מקורות ייחודיים שסיקרו את {country}, לפי שבוע", "loading": "טוען…"};
+  var LANG = "he";
+  var NAME_KEY = "name_" + LANG;
+  var container = document.getElementById("trends-root");
+
+  function fmtWeek(w) {
+    return LABELS.week_of + " " + w.start;
+  }
+
+  function pctChange(prev, last) {
+    if (prev === 0) return last > 0 ? null : 0; // null => "New"
+    return ((last - prev) / prev) * 100;
+  }
+
+  function renderRanked(data) {
+    var weeks = data.weeks;
+    var lastIdx = weeks.length - 1;
+    var prevIdx = weeks.length - 2;
+    var lastWeek = weeks[lastIdx];
+
+    var banner = document.getElementById("backlog-banner");
+    if (lastWeek && lastWeek.has_backlog) {
+      banner.textContent = LABELS.backlog_banner;
+      banner.hidden = false;
+    }
+
+    var rows = data.countries.map(function (c) {
+      var last = c.n_sources[lastIdx] || 0;
+      var prev = prevIdx >= 0 ? (c.n_sources[prevIdx] || 0) : 0;
+      var pct = pctChange(prev, last);
+      return { code: c.code, name: c[NAME_KEY], last: last, prev: prev, pct: pct };
+    });
+    rows.sort(function (a, b) {
+      var av = a.pct === null ? Infinity : a.pct;
+      var bv = b.pct === null ? Infinity : b.pct;
+      return bv - av;
+    });
+
+    var tbody = document.getElementById("ranked-body");
+    tbody.innerHTML = "";
+    var maxAbsPct = Math.max.apply(null, rows.map(function (r) { return r.pct === null ? 0 : Math.abs(r.pct); }).concat([1]));
+
+    rows.forEach(function (r) {
+      var tr = document.createElement("tr");
+      tr.className = "ranked-row";
+      tr.tabIndex = 0;
+      tr.setAttribute("role", "button");
+
+      var tdName = document.createElement("td");
+      tdName.className = "ranked-name";
+      tdName.textContent = r.name;
+      tr.appendChild(tdName);
+
+      var tdChange = document.createElement("td");
+      tdChange.className = "ranked-change";
+      var isNew = r.pct === null;
+      var isUp = !isNew && r.pct > 0;
+      var barWrap = document.createElement("span");
+      barWrap.className = "change-bar-wrap";
+      var bar = document.createElement("span");
+      bar.className = "change-bar " + (isNew || isUp ? "change-up" : "change-down");
+      var widthPct = isNew ? 100 : Math.min(100, Math.round((Math.abs(r.pct) / maxAbsPct) * 100));
+      bar.style.width = widthPct + "%";
+      barWrap.appendChild(bar);
+      var label = document.createElement("span");
+      label.className = "change-label " + (isNew || isUp ? "change-up-text" : "change-down-text");
+      label.textContent = isNew ? LABELS.new_label : (isUp ? "+" : "") + Math.round(r.pct) + "%";
+      tdChange.appendChild(barWrap);
+      tdChange.appendChild(label);
+      tr.appendChild(tdChange);
+
+      tr.addEventListener("click", function () { openExpanded(data, r.code); });
+      tr.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openExpanded(data, r.code); }
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openExpanded(data, code) {
+    document.getElementById("ranked-view").hidden = true;
+    var panel = document.getElementById("expanded-view");
+    panel.hidden = false;
+    renderChart(data, code);
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function closeExpanded() {
+    document.getElementById("expanded-view").hidden = true;
+    document.getElementById("ranked-view").hidden = false;
+  }
+
+  function renderChart(data, selectedCode) {
+    var weeks = data.weeks;
+    var selected = data.countries.find(function (c) { return c.code === selectedCode; });
+    document.getElementById("expanded-title").textContent = selected[NAME_KEY];
+
+    var W = 760, H = 320, padL = 36, padR = 16, padT = 16, padB = 36;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var globalMax = 1;
+    data.countries.forEach(function (c) {
+      c.n_sources.forEach(function (v) { if (v > globalMax) globalMax = v; });
+    });
+
+    function x(i) { return padL + (weeks.length === 1 ? 0 : (i / (weeks.length - 1)) * plotW); }
+    function y(v) { return padT + plotH - (v / globalMax) * plotH; }
+
+    var svgParts = [];
+    svgParts.push('<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + selected[NAME_KEY] + '" preserveAspectRatio="xMidYMid meet">');
+
+    // gridlines (recessive)
+    for (var gy = 0; gy <= 4; gy++) {
+      var yy = padT + (gy / 4) * plotH;
+      svgParts.push('<line x1="' + padL + '" y1="' + yy + '" x2="' + (W - padR) + '" y2="' + yy + '" class="chart-grid"/>');
+    }
+
+    // background (non-selected) lines
+    data.countries.forEach(function (c) {
+      if (c.code === selectedCode) return;
+      var pts = c.n_sources.map(function (v, i) { return x(i) + "," + y(v); }).join(" ");
+      svgParts.push('<polyline points="' + pts + '" class="chart-line-muted"/>');
+    });
+
+    // selected line - drawn as individual segments so a backlog-adjacent
+    // segment can get its own dash-array without affecting the whole line.
+    for (var i = 0; i < weeks.length - 1; i++) {
+      var segBacklog = weeks[i].has_backlog || weeks[i + 1].has_backlog;
+      svgParts.push(
+        '<line x1="' + x(i) + '" y1="' + y(selected.n_sources[i]) + '" x2="' + x(i + 1) + '" y2="' + y(selected.n_sources[i + 1]) + '" ' +
+        'class="chart-line-selected' + (segBacklog ? ' chart-line-backlog' : '') + '"/>'
+      );
+    }
+
+    // markers + invisible larger hit-targets for hover/focus
+    weeks.forEach(function (w, i) {
+      var cx = x(i), cy = y(selected.n_sources[i]);
+      var markerClass = w.has_backlog ? "chart-point chart-point-backlog" : "chart-point";
+      svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="5" class="' + markerClass + '" data-i="' + i + '"/>');
+      svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="14" class="chart-hit" data-i="' + i + '" tabindex="0" role="img" aria-label="' +
+        fmtWeek(w) + ': ' + selected.n_sources[i] + ' ' + LABELS.sources_label + (w.has_backlog ? '. ' + LABELS.backlog_point_note : '') + '"/>');
+    });
+
+    svgParts.push('</svg>');
+    var chartEl = document.getElementById("chart-svg");
+    chartEl.innerHTML = svgParts.join("");
+
+    var tooltip = document.getElementById("chart-tooltip");
+    chartEl.querySelectorAll(".chart-hit").forEach(function (hit) {
+      var i = parseInt(hit.getAttribute("data-i"), 10);
+      var w = weeks[i];
+      var text = fmtWeek(w) + ": " + selected.n_sources[i] + " " + LABELS.sources_label +
+        (w.has_backlog ? " — " + LABELS.backlog_point_note : "");
+      function show(evt) {
+        tooltip.textContent = text;
+        tooltip.hidden = false;
+        var rect = chartEl.getBoundingClientRect();
+        var px = (evt.clientX !== undefined ? evt.clientX : rect.left + rect.width / 2) - rect.left;
+        tooltip.style.left = Math.min(Math.max(px, 60), rect.width - 60) + "px";
+      }
+      hit.addEventListener("mouseenter", show);
+      hit.addEventListener("focus", show);
+      hit.addEventListener("mouseleave", function () { tooltip.hidden = true; });
+      hit.addEventListener("blur", function () { tooltip.hidden = true; });
+    });
+
+    // Accessible data table alongside the chart (not toggled - always present)
+    var thead = document.getElementById("data-table-head");
+    var tbody = document.getElementById("data-table-body");
+    document.getElementById("data-table-caption").textContent = LABELS.table_caption.replace("{country}", selected[NAME_KEY]);
+    thead.innerHTML = "<tr><th></th>" + weeks.map(function (w) { return "<th>" + w.start + "</th>"; }).join("") + "</tr>";
+    var rowCells = weeks.map(function (w, i) {
+      var v = selected.n_sources[i];
+      return "<td>" + v + (w.has_backlog ? " *" : "") + "</td>";
+    }).join("");
+    tbody.innerHTML = "<tr><th>" + LABELS.sources_label + "</th>" + rowCells + "</tr>";
+
+    var footnote = document.getElementById("data-table-footnote");
+    if (weeks.some(function (w) { return w.has_backlog; })) {
+      footnote.textContent = "* " + LABELS.backlog_point_note;
+      footnote.hidden = false;
+    } else {
+      footnote.hidden = true;
+    }
+  }
+
+  document.getElementById("back-to-list").addEventListener("click", closeExpanded);
+
+  fetch("../assets/data/trends.json")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      document.getElementById("trends-loading").hidden = true;
+      document.getElementById("ranked-view").hidden = false;
+      renderRanked(data);
+    })
+    .catch(function (err) {
+      console.error("Failed to load trends.json", err);
+      document.getElementById("trends-loading").textContent = "⚠";
+    });
+})();
+</script>
+</body>
+</html>

@@ -108,6 +108,48 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "section_id": "INTEGER NOT NULL REFERENCES report_sections(id)",
         "article_id": "INTEGER NOT NULL REFERENCES articles(id)",
     },
+    # Biweekly narrative-trends reports (promoted from the scripts/biweekly_stage{1,2}_dryrun.py
+    # dry-run tooling to a real pipeline output - see CLAUDE.md for the full specification:
+    # Thu-Wed 14-day cadence, >=5-distinct-day inclusion threshold, the three Stage-2 guards).
+    # One row per closed 14-day period. end_date is the unique key (not an autoincrement id
+    # used externally) because a period is fully identified by when it closes - matches
+    # reports.report_date being the daily table's own natural key.
+    "biweekly_periods": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "start_date": "TEXT NOT NULL",
+        "end_date": "TEXT NOT NULL",
+        "overview_he": "TEXT NOT NULL",
+        "overview_en": "TEXT NOT NULL",
+        "overview_de": "TEXT NOT NULL",
+        "created_at": "TEXT NOT NULL",
+    },
+    "biweekly_topics": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "period_id": "INTEGER NOT NULL REFERENCES biweekly_periods(id)",
+        "topic_label_he": "TEXT NOT NULL",
+        "topic_label_en": "TEXT NOT NULL",
+        "topic_label_de": "TEXT NOT NULL",
+        "comparison_text_he": "TEXT NOT NULL",
+        "comparison_text_en": "TEXT NOT NULL",
+        "comparison_text_de": "TEXT NOT NULL",
+        "n_distinct_days": "INTEGER NOT NULL",
+        "n_sources": "INTEGER NOT NULL",
+        # Display order within the period (by n_sources desc, same "zoom-out to
+        # zoom-in" convention as section_coverage() for daily reports) - stored
+        # rather than recomputed so render_biweekly.py and the hub's period-card
+        # preview always agree on ordering without re-deriving it twice.
+        "sort_order": "INTEGER NOT NULL",
+    },
+    # Links each biweekly topic back to the exact daily report_sections it was
+    # built from - lets render_biweekly.py build "see the daily reports" deep
+    # links (report_{date}_{lang}.html#section-{id}) per topic, and lets a
+    # future audit re-derive dates_covered/distinct_sources straight from the
+    # daily data instead of trusting a separately-stored copy.
+    "biweekly_topic_sections": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "topic_id": "INTEGER NOT NULL REFERENCES biweekly_topics(id)",
+        "section_id": "INTEGER NOT NULL REFERENCES report_sections(id)",
+    },
 }
 
 TABLE_CONSTRAINTS: dict[str, list[str]] = {
@@ -117,6 +159,8 @@ TABLE_CONSTRAINTS: dict[str, list[str]] = {
     "report_section_articles": ["UNIQUE(section_id, article_id)"],
     "article_countries": ["UNIQUE(article_id, country_code)"],
     "article_conflict_zones": ["UNIQUE(article_id, conflict_zone)"],
+    "biweekly_periods": ["UNIQUE(end_date)"],
+    "biweekly_topic_sections": ["UNIQUE(topic_id, section_id)"],
 }
 
 
@@ -638,3 +682,151 @@ def get_articles_without_geo_tags(conn: sqlite3.Connection, report_date: str | N
         params.append(report_date)
     query += " WHERE " + " AND ".join(conditions) + " ORDER BY a.id"
     return conn.execute(query, params).fetchall()
+
+
+# --- Biweekly narrative-trends reports (src/reporting/synthesize_biweekly.py /
+# render_biweekly.py) - same insert/lookup-helper convention as the daily
+# reports/report_sections helpers above, see CLAUDE.md for the full spec.
+
+def biweekly_period_exists(conn: sqlite3.Connection, end_date: str) -> bool:
+    cursor = conn.execute("SELECT 1 FROM biweekly_periods WHERE end_date = ?", (end_date,))
+    return cursor.fetchone() is not None
+
+
+def delete_biweekly_period(conn: sqlite3.Connection, end_date: str) -> None:
+    conn.execute(
+        """
+        DELETE FROM biweekly_topic_sections
+        WHERE topic_id IN (
+            SELECT bt.id FROM biweekly_topics bt
+            JOIN biweekly_periods bp ON bp.id = bt.period_id
+            WHERE bp.end_date = ?
+        )
+        """,
+        (end_date,),
+    )
+    conn.execute(
+        """
+        DELETE FROM biweekly_topics
+        WHERE period_id IN (SELECT id FROM biweekly_periods WHERE end_date = ?)
+        """,
+        (end_date,),
+    )
+    conn.execute("DELETE FROM biweekly_periods WHERE end_date = ?", (end_date,))
+    conn.commit()
+
+
+def insert_biweekly_period(
+    conn: sqlite3.Connection,
+    start_date: str,
+    end_date: str,
+    overview_he: str,
+    overview_en: str,
+    overview_de: str,
+    created_at: str,
+) -> int:
+    cursor = conn.execute(
+        """
+        INSERT INTO biweekly_periods (start_date, end_date, overview_he, overview_en, overview_de, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (start_date, end_date, overview_he, overview_en, overview_de, created_at),
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
+def insert_biweekly_topic(
+    conn: sqlite3.Connection,
+    period_id: int,
+    topic_label_he: str,
+    topic_label_en: str,
+    topic_label_de: str,
+    comparison_text_he: str,
+    comparison_text_en: str,
+    comparison_text_de: str,
+    n_distinct_days: int,
+    n_sources: int,
+    sort_order: int,
+) -> int:
+    cursor = conn.execute(
+        """
+        INSERT INTO biweekly_topics (
+            period_id, topic_label_he, topic_label_en, topic_label_de,
+            comparison_text_he, comparison_text_en, comparison_text_de,
+            n_distinct_days, n_sources, sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            period_id, topic_label_he, topic_label_en, topic_label_de,
+            comparison_text_he, comparison_text_en, comparison_text_de,
+            n_distinct_days, n_sources, sort_order,
+        ),
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
+def link_biweekly_topic_section(conn: sqlite3.Connection, topic_id: int, section_id: int) -> None:
+    conn.execute(
+        "INSERT INTO biweekly_topic_sections (topic_id, section_id) VALUES (?, ?)",
+        (topic_id, section_id),
+    )
+    conn.commit()
+
+
+def get_all_biweekly_periods(conn: sqlite3.Connection):
+    """Newest-first, for the hub page's period index."""
+    return conn.execute(
+        "SELECT id, start_date, end_date, overview_he, overview_en, overview_de, created_at "
+        "FROM biweekly_periods ORDER BY end_date DESC"
+    ).fetchall()
+
+
+def get_biweekly_period(conn: sqlite3.Connection, end_date: str):
+    return conn.execute(
+        "SELECT id, start_date, end_date, overview_he, overview_en, overview_de, created_at "
+        "FROM biweekly_periods WHERE end_date = ?",
+        (end_date,),
+    ).fetchone()
+
+
+def get_biweekly_topics_for_period(conn: sqlite3.Connection, period_id: int):
+    """Ordered by sort_order (n_sources desc, decided once at write time)."""
+    return conn.execute(
+        """
+        SELECT id, topic_label_he, topic_label_en, topic_label_de,
+               comparison_text_he, comparison_text_en, comparison_text_de,
+               n_distinct_days, n_sources, sort_order
+        FROM biweekly_topics WHERE period_id = ? ORDER BY sort_order
+        """,
+        (period_id,),
+    ).fetchall()
+
+
+def get_dates_and_sources_for_biweekly_topic(conn: sqlite3.Connection, topic_id: int):
+    """One row per contributing daily report_sections row (id, report_date),
+    for building the "see the daily reports" deep links - plus the distinct
+    newspaper sources across all of them, for the topic's byline."""
+    dates = conn.execute(
+        """
+        SELECT rs.id AS section_id, rs.report_date
+        FROM biweekly_topic_sections bts
+        JOIN report_sections rs ON rs.id = bts.section_id
+        WHERE bts.topic_id = ?
+        ORDER BY rs.report_date
+        """,
+        (topic_id,),
+    ).fetchall()
+    sources = conn.execute(
+        """
+        SELECT DISTINCT a.newspaper
+        FROM biweekly_topic_sections bts
+        JOIN report_section_articles rsa ON rsa.section_id = bts.section_id
+        JOIN articles a ON a.id = rsa.article_id
+        WHERE bts.topic_id = ?
+        ORDER BY a.newspaper
+        """,
+        (topic_id,),
+    ).fetchall()
+    return dates, [r["newspaper"] for r in sources]
