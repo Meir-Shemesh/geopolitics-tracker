@@ -420,6 +420,46 @@ THEME_TOGGLE_SCRIPT_HTML = """<script>
 </script>"""
 
 
+def contact_menu_html(lang: str) -> str:
+    """Replaces the old single mailto "Contact" link with a 3-option dropdown
+    (email/website/LinkedIn) - added 2026-10-08 per explicit feedback, with the
+    existing nav-overflow issue (PROJECT_LOG action item 74) in mind: this
+    adds ZERO new top-level nav items (still one "Contact" entry), only
+    revealing the extra two links inside a small popup on interaction.
+
+    Built on the native <details>/<summary> element rather than a JS-driven
+    menu - click-to-open/close, keyboard-operable (Enter/Space), and fully
+    functional even if JS never runs, all for free. The one native gap (no
+    auto-close on an outside click) is covered by the small inline <script>
+    appended right after the markup - self-contained with the dropdown
+    itself, not a separate injection point to remember at each of the many
+    page-builder call sites (the exact kind of page this project has
+    historically forgotten to update - see CLAUDE.md/PROJECT_LOG on
+    Contact/Advanced filter once missing from the homepage/archive, which
+    build their own nav separately from build_nav_html()). Shared CSS lives
+    in shared_chrome_css() instead, which is already injected at every one
+    of those same call sites.
+
+    External links get target="_blank" + rel="noopener" (new tab, no
+    window.opener access back to this page) - the email link does not, since
+    mailto: already opens the user's own mail client, not a browser tab."""
+    return f"""<details class="contact-menu">
+      <summary class="top-nav-link">{esc(CONTACT_LABEL[lang])}</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_EMAIL_LABEL[lang])}</a>
+        <a role="menuitem" href="{CONTACT_WEBSITE_URL}" target="_blank" rel="noopener">{esc(CONTACT_WEBSITE_LABEL[lang])}</a>
+        <a role="menuitem" href="{CONTACT_LINKEDIN_URL}" target="_blank" rel="noopener">{esc(CONTACT_LINKEDIN_LABEL[lang])}</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {{
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {{
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        }});
+      }});
+    </script>"""
+
+
 def esc(text: str) -> str:
     return html.escape(text)
 
@@ -430,6 +470,16 @@ LOGO_LINK_LABEL = {
 PDF_LABEL = {"he": "⬇ הורד PDF", "en": "⬇ Download PDF", "de": "⬇ PDF herunterladen"}
 CONTACT_EMAIL = "meir@meirshemesh.com"
 CONTACT_LABEL = {"he": "צור קשר", "en": "Contact", "de": "Kontakt"}
+# Added 2026-10-08: "Contact" became a 3-option dropdown (email/website/LinkedIn)
+# instead of a single mailto link - see contact_menu_html() below. Labels for
+# the two new external links; the email link's own label inside the dropdown
+# is distinct from CONTACT_LABEL (the trigger word) since both are visible at
+# once once the menu is open.
+CONTACT_WEBSITE_URL = "https://meirshemesh.com"
+CONTACT_LINKEDIN_URL = "https://www.linkedin.com/in/meir-shemesh-a18633aa/"
+CONTACT_EMAIL_LABEL = {"he": "אימייל", "en": "Email", "de": "E-Mail"}
+CONTACT_WEBSITE_LABEL = {"he": "אתר אישי", "en": "Website", "de": "Webseite"}
+CONTACT_LINKEDIN_LABEL = {"he": "לינקדאין", "en": "LinkedIn", "de": "LinkedIn"}
 FILTER_LABEL = {"he": "סינון מתקדם", "en": "Advanced filter", "de": "Erweiterte Filterung"}
 TRENDS_LABEL = {"he": "מגמות", "en": "Trends", "de": "Trends"}
 
@@ -461,7 +511,7 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
         f'\n      <a class="top-nav-link top-nav-lang-link" href="{esc(lang_hrefs[other])}">{esc(LANG_LABEL[other])}</a>'
         for other in other_langs(lang) if other in lang_hrefs
     )
-    contact_link = f'\n      <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>'
+    contact_link = f"\n      {contact_menu_html(lang)}"
     toggle_button = f"\n      {theme_toggle_html(lang)}"
     return f"""
   <nav class="top-nav">
@@ -555,9 +605,43 @@ def shared_chrome_css() -> str:
   }
   :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
   :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
   @media print {
     .site-footer { display: none; }
     .theme-toggle { display: none; }
+    .contact-menu { display: none; }
   }"""
 
 

@@ -207,9 +207,43 @@
   }
   :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
   :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
   @media print {
     .site-footer { display: none; }
     .theme-toggle { display: none; }
+    .contact-menu { display: none; }
   }
 </style>
 </head>
@@ -220,7 +254,21 @@
       <a class="top-nav-link" href="filter.html">Erweiterte Filterung</a>
       <a class="top-nav-link" href="trends.html">Trends</a>
       <a class="top-nav-link" href="../he/archive.html">עברית</a><a class="top-nav-link" href="../en/archive.html">English</a>
-      <a class="top-nav-link" href="mailto:meir@meirshemesh.com">Kontakt</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">Kontakt</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">E-Mail</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">Webseite</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
       <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dunkelmodus" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
     </div>
   </nav>
@@ -231,6 +279,11 @@
     </div>
   </header>
   <main class="archive-list">
+
+      <a class="archive-card" href="report_2026-10-08_de.html">
+        <span class="archive-date">Donnerstag, 8. Oktober 2026</span>
+        <span class="archive-sources">The Daily Telegraph, Die Welt, The Guardian, Los Angeles Times, Süddeutsche Zeitung, USA Today</span>
+      </a>
 
       <a class="archive-card" href="report_2026-10-07_de.html">
         <span class="archive-date">Mittwoch, 7. Oktober 2026</span>

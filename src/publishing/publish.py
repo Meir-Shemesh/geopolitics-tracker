@@ -36,8 +36,6 @@ from src.reporting.render_biweekly import build_biweekly_report_html, format_per
 from src.reporting.render import (
     ALL_LANGS,
     CATEGORY_LABELS,
-    CONTACT_EMAIL,
-    CONTACT_LABEL,
     FILTER_LABEL,
     FAVICON_FILENAMES,
     FONT_FAMILY,
@@ -52,6 +50,7 @@ from src.reporting.render import (
     build_footer_html,
     build_nav_html,
     category_css,
+    contact_menu_html,
     esc,
     favicon_links_html,
     font_face_css,
@@ -216,7 +215,7 @@ def build_index_html(
       <a class="top-nav-link" href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
       <a class="top-nav-link" href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>
       {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
-      <a class="top-nav-link" href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
+      {contact_menu_html(lang)}
       {theme_toggle_html(lang)}
     </div>
   </nav>
@@ -3182,6 +3181,16 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   }}
   .home-top-bar a:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
   .home-top-bar-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  /* contact_menu_html()'s <summary> isn't an <a>, so the generic ".home-top-bar a"
+     rule above doesn't reach it - mirrored here for the same look. */
+  .home-top-bar summary {{
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: .82rem;
+    cursor: pointer;
+  }}
+  .home-top-bar summary:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -3422,7 +3431,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
       <a href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
       <a href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>
       {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
-      <a href="mailto:{CONTACT_EMAIL}">{esc(CONTACT_LABEL[lang])}</a>
+      {contact_menu_html(lang)}
       {theme_toggle_html(lang)}
     </div>
   </div>
