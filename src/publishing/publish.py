@@ -358,8 +358,8 @@ def build_about_html(lang: str) -> str:
     </div>
   </header>
   <main class="about-body">
-    <h2 class="about-intro-title">{content['title']}</h2>
-    <p class="about-intro-subtitle">{content['subtitle']}</p>
+    <h2 class="about-intro-title">{esc(content['about_title'])}</h2>
+    <p class="about-intro-subtitle">{esc(content['about_subtitle'])}</p>
     <div class="about-content">
 {sections_html}
     </div>

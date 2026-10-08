@@ -1,11 +1,11 @@
-"""Shared background/about content for the project, in Hebrew and English.
+"""Shared background/about content for the project, in Hebrew, English and German.
 
 Single source of truth for text used by two independent renderers:
 scripts/build_background_doc.py (standalone branded PDF+HTML, Assistant font)
 and src/publishing/publish.py's build_about_html() (a regular site page, also
 Assistant font as of the site-wide font unification - part of
-docs/{he,en}/about.html). Keeping the text here means a wording fix only has
-to happen in one place, not two.
+docs/{he,en,de}/about.html). Keeping the text here means a wording fix only
+has to happen in one place, not two or three.
 
 Each language entry has doc_meta/identity_name/identity_role/title/subtitle,
 plus `sections`: an ordered list of {"heading": str | None, "blocks": [...]}
@@ -14,6 +14,16 @@ bold-lead-in bullet list, or ("ul_plain", [text, ...]) for a plain one.
 
 render_sections_html() turns `sections` into the shared <h2>/<p>/<ul> HTML
 shape both renderers use - only the surrounding CSS/fonts differ per caller.
+
+Rewritten 2026-10-08 (full copy pass, see PROJECT_LOG) - covers the biweekly
+"Trends" feature that shipped that week. The American-sources sentence was
+corrected during this pass: an earlier draft of the new copy listed "The New
+York Times International" as the fourth US source, which is wrong - NYT is
+permanently suspended from ingestion (structural PDF corruption, confirmed
+across multiple editions, see CLAUDE.md/PROJECT_LOG 4.34) and The Washington
+Post replaced it as the fourth MVP US source. The text below reflects the
+actual current source list, verified directly against NEWSPAPER_DISPLAY_NAMES
+and the live DB rather than assumed.
 """
 
 
@@ -42,13 +52,23 @@ def render_sections_html(sections) -> str:
 
 CONTENT = {
     "he": {
-        "doc_meta": "מסמך רקע · ספטמבר 2026",
+        "doc_meta": "מסמך רקע · אוקטובר 2026",
         "identity_name": "מאיר שמש",
         "identity_role": "ייעוץ וניהול טכנולוגיות",
+        # Brand title/subtitle - shared by the homepage's own <h1> and the standalone
+        # background-doc PDF, NOT about-page-specific (see about_title/about_subtitle
+        # below for that). Keep these as the project's brand name/tagline - do not
+        # repurpose them for about.html content again (caught and fixed 2026-10-08,
+        # see PROJECT_LOG: doing so silently broke the homepage's <h1>).
         "title": "GEOPOLITICS-TRACKER",
         "subtitle": (
             "כיצד עיתונות עולמית רואה אירוע אחד בעיניים שונות - ומה תהליך הבנייה עצמו "
             "מלמד על עבודה משותפת בין אדם לבינה מלאכותית"
+        ),
+        "about_title": "אודות הפרויקט",
+        "about_subtitle": (
+            "איך אותו אירוע נראה אחרת מעיתון לעיתון - ומה תהליך הבנייה עצמו מלמד על "
+            "עבודה משותפת בין אדם לבינה מלאכותית"
         ),
         "sections": [
             {
@@ -56,47 +76,64 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "בכל יום, עשרות עיתונים מובילים מפרסמים מאות מאמרי פרשנות על אותם "
-                        "אירועים גאופוליטיים בדיוק. אף אדם אינו יכול לקרוא את כולם - וכל אחד "
-                        "מאיתנו קורא זווית אחת או שתיים, לרוב אלה שהוא כבר מכיר, ומחמיץ את "
-                        "השיחה המלאה שמתקיימת בין מקורות שונים. geopolitics-tracker הוא ניסיון "
-                        "לתת לקריאה הזו כלי: מערכת שעוקבת אחרי עיתונים מובילים, מזהה בתוכם את "
-                        "מאמרי הפרשנות הגאופוליטית, ובונה מהם תמונה יומית של מה שתפס את תשומת "
-                        "הלב - ואיך כל מקור בחר למסגר אותו.",
+                        "בכל יום, עשרות עיתונים מובילים בעולם מפרסמים מאות מאמרי דעה ופרשנות "
+                        "על אותם אירועים גאופוליטיים בדיוק. אף אדם אינו יכול לקרוא את כולם - "
+                        "וכל אחד מאיתנו קורא זווית אחת או שתיים, לרוב אלה שהוא כבר מכיר, "
+                        "ומחמיץ את השיחה המלאה שמתקיימת בין מקורות שרואים את אותו אירוע דרך "
+                        "עדשות שונות.",
+                    ),
+                    (
+                        "p",
+                        "geopolitics-tracker מנסה לפתור בעיה ממוקדת: לא להחליף את הקריאה "
+                        "האנושית, אלא לתת לה כלי. מערכת שעוקבת אחרי עיתונים מובילים באנגלית "
+                        "ובגרמנית, במגוון פוליטי רחב משמאל לימין, מזהה בתוכם מאמרי פרשנות "
+                        "גאופוליטית ובונה מהם תמונה יומית: אילו נושאים תפסו את תשומת הלב, "
+                        "ואיך כל מקור בחר למסגר אותם. המטרה אינה לקבוע “מי צודק” - אלא "
+                        "להנגיש את מלוא מרחב הדעות, לא רק את הפינה שהקורא כבר מכיר.",
                     ),
                 ],
             },
             {
-                "heading": "שיטת העבודה: שיתוף פעולה בין אדם למכונה",
+                "heading": "מתמונת-יום למגמה",
                 "blocks": [
                     (
                         "p",
-                        "מעבר למטרה התוכנית, לפרויקט תפקיד נוסף: מקום ללמוד בפועל איך בונים "
-                        "מערכת מורכבת עם כלי בינה מלאכותית מתקדמים. לאורך הדרך התבררה תובנה "
-                        "מרכזית: המודל “אדם מבקש, מכונה מבצעת” אינו מדויק. בפרויקט שלושה "
-                        "שותפים, כל אחד עם תפקיד מובחן - כלי תכנון שחושב על הבעיה לפני "
-                        "שנכתבת שורת קוד, וסוכן שכותב ומריץ קוד בפועל ומדווח בחזרה - "
-                        "ומעליהם המפעיל האנושי, שהוא בעל החזון ומקבל ההחלטות בפרויקט: מנחה, "
-                        "מסנכרן בין השותפים, ומטיל עליהם משימות בהתאם לתכנית שהוא קובע.",
+                        "התוצר המיידי הוא דוח יומי: מסמך שמקבץ את מאמרי הפרשנות של אותו יום "
+                        "לפי נושא ממשי - לא לפי תיוג מכני - ומציג לצד כל נושא השוואה תמציתית "
+                        "בין המקורות. אבל דוח יומי בודד, ככל שיהיה מדויק, הוא רק תמונת-רגע. "
+                        "הערך האמיתי נחשף רק עם הזמן: כשמצטברים שבועות וחודשים של דוחות, "
+                        "אפשר לשאול שאלות שאף עיתון בודד לא יכול לענות עליהן - האם עמדה "
+                        "מסוימת מתעצבת מחדש? האם נושא שנעלם חוזר בפתאומיות? זו הסיבה שכל "
+                        "דוח יומי נבנה מלכתחילה גם כרשומת-ארכיון - אבן בניין למבט רחב יותר.",
                     ),
                     (
                         "p",
-                        "המתודולוגיה בפועל: בנייה מודול-מודול, עם בדיקה ויזואלית אנושית לפני "
-                        "כל שינוי שיוצא לאוויר, ורשת-ביטחון גנרית ברמת הקוד בכל פעם שמתגלה "
-                        "כשל חוזר - לא תיקון נקודתי לכל מקרה בנפרד.",
+                        "בשבוע האחרון המבט הרחב הזה הפך ממושג לתוצר. הדוח היומי רץ כעת "
+                        "באופן אוטומטי לחלוטין, עם בדיקות תקינות ועצירה אוטומטית בכשלים "
+                        "חוזרים. לצדו עלה מדור “מגמות” חדש, בשני רכיבים: דוח מגמות נרטיבי, "
+                        "מתפרסם אחת לשבועיים, עוקב אחרי איך הסיקור של נושא משתנה על פני "
+                        "התקופה - מבוסס על הדוחות היומיים עצמם, ונכתב כמוהם בשלוש השפות; "
+                        "ותצוגה גרפית של כיסוי לפי מדינה, עדיין בשלב מוקדם (בטא).",
                     ),
                 ],
             },
             {
-                "heading": "גילוי נאות: שימוש בבינה מלאכותית",
+                "heading": "שיטת העבודה: שלושה תפקידים, לא שניים",
                 "blocks": [
                     (
                         "p",
-                        "תוכן ההשוואה בכל דוח באתר זה מופק באמצעות מודל שפה (Claude API של "
-                        "Anthropic) - לא נכתב בידי עיתונאי אנושי. קיימת בקרה אנושית לאורך "
-                        "התהליך: בדיקה ויזואלית לפני כל שינוי שיוצא לאוויר, ורשת-ביטחון ברמת-"
-                        "קוד לכשלים חוזרים (ראו לעיל, “שיטת העבודה”). למגבלות הנובעות מהשימוש "
-                        "בבינה מלאכותית - ראו גם: “מגבלות ידועות” למטה.",
+                        "לצד המטרה התוכנית, יש לפרויקט תפקיד נוסף: מקום ללמוד בפועל איך "
+                        "בונים מערכת מורכבת עם כלי בינה מלאכותית מתקדמים. התובנה המרכזית: "
+                        "המודל הפשטני “אדם מבקש, מכונה מבצעת” אינו מדויק. בפרויקט פועלים "
+                        "שלושה גורמים: כלי שיחה ותכנון, שחושב על הבעיה לפני שנכתבת שורת קוד "
+                        "ומתרגם החלטה מעורפלת (“אני רוצה שהמערכת תזהה מגמות”) למשימה "
+                        "קונקרטית; סוכן כתיבת קוד, שפועל בסביבת הפיתוח - כותב, מריץ, מדווח "
+                        "בחזרה; ומעליהם המפעיל האנושי, שרואה את שני הכלים בו-זמנית ובעיקר "
+                        "בולם ובודק. לאורך הדרך, זו הייתה שוב ושוב הנקודה שבה נתפסו טעויות - "
+                        "תוצאה שנראתה “כמעט טובה” אך לא נבדקה באמת. תוכן ההשוואה בכל דוח "
+                        "מופק באמצעות מודל שפה (Claude API של Anthropic), באותה שיטה בדיוק: "
+                        "בדיקה אנושית לפני כל פרסום, ורשת-ביטחון קבועה בקוד לכל כשל שחוזר "
+                        "על עצמו.",
                     ),
                 ],
             },
@@ -105,23 +142,14 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "הפרויקט התחיל עם ארבעה מקורות - שני זוגות מאוזנים פוליטית, אחד בכל "
-                        "שפה: Guardian מול Telegraph באנגלית, Süddeutsche Zeitung מול Die "
-                        "Welt בגרמנית.",
-                    ),
-                    (
-                        "p",
-                        "אחרי כמה ימים יציבים התברר פער בולט: הזירה האמריקאית לא הייתה "
-                        "מיוצגת כלל. ההרחבה שבאה בעקבות כך לא הסתפקה בזוג נוסף - נבחרו "
-                        "ארבעה עיתונים אמריקאים במכוון כדי לפרוש טווח פוליטי רחב יותר בתוך "
-                        "הזירה עצמה (Washington Post, Wall Street Journal, "
-                        "Los Angeles Times, USA Today), ולצדם שני שבועונים (Economist, Der "
-                        "Spiegel) שמביאים עומק במקום עוד זווית יומית.",
-                    ),
-                    (
-                        "p",
-                        "היום המערכת עוקבת אחרי מקורות מגוונים בשתי שפות, עם טווח פוליטי "
-                        "רחב בכל אחת מהזירות שהיא מכסה.",
+                        "הפרויקט התחיל עם ארבעה מקורות - שני זוגות מאוזנים פוליטית: Guardian "
+                        "מול Telegraph באנגלית, Süddeutsche Zeitung מול Die Welt בגרמנית. "
+                        "אחרי כמה ימים התברר פער בולט: הזירה האמריקאית לא הייתה מיוצגת "
+                        "כלל. נבחרו ארבעה עיתונים אמריקאים כדי לפרוש טווח פוליטי רחב "
+                        "(The Washington Post, Wall Street Journal, Los Angeles Times, USA "
+                        "Today), ולצדם שני שבועונים (Economist, Der Spiegel) שמביאים עומק. "
+                        "היום המערכת עוקבת אחרי עשרה מקורות בשתי שפות, בטווח פוליטי רחב "
+                        "בכל זירה.",
                     ),
                 ],
             },
@@ -131,33 +159,10 @@ CONTENT = {
                     (
                         "p",
                         "גאופוליטיקה היא שילוב של תפיסה מרחבית, זמנית וטקסטואלית. דף הבית "
-                        "בנוי סביב שלוש “עדשות” שוות-מעמד על אותם נתונים - מפה גיאוגרפית "
-                        "אינטראקטיבית (כולל אזורי קונפליקט פעילים: הסכסוך הישראלי-פלסטיני, "
-                        "איראן-מערב, רוסיה-אוקראינה), ציר זמן, וכניסה טקסטואלית - וכן "
-                        "אפשרות לגלוש בין דוחות לפי נושא, אזור או טווח תאריכים, לא רק יום "
-                        "בודד.",
-                    ),
-                ],
-            },
-            {
-                "heading": "מה קיים היום",
-                "blocks": [
-                    (
-                        "p",
-                        "חמישה שלבים עוקבים - איסוף, חילוץ טקסט, ניתוח וסיווג באמצעות "
-                        "Claude API, הפקת השוואה, ופרסום - פעילים על נתונים אמיתיים. כל דוח "
-                        "יומי: שלוש שפות מלאות, שני פורמטים, השוואה בין-מקורית עם הפניות "
-                        "מדויקות (עיתון, תאריך, עמוד) לכל טענה. האתר חי: "
-                        "geopolitics.meirshemesh.com.",
-                    ),
-                    (
-                        "p",
-                        "שלב הפקת ההשוואה עצמו עבר שדרוג משמעותי בדרך: גישה של קריאה בודדת "
-                        "שמנסה לכתוב את כל השוואות היום בבת אחת התבררה כלא-יציבה ככל שמספר "
-                        "המקורות גדל - עד כדי כישלון גורף בקנה מידה גדול. הפתרון: פיצול "
-                        "לשני שלבים (קיבוץ לנושאים, ואז כתיבת השוואה לכל נושא בנפרד, "
-                        "במקביל), עם שיתוף-הקשר בין הקריאות שגם הוזיל את העלות משמעותית "
-                        "ביחס לגישה הישנה.",
+                        "בנוי סביב שלוש “עדשות” שוות-מעמד - מפה אינטראקטיבית (כולל אזורי "
+                        "קונפליקט פעילים: ישראל-פלסטין, איראן-מערב, רוסיה-אוקראינה), ציר "
+                        "זמן, וכניסה טקסטואלית - וכן אפשרות לגלוש בין דוחות לפי נושא, אזור "
+                        "או טווח תאריכים.",
                     ),
                 ],
             },
@@ -167,33 +172,27 @@ CONTENT = {
                     (
                         "p",
                         "האתר פורסם תחילה בעברית ובאנגלית בלבד. ההרחבה לגרמנית נעשתה בשני "
-                        "שלבים: ראשית, כל דוח קיים בארכיון נכתב מחדש לגרמנית - לא תורגם "
-                        "מילולית - תוך שימוש בטרמינולוגיה ובמשלב שנקבעו במסמך הזה עצמו, כדי "
-                        "לשמור על עקביות לאורך הארכיון כולו. מכאן ואילך, כל דוח חדש נכתב "
-                        "בגרמנית כטקסט מקורי במקביל לעברית ולאנגלית, באותו שלב הפקה ומאותם "
-                        "מאמרי מקור - לא כתרגום שמתווסף אחרי העובדה.",
+                        "שלבים: כל דוח קיים בארכיון נכתב מחדש לגרמנית - לא תורגם מילולית - "
+                        "כדי לשמור על עקביות; מכאן ואילך, כל דוח חדש נכתב בגרמנית כטקסט "
+                        "מקורי במקביל לעברית ולאנגלית, מאותם מאמרי מקור - לא כתרגום "
+                        "שמתווסף אחר כך.",
                     ),
                 ],
             },
             {
-                "heading": "מגבלות ידועות",
+                "heading": "גבולות הפרויקט",
                 "blocks": [
                     (
                         "p",
-                        "כמה נקודות ששווה שקורא ביקורתי יכיר: המקורות כולם עיתונות-איכות "
-                        "מערבית (אנגלית וגרמנית) - לא מדגם מייצג של “העולם”, ולא כולל "
-                        "סוכנויות חדשות או שפות נוספות. נפח פרסום אינו חשיבות - עיתון "
-                        "שמפרסם הרבה טורי דעה ביום נתון עלול להיראות דומיננטי בדוח בלי שזה "
-                        "משקף חשיבות גאופוליטית אמיתית; קיים מנגנון שממיין נושאים לפי "
-                        "רוחב-מקורות ושפות, אך זו הקלה חלקית, לא פתרון מלא. אין שכבת "
-                        "אימות עובדתי - הטקסט מסכם את מה שכל מקור טוען, לא בודק אם זה נכון; "
-                        "מספרים וציטוטים משקפים את המקור, לא אומתו באופן עצמאי. כל דוח "
-                        "נכתב מחדש כיחידה עצמאית - אין עדיין זיכרון בין ימים, כך שמעקב אחרי "
-                        "איך נושא מתפתח דורש קריאה ידנית של כמה דוחות. לעיתים נדירות "
-                        "(בעיקר בימים עם נפח-פרסום חריג) אותו מאמר משויך בטעות ליותר מנושא "
-                        "אחד באותו דוח ומוצג פעמיים - כפל-תצוגה בלבד, לא טעות עובדתית; "
-                        "המנגנון תוקן קדימה, אך דוחות קיימים בארכיון לא עברו תיקון "
-                        "רטרואקטיבי.",
+                        "קורא ביקורתי ראוי שיכיר כמה גבולות. כל המקורות הם עיתונות-איכות "
+                        "מערבית - לא מדגם מייצג של דעת-עולם. נפח הפרסום אינו מדד לחשיבות: "
+                        "עיתון שמפרסם הרבה טורי דעה עלול להיראות דומיננטי בלי שזה משקף "
+                        "חשיבות אמיתית; מנגנון המיון לפי רוחב-מקורות מקל על כך חלקית בלבד. "
+                        "אין שכבת אימות עובדתי - המערכת מסכמת מה שכל מקור טוען, לא בודקת "
+                        "אם זה נכון. כל דוח יומי נכתב כיחידה עצמאית; מעקב אחרי התפתחות "
+                        "נושא דרש עד כה קריאה ידנית של כמה דוחות - זה מה שהדוח הדו-שבועי "
+                        "בא להקל. שלוש גרסאות השפה נכתבות עצמאית זו מזו, לא כתרגום - כך "
+                        "שהבדלי ניסוח קלים ביניהן צפויים.",
                     ),
                 ],
             },
@@ -202,18 +201,19 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "שלוש שאלות פתוחות מנחות את השלב הבא: מגמות - איך הופכים ארכיון "
-                        "שכבר מצטבר לחומר גלם לזיהוי דפוסים לאורך זמן, לא רק תמונת-יום; "
-                        "חוויית שימוש - נראות, ניווט ובהירות לקורא שאינו מכיר את הפרויקט; "
-                        "וקהל - האם להרחיב מעבר לחוקרים ואנשי מדיניות, למשל לגרסה נגישה "
-                        "לבני נוער.",
+                        "הדוח היומי, הדוח הדו-שבועי ותצוגת-המגמות הגרפית קיימים כעת כולם - "
+                        "אך לא באותה בשלות. התצוגה הגרפית היא החוליה הפחות בשלה: היא "
+                        "מציגה נתונים גולמיים בלי להסביר מספיק את משמעותם, ותעבור עיצוב "
+                        "מחדש. מעבר לכך נותרו פתוחות שתי שאלות: חוויית שימוש בהירה יותר "
+                        "לקורא שאינו מכיר את הפרויקט, וקהל - האם להרחיב מעבר לחוקרים "
+                        "ואנשי מדיניות, למשל לגרסה נגישה לבני נוער.",
                     ),
                 ],
             },
         ],
     },
     "en": {
-        "doc_meta": "Background Document · September 2026",
+        "doc_meta": "Background Document · October 2026",
         "identity_name": "Meir Shemesh",
         "identity_role": "Technology Consulting and Management",
         "title": "GEOPOLITICS-TRACKER",
@@ -221,205 +221,10 @@ CONTENT = {
             "How world press sees one event through different eyes - and what the "
             "building process itself teaches about human-AI collaboration"
         ),
-        "sections": [
-            {
-                "heading": None,
-                "blocks": [
-                    (
-                        "p",
-                        "Every day, dozens of leading newspapers publish hundreds of opinion "
-                        "pieces on the very same geopolitical events. No single person can "
-                        "read them all - and each of us tends to read one angle or two, "
-                        "usually the ones we already recognize, missing the fuller "
-                        "conversation happening between different sources. "
-                        "geopolitics-tracker is an attempt to give that reading a tool: a "
-                        "system that follows leading newspapers, identifies their "
-                        "geopolitical opinion pieces, and builds from them a daily picture "
-                        "of what caught the world's attention - and how each source chose "
-                        "to frame it.",
-                    ),
-                ],
-            },
-            {
-                "heading": "Working method: human-machine collaboration",
-                "blocks": [
-                    (
-                        "p",
-                        "Beyond its practical goal, the project has another role: a place "
-                        "to actually learn how to build a complex system with advanced AI "
-                        "coding tools. Along the way, one insight stood out: the simple "
-                        "model of \"human requests, machine executes\" isn't accurate. "
-                        "The project has three partners, each with a distinct role - a "
-                        "planning tool that thinks through a problem before a single line "
-                        "of code is written, and an agent that writes and runs the code "
-                        "and reports back - overseen by the human operator, who holds the "
-                        "vision and makes the decisions: directing, synchronizing between "
-                        "the partners, and assigning them tasks according to the plan he "
-                        "sets.",
-                    ),
-                    (
-                        "p",
-                        "The methodology in practice: building module by module, with "
-                        "human visual review before anything goes live, and a generic "
-                        "safety net at the code level whenever a recurring failure "
-                        "surfaces - not a one-off patch for each individual case.",
-                    ),
-                ],
-            },
-            {
-                "heading": "Disclosure: Use of Artificial Intelligence",
-                "blocks": [
-                    (
-                        "p",
-                        "The comparison content in every report on this site is generated "
-                        "by a language model (Anthropic's Claude API) - not written by a "
-                        "human journalist. Human oversight is built into the process "
-                        "throughout: visual review before any change goes live, and a "
-                        "code-level safety net for recurring failures (see \"Working "
-                        "method\" above). For the limitations that come with this - see "
-                        "also: \"Known limitations\" below.",
-                    ),
-                ],
-            },
-            {
-                "heading": "The sources: from four to ten",
-                "blocks": [
-                    (
-                        "p",
-                        "The project began with four sources - two politically balanced "
-                        "pairs, one per language: The Guardian versus The Daily Telegraph "
-                        "in English, Süddeutsche Zeitung versus Die Welt in German.",
-                    ),
-                    (
-                        "p",
-                        "After a few stable days, a clear gap emerged: the American arena "
-                        "wasn't represented at all. The expansion that followed didn't "
-                        "settle for one more pair - four American newspapers were chosen "
-                        "deliberately to span a wider political range within that arena "
-                        "itself (The Washington Post, The Wall Street "
-                        "Journal, Los Angeles Times, USA Today), joined by two weeklies "
-                        "(The Economist, Der Spiegel) that bring depth rather than "
-                        "another daily angle.",
-                    ),
-                    (
-                        "p",
-                        "Today the system follows a diverse set of sources across two "
-                        "languages, with a wide political range within each of the arenas "
-                        "it covers.",
-                    ),
-                ],
-            },
-            {
-                "heading": "The framework: three axes of perception",
-                "blocks": [
-                    (
-                        "p",
-                        "Geopolitics combines spatial, temporal, and textual perception. "
-                        "The homepage is built around three equal-standing \"lenses\" on "
-                        "the same data - an interactive geographic map (including "
-                        "actively-tracked conflict zones: the Israeli-Palestinian "
-                        "conflict, Iran-West, Russia-Ukraine), a time axis, and a textual "
-                        "entry point - along with the ability to browse reports by "
-                        "topic, region, or date range, not just a single day.",
-                    ),
-                ],
-            },
-            {
-                "heading": "What exists today",
-                "blocks": [
-                    (
-                        "p",
-                        "Five sequential stages - collecting, extracting text, analyzing "
-                        "and classifying via the Claude API, generating comparisons, and "
-                        "publishing - all active on real data. Every daily report: three "
-                        "full languages, two formats, cross-source comparison with "
-                        "precise citations (newspaper, date, page) for every claim. The "
-                        "site is live: geopolitics.meirshemesh.com.",
-                    ),
-                    (
-                        "p",
-                        "The comparison-generation stage itself underwent a significant "
-                        "upgrade along the way: a single-call approach trying to write "
-                        "all of a day's comparisons at once proved unstable as the number "
-                        "of sources grew - to the point of outright failure at scale. The "
-                        "fix: splitting into two stages (grouping into topics, then "
-                        "writing each topic's comparison separately, in parallel), with "
-                        "shared context between the calls that also cut the cost "
-                        "significantly compared to the old approach.",
-                    ),
-                ],
-            },
-            {
-                "heading": "The third language: German",
-                "blocks": [
-                    (
-                        "p",
-                        "The site was originally published only in Hebrew and English. "
-                        "The expansion to German happened in two steps: first, every "
-                        "existing report in the archive was rewritten in German - not "
-                        "translated literally - using the terminology and register set in "
-                        "this very page, to keep the whole archive consistent. From here "
-                        "on, every new report is written in German as original text "
-                        "alongside Hebrew and English, in the same generation step and "
-                        "from the same source articles - not as a translation added after "
-                        "the fact.",
-                    ),
-                ],
-            },
-            {
-                "heading": "Known limitations",
-                "blocks": [
-                    (
-                        "p",
-                        "A few points worth a critical reader knowing: all sources are "
-                        "Western quality press (English and German) - not a "
-                        "representative sample of \"the world,\" and doesn't include "
-                        "wire services or additional languages. Publishing volume isn't "
-                        "importance - an outlet that runs many opinion pieces on a given "
-                        "day can look dominant in a report without that reflecting real "
-                        "geopolitical weight; a mechanism sorts topics by source- and "
-                        "language-breadth, but that's a partial mitigation, not a full "
-                        "solution. There's no fact-verification layer - the text "
-                        "summarizes what each source claims, not whether it's true; "
-                        "figures and quotes reflect the source, not independent "
-                        "verification. Each report is written from scratch as a "
-                        "standalone unit - there's no memory between days yet, so "
-                        "tracking how a topic evolves still requires manually reading "
-                        "several reports. Rarely (mostly on unusually high-volume days), "
-                        "the same article is mistakenly grouped under more than one topic "
-                        "in the same report and appears twice - a display duplication, not "
-                        "a factual error; the underlying mechanism has been fixed going "
-                        "forward, but existing reports in the archive were not "
-                        "retroactively corrected.",
-                    ),
-                ],
-            },
-            {
-                "heading": "Looking ahead",
-                "blocks": [
-                    (
-                        "p",
-                        "Three open questions guide the next stage: trends - how to turn "
-                        "an accumulating archive into raw material for identifying "
-                        "patterns over time, not just a daily snapshot; usability - "
-                        "visual clarity and navigation for a reader unfamiliar with the "
-                        "project; and audience - whether to expand beyond researchers "
-                        "and policy professionals, for example to an accessible version "
-                        "for teenagers.",
-                    ),
-                ],
-            },
-        ],
-    },
-    "de": {
-        "doc_meta": "Hintergrunddokument · September 2026",
-        "identity_name": "Meir Shemesh",
-        "identity_role": "Technologieberatung und -management",
-        "title": "GEOPOLITICS-TRACKER",
-        "subtitle": (
-            "Wie die Weltpresse ein Ereignis mit unterschiedlichen Augen sieht - und was der "
-            "Entstehungsprozess selbst über die Zusammenarbeit von Mensch und künstlicher "
-            "Intelligenz lehrt"
+        "about_title": "About the Project",
+        "about_subtitle": (
+            "How the same event looks different from newspaper to newspaper - and what "
+            "the building process itself teaches about working together with AI"
         ),
         "sections": [
             {
@@ -427,62 +232,268 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "Jeden Tag veröffentlichen Dutzende führende Zeitungen Hunderte "
-                        "Meinungsbeiträge zu ein und denselben geopolitischen Ereignissen. "
-                        "Niemand kann sie alle lesen - und jeder von uns liest in der Regel "
-                        "nur eine oder zwei Perspektiven, meist die bereits vertrauten, und "
-                        "verpasst dabei das vollständige Gespräch, das zwischen den "
-                        "verschiedenen Quellen stattfindet. geopolitics-tracker ist der "
-                        "Versuch, dieser Lektüre ein Werkzeug an die Hand zu geben: ein "
-                        "System, das führende Zeitungen beobachtet, ihre geopolitischen "
-                        "Meinungsbeiträge identifiziert und daraus ein tägliches Bild dessen "
-                        "erstellt, was die Aufmerksamkeit der Welt auf sich gezogen hat - und "
-                        "wie jede Quelle es einzuordnen wählte.",
+                        "Every day, dozens of leading newspapers around the world publish "
+                        "hundreds of opinion and analysis pieces about the very same "
+                        "geopolitical events. No one can read them all - each of us reads "
+                        "one angle or two, usually the ones we already know, and misses "
+                        "the fuller conversation taking place between sources that see the "
+                        "same event through different lenses.",
+                    ),
+                    (
+                        "p",
+                        "geopolitics-tracker tries to solve a focused problem: not to "
+                        "replace human reading, but to give it a tool. A system that "
+                        "follows leading newspapers in English and German, across a wide "
+                        "political range from left to right, identifies the geopolitical "
+                        "commentary among them, and builds a daily picture from it: which "
+                        "topics drew attention, and how each source chose to frame them. "
+                        "The goal isn't to decide \"who's right\" - but to make the full "
+                        "range of opinion accessible, not just the corner the reader "
+                        "already knows.",
                     ),
                 ],
             },
             {
-                "heading": "Arbeitsmethode: Zusammenarbeit zwischen Mensch und Maschine",
+                "heading": "From a Daily Snapshot to a Trend",
                 "blocks": [
                     (
                         "p",
-                        "Über sein praktisches Ziel hinaus hat das Projekt noch eine weitere "
-                        "Funktion: Es ist ein Ort, um in der Praxis zu lernen, wie man mit "
-                        "fortgeschrittenen KI-Programmierwerkzeugen ein komplexes System "
-                        "aufbaut. Dabei hat sich eine zentrale Erkenntnis herauskristallisiert: "
-                        "Das einfache Modell „Mensch fordert an, Maschine führt aus“ trifft "
-                        "die Realität nicht. Das Projekt kennt drei Partner mit jeweils klar "
-                        "unterschiedlicher Rolle - ein Planungswerkzeug, das ein Problem "
-                        "durchdenkt, bevor auch nur eine Codezeile geschrieben wird, und ein "
-                        "Agent, der den Code tatsächlich schreibt, ausführt und darüber "
-                        "berichtet - beide unter der Aufsicht des menschlichen Betreibers, "
-                        "der die Vision trägt und die Entscheidungen trifft: Er gibt die "
-                        "Richtung vor, synchronisiert zwischen den Partnern und weist ihnen "
-                        "Aufgaben gemäß dem von ihm festgelegten Plan zu.",
+                        "The immediate product is a daily report: a document that groups "
+                        "that day's commentary by real topic - not by mechanical tagging - "
+                        "and sets out a concise comparison between sources for each one. "
+                        "But a single daily report, however accurate, is only a snapshot. "
+                        "The real value only emerges over time: once weeks and months of "
+                        "reports accumulate, you can ask questions no single newspaper can "
+                        "answer - is a position being reshaped? Does a topic that "
+                        "disappeared suddenly return? That's why every daily report is "
+                        "built from the start to double as an archive entry - a building "
+                        "block for a wider view.",
                     ),
                     (
                         "p",
-                        "Die Methodik in der Praxis: Modul für Modul aufgebaut, mit "
-                        "menschlicher visueller Prüfung, bevor etwas live geht, und einem "
-                        "generischen Sicherheitsnetz auf Code-Ebene, sobald sich ein "
-                        "wiederkehrender Fehler zeigt - statt einer punktuellen Korrektur "
-                        "für jeden Einzelfall.",
+                        "This past week, that wider view turned from an idea into a "
+                        "product. The daily report now runs fully automatically, with "
+                        "health checks and automatic stop on repeated failures. Alongside "
+                        "it came a new \"Trends\" section, with two components: a "
+                        "narrative trend report, published every two weeks, tracking how "
+                        "coverage of a topic shifts over the period - built from the daily "
+                        "reports themselves, and written like them in all three languages; "
+                        "and a graphical view of coverage by country, still at an early "
+                        "(Beta) stage.",
                     ),
                 ],
             },
             {
-                "heading": "Offenlegung: Einsatz von Künstlicher Intelligenz",
+                "heading": "The Method: Three Roles, Not Two",
                 "blocks": [
                     (
                         "p",
-                        "Der Vergleichstext in jedem Bericht auf dieser Website wird von "
-                        "einem Sprachmodell erzeugt (Claude API von Anthropic) - nicht von "
-                        "einem menschlichen Journalisten verfasst. Menschliche Aufsicht ist "
-                        "durchgehend in den Prozess eingebaut: visuelle Prüfung vor jeder "
-                        "Änderung, die live geht, und ein Sicherheitsnetz auf Code-Ebene für "
-                        "wiederkehrende Fehler (siehe oben, „Arbeitsmethode“). Zu den damit "
-                        "verbundenen Einschränkungen siehe auch unten: „Bekannte "
-                        "Einschränkungen“.",
+                        "Alongside its substantive goal, the project has a second role: a "
+                        "place to actually learn how to build a complex system with "
+                        "advanced AI tools. The central insight: the simplistic model "
+                        "\"person asks, machine executes\" isn't accurate. Three parties "
+                        "are at work: a conversation-and-planning tool, which thinks "
+                        "through the problem before a line of code is written and "
+                        "translates a vague decision (\"I want the system to detect "
+                        "trends\") into a concrete task; a coding agent, which operates "
+                        "inside the development environment - writes, runs, reports back; "
+                        "and above both, the human operator, who watches both tools at "
+                        "once and, above all, holds the line and checks the work. Again "
+                        "and again, this was the point where mistakes got caught - a "
+                        "result that looked \"almost good\" but hadn't actually been "
+                        "verified. Every report's comparison content is produced using a "
+                        "language model (Anthropic's Claude API), by exactly the same "
+                        "method: human review before every publish, and a standing safety "
+                        "net in the code for any failure that repeats.",
+                    ),
+                ],
+            },
+            {
+                "heading": "The Sources: From Four to Ten",
+                "blocks": [
+                    (
+                        "p",
+                        "The project started with four sources - two politically balanced "
+                        "pairs: Guardian vs. Telegraph in English, Süddeutsche Zeitung vs. "
+                        "Die Welt in German. After a few days, a clear gap emerged: the "
+                        "American arena wasn't represented at all. Four American papers "
+                        "were chosen to span a wide political range (The Washington Post, "
+                        "Wall Street Journal, Los Angeles Times, USA Today), alongside two "
+                        "weeklies (The Economist, Der Spiegel) that bring depth. Today the "
+                        "system follows ten sources across two languages, spanning a wide "
+                        "political range in every arena.",
+                    ),
+                ],
+            },
+            {
+                "heading": "The Framework: Three Axes of Perception",
+                "blocks": [
+                    (
+                        "p",
+                        "Geopolitics is a combination of spatial, temporal, and textual "
+                        "perception. The homepage is built around three equal-standing "
+                        "\"lenses\" - an interactive map (including active conflict zones: "
+                        "Israel-Palestine, Iran-the West, Russia-Ukraine), a timeline, and "
+                        "a textual entry point - along with the ability to browse reports "
+                        "by topic, region, or date range.",
+                    ),
+                ],
+            },
+            {
+                "heading": "The Third Language: German",
+                "blocks": [
+                    (
+                        "p",
+                        "The site was first published in Hebrew and English only. The "
+                        "expansion to German happened in two stages: every existing report "
+                        "in the archive was rewritten into German - not translated "
+                        "word-for-word - to keep it consistent; from that point on, every "
+                        "new report is written in German as original text, alongside "
+                        "Hebrew and English, from the same source articles - not as a "
+                        "translation added afterward.",
+                    ),
+                ],
+            },
+            {
+                "heading": "Limits of the Project",
+                "blocks": [
+                    (
+                        "p",
+                        "A critical reader deserves to know a few boundaries. All the "
+                        "sources are Western quality press - not a representative sample "
+                        "of world opinion. Volume of publication isn't a measure of "
+                        "importance: a paper that runs many opinion pieces can look "
+                        "dominant without that reflecting real significance; the sorting "
+                        "mechanism by source-breadth only partly offsets this. There's no "
+                        "fact-checking layer - the system summarizes what each source "
+                        "claims, not whether it's true. Every daily report is written as a "
+                        "standalone unit; tracking how a topic develops has so far "
+                        "required manually reading several reports - which is what the "
+                        "biweekly report is meant to ease. The three language versions "
+                        "are written independently of each other, not as translations - "
+                        "so small differences in wording between them are expected.",
+                    ),
+                ],
+            },
+            {
+                "heading": "Looking Ahead",
+                "blocks": [
+                    (
+                        "p",
+                        "The daily report, the biweekly report, and the graphical trends "
+                        "view all exist now - but not at the same level of maturity. The "
+                        "graphical view is the least mature piece: it shows raw numbers "
+                        "without explaining their meaning well enough, and it's due for a "
+                        "redesign. Beyond that, two questions remain open: a clearer "
+                        "experience for a reader unfamiliar with the project, and audience "
+                        "- whether to expand beyond researchers and policy people, for "
+                        "instance to a version accessible to teenagers.",
+                    ),
+                ],
+            },
+        ],
+    },
+    "de": {
+        "doc_meta": "Hintergrunddokument · Oktober 2026",
+        "identity_name": "Meir Shemesh",
+        "identity_role": "Technologieberatung und -management",
+        "title": "GEOPOLITICS-TRACKER",
+        "subtitle": (
+            "Wie die Weltpresse ein Ereignis mit unterschiedlichen Augen sieht - und was "
+            "der Entstehungsprozess selbst über die Zusammenarbeit von Mensch und "
+            "künstlicher Intelligenz lehrt"
+        ),
+        "about_title": "Über das Projekt",
+        "about_subtitle": (
+            "Wie dasselbe Ereignis von Zeitung zu Zeitung anders aussieht - und was der "
+            "Bauprozess selbst über die Zusammenarbeit zwischen Mensch und KI lehrt"
+        ),
+        "sections": [
+            {
+                "heading": None,
+                "blocks": [
+                    (
+                        "p",
+                        "Jeden Tag veröffentlichen Dutzende führende Zeitungen weltweit "
+                        "Hunderte Meinungs- und Analysebeiträge zu genau denselben "
+                        "geopolitischen Ereignissen. Niemand kann sie alle lesen - jeder "
+                        "von uns liest ein, zwei Blickwinkel, meist die, die er schon "
+                        "kennt, und verpasst das vollständige Gespräch, das zwischen "
+                        "Quellen stattfindet, die dasselbe Ereignis durch unterschiedliche "
+                        "Linsen sehen.",
+                    ),
+                    (
+                        "p",
+                        "geopolitics-tracker versucht, ein konkretes Problem zu lösen: "
+                        "nicht die menschliche Lektüre zu ersetzen, sondern ihr ein "
+                        "Werkzeug zu geben. Ein System, das führende Zeitungen auf "
+                        "Englisch und Deutsch verfolgt, über ein breites politisches "
+                        "Spektrum von links bis rechts, darin geopolitische Kommentare "
+                        "identifiziert und daraus ein Tagesbild baut: welche Themen "
+                        "Aufmerksamkeit bekamen und wie jede Quelle sie einordnete. Das "
+                        "Ziel ist nicht zu entscheiden, „wer recht hat“ - sondern das "
+                        "gesamte Meinungsspektrum zugänglich zu machen, nicht nur die "
+                        "Ecke, die der Leser schon kennt.",
+                    ),
+                ],
+            },
+            {
+                "heading": "Von der Tagesaufnahme zum Trend",
+                "blocks": [
+                    (
+                        "p",
+                        "Das unmittelbare Produkt ist ein Tagesbericht: ein Dokument, das "
+                        "die Kommentare eines Tages nach echtem Thema gruppiert - nicht "
+                        "nach mechanischer Verschlagwortung - und zu jedem Thema einen "
+                        "knappen Vergleich zwischen den Quellen zeigt. Aber ein einzelner "
+                        "Tagesbericht, wie genau er auch sein mag, ist nur eine "
+                        "Momentaufnahme. Der eigentliche Wert zeigt sich erst mit der "
+                        "Zeit: Wenn sich Wochen und Monate von Berichten ansammeln, lassen "
+                        "sich Fragen stellen, die keine einzelne Zeitung beantworten kann "
+                        "- formt sich eine bestimmte Position neu? Kehrt ein "
+                        "verschwundenes Thema plötzlich zurück? Deshalb ist jeder "
+                        "Tagesbericht von Anfang an auch als Archiveintrag angelegt - ein "
+                        "Baustein für den weiteren Blick.",
+                    ),
+                    (
+                        "p",
+                        "In der vergangenen Woche wurde dieser weitere Blick vom Konzept "
+                        "zum Produkt. Der Tagesbericht läuft jetzt vollständig "
+                        "automatisch, mit Funktionsprüfungen und automatischem Stopp bei "
+                        "wiederholten Fehlern. Daneben entstand ein neuer Bereich "
+                        "„Trends“, mit zwei Komponenten: ein narrativer Trendbericht, der "
+                        "alle zwei Wochen erscheint und verfolgt, wie sich die "
+                        "Berichterstattung zu einem Thema über den Zeitraum verändert - "
+                        "aufgebaut auf den Tagesberichten selbst und wie diese in allen "
+                        "drei Sprachen geschrieben; und eine grafische Ansicht der "
+                        "Berichterstattung nach Land, noch in einem frühen Stadium (Beta).",
+                    ),
+                ],
+            },
+            {
+                "heading": "Die Arbeitsweise: Drei Rollen, nicht zwei",
+                "blocks": [
+                    (
+                        "p",
+                        "Neben seinem inhaltlichen Ziel hat das Projekt eine zweite "
+                        "Rolle: ein Ort, um in der Praxis zu lernen, wie man mit "
+                        "fortgeschrittenen KI-Werkzeugen ein komplexes System baut. Die "
+                        "zentrale Erkenntnis: Das vereinfachte Modell „Mensch fragt, "
+                        "Maschine führt aus“ trifft nicht zu. Drei Parteien sind "
+                        "beteiligt: ein Gesprächs- und Planungswerkzeug, das über das "
+                        "Problem nachdenkt, bevor eine Codezeile geschrieben wird, und "
+                        "eine vage Entscheidung („ich möchte, dass das System Trends "
+                        "erkennt“) in eine konkrete Aufgabe übersetzt; ein Code-Agent, der "
+                        "in der Entwicklungsumgebung arbeitet - schreibt, führt aus, "
+                        "meldet zurück; und über beiden der menschliche Betreiber, der "
+                        "beide Werkzeuge gleichzeitig beobachtet und vor allem bremst und "
+                        "prüft. Genau an dieser Stelle wurden immer wieder Fehler "
+                        "entdeckt - ein Ergebnis, das „fast gut“ aussah, aber nie wirklich "
+                        "geprüft worden war. Der Vergleichsinhalt jedes Berichts wird mit "
+                        "einem Sprachmodell erzeugt (Anthropics Claude API), nach genau "
+                        "derselben Methode: menschliche Prüfung vor jeder "
+                        "Veröffentlichung, und ein fest im Code verankertes "
+                        "Sicherheitsnetz für jeden wiederkehrenden Fehler.",
                     ),
                 ],
             },
@@ -491,27 +502,16 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "Das Projekt begann mit vier Quellen - zwei politisch ausgewogenen "
-                        "Paaren, eines pro Sprache: The Guardian gegen The Daily Telegraph "
-                        "im Englischen, Süddeutsche Zeitung gegen Die Welt im Deutschen.",
-                    ),
-                    (
-                        "p",
-                        "Nach einigen stabilen Tagen zeigte sich eine deutliche Lücke: Die "
-                        "amerikanische Arena war überhaupt nicht vertreten. Die daraufhin "
-                        "folgende Erweiterung begnügte sich nicht mit einem weiteren Paar - "
-                        "vier amerikanische Zeitungen wurden bewusst ausgewählt, um "
-                        "innerhalb dieser Arena selbst ein breiteres politisches Spektrum "
-                        "abzudecken (The Washington Post, The Wall Street Journal, Los "
-                        "Angeles Times, USA Today), ergänzt durch zwei Wochenzeitschriften "
-                        "(The Economist, Der Spiegel), die eher Tiefe als einen weiteren "
-                        "Tagesblickwinkel beitragen.",
-                    ),
-                    (
-                        "p",
-                        "Heute verfolgt das System ein vielfältiges Spektrum an Quellen in "
-                        "zwei Sprachen, mit einer breiten politischen Bandbreite innerhalb "
-                        "jeder der abgedeckten Arenen.",
+                        "Das Projekt begann mit vier Quellen - zwei politisch "
+                        "ausgewogenen Paaren: Guardian gegen Telegraph auf Englisch, "
+                        "Süddeutsche Zeitung gegen Die Welt auf Deutsch. Nach wenigen "
+                        "Tagen zeigte sich eine deutliche Lücke: Der amerikanische Raum "
+                        "war gar nicht vertreten. Vier amerikanische Zeitungen wurden "
+                        "gewählt, um ein breites politisches Spektrum abzudecken (The "
+                        "Washington Post, Wall Street Journal, Los Angeles Times, USA "
+                        "Today), dazu zwei Wochenmagazine (The Economist, Der Spiegel), "
+                        "die Tiefe bringen. Heute verfolgt das System zehn Quellen in "
+                        "zwei Sprachen, mit breitem politischem Spektrum in jedem Raum.",
                     ),
                 ],
             },
@@ -520,41 +520,13 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "Geopolitik verbindet räumliche, zeitliche und textuelle "
-                        "Wahrnehmung. Die Startseite ist um drei gleichrangige „Linsen“ auf "
-                        "dieselben Daten herum aufgebaut - eine interaktive geografische "
-                        "Karte (einschließlich aktiv verfolgter Konfliktzonen: des "
-                        "israelisch-palästinensischen Konflikts, Iran-Westen, "
-                        "Russland-Ukraine), eine Zeitachse und einen textuellen "
-                        "Einstiegspunkt - dazu die Möglichkeit, Berichte nach Thema, Region "
-                        "oder Zeitraum zu durchsuchen, nicht nur nach einem einzelnen Tag.",
-                    ),
-                ],
-            },
-            {
-                "heading": "Was heute existiert",
-                "blocks": [
-                    (
-                        "p",
-                        "Fünf aufeinanderfolgende Stufen - Sammeln, Textextraktion, Analyse "
-                        "und Klassifizierung mittels der Claude API, Erstellung der "
-                        "Vergleiche und Veröffentlichung - alle aktiv auf realen Daten. Jeder "
-                        "Tagesbericht: drei vollständige Sprachen, zwei Formate, "
-                        "quellenübergreifender Vergleich mit präzisen Belegen (Zeitung, "
-                        "Datum, Seite) zu jeder Aussage. Die Website ist live: "
-                        "geopolitics.meirshemesh.com.",
-                    ),
-                    (
-                        "p",
-                        "Die Stufe der Vergleichserstellung selbst durchlief dabei ein "
-                        "bedeutendes Upgrade: Ein Ansatz mit einem einzigen Aufruf, der "
-                        "versuchte, alle Vergleiche eines Tages auf einmal zu schreiben, "
-                        "erwies sich mit wachsender Quellenzahl als instabil - bis hin zum "
-                        "vollständigen Scheitern im großen Maßstab. Die Lösung: eine "
-                        "Aufteilung in zwei Stufen (Gruppierung nach Themen, danach "
-                        "getrennte, parallele Erstellung des Vergleichs für jedes Thema), "
-                        "mit gemeinsam genutztem Kontext zwischen den Aufrufen, was zugleich "
-                        "die Kosten gegenüber dem alten Ansatz deutlich senkte.",
+                        "Geopolitik ist eine Kombination aus räumlicher, zeitlicher und "
+                        "textueller Wahrnehmung. Die Startseite ist um drei gleichrangige "
+                        "„Linsen“ aufgebaut - eine interaktive Karte (einschließlich "
+                        "aktiver Konfliktzonen: Israel-Palästina, Iran-der Westen, "
+                        "Russland-Ukraine), eine Zeitleiste und einen textuellen Einstieg "
+                        "- sowie die Möglichkeit, Berichte nach Thema, Region oder "
+                        "Zeitraum zu durchsuchen.",
                     ),
                 ],
             },
@@ -563,47 +535,38 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "Die Website wurde ursprünglich nur auf Hebräisch und Englisch "
-                        "veröffentlicht. Die Erweiterung um Deutsch erfolgte in zwei "
-                        "Schritten: Zunächst wurde jeder bestehende Bericht im Archiv neu "
-                        "auf Deutsch verfasst - nicht wörtlich übersetzt - unter "
-                        "Verwendung der Terminologie und des Sprachregisters, die auf "
-                        "genau dieser Seite festgelegt wurden, um das gesamte Archiv "
-                        "konsistent zu halten. Von nun an wird jeder neue Bericht als "
-                        "eigenständiger deutscher Originaltext parallel zu Hebräisch und "
-                        "Englisch erstellt, im selben Erzeugungsschritt und aus denselben "
-                        "Quellartikeln - nicht als nachträglich hinzugefügte Übersetzung.",
+                        "Die Website wurde zunächst nur auf Hebräisch und Englisch "
+                        "veröffentlicht. Die Erweiterung auf Deutsch geschah in zwei "
+                        "Schritten: Jeder bestehende Bericht im Archiv wurde neu auf "
+                        "Deutsch geschrieben - nicht wörtlich übersetzt - um Konsistenz "
+                        "zu bewahren; von da an wird jeder neue Bericht auf Deutsch als "
+                        "eigenständiger Originaltext verfasst, parallel zu Hebräisch und "
+                        "Englisch, aus denselben Quellartikeln - nicht als nachträglich "
+                        "hinzugefügte Übersetzung.",
                     ),
                 ],
             },
             {
-                "heading": "Bekannte Einschränkungen",
+                "heading": "Grenzen des Projekts",
                 "blocks": [
                     (
                         "p",
-                        "Einige Punkte, die ein kritischer Leser kennen sollte: Sämtliche "
-                        "Quellen gehören zur westlichen Qualitätspresse (Englisch und "
-                        "Deutsch) - kein repräsentativer Querschnitt „der Welt“, und "
-                        "Nachrichtenagenturen oder weitere Sprachen sind nicht enthalten. "
-                        "Publikationsvolumen bedeutet nicht Wichtigkeit - ein Blatt, das an "
-                        "einem bestimmten Tag viele Meinungsbeiträge veröffentlicht, kann in "
-                        "einem Bericht dominant erscheinen, ohne dass dies tatsächliches "
-                        "geopolitisches Gewicht widerspiegelt; ein Mechanismus sortiert "
-                        "Themen nach Quellen- und Sprachbreite, doch das ist nur eine "
-                        "teilweise Abhilfe, keine vollständige Lösung. Es gibt keine "
-                        "Faktenprüfungsebene - der Text fasst zusammen, was jede Quelle "
-                        "behauptet, nicht ob es zutrifft; Zahlen und Zitate spiegeln die "
-                        "Quelle wider, sind aber nicht unabhängig verifiziert. Jeder Bericht "
-                        "wird als eigenständige Einheit neu verfasst - es gibt noch kein "
-                        "Gedächtnis zwischen den Tagen, sodass die Verfolgung, wie sich ein "
-                        "Thema entwickelt, weiterhin das manuelle Lesen mehrerer Berichte "
-                        "erfordert. In seltenen Fällen (vor allem an Tagen mit "
-                        "ungewöhnlich hohem Publikationsvolumen) wird derselbe Artikel "
-                        "versehentlich mehr als einem Thema im selben Bericht zugeordnet "
-                        "und erscheint doppelt - eine Darstellungsdopplung, kein "
-                        "Sachfehler; der zugrunde liegende Mechanismus wurde für künftige "
-                        "Berichte behoben, bestehende Berichte im Archiv wurden jedoch "
-                        "nicht rückwirkend korrigiert.",
+                        "Ein kritischer Leser sollte einige Grenzen kennen. Alle Quellen "
+                        "sind westliche Qualitätspresse - keine repräsentative "
+                        "Stichprobe der Weltmeinung. Veröffentlichungsvolumen ist kein "
+                        "Maß für Wichtigkeit: Eine Zeitung, die viele Meinungsbeiträge "
+                        "veröffentlicht, kann dominant wirken, ohne dass dies echte "
+                        "Bedeutung widerspiegelt; der Sortiermechanismus nach "
+                        "Quellenbreite gleicht das nur teilweise aus. Es gibt keine "
+                        "Faktenprüfungsebene - das System fasst zusammen, was jede Quelle "
+                        "behauptet, nicht ob es stimmt. Jeder Tagesbericht wird als "
+                        "eigenständige Einheit geschrieben; die Entwicklung eines Themas "
+                        "zu verfolgen erforderte bisher das manuelle Lesen mehrerer "
+                        "Berichte - genau das soll der zweiwöchentliche Bericht "
+                        "erleichtern. Die drei Sprachversionen werden unabhängig "
+                        "voneinander geschrieben, nicht als Übersetzung - kleine "
+                        "Unterschiede in der Formulierung zwischen ihnen sind daher zu "
+                        "erwarten.",
                     ),
                 ],
             },
@@ -612,13 +575,15 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "Drei offene Fragen leiten die nächste Phase: Trends - wie sich ein "
-                        "wachsendes Archiv in Rohmaterial zur Erkennung von Mustern über die "
-                        "Zeit verwandeln lässt, nicht nur in eine Tagesaufnahme; "
-                        "Nutzererfahrung - visuelle Klarheit und Navigation für Leser, die "
-                        "das Projekt noch nicht kennen; und Zielgruppe - ob über Forschende "
-                        "und politische Fachleute hinaus erweitert werden soll, etwa zu "
-                        "einer zugänglichen Version für Jugendliche.",
+                        "Der Tagesbericht, der zweiwöchentliche Bericht und die "
+                        "grafische Trendansicht existieren jetzt alle - aber nicht auf "
+                        "demselben Reifegrad. Die grafische Ansicht ist das am wenigsten "
+                        "ausgereifte Glied: Sie zeigt Rohdaten, ohne ihre Bedeutung "
+                        "ausreichend zu erklären, und wird überarbeitet. Darüber hinaus "
+                        "bleiben zwei Fragen offen: eine klarere Nutzererfahrung für "
+                        "Leser, die das Projekt nicht kennen, und die Zielgruppe - ob man "
+                        "über Forscher und Politikexperten hinaus erweitert, etwa zu "
+                        "einer für Jugendliche zugänglichen Version.",
                     ),
                 ],
             },
