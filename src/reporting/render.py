@@ -74,6 +74,18 @@ def favicon_links_html(asset_prefix: str) -> str:
 <link rel="icon" type="image/png" sizes="16x16" href="{base}/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="{base}/apple-touch-icon.png">"""
 
+
+def head_meta_html(page_title: str, asset_prefix: str) -> str:
+    """The charset/viewport/anti-flicker-script/title/favicon sequence that
+    opens every page's <head>, identical everywhere but for `page_title` and
+    the prefix favicon_links_html() needs - previously retyped verbatim at
+    all 10 page-builder call sites rather than centralized."""
+    return f"""<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{THEME_TOGGLE_SCRIPT_HTML}
+<title>{esc(page_title)}</title>
+{favicon_links_html(asset_prefix)}"""
+
 FALLBACK_CATEGORY = "additional_coverage"
 
 NEWSPAPER_DISPLAY_NAMES = {
@@ -484,7 +496,16 @@ FILTER_LABEL = {"he": "סינון מתקדם", "en": "Advanced filter", "de": "E
 TRENDS_LABEL = {"he": "מגמות", "en": "Trends", "de": "Trends"}
 
 
-def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_href: str | None = None) -> str:
+def build_nav_html(
+    back_href: str | None,
+    lang_hrefs: dict[str, str],
+    lang: str,
+    pdf_href: str | None = None,
+    asset_prefix: str = "../",
+    filter_href: str = "filter.html",
+    trends_href: str = "trends.html",
+    logo_linked: bool = True,
+) -> str:
     """`lang_hrefs` maps every OTHER language this page exists in (a subset of
     other_langs(lang) - 2 entries for a trilingual page, 1 for a still-bilingual
     one) to that language's href for this same page. Each becomes its own
@@ -497,29 +518,88 @@ def build_nav_html(back_href: str, lang_hrefs: dict[str, str], lang: str, pdf_hr
     optional PDF link - single point of change so every page type that calls
     this function gets it automatically.
 
-    The "Advanced filter" link (added 2026-09-23) is hardcoded to the bare
-    sibling href "filter.html" rather than taking a parameter like back_href -
-    every caller of this function lives at the same docs/{lang}/ depth as
-    filter.html itself (no root copy, same convention as topic.html), so
-    there is nothing page-specific to parameterize."""
+    `back_href=None` omits the "all reports" link entirely - archive.html and
+    the homepage are the two pages that ARE the back-target, so neither wants
+    a link back to itself (added 2026-10-08 when both were migrated off their
+    own hand-rolled nav markup onto this function - see CLAUDE.md).
+
+    `asset_prefix`/`filter_href`/`trends_href` default to the single fixed
+    depth (docs/{lang}/, one level under the site root) that every caller used
+    to assume implicitly - everything EXCEPT archive.html and the homepage
+    lives only at that depth. Those two also exist at the site root (depth 0),
+    so they pass their own already-computed, depth-aware values through
+    instead (see build_index_html()/build_homepage_html() in publish.py,
+    which solved this root-vs-lang-folder distinction long before they used
+    this function for their nav markup).
+
+    `logo_linked=False` renders a bare, unlinked logo image - the homepage's
+    one documented exception (CLAUDE.md: the logo on the homepage itself
+    isn't a link, since you're already home); every other caller keeps the
+    default linked logo."""
     pdf_link = ""
     if pdf_href is not None:
         pdf_link = f'\n      <a class="top-nav-link" href="{esc(pdf_href)}">{esc(PDF_LABEL[lang])}</a>'
-    filter_link = f'\n      <a class="top-nav-link" href="filter.html">{esc(FILTER_LABEL[lang])}</a>'
-    trends_link = f'\n      <a class="top-nav-link" href="trends.html">{esc(TRENDS_LABEL[lang])}</a>'
+    filter_link = f'\n      <a class="top-nav-link" href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>'
+    trends_link = f'\n      <a class="top-nav-link" href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>'
     lang_links = "".join(
         f'\n      <a class="top-nav-link top-nav-lang-link" href="{esc(lang_hrefs[other])}">{esc(LANG_LABEL[other])}</a>'
         for other in other_langs(lang) if other in lang_hrefs
     )
     contact_link = f"\n      {contact_menu_html(lang)}"
     toggle_button = f"\n      {theme_toggle_html(lang)}"
+    back_link = ""
+    if back_href is not None:
+        back_link = f'\n      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>'
+    logo_html = (
+        f'<a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}">'
+        f'<img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>'
+        if logo_linked
+        else f'<img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt="">'
+    )
     return f"""
   <nav class="top-nav">
-    <a class="top-nav-logo-link" href="../index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    {logo_html}
     <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(back_href)}">{esc(BACK_LABEL[lang])}</a>{filter_link}{trends_link}{lang_links}{pdf_link}{contact_link}{toggle_button}
+      {back_link}{filter_link}{trends_link}{lang_links}{pdf_link}{contact_link}{toggle_button}
     </div>
   </nav>"""
+
+
+def nav_chrome_css(max_width: str = "44rem") -> str:
+    """The `.top-nav` styling that every page type needs alongside
+    build_nav_html()'s markup - previously copy-pasted as raw CSS text into
+    10 separate <style> blocks (daily report, biweekly report, and 8 page
+    types in publish.py), which is exactly how "Contact"/"Advanced filter"
+    ended up missing from pages that hand-rolled their own nav AND their own
+    matching CSS in parallel (see CLAUDE.md). `max_width` is the one real,
+    deliberate divergence found across those 10 copies: every page but two
+    used 44rem (matching their own content column); trendschart.html's wider
+    content column uses 48rem, and the homepage's wider three-module layout
+    uses 60rem - both pass their own value through here instead of losing it
+    in the unification."""
+    return f"""
+  .top-nav {{
+    max-width: {max_width};
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }}
+  .top-nav-logo-link {{ display: flex; align-items: center; }}
+  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
+  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
+  .top-nav-link {{
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }}
+  .top-nav-link:hover {{
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }}"""
 
 
 def build_footer_html(
@@ -824,11 +904,7 @@ def build_report_html(
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html("../")}
+{head_meta_html(page_title, "../")}
 <style>
   {font_face_css(FONT_RELATIVE_PATH)}
 
@@ -846,28 +922,7 @@ def build_report_html(
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-  }}
-  .top-nav-link:hover {{
-    color: var(--masthead-accent);
-    text-decoration: underline;
-  }}
+  {nav_chrome_css()}
 
   .category-nav {{
     position: sticky;

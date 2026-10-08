@@ -14,13 +14,13 @@ daily reports that contributed to each topic.
 from src.reporting.render import (
     FONT_FAMILY,
     FONT_FILENAME,
-    THEME_TOGGLE_SCRIPT_HTML,
     build_footer_html,
     build_nav_html,
     esc,
-    favicon_links_html,
     font_face_css,
     footer_hrefs_for,
+    head_meta_html,
+    nav_chrome_css,
     other_langs,
     print_force_light_css,
     shared_chrome_css,
@@ -133,11 +133,7 @@ def build_biweekly_report_html(
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html("../")}
+{head_meta_html(page_title, "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -153,21 +149,7 @@ def build_biweekly_report_html(
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
-  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);

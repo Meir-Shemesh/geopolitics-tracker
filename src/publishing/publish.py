@@ -55,6 +55,8 @@ from src.reporting.render import (
     favicon_links_html,
     font_face_css,
     footer_hrefs_for,
+    head_meta_html,
+    nav_chrome_css,
     other_langs,
     print_force_light_css,
     section_coverage,
@@ -122,11 +124,7 @@ def build_index_html(
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html(asset_prefix)}
+{head_meta_html(page_title, asset_prefix)}
 <style>
   {font_face_css(font_relative_path)}
 
@@ -142,28 +140,7 @@ def build_index_html(
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-  }}
-  .top-nav-link:hover {{
-    color: var(--masthead-accent);
-    text-decoration: underline;
-  }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -209,16 +186,7 @@ def build_index_html(
 </style>
 </head>
 <body>
-  <nav class="top-nav">
-    <a class="top-nav-logo-link" href="{esc(asset_prefix)}index.html" aria-label="{esc(LOGO_LINK_LABEL[lang])}"><img class="top-nav-logo" src="{esc(asset_prefix)}assets/images/MS_Logo.png" alt=""></a>
-    <div class="top-nav-links">
-      <a class="top-nav-link" href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
-      <a class="top-nav-link" href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>
-      {"".join(f'<a class="top-nav-link" href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
-      {contact_menu_html(lang)}
-      {theme_toggle_html(lang)}
-    </div>
-  </nav>
+{build_nav_html(None, lang_hrefs, lang, asset_prefix=asset_prefix, filter_href=filter_href, trends_href=trends_href)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
@@ -251,11 +219,7 @@ def build_about_html(lang: str) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html("../")}
+{head_meta_html(page_title, "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -271,28 +235,7 @@ def build_about_html(lang: str) -> str:
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-  }}
-  .top-nav-link:hover {{
-    color: var(--masthead-accent);
-    text-decoration: underline;
-  }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -395,11 +338,7 @@ def _build_static_page_html(
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html("../")}
+{head_meta_html(page_title, "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -415,21 +354,7 @@ def _build_static_page_html(
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
-  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -1174,11 +1099,7 @@ def build_filter_html(lang: str) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html("../")}
+{head_meta_html(page_title, "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -1196,28 +1117,7 @@ def build_filter_html(lang: str) -> str:
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-  }}
-  .top-nav-link:hover {{
-    color: var(--masthead-accent);
-    text-decoration: underline;
-  }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -1565,11 +1465,7 @@ def build_trends_chart_html(lang: str) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(L['page_title'])}</title>
-{favicon_links_html("../")}
+{head_meta_html(L['page_title'], "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -1591,21 +1487,7 @@ def build_trends_chart_html(lang: str) -> str:
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 48rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
-  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+  {nav_chrome_css("48rem")}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -1860,11 +1742,7 @@ def build_trends_hub_html(lang: str, periods: list[dict]) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(L['page_title'])}</title>
-{favicon_links_html("../")}
+{head_meta_html(L['page_title'], "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -1879,21 +1757,7 @@ def build_trends_hub_html(lang: str, periods: list[dict]) -> str:
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{ color: var(--text-muted); text-decoration: none; font-weight: 500; }}
-  .top-nav-link:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -2014,11 +1878,7 @@ def build_topic_html(lang: str) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html("../")}
+{head_meta_html(page_title, "../")}
 <style>
   {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
 
@@ -2036,28 +1896,7 @@ def build_topic_html(lang: str) -> str:
     line-height: 1.7;
   }}
 
-  .top-nav {{
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.82rem;
-    border-bottom: 1px solid var(--border);
-  }}
-  .top-nav-logo-link {{ display: flex; align-items: center; }}
-  .top-nav-logo {{ height: 56px; width: auto; display: block; }}
-  .top-nav-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  .top-nav-link {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-  }}
-  .top-nav-link:hover {{
-    color: var(--masthead-accent);
-    text-decoration: underline;
-  }}
+  {nav_chrome_css()}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -3141,11 +2980,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-{THEME_TOGGLE_SCRIPT_HTML}
-<title>{esc(page_title)}</title>
-{favicon_links_html(asset_prefix)}
+{head_meta_html(page_title, asset_prefix)}
 <style>
   {font_face_css(f"{asset_prefix}assets/fonts/{FONT_FILENAME}")}
 
@@ -3163,34 +2998,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     line-height: 1.7;
   }}
 
-  .home-top-bar {{
-    max-width: 60rem;
-    margin: 0 auto;
-    padding: 0.65rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border);
-  }}
-  .home-logo {{ height: 56px; width: auto; display: block; }}
-  .home-top-bar a {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: .82rem;
-  }}
-  .home-top-bar a:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
-  .home-top-bar-links {{ display: flex; align-items: center; gap: 1.1rem; }}
-  /* contact_menu_html()'s <summary> isn't an <a>, so the generic ".home-top-bar a"
-     rule above doesn't reach it - mirrored here for the same look. */
-  .home-top-bar summary {{
-    color: var(--text-muted);
-    text-decoration: none;
-    font-weight: 500;
-    font-size: .82rem;
-    cursor: pointer;
-  }}
-  .home-top-bar summary:hover {{ color: var(--masthead-accent); text-decoration: underline; }}
+  {nav_chrome_css("60rem")}
 
   .masthead {{
     background: var(--bg-elevated);
@@ -3425,16 +3233,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 </style>
 </head>
 <body>
-  <div class="home-top-bar">
-    <img class="home-logo" src="{asset_prefix}assets/images/MS_Logo.png" alt="">
-    <div class="home-top-bar-links">
-      <a href="{esc(filter_href)}">{esc(FILTER_LABEL[lang])}</a>
-      <a href="{esc(trends_href)}">{esc(TRENDS_LABEL[lang])}</a>
-      {"".join(f'<a href="{esc(lang_hrefs[o])}">{esc(LANG_LABEL[o])}</a>' for o in other_langs(lang) if o in lang_hrefs)}
-      {contact_menu_html(lang)}
-      {theme_toggle_html(lang)}
-    </div>
-  </div>
+{build_nav_html(None, lang_hrefs, lang, asset_prefix=asset_prefix, filter_href=filter_href, trends_href=trends_href, logo_linked=False)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(eyebrow)}</p>
