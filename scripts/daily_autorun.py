@@ -87,7 +87,12 @@ TIMEOUTS = {
     "fetch": 60 * 60,
     "pdf_health_check": 10 * 60,
     "extract": 30 * 60,
-    "screen": 20 * 60,
+    # Raised from 20 min to 50 min on 2026-10-10 (see PROJECT_LOG) after a real
+    # timeout: measured steady throughput is ~1.7s/page with no stalls, so even
+    # a single ordinary day's extraction (714 pages that day) already brushes
+    # the old 1200s ceiling - before any backlog/duplicate pages add to the
+    # queue. 3000s covers a normal day plus a real backlog with headroom.
+    "screen": 50 * 60,
     "analyze": 60 * 60,
     "synthesize": 20 * 60,
     "orphan_review": 5 * 60,
@@ -157,6 +162,15 @@ def run_step(log, name: str, args: list[str], timeout_key: str | None = None) ->
         )
     except subprocess.TimeoutExpired as e:
         log(f"TIMEOUT {name} after {timeout}s")
+        # subprocess.run() already captured whatever reached the pipes before the kill -
+        # log it exactly like the success path does, or a timeout leaves no trace of how
+        # far the step actually got (see PROJECT_LOG 2026-10-10: a screen.py timeout looked
+        # like a silent hang in the log, when the DB showed steady, un-stuck progress the
+        # whole time - this tail was sitting in e.stdout, just never printed).
+        if e.stdout:
+            log(f"  --- {name} stdout (tail, before timeout) ---\n" + "\n".join(e.stdout.splitlines()[-40:]))
+        if e.stderr:
+            log(f"  --- {name} stderr (tail, before timeout) ---\n" + "\n".join(e.stderr.splitlines()[-40:]))
         return StepResult(name, False, None, e.stdout or "", e.stderr or "", note=f"timed out after {timeout}s")
     ok = proc.returncode == 0
     log(f"{'OK' if ok else 'FAIL'} {name} (exit {proc.returncode})")
