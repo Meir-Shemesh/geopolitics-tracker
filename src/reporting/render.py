@@ -83,6 +83,7 @@ def head_meta_html(page_title: str, asset_prefix: str) -> str:
     return f"""<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {THEME_TOGGLE_SCRIPT_HTML}
+{ANALYTICS_BEACON_SCRIPT_HTML}
 <title>{esc(page_title)}</title>
 {favicon_links_html(asset_prefix)}"""
 
@@ -429,6 +430,36 @@ THEME_TOGGLE_SCRIPT_HTML = """<script>
     __syncThemeToggles();
   }
   document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>"""
+
+
+# Privacy-protected visit counter (cf-analytics/, decided 2026-10-02, see
+# PROJECT_LOG 4.70 - deployed server-side then, beacon connection deliberately
+# deferred for separate approval, now approved). Fires once per page load via
+# navigator.sendBeacon, sending only document.referrer - no cookies, no
+# fingerprint, no persistent identifier of any kind. Uses a `text/plain` Blob
+# rather than `application/json` deliberately: application/json is not a
+# CORS-safelisted content type, so it would trigger a preflight OPTIONS
+# round-trip that the Worker's corsHeaders() doesn't fully support (no
+# Access-Control-Allow-Headers) - text/plain keeps this a CORS "simple
+# request" instead, sent with no preflight at all. The Worker's
+# handleCollect() already parses the body as JSON regardless of the declared
+# Content-Type, so this costs nothing server-side. sendBeacon itself is
+# fire-and-forget (no response is ever read, failures are silent by design,
+# matching the server's own "never fail the ping" stance on a malformed
+# body) - wrapped in try/catch only for the sendBeacon-undefined case (very
+# old browsers).
+ANALYTICS_COLLECT_URL = "https://geopolitics-analytics.meirshemesh.workers.dev/collect"
+
+ANALYTICS_BEACON_SCRIPT_HTML = f"""<script>
+  (function () {{
+    try {{
+      if (navigator.sendBeacon) {{
+        var payload = JSON.stringify({{ referrer: document.referrer }});
+        navigator.sendBeacon("{ANALYTICS_COLLECT_URL}", new Blob([payload], {{ type: "text/plain" }}));
+      }}
+    }} catch (e) {{}}
+  }})();
 </script>"""
 
 
