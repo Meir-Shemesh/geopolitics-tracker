@@ -6,7 +6,8 @@ Python's stdlib GUI toolkit - no new dependency.
 Two tabs, two fully separate mechanisms - nothing on one tab reads or writes
 anything the other tab's mechanism uses:
   - "ריצה יומית": scripts/daily_autorun.py (task GeopoliticsTrackerDailyAutorun,
-    .pause_automation, automation_state/config.json + state.json).
+    .pause_automation, automation_state/config.json + state.json +
+    killswitch.flag).
   - "דוח מגמות דו-שבועי": scripts/biweekly_autorun.py (task
     GeopoliticsTrackerBiweeklyAutorun, automation_state/biweekly_state.json,
     biweekly_killswitch.flag, biweekly_pause_next.flag).
@@ -36,7 +37,9 @@ LOG_DIR = STATE_DIR / "logs"
 STATE_FILE = STATE_DIR / "state.json"
 CONFIG_FILE = STATE_DIR / "config.json"
 PAUSE_FLAG = PROJECT_ROOT / ".pause_automation"
+KILLSWITCH_FLAG = STATE_DIR / "killswitch.flag"
 SCHEDULED_TASK_NAME = "GeopoliticsTrackerDailyAutorun"
+DAILY_FAILURE_LIMIT = 2  # daily_autorun.CONSECUTIVE_FAILURE_LIMIT
 
 # Biweekly mechanism - same names scripts/biweekly_autorun.py defines.
 BW_TASK_NAME = "GeopoliticsTrackerBiweeklyAutorun"
@@ -51,6 +54,8 @@ BW_DEFAULT_STATE = {
 }
 
 GREEN, RED, BLUE, AMBER = "#2a7", "#a33", "#246", "#a60"
+
+TASKBAR_ALLOWANCE = 48  # logical px kept clear at the bottom of the screen for the taskbar
 
 # The three results the biweekly tab must never blur together, plus the two
 # "did not really run" ones. "skipped" is deliberately neither green nor
@@ -172,19 +177,34 @@ class ControlPanel(tk.Tk):
         # no guessing, no reliance on implicit auto-expand timing - and only lock
         # resizable() after this explicit size is set.
         self.update()
-        self.geometry(f"{self.winfo_reqwidth()}x{self.winfo_reqheight()}")
+        self._fit_to_content()
         self.resizable(False, False)
         self._mapped = True
+
+    def _fit_to_content(self):
+        """Sizes the window to exactly what its content needs AND slides it up
+        if that would push the bottom edge below the usable screen. A window
+        locked with resizable(False, False) cannot be shrunk by the user, and
+        the bottom row is the feedback line where every action reports back -
+        measured 2026-10-13 on this machine (1920x1080 at 150% = 1280x720
+        logical): the two-tab panel was 704 logical px tall and sat with its
+        bottom ~55 px below the screen edge at Windows' default position."""
+        self.update_idletasks()
+        width, height = self.winfo_reqwidth(), self.winfo_reqheight()
+        decoration = max(0, self.winfo_rooty() - self.winfo_y())   # title bar + top border
+        lowest_top = self.winfo_screenheight() - TASKBAR_ALLOWANCE - (height + decoration)
+        y = max(0, min(self.winfo_y(), lowest_top))
+        self.geometry(f"{width}x{height}+{self.winfo_x()}+{y}")
 
     # ---------- widget construction ----------
 
     def _build_widgets(self):
         header = tk.Label(self, text="בקרת אוטומציה", font=self.title_font, anchor="e", justify="right")
-        header.pack(fill="x", padx=12, pady=(12, 6))
+        header.pack(fill="x", padx=12, pady=(8, 2))
 
         ttk.Style(self).configure("TNotebook.Tab", font=self.bold_font, padding=(14, 5))
         self.notebook = ttk.Notebook(self)
-        self.notebook.pack(fill="both", expand=True, padx=12, pady=(0, 6))
+        self.notebook.pack(fill="both", expand=True, padx=12, pady=(0, 4))
         daily_tab = tk.Frame(self.notebook)
         biweekly_tab = tk.Frame(self.notebook)
         self.notebook.add(daily_tab, text="ריצה יומית")
@@ -193,45 +213,45 @@ class ControlPanel(tk.Tk):
         self._build_daily_tab(daily_tab)
         self._build_biweekly_tab(biweekly_tab)
 
-        tk.Button(self, text="רענן", font=self.hebrew_font, command=self.refresh).pack(fill="x", padx=12, pady=(0, 4))
+        tk.Button(self, text="רענן", font=self.hebrew_font, command=self.refresh).pack(fill="x", padx=12, pady=(0, 2))
 
         self.feedback_label = tk.Label(
             self, text="", font=self.hebrew_font, anchor="e", justify="right", wraplength=430,
         )
-        self.feedback_label.pack(fill="x", padx=12, pady=(4, 12))
+        self.feedback_label.pack(fill="x", padx=12, pady=(2, 8))
 
     def _build_daily_tab(self, tab):
         status_frame = tk.LabelFrame(tab, text="מצב נוכחי", font=self.bold_font, labelanchor="ne")
-        status_frame.pack(fill="x", padx=12, pady=6)
+        status_frame.pack(fill="x", padx=12, pady=3)
         self.status_labels: dict[str, tk.Label] = {}
-        for key in ("task", "next_run", "last_run", "failures", "paused_today", "quota"):
+        for key in ("task", "next_run", "last_run", "failures", "killswitch", "paused_today", "quota"):
             lbl = tk.Label(status_frame, text="", font=self.hebrew_font, anchor="e", justify="right")
-            lbl.pack(fill="x", padx=10, pady=2)
+            lbl.pack(fill="x", padx=10, pady=1)
             self.status_labels[key] = lbl
 
         actions_frame = tk.LabelFrame(tab, text="פעולות", font=self.bold_font, labelanchor="ne")
-        actions_frame.pack(fill="x", padx=12, pady=6)
+        actions_frame.pack(fill="x", padx=12, pady=3)
 
         self.btn_toggle_task = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_toggle_task)
-        self.btn_toggle_task.pack(fill="x", padx=10, pady=4)
+        self.btn_toggle_task.pack(fill="x", padx=10, pady=2)
 
         self.btn_toggle_pause = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_toggle_pause_today)
-        self.btn_toggle_pause.pack(fill="x", padx=10, pady=4)
+        self.btn_toggle_pause.pack(fill="x", padx=10, pady=2)
 
         tk.Button(actions_frame, text="פתח לוג אחרון", font=self.hebrew_font, command=self.on_open_log).pack(
-            fill="x", padx=10, pady=4
+            fill="x", padx=10, pady=2
         )
 
         tk.Button(
-            actions_frame, text="אפס מונה-כשלים", font=self.hebrew_font, fg="#a33",
+            actions_frame, text="אפס מונה-כשלים ושחרר מפסק-חירום", font=self.hebrew_font, fg="#a33",
             command=self.on_reset_failures,
-        ).pack(fill="x", padx=10, pady=4)
+        ).pack(fill="x", padx=10, pady=2)
 
         quota_frame = tk.LabelFrame(tab, text="מכסת-ריצות מראש (ריק = ללא הגבלה)", font=self.bold_font, labelanchor="ne")
-        quota_frame.pack(fill="x", padx=12, pady=6)
+        quota_frame.pack(fill="x", padx=12, pady=3)
 
         row1 = tk.Frame(quota_frame)
-        row1.pack(fill="x", padx=10, pady=(6, 2))
+        row1.pack(fill="x", padx=10, pady=(3, 1))
         tk.Label(row1, text="ריצות שנותרו:", font=self.hebrew_font, anchor="e", justify="right", width=24).pack(
             side="right"
         )
@@ -239,7 +259,7 @@ class ControlPanel(tk.Tk):
         self.entry_remaining_runs.pack(side="right", fill="x", expand=True, padx=(0, 6))
 
         row2 = tk.Frame(quota_frame)
-        row2.pack(fill="x", padx=10, pady=2)
+        row2.pack(fill="x", padx=10, pady=1)
         tk.Label(row2, text="תאריך-סיום (YYYY-MM-DD):", font=self.hebrew_font, anchor="e", justify="right", width=24).pack(
             side="right"
         )
@@ -247,12 +267,12 @@ class ControlPanel(tk.Tk):
         self.entry_end_date.pack(side="right", fill="x", expand=True, padx=(0, 6))
 
         tk.Button(quota_frame, text="שמור הגדרות-מכסה", font=self.hebrew_font, command=self.on_save_quota).pack(
-            fill="x", padx=10, pady=(4, 8)
+            fill="x", padx=10, pady=(2, 4)
         )
 
     def _build_biweekly_tab(self, tab):
         status_frame = tk.LabelFrame(tab, text="מצב נוכחי", font=self.bold_font, labelanchor="ne")
-        status_frame.pack(fill="x", padx=12, pady=6)
+        status_frame.pack(fill="x", padx=12, pady=3)
         self.bw_labels: dict[str, tk.Label] = {}
         self.bw_status_frame = status_frame
         for key in ("task", "next_run", "last_run", "last_period", "last_reason_caption", "last_reason",
@@ -268,28 +288,28 @@ class ControlPanel(tk.Tk):
             self.bw_labels[key] = lbl
 
         actions_frame = tk.LabelFrame(tab, text="פעולות", font=self.bold_font, labelanchor="ne")
-        actions_frame.pack(fill="x", padx=12, pady=6)
+        actions_frame.pack(fill="x", padx=12, pady=3)
 
         self.bw_btn_toggle_task = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_bw_toggle_task)
-        self.bw_btn_toggle_task.pack(fill="x", padx=10, pady=4)
+        self.bw_btn_toggle_task.pack(fill="x", padx=10, pady=2)
 
         self.bw_btn_toggle_pause = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_bw_toggle_pause_next)
-        self.bw_btn_toggle_pause.pack(fill="x", padx=10, pady=4)
+        self.bw_btn_toggle_pause.pack(fill="x", padx=10, pady=2)
 
         tk.Button(actions_frame, text="פתח לוג דו-שבועי אחרון", font=self.hebrew_font, command=self.on_bw_open_log).pack(
-            fill="x", padx=10, pady=4
+            fill="x", padx=10, pady=2
         )
 
         tk.Button(
             actions_frame, text="אפס מונה-כשלים ושחרר מפסק-חירום", font=self.hebrew_font, fg=RED,
             command=self.on_bw_reset_failures,
-        ).pack(fill="x", padx=10, pady=4)
+        ).pack(fill="x", padx=10, pady=2)
 
         tk.Label(
             tab, font=self.hebrew_font, anchor="e", justify="right", wraplength=430, fg="#555",
             text="המשימה רצה כל יום חמישי ב-01:30 ומפיקה דוח רק בחמישי שאחרי סגירת תקופה (אחת לשבועיים). "
                  "בשאר השבועות \"דילגה כצפוי\" היא התוצאה התקינה.",
-        ).pack(fill="x", padx=12, pady=(2, 8))
+        ).pack(fill="x", padx=12, pady=(1, 4))
 
     # ---------- state reading + rendering ----------
 
@@ -302,8 +322,7 @@ class ControlPanel(tk.Tk):
         # only then), re-fit it on every refresh instead of clipping the
         # bottom rows at whatever size the first refresh happened to need.
         if self._mapped:
-            self.update_idletasks()
-            self.geometry(f"{self.winfo_reqwidth()}x{self.winfo_reqheight()}")
+            self._fit_to_content()
 
     def _refresh_biweekly(self):
         task_info = query_task(BW_TASK_NAME)
@@ -387,7 +406,7 @@ class ControlPanel(tk.Tk):
             lbl.pack_forget()
         for lbl in L.values():
             if lbl.cget("text"):
-                lbl.pack(fill="x", padx=10, pady=2)
+                lbl.pack(fill="x", padx=10, pady=1)
 
         if self._bw_task_enabled is None:
             self.bw_btn_toggle_task.config(text="(משימה לא נמצאה - הריצו את register_biweekly_task.ps1)", state="disabled")
@@ -438,9 +457,26 @@ class ControlPanel(tk.Tk):
             )
 
         failures = state.get("consecutive_failures", 0)
+        if failures >= DAILY_FAILURE_LIMIT:
+            failures_note = " (הגיע לסף מפסק-החירום)"
+        elif failures >= DAILY_FAILURE_LIMIT - 1 and failures > 0:
+            failures_note = " (כשל נוסף יפעיל את מפסק-החירום!)"
+        else:
+            failures_note = ""
         self.status_labels["failures"].config(
-            text=f"כשלים רצופים: {failures}" + (" (מפסק-חירום עלול להתפעל!)" if failures >= 1 else ""),
-            fg="#a33" if failures >= 1 else "black",
+            text=f"כשלים רצופים: {failures} מתוך {DAILY_FAILURE_LIMIT}{failures_note}",
+            fg=RED if failures >= 1 else "black",
+        )
+
+        # The flag file - not the counter - is what actually stops
+        # daily_autorun.py (it checks the file first and exits). The counter can
+        # read 0 while the flag is still on disk, so this has to be shown on its
+        # own line, not inferred from the number above.
+        self._killswitch = KILLSWITCH_FLAG.exists()
+        self.status_labels["killswitch"].config(
+            text="מפסק-חירום יומי: פעיל - שום ריצה לא תתבצע עד לשחרור" if self._killswitch
+            else "מפסק-חירום יומי: לא פעיל",
+            fg=RED if self._killswitch else "black",
         )
 
         self._paused_today = paused_today
@@ -533,19 +569,35 @@ class ControlPanel(tk.Tk):
     def on_reset_failures(self):
         state = load_json(STATE_FILE, {"consecutive_failures": 0, "last_run_date": None, "last_run_status": None})
         current = state.get("consecutive_failures", 0)
-        if current == 0:
-            self._set_feedback("מונה-הכשלים כבר על 0 - אין מה לאפס.", ok=True)
+        flag = KILLSWITCH_FLAG.exists()
+        # "counter is 0" alone must not end this early: a flag left on disk with a
+        # counter already at 0 is exactly the state that keeps the run blocked.
+        if current == 0 and not flag:
+            self._set_feedback("מונה-הכשלים היומי על 0 ומפסק-החירום לא פעיל - אין מה לאפס.", ok=True)
             return
         if not messagebox.askyesno(
-            "אישור איפוס",
-            f"מונה-הכשלים הרצופים כרגע עומד על {current}.\n"
-            f"לאפס אותו ל-0? (מומלץ רק אחרי שבדקתם ותיקנתם את הסיבה לכשלים)",
+            "אישור איפוס - ריצה יומית",
+            f"כשלים רצופים: {current}. מפסק-חירום: {'פעיל' if flag else 'לא פעיל'}.\n"
+            f"לאפס את המונה ל-0 ולשחרר את המפסק? (מומלץ רק אחרי שבדקתם ותיקנתם את הסיבה לכשלים)\n\n"
+            f"הפעולה נוגעת רק לריצה היומית - מונה-הכשלים של הדוח הדו-שבועי לא משתנה.",
         ):
             return
-        state["consecutive_failures"] = 0
-        save_json(STATE_FILE, state)
-        self._set_feedback("מונה-הכשלים אופס ל-0.", ok=True)
+        try:
+            state["consecutive_failures"] = 0
+            save_json(STATE_FILE, state)
+            if flag:
+                KILLSWITCH_FLAG.unlink()
+        except OSError as e:
+            self._set_feedback(f"האיפוס נכשל: {e}", ok=False)
+            self.refresh()
+            return
         self.refresh()
+        # When the breaker trips, daily_autorun.py also disables the Windows task;
+        # releasing the flag does not re-enable it.
+        if flag and self._task_enabled is False:
+            self._set_feedback("אופס ושוחרר. המשימה המתוזמנת עדיין מושהית - לחצו \"הפעל אוטומציה\".", ok=False)
+        else:
+            self._set_feedback("מונה-הכשלים היומי אופס ומפסק-החירום שוחרר.", ok=True)
 
     def on_bw_toggle_task(self):
         if self._bw_task_enabled is None:

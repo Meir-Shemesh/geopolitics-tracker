@@ -90,6 +90,10 @@ PAUSE_NEXT_FLAG = autorun.STATE_DIR / "biweekly_pause_next.flag"
 
 CONSECUTIVE_FAILURE_LIMIT = 2
 
+# Every value `last_outcome` can take - scripts/automation_control_panel.pyw has a
+# display line for each (tests/test_control_panel.py keeps the two in step).
+OUTCOMES = ("published", "skipped", "failed", "paused", "stopped")
+
 DEFAULT_STATE = {
     "consecutive_failures": 0,
     "last_run_at": None,
