@@ -721,28 +721,40 @@ def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
 
 
 def write_period_to_db(conn, start: str, end: str, overview: dict, topics: list[dict], force: bool) -> int:
-    if biweekly_period_exists(conn, end):
-        if not force:
-            raise SystemExit(f"Period ending {end} already exists - pass --force to overwrite.")
-        delete_biweekly_period(conn, end)
+    """All-or-nothing: every row of the period (and, under --force, the delete
+    of the one it replaces) goes into a single transaction. Committing per row
+    would let a crash mid-write leave a period row with only some of its
+    topics - and since every later run skips a period whose row already
+    exists, that partial report would stay published with nothing flagging it."""
+    if biweekly_period_exists(conn, end) and not force:
+        raise SystemExit(f"Period ending {end} already exists - pass --force to overwrite.")
 
-    period_id = insert_biweekly_period(
-        conn, start, end,
-        overview["overview_he"], overview["overview_en"], overview["overview_de"],
-        datetime.now(timezone.utc).isoformat(),
-    )
-    for sort_order, t in enumerate(topics):
-        r = t["result"]
-        topic_id = insert_biweekly_topic(
-            conn, period_id,
-            r["topic_label_he"], r["topic_label_en"], r["topic_label_de"],
-            r["comparison_text_he"], r["comparison_text_en"], r["comparison_text_de"],
-            t["n_distinct_days"], t["n_sources"], sort_order,
+    try:
+        if force:
+            delete_biweekly_period(conn, end, commit=False)
+        period_id = insert_biweekly_period(
+            conn, start, end,
+            overview["overview_he"], overview["overview_en"], overview["overview_de"],
+            datetime.now(timezone.utc).isoformat(),
+            commit=False,
         )
-        # dict.fromkeys() de-dup - see scripts/migrate_biweekly_dryrun_to_db.py
-        # for why a section id can legitimately repeat within one topic's list.
-        for section_id in dict.fromkeys(t["section_ids"]):
-            link_biweekly_topic_section(conn, topic_id, section_id)
+        for sort_order, t in enumerate(topics):
+            r = t["result"]
+            topic_id = insert_biweekly_topic(
+                conn, period_id,
+                r["topic_label_he"], r["topic_label_en"], r["topic_label_de"],
+                r["comparison_text_he"], r["comparison_text_en"], r["comparison_text_de"],
+                t["n_distinct_days"], t["n_sources"], sort_order,
+                commit=False,
+            )
+            # dict.fromkeys() de-dup - see scripts/migrate_biweekly_dryrun_to_db.py
+            # for why a section id can legitimately repeat within one topic's list.
+            for section_id in dict.fromkeys(t["section_ids"]):
+                link_biweekly_topic_section(conn, topic_id, section_id, commit=False)
+        conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
     return period_id
 
 

@@ -11,13 +11,17 @@ PROJECT_LOG for 2026-09-27/28's manual autonomous runs):
     unittest (sanity gate) -> fetch -> pdf_health_check -> extract
     -> screen (per-file, excluding anything pdf_health_check flagged SUSPECT)
     -> analyze -> synthesize (one retry on failure) -> orphan_review (report-only)
-    -> render -> [biweekly, conditional] -> publish -> git add/commit/push
+    -> render -> publish -> git add/commit/push
 
-    The biweekly step (src.reporting.synthesize_biweekly + src.reporting.render_biweekly,
-    see CLAUDE.md "דוח דו-שבועי") only does anything on the one day in 14 that closes a
-    period (src.common.biweekly.period_closing_on) - every other day it's a fast no-op.
-    It runs after the daily render so that day's own report already exists (a biweekly
-    topic can link to it), and before publish so one publish/commit covers both.
+    The biweekly trends report is NOT part of this run any more (moved out
+    2026-10-12): it has its own scheduled task and wrapper,
+    scripts/biweekly_autorun.py, firing overnight after the period's closing
+    Wednesday so the report is ready Thursday morning. All this run still does
+    about it is a read-only check - if a period closed at least a day ago and
+    has no row in tracker.db, the daily summary email says so (see
+    missing_biweekly_period_warning). That check lives here, in a separate
+    process and a separate scheduled task from the overnight run, so it also
+    catches the night the machine was simply off.
 
 Failure policy (see CLAUDE.md-style reasoning in comments below):
   - A single source failing inside fetch/screen/analyze (a bad download, a
@@ -30,14 +34,8 @@ Failure policy (see CLAUDE.md-style reasoning in comments below):
     aborts the day entirely: no render, no publish, no commit. Every other
     step gets zero retries - same "don't push partial state" policy, just
     without the extra retry step.py.py.
-  - The conditional biweekly step is NON-FATAL to the day: if it fails (or
-    partially fails), the wrapper logs it, sends a distinct note in the email
-    summary, and continues straight to publish/commit for the DAILY report
-    regardless - readers depend on the daily report every day, not on the
-    biweekly report landing exactly on its one day in 14, so a biweekly
-    hiccup must never block it. There is no retry for this step; a failed
-    period can always be re-run by hand later via
-    `python -m src.reporting.synthesize_biweekly --start ... --end ...`.
+  - The biweekly-period check is informational only and can never fail the
+    day - any error inside it is swallowed and reported as "check failed".
   - Two consecutive failed days trips the kill-switch: the scheduled task
     disables itself (both a state-file flag AND the actual Windows task, so
     a stray manual re-trigger can't silently resume without notice) and an
@@ -62,7 +60,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
-from src.common.biweekly import period_closing_on  # noqa: E402
+from src.common.biweekly import PERIOD_LENGTH_DAYS, latest_closed_period  # noqa: E402
 VENV_PYTHON = PROJECT_ROOT / "venv" / "Scripts" / "python.exe"
 
 STATE_DIR = PROJECT_ROOT / "automation_state"
@@ -97,13 +95,14 @@ TIMEOUTS = {
     "synthesize": 20 * 60,
     "orphan_review": 5 * 60,
     "render": 15 * 60,
-    # The map-reduce (Stage 1) + per-topic narrative writing (Stage 2) for a
-    # full 14-day period - measured in practice at a few minutes for a normal
-    # period (P1/P2/P3 dry-runs, see PROJECT_LOG), generous headroom above
-    # that. No separate "render_biweekly" step exists - publish.py already
-    # queries every biweekly_periods row from the DB on every run and builds
-    # its HTML pages unconditionally, same as it does for daily reports.
-    "synthesize_biweekly": 20 * 60,
+    # Used by scripts/biweekly_autorun.py (which shares run_step), not by this
+    # script's own sequence. The map-reduce (Stage 1) + per-topic narrative
+    # writing (Stage 2) for a full 14-day period - a few minutes for the
+    # P1/P2/P3 dry-runs (see PROJECT_LOG); the ceiling is generous because no
+    # live period has been timed yet and nobody is watching at 01:30. No
+    # separate "render_biweekly" step exists - publish.py builds every
+    # biweekly_periods row's pages on every run, same as for daily reports.
+    "synthesize_biweekly": 40 * 60,
     "publish": 10 * 60,
     "git": 5 * 60,
 }
@@ -197,15 +196,22 @@ def run_git(log, args: list[str]) -> StepResult:
     return StepResult("git", ok, proc.returncode, proc.stdout, proc.stderr)
 
 
-def do_git_sequence(log, today: str) -> tuple[bool, str]:
-    """Returns (ok, note). 'nothing to commit' is a normal, successful
+def do_git_sequence(
+    log, today: str, paths: list[str] | None = None, commit_message: str | None = None,
+) -> tuple[bool, str]:
+    """`paths` narrows staging to those paths (`git add -- <paths>`) instead of
+    the default `git add -A`; `commit_message` replaces the daily message.
+    Both exist for scripts/biweekly_autorun.py - the defaults are this
+    script's own unchanged behaviour.
+
+    Returns (ok, note). 'nothing to commit' is a normal, successful
     outcome (not every day necessarily changes tracked output), never a
     failure. A remote that has moved on (fetch shows we're behind) is
     deliberately NOT auto-merged/rebased here - that's judged too risky for
     an unattended run; it's surfaced as a failure so a human resolves it by
     hand, exactly like every other "don't push partial/uncertain state"
     case."""
-    add = run_git(log, ["add", "-A"])
+    add = run_git(log, ["add", "-A"] if paths is None else ["add", "--", *paths])
     if not add.ok:
         return False, "git add failed"
 
@@ -218,10 +224,12 @@ def do_git_sequence(log, today: str) -> tuple[bool, str]:
 
     msg_path = STATE_DIR / "commit_msg.txt"
     msg_path.write_text(
-        f"Daily automated report for {today}\n\n"
-        f"Autonomous run via scripts/daily_autorun.py - see automation_state/logs/{today}.log "
-        f"for the full step-by-step record.\n\n"
-        f"Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>\n",
+        commit_message or (
+            f"Daily automated report for {today}\n\n"
+            f"Autonomous run via scripts/daily_autorun.py - see automation_state/logs/{today}.log "
+            f"for the full step-by-step record.\n\n"
+            f"Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>\n"
+        ),
         encoding="utf-8",
     )
     commit = run_git(log, ["commit", "-F", str(msg_path)])
@@ -275,6 +283,34 @@ def disable_scheduled_task(log) -> None:
         log(f"Disabled scheduled task '{SCHEDULED_TASK_NAME}' via schtasks.")
     except Exception as e:
         log(f"Could not disable scheduled task automatically ({e!r}) - killswitch.flag still stops future runs.")
+
+
+def missing_biweekly_period_warning(today: date) -> str:
+    """One line for the daily summary email. Read-only - never synthesizes
+    anything itself. Only looks one period back: once the next one closes,
+    an old gap stops being this run's news (publish.py's hub simply lists
+    whatever periods exist)."""
+    try:
+        period = latest_closed_period(today, max_age_days=PERIOD_LENGTH_DAYS)
+        if period is None:
+            return "no closed period to check"
+        start, end = period[0].isoformat(), period[1].isoformat()
+        from src.common.db import biweekly_period_exists, get_connection
+        conn = get_connection()
+        try:
+            exists = biweekly_period_exists(conn, end)
+        finally:
+            conn.close()
+        if exists:
+            return f"latest closed period {start}..{end} is in tracker.db"
+        return (
+            f"*** WARNING: period {start}..{end} closed {(today - period[1]).days} day(s) ago and has NO "
+            f"report in tracker.db - the overnight run (scripts/biweekly_autorun.py) did not produce it. "
+            f"Check automation_state/logs/biweekly_*.log, or run it by hand: "
+            f"python -m src.reporting.synthesize_biweekly --start {start} --end {end} ***"
+        )
+    except Exception as e:
+        return f"check failed ({e!r})"
 
 
 def load_env() -> None:
@@ -407,18 +443,8 @@ def main() -> int:
             results["render"] = r
             day_ok = r.ok
 
-        # --- biweekly report: conditional, non-fatal (see docstring/failure policy) ---
-        biweekly_note = "not due today"
-        if day_ok:
-            due = period_closing_on(date.fromisoformat(today))
-            if due is not None:
-                start, end = due[0].isoformat(), due[1].isoformat()
-                log(f"Biweekly period due today: {start}..{end}")
-                r = run_step(log, "synthesize_biweekly", ["src.reporting.synthesize_biweekly"])
-                results["synthesize_biweekly"] = r
-                biweekly_note = "OK" if r.ok else f"FAILED (exit={r.returncode}) - daily report continues regardless"
-                if not r.ok:
-                    log("synthesize_biweekly failed - non-fatal, continuing to publish/commit the daily report anyway.")
+        biweekly_note = missing_biweekly_period_warning(date.fromisoformat(today))
+        log(f"Biweekly period check: {biweekly_note}")
 
         if day_ok:
             r = run_step(log, "publish", ["src.publishing.publish"])
@@ -462,7 +488,7 @@ def main() -> int:
             else:
                 status = "?"
             lines.append(f"  {name}: {status}")
-        lines.append(f"  biweekly report: {biweekly_note}")
+        lines.append(f"  biweekly check: {biweekly_note}")
         lines.append(f"  git: {'OK' if day_ok else 'FAILED'} ({git_note})")
         lines += [
             "",

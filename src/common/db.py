@@ -693,7 +693,10 @@ def biweekly_period_exists(conn: sqlite3.Connection, end_date: str) -> bool:
     return cursor.fetchone() is not None
 
 
-def delete_biweekly_period(conn: sqlite3.Connection, end_date: str) -> None:
+def delete_biweekly_period(conn: sqlite3.Connection, end_date: str, commit: bool = True) -> None:
+    """`commit=False` (here and on the three insert helpers below) lets a caller
+    group a whole period's writes into ONE transaction and commit once at the
+    end - see synthesize_biweekly.write_period_to_db() for why that matters."""
     conn.execute(
         """
         DELETE FROM biweekly_topic_sections
@@ -713,7 +716,8 @@ def delete_biweekly_period(conn: sqlite3.Connection, end_date: str) -> None:
         (end_date,),
     )
     conn.execute("DELETE FROM biweekly_periods WHERE end_date = ?", (end_date,))
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def insert_biweekly_period(
@@ -724,6 +728,7 @@ def insert_biweekly_period(
     overview_en: str,
     overview_de: str,
     created_at: str,
+    commit: bool = True,
 ) -> int:
     cursor = conn.execute(
         """
@@ -732,7 +737,8 @@ def insert_biweekly_period(
         """,
         (start_date, end_date, overview_he, overview_en, overview_de, created_at),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return cursor.lastrowid
 
 
@@ -748,6 +754,7 @@ def insert_biweekly_topic(
     n_distinct_days: int,
     n_sources: int,
     sort_order: int,
+    commit: bool = True,
 ) -> int:
     cursor = conn.execute(
         """
@@ -763,16 +770,20 @@ def insert_biweekly_topic(
             n_distinct_days, n_sources, sort_order,
         ),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return cursor.lastrowid
 
 
-def link_biweekly_topic_section(conn: sqlite3.Connection, topic_id: int, section_id: int) -> None:
+def link_biweekly_topic_section(
+    conn: sqlite3.Connection, topic_id: int, section_id: int, commit: bool = True
+) -> None:
     conn.execute(
         "INSERT INTO biweekly_topic_sections (topic_id, section_id) VALUES (?, ?)",
         (topic_id, section_id),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def get_all_biweekly_periods(conn: sqlite3.Connection):

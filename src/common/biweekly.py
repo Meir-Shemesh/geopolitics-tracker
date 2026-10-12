@@ -6,8 +6,10 @@ the *current default* (not yet a final decision on which weekday to start on
 - that is explicitly left open for a separate decision).
 
 No side effects, no DB access - shared by synthesize_biweekly.py (decides
-whether a period is due), daily_autorun.py (same check, for the conditional
-automation step) and publish.py (lists closed periods for the hub page).
+whether a period is due when run by hand with no arguments),
+scripts/biweekly_autorun.py (the scheduled overnight run - see
+latest_closed_period), daily_autorun.py (its "is a closed period missing"
+warning) and publish.py (lists closed periods for the hub page).
 """
 from datetime import date, timedelta
 
@@ -46,3 +48,21 @@ def all_closed_periods_through(d: date) -> list[tuple[date, date]]:
         periods.append((start, end))
         start = end + timedelta(days=1)
     return periods
+
+
+def latest_closed_period(as_of: date, max_age_days: int | None = None) -> tuple[date, date] | None:
+    """The most recent period that had fully ended BEFORE `as_of` (its end date
+    is yesterday or earlier), or None if there is none - or if it ended more
+    than `max_age_days` days before `as_of`.
+
+    This, not period_closing_on(), is the right question for anything that
+    runs after midnight: the overnight biweekly run fires early on Thursday,
+    when "today" is already the first day of the NEXT period and
+    period_closing_on(today) is None by definition."""
+    closed = all_closed_periods_through(as_of - timedelta(days=1))
+    if not closed:
+        return None
+    start, end = closed[-1]
+    if max_age_days is not None and (as_of - end).days > max_age_days:
+        return None
+    return start, end
