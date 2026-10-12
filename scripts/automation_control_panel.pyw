@@ -1,8 +1,15 @@
-"""GUI control panel for scripts/daily_autorun.py's unattended scheduled task -
-a small tkinter window so the Windows Task Scheduler task, .pause_automation
-flag, automation_state/config.json quota, and automation_state/state.json
-failure counter never need to be managed by hand-typed schtasks/PowerShell
-commands. tkinter is Python's stdlib GUI toolkit - no new dependency.
+"""GUI control panel for the project's two unattended scheduled runs - a small
+tkinter window so their Windows Task Scheduler tasks and state files never
+need to be managed by hand-typed schtasks/PowerShell commands. tkinter is
+Python's stdlib GUI toolkit - no new dependency.
+
+Two tabs, two fully separate mechanisms - nothing on one tab reads or writes
+anything the other tab's mechanism uses:
+  - "ריצה יומית": scripts/daily_autorun.py (task GeopoliticsTrackerDailyAutorun,
+    .pause_automation, automation_state/config.json + state.json).
+  - "דוח מגמות דו-שבועי": scripts/biweekly_autorun.py (task
+    GeopoliticsTrackerBiweeklyAutorun, automation_state/biweekly_state.json,
+    biweekly_killswitch.flag, biweekly_pause_next.flag).
 
 .pyw (not .py) so double-clicking it launches with pythonw.exe - no console
 window. Every subprocess call to schtasks.exe explicitly passes
@@ -10,19 +17,18 @@ creationflags=subprocess.CREATE_NO_WINDOW for the same reason (schtasks.exe
 is a console-subsystem program; spawning it from a windowed/no-console
 parent would otherwise flash a new console window open for each call).
 
-Reads/writes exactly the same files scripts/daily_autorun.py itself reads/
-writes (automation_state/state.json, automation_state/config.json,
-.pause_automation) - this is a thin control surface over that state, not a
-second source of truth for it.
+Reads/writes exactly the same files the two wrapper scripts themselves read/
+write - this is a thin control surface over that state, not a second source
+of truth for it.
 """
 import json
 import subprocess
 import sys
 import tkinter as tk
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from tkinter import font as tkfont
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STATE_DIR = PROJECT_ROOT / "automation_state"
@@ -31,6 +37,31 @@ STATE_FILE = STATE_DIR / "state.json"
 CONFIG_FILE = STATE_DIR / "config.json"
 PAUSE_FLAG = PROJECT_ROOT / ".pause_automation"
 SCHEDULED_TASK_NAME = "GeopoliticsTrackerDailyAutorun"
+
+# Biweekly mechanism - same names scripts/biweekly_autorun.py defines.
+BW_TASK_NAME = "GeopoliticsTrackerBiweeklyAutorun"
+BW_STATE_FILE = STATE_DIR / "biweekly_state.json"
+BW_KILLSWITCH_FLAG = STATE_DIR / "biweekly_killswitch.flag"
+BW_PAUSE_NEXT_FLAG = STATE_DIR / "biweekly_pause_next.flag"
+BW_FAILURE_LIMIT = 2          # biweekly_autorun.CONSECUTIVE_FAILURE_LIMIT
+BW_EXPECTED_INTERVAL_DAYS = 7  # the task fires every Thursday, due period or not
+BW_DEFAULT_STATE = {
+    "consecutive_failures": 0, "last_run_at": None, "last_outcome": None,
+    "last_detail": None, "last_period": None,
+}
+
+GREEN, RED, BLUE, AMBER = "#2a7", "#a33", "#246", "#a60"
+
+# The three results the biweekly tab must never blur together, plus the two
+# "did not really run" ones. "skipped" is deliberately neither green nor
+# "no data": it is the expected result most Thursdays, and it is not a report.
+BW_OUTCOME_TEXT = {
+    "published": ("רצה ופרסמה דוח חדש", GREEN),
+    "skipped": ("רצה ודילגה כצפוי - אין תקופה חדשה שהגיע זמנה", BLUE),
+    "failed": ("נכשלה - הייתה תקופה שהגיע זמנה ולא הופק דוח", RED),
+    "paused": ("דולגה - השהיה ידנית לריצה אחת (תקופה הייתה מוכנה)", AMBER),
+    "stopped": ("לא רצה - מפסק-החירום הדו-שבועי פעיל", RED),
+}
 
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
@@ -85,9 +116,9 @@ def run_schtasks_elevated(args: list[str]) -> tuple[int, str]:
     return result.returncode, (result.stdout.strip() or result.stderr.strip() or f"קוד שגיאה {result.returncode}")
 
 
-def query_task() -> dict:
+def query_task(task_name: str = SCHEDULED_TASK_NAME) -> dict:
     """Returns {'exists': bool, 'state': str|None, 'next_run': str|None, 'error': str|None}."""
-    result = run_schtasks(["/Query", "/TN", SCHEDULED_TASK_NAME, "/V", "/FO", "LIST"])
+    result = run_schtasks(["/Query", "/TN", task_name, "/V", "/FO", "LIST"])
     if result.returncode != 0:
         return {"exists": False, "state": None, "next_run": None, "error": result.stderr.strip() or result.stdout.strip()}
     info = {"exists": True, "state": None, "next_run": None, "error": None}
@@ -116,12 +147,13 @@ def save_json(path: Path, data: dict) -> None:
 class ControlPanel(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("גאופוליטיקה יומי - בקרת אוטומציה")
+        self.title("גאופוליטיקה - בקרת אוטומציה")
 
         self.hebrew_font = tkfont.Font(family="Segoe UI", size=10)
         self.bold_font = tkfont.Font(family="Segoe UI", size=10, weight="bold")
         self.title_font = tkfont.Font(family="Segoe UI", size=13, weight="bold")
 
+        self._mapped = False
         self._build_widgets()
         self.refresh()
 
@@ -142,14 +174,34 @@ class ControlPanel(tk.Tk):
         self.update()
         self.geometry(f"{self.winfo_reqwidth()}x{self.winfo_reqheight()}")
         self.resizable(False, False)
+        self._mapped = True
 
     # ---------- widget construction ----------
 
     def _build_widgets(self):
-        header = tk.Label(self, text="בקרת אוטומציה - הרצה יומית", font=self.title_font, anchor="e", justify="right")
+        header = tk.Label(self, text="בקרת אוטומציה", font=self.title_font, anchor="e", justify="right")
         header.pack(fill="x", padx=12, pady=(12, 6))
 
-        status_frame = tk.LabelFrame(self, text="מצב נוכחי", font=self.bold_font, labelanchor="ne")
+        ttk.Style(self).configure("TNotebook.Tab", font=self.bold_font, padding=(14, 5))
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill="both", expand=True, padx=12, pady=(0, 6))
+        daily_tab = tk.Frame(self.notebook)
+        biweekly_tab = tk.Frame(self.notebook)
+        self.notebook.add(daily_tab, text="ריצה יומית")
+        self.notebook.add(biweekly_tab, text="דוח מגמות דו-שבועי")
+
+        self._build_daily_tab(daily_tab)
+        self._build_biweekly_tab(biweekly_tab)
+
+        tk.Button(self, text="רענן", font=self.hebrew_font, command=self.refresh).pack(fill="x", padx=12, pady=(0, 4))
+
+        self.feedback_label = tk.Label(
+            self, text="", font=self.hebrew_font, anchor="e", justify="right", wraplength=430,
+        )
+        self.feedback_label.pack(fill="x", padx=12, pady=(4, 12))
+
+    def _build_daily_tab(self, tab):
+        status_frame = tk.LabelFrame(tab, text="מצב נוכחי", font=self.bold_font, labelanchor="ne")
         status_frame.pack(fill="x", padx=12, pady=6)
         self.status_labels: dict[str, tk.Label] = {}
         for key in ("task", "next_run", "last_run", "failures", "paused_today", "quota"):
@@ -157,7 +209,7 @@ class ControlPanel(tk.Tk):
             lbl.pack(fill="x", padx=10, pady=2)
             self.status_labels[key] = lbl
 
-        actions_frame = tk.LabelFrame(self, text="פעולות", font=self.bold_font, labelanchor="ne")
+        actions_frame = tk.LabelFrame(tab, text="פעולות", font=self.bold_font, labelanchor="ne")
         actions_frame.pack(fill="x", padx=12, pady=6)
 
         self.btn_toggle_task = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_toggle_task)
@@ -175,7 +227,7 @@ class ControlPanel(tk.Tk):
             command=self.on_reset_failures,
         ).pack(fill="x", padx=10, pady=4)
 
-        quota_frame = tk.LabelFrame(self, text="מכסת-ריצות מראש (ריק = ללא הגבלה)", font=self.bold_font, labelanchor="ne")
+        quota_frame = tk.LabelFrame(tab, text="מכסת-ריצות מראש (ריק = ללא הגבלה)", font=self.bold_font, labelanchor="ne")
         quota_frame.pack(fill="x", padx=12, pady=6)
 
         row1 = tk.Frame(quota_frame)
@@ -198,16 +250,157 @@ class ControlPanel(tk.Tk):
             fill="x", padx=10, pady=(4, 8)
         )
 
-        tk.Button(self, text="רענן", font=self.hebrew_font, command=self.refresh).pack(fill="x", padx=12, pady=(0, 4))
+    def _build_biweekly_tab(self, tab):
+        status_frame = tk.LabelFrame(tab, text="מצב נוכחי", font=self.bold_font, labelanchor="ne")
+        status_frame.pack(fill="x", padx=12, pady=6)
+        self.bw_labels: dict[str, tk.Label] = {}
+        self.bw_status_frame = status_frame
+        for key in ("task", "next_run", "last_run", "last_period", "last_reason_caption", "last_reason",
+                    "freshness", "failures", "killswitch", "pause_next"):
+            # "last_reason" shows the wrapper's own English text verbatim, so it
+            # is laid out left-to-right on a line of its own - mixed into a
+            # Hebrew sentence, bidi reordering scrambles it.
+            ltr = key == "last_reason"
+            lbl = tk.Label(
+                status_frame, text="", font=self.hebrew_font, wraplength=410,
+                anchor="w" if ltr else "e", justify="left" if ltr else "right",
+            )
+            self.bw_labels[key] = lbl
 
-        self.feedback_label = tk.Label(
-            self, text="", font=self.hebrew_font, anchor="e", justify="right", wraplength=430,
+        actions_frame = tk.LabelFrame(tab, text="פעולות", font=self.bold_font, labelanchor="ne")
+        actions_frame.pack(fill="x", padx=12, pady=6)
+
+        self.bw_btn_toggle_task = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_bw_toggle_task)
+        self.bw_btn_toggle_task.pack(fill="x", padx=10, pady=4)
+
+        self.bw_btn_toggle_pause = tk.Button(actions_frame, text="...", font=self.hebrew_font, command=self.on_bw_toggle_pause_next)
+        self.bw_btn_toggle_pause.pack(fill="x", padx=10, pady=4)
+
+        tk.Button(actions_frame, text="פתח לוג דו-שבועי אחרון", font=self.hebrew_font, command=self.on_bw_open_log).pack(
+            fill="x", padx=10, pady=4
         )
-        self.feedback_label.pack(fill="x", padx=12, pady=(4, 12))
+
+        tk.Button(
+            actions_frame, text="אפס מונה-כשלים ושחרר מפסק-חירום", font=self.hebrew_font, fg=RED,
+            command=self.on_bw_reset_failures,
+        ).pack(fill="x", padx=10, pady=4)
+
+        tk.Label(
+            tab, font=self.hebrew_font, anchor="e", justify="right", wraplength=430, fg="#555",
+            text="המשימה רצה כל יום חמישי ב-01:30 ומפיקה דוח רק בחמישי שאחרי סגירת תקופה (אחת לשבועיים). "
+                 "בשאר השבועות \"דילגה כצפוי\" היא התוצאה התקינה.",
+        ).pack(fill="x", padx=12, pady=(2, 8))
 
     # ---------- state reading + rendering ----------
 
     def refresh(self):
+        self._refresh_daily()
+        self._refresh_biweekly()
+        # The biweekly tab's lines appear, disappear and wrap with its state
+        # (a failure reason, the stale-run warning), so the height needed is
+        # not fixed. Once the window has been mapped (see __init__ for why
+        # only then), re-fit it on every refresh instead of clipping the
+        # bottom rows at whatever size the first refresh happened to need.
+        if self._mapped:
+            self.update_idletasks()
+            self.geometry(f"{self.winfo_reqwidth()}x{self.winfo_reqheight()}")
+
+    def _refresh_biweekly(self):
+        task_info = query_task(BW_TASK_NAME)
+        state = load_json(BW_STATE_FILE, BW_DEFAULT_STATE)
+        L = self.bw_labels
+
+        if not task_info["exists"]:
+            L["task"].config(text="משימה מתוזמנת: לא נמצאה", fg=RED)
+            self._bw_task_enabled = None
+        else:
+            enabled = task_info["state"] == "Enabled"
+            self._bw_task_enabled = enabled
+            L["task"].config(
+                text=f"משימה מתוזמנת: {'פעילה (Enabled)' if enabled else 'מושהית (Disabled)'}",
+                fg=GREEN if enabled else RED,
+            )
+        L["next_run"].config(text=f"ריצה הבאה: {task_info['next_run'] or '-'}")
+
+        # Like the daily tab: this is the automated MECHANISM's last run (what
+        # scripts/biweekly_autorun.py recorded), not "the latest published
+        # period" - a period produced by hand does not show up here.
+        outcome = state.get("last_outcome")
+        last_run_at = state.get("last_run_at")
+        when = (last_run_at or "").replace("T", " ")
+        if outcome in BW_OUTCOME_TEXT:
+            text, colour = BW_OUTCOME_TEXT[outcome]
+            L["last_run"].config(text=f"ריצה אחרונה של המנגנון האוטומטי: {text} ({when})", fg=colour)
+        elif outcome:
+            L["last_run"].config(text=f"ריצה אחרונה של המנגנון האוטומטי: תוצאה לא מוכרת '{outcome}' ({when})", fg=RED)
+        else:
+            L["last_run"].config(text="ריצה אחרונה של המנגנון האוטומטי: אין נתונים עדיין (טרם רץ)", fg="black")
+
+        period = state.get("last_period") or ""
+        L["last_period"].config(text=f"תקופה: {period.replace('..', ' עד ')}" if period else "")
+        show_reason = outcome == "failed" and bool(state.get("last_detail"))
+        L["last_reason_caption"].config(text="סיבת הכשל, כפי שנרשמה" if show_reason else "", fg=RED)
+        L["last_reason"].config(text=state["last_detail"] if show_reason else "", fg=RED)
+
+        # A run that never happened (machine off at 01:30) records nothing, so
+        # the last outcome alone would keep showing an old, reassuring result.
+        freshness_text, freshness_colour = "", "black"
+        if last_run_at and self._bw_task_enabled:
+            try:
+                age = datetime.now() - datetime.fromisoformat(last_run_at)
+                if age > timedelta(days=BW_EXPECTED_INTERVAL_DAYS, hours=12):
+                    freshness_text = (f"שימו לב: לא נרשמה ריצה כבר {age.days} ימים, אף שהמשימה אמורה לרוץ כל שבוע - "
+                                      f"ייתכן שהמחשב היה כבוי ב-01:30")
+                    freshness_colour = RED
+            except ValueError:
+                pass
+        L["freshness"].config(text=freshness_text, fg=freshness_colour)
+
+        failures = state.get("consecutive_failures", 0)
+        if failures >= BW_FAILURE_LIMIT:
+            failures_note = " (הגיע לסף מפסק-החירום)"
+        elif failures >= BW_FAILURE_LIMIT - 1 and failures > 0:
+            failures_note = " (כשל נוסף יפעיל את מפסק-החירום!)"
+        else:
+            failures_note = ""
+        L["failures"].config(
+            text=f"כשלים רצופים: {failures} מתוך {BW_FAILURE_LIMIT}{failures_note}", fg=RED if failures >= 1 else "black",
+        )
+
+        self._bw_killswitch = BW_KILLSWITCH_FLAG.exists()
+        L["killswitch"].config(
+            text="מפסק-חירום דו-שבועי: פעיל - שום ריצה לא תתבצע עד לשחרור" if self._bw_killswitch
+            else "מפסק-חירום דו-שבועי: לא פעיל",
+            fg=RED if self._bw_killswitch else "black",
+        )
+
+        self._bw_pause_next = BW_PAUSE_NEXT_FLAG.exists()
+        L["pause_next"].config(
+            text="מושהה לריצה הבאה: כן - הדוח הבא שיגיע זמנו ידולג פעם אחת" if self._bw_pause_next
+            else "מושהה לריצה הבאה: לא",
+            fg=AMBER if self._bw_pause_next else "black",
+        )
+
+        # Lines with nothing to say are removed rather than left as blank rows;
+        # re-packing all of them keeps the order fixed.
+        for lbl in L.values():
+            lbl.pack_forget()
+        for lbl in L.values():
+            if lbl.cget("text"):
+                lbl.pack(fill="x", padx=10, pady=2)
+
+        if self._bw_task_enabled is None:
+            self.bw_btn_toggle_task.config(text="(משימה לא נמצאה - הריצו את register_biweekly_task.ps1)", state="disabled")
+        else:
+            self.bw_btn_toggle_task.config(
+                text="השהה את הדוח הדו-שבועי לגמרי" if self._bw_task_enabled else "הפעל את הדוח הדו-שבועי",
+                state="normal",
+            )
+        self.bw_btn_toggle_pause.config(
+            text="בטל השהיית הריצה הבאה" if self._bw_pause_next else "השהה רק את הריצה הבאה"
+        )
+
+    def _refresh_daily(self):
         task_info = query_task()
         state = load_json(STATE_FILE, {"consecutive_failures": 0, "last_run_date": None, "last_run_status": None})
         config = load_json(CONFIG_FILE, {"remaining_runs": None, "end_date": None})
@@ -324,7 +517,9 @@ class ControlPanel(tk.Tk):
         if not LOG_DIR.exists():
             self._set_feedback("תיקיית הלוגים עדיין לא קיימת - עוד לא הייתה ריצה.", ok=False)
             return
-        logs = sorted(LOG_DIR.glob("*.log"))
+        # Daily logs are named {date}.log; "biweekly_*.log" in the same folder
+        # belongs to the other tab and would sort after every one of them.
+        logs = sorted(LOG_DIR.glob("[0-9]*.log"))
         if not logs:
             self._set_feedback("לא נמצאו קובצי-לוג.", ok=False)
             return
@@ -351,6 +546,82 @@ class ControlPanel(tk.Tk):
         save_json(STATE_FILE, state)
         self._set_feedback("מונה-הכשלים אופס ל-0.", ok=True)
         self.refresh()
+
+    def on_bw_toggle_task(self):
+        if self._bw_task_enabled is None:
+            return
+        action = "/Disable" if self._bw_task_enabled else "/Enable"
+        self._set_feedback("מבקש הרשאת-מנהל (UAC) לביצוע הפעולה...", ok=True)
+        self.update_idletasks()
+        exit_code, message = run_schtasks_elevated(["/Change", "/TN", BW_TASK_NAME, action])
+        if exit_code == 0:
+            self._set_feedback(
+                f"המשימה הדו-שבועית {'הושהתה' if action == '/Disable' else 'הופעלה'} בהצלחה. הריצה היומית לא הושפעה.", ok=True
+            )
+        elif exit_code == ELEVATION_CANCELLED:
+            self._set_feedback(message, ok=False)
+        else:
+            self._set_feedback(f"הפעולה נכשלה: {message}", ok=False)
+        self.refresh()
+
+    def on_bw_toggle_pause_next(self):
+        try:
+            if BW_PAUSE_NEXT_FLAG.exists():
+                BW_PAUSE_NEXT_FLAG.unlink()
+                self._set_feedback("השהיית הריצה הדו-שבועית הבאה בוטלה.", ok=True)
+            else:
+                BW_PAUSE_NEXT_FLAG.parent.mkdir(parents=True, exist_ok=True)
+                BW_PAUSE_NEXT_FLAG.write_text(
+                    f"נוצר ידנית דרך לוח-הבקרה ב-{datetime.now().isoformat(timespec='seconds')}\n", encoding="utf-8"
+                )
+                self._set_feedback(
+                    "הדוח הדו-שבועי הבא שיגיע זמנו ידולג פעם אחת (לא ייספר ככישלון), וההשהיה תוסר מעצמה. "
+                    "שבוע שבו אין תקופה מוכנה לא מנצל את ההשהיה. הריצה היומית לא הושפעה.", ok=True
+                )
+        except OSError as e:
+            self._set_feedback(f"הפעולה נכשלה: {e}", ok=False)
+        self.refresh()
+
+    def on_bw_open_log(self):
+        logs = sorted(LOG_DIR.glob("biweekly_*.log")) if LOG_DIR.exists() else []
+        if not logs:
+            self._set_feedback("לא נמצאו קובצי-לוג דו-שבועיים - עוד לא הייתה ריצה.", ok=False)
+            return
+        latest = logs[-1]
+        try:
+            subprocess.Popen(["notepad.exe", str(latest)])
+            self._set_feedback(f"נפתח: {latest.name}", ok=True)
+        except OSError as e:
+            self._set_feedback(f"פתיחת הלוג נכשלה: {e}", ok=False)
+
+    def on_bw_reset_failures(self):
+        state = load_json(BW_STATE_FILE, BW_DEFAULT_STATE)
+        current = state.get("consecutive_failures", 0)
+        flag = BW_KILLSWITCH_FLAG.exists()
+        if current == 0 and not flag:
+            self._set_feedback("מונה-הכשלים הדו-שבועי על 0 ומפסק-החירום לא פעיל - אין מה לאפס.", ok=True)
+            return
+        if not messagebox.askyesno(
+            "אישור איפוס - דוח דו-שבועי",
+            f"כשלים רצופים: {current}. מפסק-חירום: {'פעיל' if flag else 'לא פעיל'}.\n"
+            f"לאפס את המונה ל-0 ולשחרר את המפסק? (מומלץ רק אחרי שבדקתם ותיקנתם את הסיבה לכשלים)\n\n"
+            f"הפעולה נוגעת רק לדוח הדו-שבועי - מונה-הכשלים של הריצה היומית לא משתנה.",
+        ):
+            return
+        try:
+            state["consecutive_failures"] = 0
+            save_json(BW_STATE_FILE, state)
+            if flag:
+                BW_KILLSWITCH_FLAG.unlink()
+        except OSError as e:
+            self._set_feedback(f"האיפוס נכשל: {e}", ok=False)
+            self.refresh()
+            return
+        self.refresh()
+        if flag and self._bw_task_enabled is False:
+            self._set_feedback("אופס ושוחרר. המשימה המתוזמנת עדיין מושהית - לחצו \"הפעל את הדוח הדו-שבועי\".", ok=False)
+        else:
+            self._set_feedback("מונה-הכשלים הדו-שבועי אופס ומפסק-החירום שוחרר.", ok=True)
 
     def on_save_quota(self):
         remaining_text = self.entry_remaining_runs.get().strip()

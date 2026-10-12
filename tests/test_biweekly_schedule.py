@@ -82,6 +82,52 @@ class DuePeriodTest(unittest.TestCase):
         self.assertIsNone(biweekly_autorun.due_period(date(2026, 10, 14), exists(ALREADY_IN_DB)))
 
 
+class CircuitBreakerTest(unittest.TestCase):
+    """biweekly_autorun.apply_outcome: what each outcome does to the
+    consecutive-failure count, and when the breaker trips."""
+
+    NOW = "2026-10-15T01:30:05"
+
+    def run_sequence(self, *outcomes):
+        state, tripped = dict(biweekly_autorun.DEFAULT_STATE), False
+        for outcome in outcomes:
+            state, tripped = biweekly_autorun.apply_outcome(state, outcome, "detail", "p", self.NOW)
+        return state, tripped
+
+    def test_one_failure_does_not_trip(self):
+        state, tripped = self.run_sequence("failed")
+        self.assertEqual(state["consecutive_failures"], 1)
+        self.assertFalse(tripped)
+
+    def test_the_second_consecutive_failure_trips(self):
+        state, tripped = self.run_sequence("failed", "failed")
+        self.assertEqual(state["consecutive_failures"], biweekly_autorun.CONSECUTIVE_FAILURE_LIMIT)
+        self.assertTrue(tripped)
+
+    def test_a_published_report_resets_the_count(self):
+        state, tripped = self.run_sequence("failed", "published", "failed")
+        self.assertEqual(state["consecutive_failures"], 1)
+        self.assertFalse(tripped)
+
+    def test_an_expected_skip_resets_the_count_and_is_not_a_success_or_a_failure(self):
+        state, tripped = self.run_sequence("failed", "skipped")
+        self.assertEqual((state["consecutive_failures"], state["last_outcome"], tripped), (0, "skipped", False))
+
+    def test_a_manual_pause_neither_counts_nor_resets(self):
+        state, tripped = self.run_sequence("failed", "paused")
+        self.assertEqual((state["consecutive_failures"], state["last_outcome"], tripped), (1, "paused", False))
+
+    def test_running_into_the_kill_switch_does_not_trip_it_again(self):
+        state, tripped = self.run_sequence("failed", "failed", "stopped")
+        self.assertEqual((state["consecutive_failures"], tripped), (2, False))
+
+    def test_state_files_are_not_the_daily_ones(self):
+        import daily_autorun
+        daily = {daily_autorun.STATE_FILE, daily_autorun.CONFIG_FILE, daily_autorun.KILLSWITCH_FLAG, daily_autorun.PAUSE_FLAG}
+        biweekly = {biweekly_autorun.STATE_FILE, biweekly_autorun.KILLSWITCH_FLAG, biweekly_autorun.PAUSE_NEXT_FLAG}
+        self.assertFalse(daily & biweekly)
+
+
 class MissingPublishedDaysTest(unittest.TestCase):
     """A period may only be synthesized when every one of its days has a
     published daily report - in `reports` AND rendered under docs/he/."""
