@@ -492,6 +492,13 @@ def report_exists(conn: sqlite3.Connection, report_date: str) -> bool:
     return cursor.fetchone() is not None
 
 
+def get_report_dates_in_range(conn: sqlite3.Connection, start_date: str, end_date: str) -> set[str]:
+    cursor = conn.execute(
+        "SELECT report_date FROM reports WHERE report_date BETWEEN ? AND ?", (start_date, end_date)
+    )
+    return {row[0] for row in cursor.fetchall()}
+
+
 def delete_report(conn: sqlite3.Connection, report_date: str) -> None:
     conn.execute(
         """

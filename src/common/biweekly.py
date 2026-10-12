@@ -5,13 +5,15 @@ specification and PROJECT_LOG 4.82 for why this anchor/cadence was chosen as
 the *current default* (not yet a final decision on which weekday to start on
 - that is explicitly left open for a separate decision).
 
-No side effects, no DB access - shared by synthesize_biweekly.py (decides
+No side effects, no DB access (missing_published_days only looks at which
+report files exist) - shared by synthesize_biweekly.py (decides
 whether a period is due when run by hand with no arguments),
 scripts/biweekly_autorun.py (the scheduled overnight run - see
 latest_closed_period), daily_autorun.py (its "is a closed period missing"
 warning) and publish.py (lists closed periods for the hub page).
 """
 from datetime import date, timedelta
+from pathlib import Path
 
 ANCHOR_START = date(2026, 8, 20)  # first Thursday the archive's daily reports begin on
 PERIOD_LENGTH_DAYS = 14
@@ -66,3 +68,24 @@ def latest_closed_period(as_of: date, max_age_days: int | None = None) -> tuple[
     if max_age_days is not None and (as_of - end).days > max_age_days:
         return None
     return start, end
+
+
+def missing_published_days(start: date, end: date, report_dates: set[str], docs_dir: Path) -> list[str]:
+    """Every day in start..end (inclusive) that has no PUBLISHED daily report,
+    as ISO strings, oldest first. Published means both: a row in `reports`
+    (the caller passes those dates in - see db.get_report_dates_in_range) and
+    the rendered page under docs/he/, which is what publish.py writes last.
+
+    A biweekly report is built only from published daily reports, so a period
+    synthesized while any of these are missing is silently a shorter period
+    under a full period's label - and once its row exists, every later run
+    skips it as done. Both synthesize_biweekly.py and the overnight wrapper
+    refuse to run on a non-empty result."""
+    missing = []
+    day = start
+    while day <= end:
+        iso = day.isoformat()
+        if iso not in report_dates or not (docs_dir / "he" / f"report_{iso}_he.html").exists():
+            missing.append(iso)
+        day += timedelta(days=1)
+    return missing

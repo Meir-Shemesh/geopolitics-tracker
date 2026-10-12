@@ -5,6 +5,7 @@ no tracker.db, no API. Weekdays are asserted explicitly so a wrong anchor
 can't make these pass by accident.
 """
 import sys
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
@@ -13,7 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from src.common.biweekly import latest_closed_period, period_closing_on  # noqa: E402
+from src.common.biweekly import latest_closed_period, missing_published_days, period_closing_on  # noqa: E402
 import biweekly_autorun  # noqa: E402
 
 P3 = (date(2026, 9, 17), date(2026, 9, 30))
@@ -79,6 +80,52 @@ class DuePeriodTest(unittest.TestCase):
     def test_the_wednesday_before_closing_night_picks_nothing_new(self):
         # Wednesday 15:00-ish: P4 has not ended, P3 already exists.
         self.assertIsNone(biweekly_autorun.due_period(date(2026, 10, 14), exists(ALREADY_IN_DB)))
+
+
+class MissingPublishedDaysTest(unittest.TestCase):
+    """A period may only be synthesized when every one of its days has a
+    published daily report - in `reports` AND rendered under docs/he/."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.docs = Path(self._tmp.name)
+        (self.docs / "he").mkdir()
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def publish(self, *isos):
+        for iso in isos:
+            (self.docs / "he" / f"report_{iso}_he.html").write_text("x", encoding="utf-8")
+
+    def all_days(self, start, end):
+        return [date.fromordinal(o).isoformat() for o in range(start.toordinal(), end.toordinal() + 1)]
+
+    def test_a_complete_period_has_nothing_missing(self):
+        days = self.all_days(*P4)
+        self.publish(*days)
+        self.assertEqual(missing_published_days(*P4, set(days), self.docs), [])
+
+    def test_the_2026_10_12_incident_names_both_missing_days(self):
+        # Run by hand two days before the period closed: 12 of 14 days existed.
+        days = self.all_days(*P4)[:12]
+        self.publish(*days)
+        self.assertEqual(missing_published_days(*P4, set(days), self.docs), ["2026-10-13", "2026-10-14"])
+
+    def test_a_gap_in_the_middle_is_named_too(self):
+        days = [d for d in self.all_days(*P4) if d != "2026-10-06"]
+        self.publish(*days)
+        self.assertEqual(missing_published_days(*P4, set(days), self.docs), ["2026-10-06"])
+
+    def test_a_report_in_the_db_but_not_yet_published_counts_as_missing(self):
+        days = self.all_days(*P4)
+        self.publish(*days[:-1])
+        self.assertEqual(missing_published_days(*P4, set(days), self.docs), ["2026-10-14"])
+
+    def test_a_published_file_with_no_db_row_counts_as_missing(self):
+        days = self.all_days(*P4)
+        self.publish(*days)
+        self.assertEqual(missing_published_days(*P4, set(days[1:]), self.docs), ["2026-10-01"])
 
 
 if __name__ == "__main__":

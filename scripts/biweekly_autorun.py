@@ -17,7 +17,7 @@ period. The catch-up window is 8 days so that a missed night (machine off)
 is picked up by the following Thursday's firing instead of being lost.
 
 Sequence, when a period is due:
-    check Wednesday's daily report exists and is published
+    check every day of the period has a published daily report
     -> synthesize_biweekly --start --end   (never --force)
     -> publish                              (builds the period's pages + hub)
     -> git add docs reports / commit / push
@@ -49,8 +49,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import daily_autorun as autorun  # noqa: E402  (also puts PROJECT_ROOT on sys.path)
 
-from src.common.biweekly import latest_closed_period  # noqa: E402
-from src.common.db import biweekly_period_exists, get_connection, report_exists  # noqa: E402
+from src.common.biweekly import latest_closed_period, missing_published_days  # noqa: E402
+from src.common.db import biweekly_period_exists, get_connection, get_report_dates_in_range  # noqa: E402
 
 CATCH_UP_DAYS = 8
 GIT_PATHS = ["docs", "reports"]  # publish.py's only tracked outputs - never `add -A` at 01:30
@@ -65,16 +65,21 @@ def due_period(as_of: date, period_exists) -> tuple[date, date] | None:
     return period
 
 
-def closing_day_report_problem(conn, end: str) -> str | None:
-    """None when Wednesday's daily report is both in tracker.db and already
-    published; otherwise the reason. Synthesizing without it would quietly
-    produce a 13-day report under a 14-day label."""
-    if not report_exists(conn, end):
-        return f"no daily report for {end} in tracker.db"
-    published = autorun.PROJECT_ROOT / "docs" / "he" / f"report_{end}_he.html"
-    if not published.exists():
-        return f"daily report for {end} is in tracker.db but not published ({published.name} missing from docs/he/)"
-    return None
+def missing_days_problem(conn, period: tuple[date, date]) -> str | None:
+    """None when every day of the period has a published daily report;
+    otherwise a sentence naming the missing dates. Same rule
+    synthesize_biweekly.py enforces itself - checked here first so the
+    failure email can say exactly which days, and this wrapper never passes
+    --allow-missing-days: an incomplete period is a human's call."""
+    start, end = period
+    missing = missing_published_days(
+        start, end, get_report_dates_in_range(conn, start.isoformat(), end.isoformat()),
+        autorun.PROJECT_ROOT / "docs",
+    )
+    if not missing:
+        return None
+    total = (end - start).days + 1
+    return f"{len(missing)} of {total} day(s) have no published daily report: {', '.join(missing)}"
 
 
 def notify(log, subject: str, body: str) -> None:
@@ -122,7 +127,7 @@ def main() -> int:
                 return 0
             start, end = period[0].isoformat(), period[1].isoformat()
             log(f"Period due: {start}..{end} (closed {(today - period[1]).days} day(s) ago)")
-            problem = closing_day_report_problem(conn, end)
+            problem = missing_days_problem(conn, period)
         finally:
             conn.close()
 
@@ -134,9 +139,10 @@ def main() -> int:
                     f"[geopolitics-tracker] Biweekly report {start}..{end} NOT produced",
                     f"The overnight biweekly run found period {start}..{end} due, but stopped before "
                     f"synthesizing:\n\n  {problem}\n\n"
-                    f"Fix the daily report for {end} first, then run by hand:\n"
+                    f"Publish the missing daily report(s) first, then run by hand:\n"
                     f"  python -m src.reporting.synthesize_biweekly --start {start} --end {end}\n"
-                    f"  python -m src.publishing.publish\n\n"
+                    f"  python -m src.publishing.publish\n"
+                    f"If those days are a known, permanent gap, add --allow-missing-days to the first command.\n\n"
                     f"(Next Thursday's run will also retry on its own if the period is still missing.)\n\n"
                     f"Log: {log_path}",
                 )

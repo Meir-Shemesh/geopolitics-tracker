@@ -25,6 +25,7 @@ period (src.common.biweekly.period_closing_on) - the mode daily_autorun.py's
 conditional biweekly step uses.
 """
 import argparse
+from pathlib import Path
 import json
 import re
 import sys
@@ -33,14 +34,17 @@ from datetime import date, datetime, timezone
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 import anthropic
 from dotenv import load_dotenv
 
-from src.common.biweekly import period_closing_on
+from src.common.biweekly import missing_published_days, period_closing_on
 from src.common.db import (
     biweekly_period_exists,
     delete_biweekly_period,
     get_connection,
+    get_report_dates_in_range,
     init_db,
     insert_biweekly_period,
     insert_biweekly_topic,
@@ -763,6 +767,13 @@ def main() -> int:
     parser.add_argument("--start", default=None, help="Period start, YYYY-MM-DD. Omit with --end to auto-detect today's closing period.")
     parser.add_argument("--end", default=None, help="Period end, YYYY-MM-DD.")
     parser.add_argument("--force", action="store_true", help="Overwrite an existing period for this end date.")
+    parser.add_argument(
+        "--allow-missing-days", action="store_true",
+        help="Synthesize even though some days in the period have no published daily report "
+             "(a known, permanent gap in the archive). Without it the run refuses and lists the "
+             "missing dates. Separate from --force on purpose: overwriting a period and accepting "
+             "an incomplete one are different decisions.",
+    )
     args = parser.parse_args()
 
     conn = get_connection()
@@ -786,6 +797,33 @@ def main() -> int:
         print(f"Period ending {end} already exists - nothing to do (pass --force to overwrite).")
         conn.close()
         return 0
+
+    # Before any API call and long before anything is written: a period row
+    # built from fewer days than its label says would be indistinguishable,
+    # to every later run, from a finished one.
+    try:
+        start_d, end_d = date.fromisoformat(start), date.fromisoformat(end)
+    except ValueError as e:
+        parser.error(f"--start/--end must be YYYY-MM-DD ({e})")
+    if start_d > end_d:
+        parser.error(f"--start ({start}) is after --end ({end}).")
+    missing = missing_published_days(
+        start_d, end_d, get_report_dates_in_range(conn, start, end), PROJECT_ROOT / "docs"
+    )
+    if missing:
+        total_days = (end_d - start_d).days + 1
+        listing = ", ".join(missing)
+        if not args.allow_missing_days:
+            print(
+                f"REFUSING to synthesize {start}..{end}: {len(missing)} of {total_days} day(s) have no "
+                f"published daily report:\n  {listing}\n"
+                f"Nothing was written. Publish those daily reports first, or - only if these days are a "
+                f"known, permanent gap - re-run with --allow-missing-days.",
+                file=sys.stderr,
+            )
+            conn.close()
+            return 2
+        print(f"WARNING (--allow-missing-days): proceeding without {len(missing)} of {total_days} day(s): {listing}")
 
     client = anthropic.Anthropic()
 
