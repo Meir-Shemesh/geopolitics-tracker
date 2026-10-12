@@ -104,7 +104,6 @@ NEWSPAPER_DISPLAY_NAMES = {
     "Frankfurter Allgemeine Zeitung": "Frankfurter Allgemeine Zeitung",
     "Neue Zürcher Zeitung": "Neue Zürcher Zeitung",
     "Globe and Mail": "The Globe and Mail",
-    "Handelsblatt": "Handelsblatt",
 }
 
 # Used only to sort topics by cross-border reach (see section_coverage) - not
@@ -123,7 +122,6 @@ NEWSPAPER_LANGUAGES = {
     "Der Spiegel": "de",
     "Frankfurter Allgemeine Zeitung": "de",
     "Neue Zürcher Zeitung": "de",
-    "Handelsblatt": "de",
     "Globe and Mail": "en",
 }
 

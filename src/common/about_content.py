@@ -148,10 +148,10 @@ CONTENT = {
                         "כלל. נבחרו ארבעה עיתונים אמריקאים כדי לפרוש טווח פוליטי רחב "
                         "(The Washington Post, Wall Street Journal, Los Angeles Times, USA "
                         "Today), ולצדם שני שבועונים (Economist, Der Spiegel) שמביאים עומק. "
-                        "בהמשך התווספו עוד ארבעה מקורות (Frankfurter Allgemeine Zeitung, "
-                        "Neue Zürcher Zeitung, Handelsblatt, The Globe and Mail) שמביאים "
+                        "בהמשך התווספו עוד שלושה מקורות (Frankfurter Allgemeine Zeitung, "
+                        "Neue Zürcher Zeitung, The Globe and Mail) שמביאים "
                         "זוויות גרמנית-שמרנית, שווייצרית-ליברלית וקנדית - ומקטינים את "
-                        "המשקל היחסי של ארה\"ב בתמהיל. היום המערכת עוקבת אחרי 13 מקורות "
+                        "המשקל היחסי של ארה\"ב בתמהיל. היום המערכת עוקבת אחרי 12 מקורות "
                         "בשתי שפות, בטווח פוליטי רחב בכל זירה.",
                     ),
                 ],
@@ -322,12 +322,12 @@ CONTENT = {
                         "American arena wasn't represented at all. Four American papers "
                         "were chosen to span a wide political range (The Washington Post, "
                         "Wall Street Journal, Los Angeles Times, USA Today), alongside two "
-                        "weeklies (The Economist, Der Spiegel) that bring depth. Four more "
+                        "weeklies (The Economist, Der Spiegel) that bring depth. Three more "
                         "sources were added later (Frankfurter Allgemeine Zeitung, Neue "
-                        "Zürcher Zeitung, Handelsblatt, The Globe and Mail), bringing "
+                        "Zürcher Zeitung, The Globe and Mail), bringing "
                         "German-conservative, Swiss-liberal and Canadian perspectives - "
                         "and reducing the US's relative weight in the mix. Today the "
-                        "system follows 13 sources across two languages, spanning a wide "
+                        "system follows 12 sources across two languages, spanning a wide "
                         "political range in every arena.",
                     ),
                 ],
@@ -517,12 +517,12 @@ CONTENT = {
                         "gewählt, um ein breites politisches Spektrum abzudecken (The "
                         "Washington Post, Wall Street Journal, Los Angeles Times, USA "
                         "Today), dazu zwei Wochenmagazine (The Economist, Der Spiegel), "
-                        "die Tiefe bringen. Später kamen vier weitere Quellen hinzu "
+                        "die Tiefe bringen. Später kamen drei weitere Quellen hinzu "
                         "(Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, "
-                        "Handelsblatt, The Globe and Mail), die deutsch-konservative, "
+                        "The Globe and Mail), die deutsch-konservative, "
                         "schweizerisch-liberale und kanadische Perspektiven einbringen - "
                         "und das relative Gewicht der USA im Mix verringern. Heute "
-                        "verfolgt das System 13 Quellen in zwei Sprachen, mit breitem "
+                        "verfolgt das System 12 Quellen in zwei Sprachen, mit breitem "
                         "politischem Spektrum in jedem Raum.",
                     ),
                 ],

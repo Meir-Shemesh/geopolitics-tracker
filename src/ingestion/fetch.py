@@ -135,9 +135,16 @@ def guess_newspaper(file_name: str) -> str | None:
         return "Economist"
     if "spiegel" in normalized:
         return "Der Spiegel"
-    # Four sources added 2026-10-12 after a discovery scan + content-verification
-    # round (see PROJECT_LOG) - all 4 confirmed real, complete, readable issues
-    # via pdf_health_check + manual text-sample review before being added here.
+    # Three sources added 2026-10-12 after a discovery scan + content-verification
+    # round (see PROJECT_LOG) - all confirmed real, complete, readable issues via
+    # pdf_health_check + manual text-sample review before being added here. A
+    # fourth, Handelsblatt, was added in that same round and removed the next day
+    # (2026-10-13, see PROJECT_LOG) - its inclusion had tipped the German-language
+    # group's political balance right-ward (Welt+FAZ+Handelsblatt vs. SZ+Spiegel),
+    # and its original justification (pairing with Financial Times on economics
+    # depth) no longer held once FT was separately rejected for corruption in the
+    # same round. Not retroactive - the 2026-10-12 report that already included
+    # Handelsblatt stays published as-is.
     if "frankfurter allgemeine" in normalized or re.search(r"\bfaz\b", normalized):
         return "Frankfurter Allgemeine Zeitung"
     if (
@@ -152,8 +159,6 @@ def guess_newspaper(file_name: str) -> str | None:
         return "Neue Zürcher Zeitung"
     if "globe and mail" in normalized:
         return "Globe and Mail"
-    if "handelsblatt" in normalized:
-        return "Handelsblatt"
     return None
 
 
