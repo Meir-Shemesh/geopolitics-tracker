@@ -138,7 +138,7 @@ CONTENT = {
                 ],
             },
             {
-                "heading": "המקורות: מארבעה לעשרה",
+                "heading": "המקורות",
                 "blocks": [
                     (
                         "p",
@@ -148,8 +148,11 @@ CONTENT = {
                         "כלל. נבחרו ארבעה עיתונים אמריקאים כדי לפרוש טווח פוליטי רחב "
                         "(The Washington Post, Wall Street Journal, Los Angeles Times, USA "
                         "Today), ולצדם שני שבועונים (Economist, Der Spiegel) שמביאים עומק. "
-                        "היום המערכת עוקבת אחרי עשרה מקורות בשתי שפות, בטווח פוליטי רחב "
-                        "בכל זירה.",
+                        "בהמשך התווספו עוד ארבעה מקורות (Frankfurter Allgemeine Zeitung, "
+                        "Neue Zürcher Zeitung, Handelsblatt, The Globe and Mail) שמביאים "
+                        "זוויות גרמנית-שמרנית, שווייצרית-ליברלית וקנדית - ומקטינים את "
+                        "המשקל היחסי של ארה\"ב בתמהיל. היום המערכת עוקבת אחרי 13 מקורות "
+                        "בשתי שפות, בטווח פוליטי רחב בכל זירה.",
                     ),
                 ],
             },
@@ -309,7 +312,7 @@ CONTENT = {
                 ],
             },
             {
-                "heading": "The Sources: From Four to Ten",
+                "heading": "The Sources",
                 "blocks": [
                     (
                         "p",
@@ -319,8 +322,12 @@ CONTENT = {
                         "American arena wasn't represented at all. Four American papers "
                         "were chosen to span a wide political range (The Washington Post, "
                         "Wall Street Journal, Los Angeles Times, USA Today), alongside two "
-                        "weeklies (The Economist, Der Spiegel) that bring depth. Today the "
-                        "system follows ten sources across two languages, spanning a wide "
+                        "weeklies (The Economist, Der Spiegel) that bring depth. Four more "
+                        "sources were added later (Frankfurter Allgemeine Zeitung, Neue "
+                        "Zürcher Zeitung, Handelsblatt, The Globe and Mail), bringing "
+                        "German-conservative, Swiss-liberal and Canadian perspectives - "
+                        "and reducing the US's relative weight in the mix. Today the "
+                        "system follows 13 sources across two languages, spanning a wide "
                         "political range in every arena.",
                     ),
                 ],
@@ -498,7 +505,7 @@ CONTENT = {
                 ],
             },
             {
-                "heading": "Die Quellen: von vier auf zehn",
+                "heading": "Die Quellen",
                 "blocks": [
                     (
                         "p",
@@ -510,8 +517,13 @@ CONTENT = {
                         "gewählt, um ein breites politisches Spektrum abzudecken (The "
                         "Washington Post, Wall Street Journal, Los Angeles Times, USA "
                         "Today), dazu zwei Wochenmagazine (The Economist, Der Spiegel), "
-                        "die Tiefe bringen. Heute verfolgt das System zehn Quellen in "
-                        "zwei Sprachen, mit breitem politischem Spektrum in jedem Raum.",
+                        "die Tiefe bringen. Später kamen vier weitere Quellen hinzu "
+                        "(Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, "
+                        "Handelsblatt, The Globe and Mail), die deutsch-konservative, "
+                        "schweizerisch-liberale und kanadische Perspektiven einbringen - "
+                        "und das relative Gewicht der USA im Mix verringern. Heute "
+                        "verfolgt das System 13 Quellen in zwei Sprachen, mit breitem "
+                        "politischem Spektrum in jedem Raum.",
                     ),
                 ],
             },

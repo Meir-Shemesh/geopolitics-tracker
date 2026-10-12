@@ -135,6 +135,25 @@ def guess_newspaper(file_name: str) -> str | None:
         return "Economist"
     if "spiegel" in normalized:
         return "Der Spiegel"
+    # Four sources added 2026-10-12 after a discovery scan + content-verification
+    # round (see PROJECT_LOG) - all 4 confirmed real, complete, readable issues
+    # via pdf_health_check + manual text-sample review before being added here.
+    if "frankfurter allgemeine" in normalized or re.search(r"\bfaz\b", normalized):
+        return "Frankfurter Allgemeine Zeitung"
+    if (
+        "neue zürcher zeitung" in normalized
+        and "sonntag" not in normalized
+        and "international" not in normalized
+    ):
+        # Excludes "NZZ am Sonntag" (Sunday edition) and "NZZ International" -
+        # neither was content-verified, same precedent as Die Welt excluding
+        # "sonntag" above. Deliberately not matching bare "nzz" - that would
+        # sweep in both excluded variants too.
+        return "Neue Zürcher Zeitung"
+    if "globe and mail" in normalized:
+        return "Globe and Mail"
+    if "handelsblatt" in normalized:
+        return "Handelsblatt"
     return None
 
 
