@@ -1587,6 +1587,11 @@ Commit: ראו היסטוריית-git (הודעת-commit מפנה ל-action item
 **עדכון (13.10, אחרי הרצה):** `align_daily_task_settings.ps1` נכשל אצל המשתמש ב-"Access is denied" אף שהסיסמה נכונה (עבדה ב-GUI), והשינוי בוצע ידנית ב-GUI. נקרא בפועל מהמשימה: `StopIfGoingOnBatteries=False`, `WakeToRun=True`, `StartWhenAvailable=True`; ללא שינוי: `DisallowStartIfOnBatteries=True` (תיבת "Start only if on AC power" נשארה - לא נגעו בה), `ExecutionTimeLimit=PT72H`, `MultipleInstances=IgnoreNew`, `Enabled=True`, פעולה/טריגר/Principal (meir, Password) זהים. **אבחנה (לא נוסתה - דורשת סיסמה; לא לתקן עד שמישהו נדרש לה):** הסיסמה עוברת דרך `/RP *` (הנחיה אינטראקטיבית), לא כארגומנט, כך שתווים מיוחדים בשורת-הפקודה אינם הסבר. ההבדל המוחשי מול `register_biweekly_task.ps1` (שהצליח באותה צורת-קריאה): הוא מעביר `/RU "$env:COMPUTERNAME\$env:USERNAME"`, ואילו הסקריפט שלנו `/RU "$env:USERNAME"` (שם חשוף) - חשד ראשון; חשד שני: `/F` דורס משימה קיימת שה-Principal שלה כבר מוגדר כ-`meir` ולא כ-`COMPUTER\meir`. תיקון עתידי סביר: להשתמש ב-`$env:COMPUTERNAME\$env:USERNAME`.
 
 
+### 4.99 השוואת מודלים לשלב הניתוח המעמיק: Gemini 4 Argon נדחה, claude-sonnet-5-5 לא אומץ (14.10)
+
+**Argon** (`scripts/compare_analyze_models_20261014.py`, 64 עמודים שפורסמו בפועל, 8 שכבות, ריצת Sonnet טרייה כקו-ייחוס, שופט Haiku עיוור): Argon מצא 44%-48% ממה שפורסם מול 80% של `claude-sonnet-5` הטרי (precision דומה, ~88% מול 85%); 45 מ-63 ההחמצות נמצאו על-ידי Sonnet הטרי, כלומר הפער אמיתי ולא רעש. אין יתרון מחיר (עלות למאמר תואם $0.0151-$0.0174 מול $0.0152), ועמוד Die Welt רגיל נחסם ב-`BlockedReason.OTHER`. **הוחלט: לא מאמצים.** עלות הניסוי ~$3.3.
+**claude-sonnet-5-5** (`scripts/compare_sonnet5_vs_55_20261014.py`): המזהה תקף ב-API, אך הוא **דוחה `tool_choice` מכוון** (400) - מעבר דורש שינוי קוד ב-`analyze_page()`. עם `tool_choice: auto`: recall 51% מול 80%, precision זהה (85%), עלות $1.41 מול $1.51. **ההשערה שה-5.5 ישפר את ה-recall לא נתמכה; לא עוברים.** סייגים: ה-ground truth הוא פלט Sonnet 5 (הטיה לטובתו) ו-`auto` מבלבל עם אפקט המודל. מסמך מלא: `scripts/output/sonnet-vs-argon-analysis-test.md` (נשמר ב-git למרות ה-gitignore, בהוראה מפורשת).
+
 ## 5. סטטוס נוכחי מפורט לפי שלב
 
 ### ✅ שלב 1 — Ingestion (`src/ingestion/fetch.py`)
