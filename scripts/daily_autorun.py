@@ -82,9 +82,9 @@ CONSECUTIVE_FAILURE_LIMIT = 2  # trips the kill-switch after this many failed da
 # it for the rest of the vacation).
 TIMEOUTS = {
     "unittest": 5 * 60,
-    "fetch": 60 * 60,
+    "fetch": 90 * 60,
     "pdf_health_check": 10 * 60,
-    "extract": 30 * 60,
+    "extract": 45 * 60,
     # Raised from 20 min to 50 min on 2026-10-10 (see PROJECT_LOG) after a real
     # timeout: measured steady throughput is ~1.7s/page with no stalls, so even
     # a single ordinary day's extraction (714 pages that day) already brushes
@@ -94,7 +94,7 @@ TIMEOUTS = {
     "analyze": 60 * 60,
     "synthesize": 20 * 60,
     "orphan_review": 5 * 60,
-    "render": 15 * 60,
+    "render": 25 * 60,
     # Used by scripts/biweekly_autorun.py (which shares run_step), not by this
     # script's own sequence. The map-reduce (Stage 1) + per-topic narrative
     # writing (Stage 2) for a full 14-day period - a few minutes for the

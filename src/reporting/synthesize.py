@@ -39,6 +39,7 @@ from src.common.db import (
     insert_report_section,
     link_section_article,
     report_exists,
+    report_row_exists,
 )
 
 # Windows defaults stdout to the cp1252 console codepage even when redirected
@@ -521,6 +522,12 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
         print(f"Report for {report_date} already exists - deleting and rebuilding (--force).")
         original_created_at = get_report(conn, report_date)["created_at"]
         delete_report(conn, report_date)
+    elif not dry_run and report_row_exists(conn, report_date):
+        # A header row with no sections = a write that was interrupted before the
+        # single-transaction fix (or by a hard kill mid-commit). report_exists()
+        # no longer counts it as a report, but the PK would collide on insert.
+        print(f"Found an incomplete report row for {report_date} (no sections) - removing it and rebuilding.")
+        delete_report(conn, report_date)
 
     sources = get_sources_for_date(conn, report_date)
     if not sources:
@@ -585,12 +592,29 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
         return
 
     now = datetime.now(timezone.utc).isoformat()
+    # Everything below is ONE transaction (commit=False on every helper, a single
+    # commit at the end): the `reports` header row must never be durable without
+    # its sections, or report_exists() would let a half-written day look done.
+    # All API work has already finished by this point, so the window is local
+    # DB writes only. Any exception rolls the whole report back.
+    try:
+        _write_report(conn, report_date, sources, sections, articles, valid_ids, now, original_created_at)
+        conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
+
+    conn.close()
+
+
+def _write_report(conn, report_date, sources, sections, articles, valid_ids, now, original_created_at) -> None:
     insert_report(
         conn,
         report_date,
         json.dumps(sources, ensure_ascii=False),
         created_at=original_created_at or now,
         updated_at=now if original_created_at else None,
+        commit=False,
     )
 
     seen_ids = set()
@@ -606,6 +630,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
             now,
             section["topic_label_de"],
             section["comparison_text_de"],
+            commit=False,
         )
         for article_id in dict.fromkeys(section["article_ids"]):
             if article_id not in valid_ids:
@@ -614,7 +639,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
                     f"article_id={article_id} - skipping link."
                 )
                 continue
-            link_section_article(conn, section_id, article_id)
+            link_section_article(conn, section_id, article_id, commit=False)
             seen_ids.add(article_id)
         print(f"  section: {section['topic_label_en']} ({len(section['article_ids'])} article(s))")
 
@@ -634,11 +659,11 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
                 now,
                 fallback["topic_label_de"],
                 fallback["comparison_text_de"],
+                commit=False,
             )
-            link_section_article(conn, section_id, article_id)
+            link_section_article(conn, section_id, article_id, commit=False)
             print(f"  fallback section created for article_id={article_id}: {fallback['topic_label_en']}")
 
-    conn.close()
     print(
         f"\nSynthesis complete: {len(sections)} model section(s) + {len(missing)} fallback section(s) "
         f"= {len(sections) + len(missing)} total for {report_date}."

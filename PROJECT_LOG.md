@@ -1579,6 +1579,14 @@ Commit: ראו היסטוריית-git (הודעת-commit מפנה ל-action item
 
 ---
 
+### 4.98 אבחון זמני-ריצה (13 עיתונים) והתיקונים שנבעו ממנו - תקרות timeout, כתיבת-דוח אטומית, הגדרות המשימה היומית (13.10)
+
+**ממצא מדוד** (לוגי הריצות האוטומטיות 30.9-9.10; ריצה אוטומטית עם 12 עיתונים טרם התקיימה): יום רגיל לפני ההרחבה ~56 דק' (45-71), fetch הוא המשתנה הגדול (18-44 דק'); הערכה ל-12 עיתונים ~85 דק' טיפוסי, ~136 גרוע. **מגבלת Task Scheduler היומית היא 72 שעות (לא שעתיים - זו של הדו-שבועית)**; המגבלה בפועל היא `TIMEOUTS` לכל שלב - render נמדד 81% מהתקרה, extract 95% (10.10), fetch בקצב 10.10 על ~10 קבצים חורג.
+**שלושה תיקונים**: (1) `TIMEOUTS`: fetch 60→90, extract 30→45, render 15→25 דק' (screen/analyze/synthesize לא נגעו). (2) **כתיבת דוח אטומית**: `insert_report` עשה commit לשורת `reports` לפני ה-sections, כך שקטיעה בחלון הזה השאירה שורה ריקה ש-`report_exists()` ראה כ"דוח קיים" ודילג עליה לצמיתות. עכשיו כל הכתיבה (header + sections + links + fallbacks) בטרנזקציה אחת (`_write_report`, `commit=False` בכל ה-helpers, rollback על כל חריגה); `report_exists()` דורש לפחות section אחד, ו-`synthesize.run()` מוחק שורת-header יתומה ובונה מחדש. נבדק בעבר: **0 שורות יתומות** ב-`tracker.db` (51 דוחות). `tests/test_report_atomic_write.py` (4 בדיקות). (3) **הגדרות המשימה היומית**: מחשב נייד; הוגדרו `DisallowStartIfOnBatteries`+`StopIfGoingOnBatteries`=true, בלי WakeToRun/StartWhenAvailable. `scripts/align_daily_task_settings.ps1` מיישר לדו-שבועית (כולם: battery=false, WakeToRun/StartWhenAvailable=true); דורש סיסמת Windows (LogonType Password), ולכן **מופעל ידנית ע"י המשתמש** - `Set-ScheduledTask` נכשל בלי סיסמה.
+
+**עדכון (13.10, אחרי הרצה):** `align_daily_task_settings.ps1` נכשל אצל המשתמש ב-"Access is denied" אף שהסיסמה נכונה (עבדה ב-GUI), והשינוי בוצע ידנית ב-GUI. נקרא בפועל מהמשימה: `StopIfGoingOnBatteries=False`, `WakeToRun=True`, `StartWhenAvailable=True`; ללא שינוי: `DisallowStartIfOnBatteries=True` (תיבת "Start only if on AC power" נשארה - לא נגעו בה), `ExecutionTimeLimit=PT72H`, `MultipleInstances=IgnoreNew`, `Enabled=True`, פעולה/טריגר/Principal (meir, Password) זהים. **אבחנה (לא נוסתה - דורשת סיסמה; לא לתקן עד שמישהו נדרש לה):** הסיסמה עוברת דרך `/RP *` (הנחיה אינטראקטיבית), לא כארגומנט, כך שתווים מיוחדים בשורת-הפקודה אינם הסבר. ההבדל המוחשי מול `register_biweekly_task.ps1` (שהצליח באותה צורת-קריאה): הוא מעביר `/RU "$env:COMPUTERNAME\$env:USERNAME"`, ואילו הסקריפט שלנו `/RU "$env:USERNAME"` (שם חשוף) - חשד ראשון; חשד שני: `/F` דורס משימה קיימת שה-Principal שלה כבר מוגדר כ-`meir` ולא כ-`COMPUTER\meir`. תיקון עתידי סביר: להשתמש ב-`$env:COMPUTERNAME\$env:USERNAME`.
+
+
 ## 5. סטטוס נוכחי מפורט לפי שלב
 
 ### ✅ שלב 1 — Ingestion (`src/ingestion/fetch.py`)

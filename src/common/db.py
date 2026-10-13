@@ -488,8 +488,24 @@ def get_sources_for_date(conn: sqlite3.Connection, report_date: str) -> list[str
 
 
 def report_exists(conn: sqlite3.Connection, report_date: str) -> bool:
-    cursor = conn.execute("SELECT 1 FROM reports WHERE report_date = ?", (report_date,))
+    """True only for a COMPLETE report: a `reports` row with at least one
+    section. A header row with no sections is the leftover of a write that was
+    interrupted (see synthesize.py's single-transaction write) and must not
+    make later runs skip the date forever."""
+    cursor = conn.execute(
+        """
+        SELECT 1 FROM reports r
+        WHERE r.report_date = ?
+          AND EXISTS (SELECT 1 FROM report_sections s WHERE s.report_date = r.report_date)
+        """,
+        (report_date,),
+    )
     return cursor.fetchone() is not None
+
+
+def report_row_exists(conn: sqlite3.Connection, report_date: str) -> bool:
+    """Raw presence of the `reports` header row, with or without sections."""
+    return conn.execute("SELECT 1 FROM reports WHERE report_date = ?", (report_date,)).fetchone() is not None
 
 
 def get_report_dates_in_range(conn: sqlite3.Connection, start_date: str, end_date: str) -> set[str]:
@@ -518,12 +534,14 @@ def insert_report(
     sources_included: str,
     created_at: str,
     updated_at: str | None = None,
+    commit: bool = True,
 ) -> None:
     conn.execute(
         "INSERT INTO reports (report_date, sources_included, created_at, updated_at) VALUES (?, ?, ?, ?)",
         (report_date, sources_included, created_at, updated_at),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def insert_report_section(
@@ -537,6 +555,7 @@ def insert_report_section(
     created_at: str,
     topic_label_de: str,
     comparison_text_de: str,
+    commit: bool = True,
 ) -> int:
     cursor = conn.execute(
         """
@@ -548,16 +567,18 @@ def insert_report_section(
         (report_date, topic_label_he, topic_label_en, comparison_text_he, comparison_text_en, category, created_at,
          topic_label_de, comparison_text_de),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return cursor.lastrowid
 
 
-def link_section_article(conn: sqlite3.Connection, section_id: int, article_id: int) -> None:
+def link_section_article(conn: sqlite3.Connection, section_id: int, article_id: int, commit: bool = True) -> None:
     conn.execute(
         "INSERT INTO report_section_articles (section_id, article_id) VALUES (?, ?)",
         (section_id, article_id),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def get_report(conn: sqlite3.Connection, report_date: str):
