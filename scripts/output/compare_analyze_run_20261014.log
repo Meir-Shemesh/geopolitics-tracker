@@ -1,0 +1,36 @@
+
+Sample: 64 pages
+  A_multi_article_published                  14
+  B_single_article_published                 10
+  C1_letters_with_published_item             6
+  C2_letters_nothing_published               2
+  D_domestic_excluded_post_scope_change      14
+  E_self_tagged_not_applicable               8
+  F_author_not_in_page_text                  5
+  G_scope_gate_documented_cases              5
+  by newspaper: {'Daily Telegraph': 6, 'Der Spiegel': 3, 'Die Welt': 8, 'Economist': 4, 'Frankfurter Allgemeine Zeitung': 4, 'Globe and Mail': 4, 'Guardian': 6, 'Handelsblatt': 3, 'Los Angeles Times': 5, 'Neue Zürcher Zeitung': 4, 'New York Times International': 1, 'Süddeutsche Zeitung': 4, 'USA Today': 2, 'Wall Street Journal': 5, 'Washington Post': 5}
+  published articles in sample (ground truth): 134; chars: median 12385, max 22636
+Argon verified live: '{"ok": true}' (in models.list(): True)
+  probe think=True: errors=[None, None, None], thoughts tokens=[368, 91, 0], out tokens=[668, 22, 356]
+  probe think=False: errors=[None, None, None], thoughts tokens=[0, 0, 0], out tokens=[599, 20, 734]
+sonnet: done, 0 error(s)
+argon_think: done, 1 error(s)
+argon_nothink: done, 1 error(s)
+
+== sonnet ==
+{"pages": 64, "pred_articles": 117, "truth_articles": 123, "matched": 99, "extra": 18, "missing": 24, "page_include_agree": 60, "author_equal": 93, "both_author_empty": 38, "obj_n": 117, "obj_excerpt_verbatim": 11, "obj_excerpt_loose": 75, "obj_authors": 71, "obj_author_not_in_text": 16, "obj_self_tagged": 0, "country_jaccard_mean": 0.855, "conflict_zone_equal_rate": 0.949}
+cost: {'input_tokens': 606950, 'output_tokens_incl_thoughts': 29285, 'usd': 1.507, 'seconds_total': 324.5}
+
+== argon_think ==
+{"pages": 63, "pred_articles": 60, "truth_articles": 120, "matched": 53, "extra": 7, "missing": 67, "page_include_agree": 49, "author_equal": 43, "both_author_empty": 9, "obj_n": 60, "obj_excerpt_verbatim": 3, "obj_excerpt_loose": 39, "obj_authors": 44, "obj_author_not_in_text": 8, "obj_self_tagged": 0, "errors": 1, "country_jaccard_mean": 0.763, "conflict_zone_equal_rate": 0.887}
+cost: {'input_tokens': 362955, 'output_tokens_incl_thoughts': 19767, 'usd': 0.924, 'seconds_total': 637.4}
+
+== argon_nothink ==
+{"pages": 63, "pred_articles": 65, "truth_articles": 120, "matched": 57, "extra": 8, "missing": 63, "page_include_agree": 52, "author_equal": 44, "both_author_empty": 11, "obj_n": 65, "obj_excerpt_verbatim": 4, "obj_excerpt_loose": 39, "obj_authors": 46, "obj_author_not_in_text": 9, "obj_self_tagged": 0, "errors": 1, "country_jaccard_mean": 0.798, "conflict_zone_equal_rate": 0.895}
+cost: {'input_tokens': 362955, 'output_tokens_incl_thoughts': 13717, 'usd': 0.863, 'seconds_total': 507.1}
+stance judge sonnet vs published: {'same': 54, 'partial': 41, 'different': 4}
+stance judge argon_think vs published: {'same': 25, 'partial': 23, 'different': 5}
+stance judge argon_nothink vs published: {'same': 24, 'partial': 27, 'different': 6}
+Argon vs fresh Sonnet: {'argon_think': {'matched': 51, 'unmatched_either_side': 72, 'page_include_agree': 49}, 'argon_nothink': {'matched': 55, 'unmatched_either_side': 69, 'page_include_agree': 52}}
+
+Wrote C:\Users\meir\OneDrive\Documents\Claude Projects\geopolitics-tracker\scripts\output\compare_analyze_models_20261014.json and ..._raw.json
