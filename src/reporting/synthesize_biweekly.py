@@ -25,10 +25,14 @@ period (src.common.biweekly.period_closing_on) - the mode daily_autorun.py's
 conditional biweekly step uses.
 """
 import argparse
+import hashlib
+import os
 from pathlib import Path
 import json
 import re
 import sys
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 
@@ -37,6 +41,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 import anthropic
+import httpx2
 from dotenv import load_dotenv
 
 from src.common.biweekly import missing_published_days, period_closing_on
@@ -57,6 +62,117 @@ load_dotenv()
 
 MODEL = "claude-sonnet-5"
 CONCURRENCY = 6
+
+# ---------------------------------------------------------------------------
+# Resilience (2026-10-15, PROJECT_LOG 4.100): the first live overnight run died
+# 9 minutes in, in the middle of the reduce call's streaming response, with a raw
+# httpx2.ReadError (WinError 10054) - after all three map calls had been paid
+# for and with nothing persisted. Two additions, neither changes the grouping
+# logic: (1) retry transient transport errors with backoff around every API
+# call; (2) checkpoint map/reduce results to disk so a later failure never
+# re-pays for them.
+# ---------------------------------------------------------------------------
+TRANSIENT_ERRORS = (
+    anthropic.APIConnectionError,   # includes APITimeoutError
+    httpx2.TransportError,          # the raw ReadError/ConnectError that escapes from a mid-stream failure
+    ConnectionError,
+    TimeoutError,
+)
+TRANSIENT_STATUS_CODES = (408, 409, 429, 500, 502, 503, 504, 529)
+RETRY_BACKOFF_SECONDS = (15, 60)  # 3 attempts in total
+
+
+def _is_transient(exc: BaseException) -> bool:
+    if isinstance(exc, anthropic.APIStatusError):
+        return exc.status_code in TRANSIENT_STATUS_CODES
+    return isinstance(exc, TRANSIENT_ERRORS)
+
+
+def call_with_retry(label: str, fn):
+    """Runs fn(); on a transient network/overload error waits and tries again (3
+    attempts total). Anything else - bad request, auth, a logic error - is
+    raised immediately. The anthropic SDK's own max_retries only covers
+    establishing a request, not a connection dropped mid-stream."""
+    for attempt in range(len(RETRY_BACKOFF_SECONDS) + 1):
+        try:
+            return fn()
+        except Exception as exc:
+            if not _is_transient(exc) or attempt == len(RETRY_BACKOFF_SECONDS):
+                raise
+            delay = RETRY_BACKOFF_SECONDS[attempt]
+            print(f"    [{label}] transient error ({type(exc).__name__}: {str(exc)[:120]}) - "
+                  f"retry {attempt + 1}/{len(RETRY_BACKOFF_SECONDS)} in {delay}s", flush=True)
+            time.sleep(delay)
+
+
+_USAGE_LOCK = threading.Lock()
+USAGE = {"calls": 0, "input": 0, "output": 0, "cache_create": 0, "cache_read": 0}
+# Prices as stated in the request ($ per million tokens), not independently verified.
+PRICE_IN, PRICE_OUT = 2.00, 10.00
+
+
+def record_usage(usage) -> None:
+    with _USAGE_LOCK:
+        USAGE["calls"] += 1
+        USAGE["input"] += getattr(usage, "input_tokens", 0) or 0
+        USAGE["output"] += getattr(usage, "output_tokens", 0) or 0
+        USAGE["cache_create"] += getattr(usage, "cache_creation_input_tokens", 0) or 0
+        USAGE["cache_read"] += getattr(usage, "cache_read_input_tokens", 0) or 0
+
+
+def usage_summary(label: str) -> str:
+    u = USAGE
+    cost = (u["input"] + 1.25 * u["cache_create"] + 0.10 * u["cache_read"]) / 1e6 * PRICE_IN + u["output"] / 1e6 * PRICE_OUT
+    return (f"[usage {label}] {u['calls']} call(s) completed in this process: input {u['input']:,}, output {u['output']:,} "
+            f"(thinking included), cache-write {u['cache_create']:,}, cache-read {u['cache_read']:,} "
+            f"-> ~${cost:.2f} at ${PRICE_IN:g}/${PRICE_OUT:g} per Mtok (calls that failed mid-stream are not counted)")
+
+
+CHECKPOINT_DIR = PROJECT_ROOT / "data" / "processed" / "biweekly_checkpoints"
+
+
+def _content_key(*parts) -> str:
+    h = hashlib.sha256()
+    for part in parts:
+        h.update(json.dumps(part, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8"))
+        h.update(b"\x00")
+    return h.hexdigest()[:16]
+
+
+def _checkpoint_path(start: str, end: str, kind: str, key: str) -> Path:
+    return CHECKPOINT_DIR / f"{start}_{end}_{kind}_{key}.json"
+
+
+def load_checkpoint(path: Path):
+    """A missing, unreadable or half-written checkpoint is simply 'no checkpoint'."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) and "topics" in data else None
+    except (OSError, ValueError):
+        return None
+
+
+def save_checkpoint(path: Path, topics: list, usage: dict, retries: int) -> None:
+    try:
+        CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"topics": topics, "usage": usage, "retries": retries,
+                                   "saved_at": datetime.now(timezone.utc).isoformat()}, ensure_ascii=False), encoding="utf-8")
+        os.replace(tmp, path)
+    except OSError as exc:  # a checkpoint is an optimisation; never fail the run over it
+        print(f"    (warning: could not write checkpoint {path.name}: {exc})")
+
+
+def clear_checkpoints(start: str, end: str) -> int:
+    n = 0
+    if CHECKPOINT_DIR.exists():
+        for f in CHECKPOINT_DIR.glob(f"{start}_{end}_*.json"):
+            try:
+                f.unlink()
+                n += 1
+            except OSError:
+                pass
+    return n
 
 # Deliberately separate from synthesize.py's GROUPING_RATIO_THRESHOLD (20%) -
 # that one is calibrated for daily Stage 1's near-total-failure days; this one
@@ -346,30 +462,38 @@ def build_windows(client, dates: list[str], rows_by_date: dict[str, list[dict]])
 
 
 def call_map_once(client, dates, rows, user_content):
-    with client.messages.stream(
-        model=MODEL,
-        max_tokens=16000,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "medium"},
-        system=MAP_SYSTEM_PROMPT,
-        tools=[MAP_TOOL],
-        tool_choice={"type": "tool", "name": "record_subwindow_topic_groups"},
-        messages=[{"role": "user", "content": user_content}],
-    ) as stream:
-        response = stream.get_final_message()
+    def _call():
+        with client.messages.stream(
+            model=MODEL,
+            max_tokens=16000,
+            thinking={"type": "adaptive"},
+            output_config={"effort": "medium"},
+            system=MAP_SYSTEM_PROMPT,
+            tools=[MAP_TOOL],
+            tool_choice={"type": "tool", "name": "record_subwindow_topic_groups"},
+            messages=[{"role": "user", "content": user_content}],
+        ) as stream:
+            return stream.get_final_message()
+
+    response = call_with_retry(f"map {dates[0]}..{dates[-1]}", _call)
+    record_usage(response.usage)
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
     return topics, usage
 
 
-def run_map(client, window_idx, dates, rows_by_date):
+def map_user_content(dates, rows_by_date):
     rows = []
     for d in dates:
         rows.extend(rows_by_date[d])
-    valid_ids = {r["id"] for r in rows}
     text = format_sections_compact(rows)
-    user_content = f"Day-span {dates[0]}..{dates[-1]} ({len(rows)} section(s) total):\n\n{text}"
+    return rows, f"Day-span {dates[0]}..{dates[-1]} ({len(rows)} section(s) total):\n\n{text}"
+
+
+def run_map(client, window_idx, dates, rows_by_date):
+    rows, user_content = map_user_content(dates, rows_by_date)
+    valid_ids = {r["id"] for r in rows}
 
     topics, usage = call_map_once(client, dates, rows, user_content)
     missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids, key="section_ids")
@@ -399,17 +523,21 @@ def run_map(client, window_idx, dates, rows_by_date):
 
 
 def call_reduce_once(client, user_content):
-    with client.messages.stream(
-        model=MODEL,
-        max_tokens=24000,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "medium"},
-        system=REDUCE_SYSTEM_PROMPT,
-        tools=[REDUCE_TOOL],
-        tool_choice={"type": "tool", "name": "record_final_topic_groups"},
-        messages=[{"role": "user", "content": user_content}],
-    ) as stream:
-        response = stream.get_final_message()
+    def _call():
+        with client.messages.stream(
+            model=MODEL,
+            max_tokens=24000,
+            thinking={"type": "adaptive"},
+            output_config={"effort": "medium"},
+            system=REDUCE_SYSTEM_PROMPT,
+            tools=[REDUCE_TOOL],
+            tool_choice={"type": "tool", "name": "record_final_topic_groups"},
+            messages=[{"role": "user", "content": user_content}],
+        ) as stream:
+            return stream.get_final_message()
+
+    response = call_with_retry("reduce", _call)
+    record_usage(response.usage)
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
@@ -419,7 +547,7 @@ def call_reduce_once(client, user_content):
     return topics, usage
 
 
-def run_reduce(client, map_results, sections_by_id):
+def reduce_user_content(map_results, sections_by_id):
     lines = []
     for window_label, topics in map_results:
         for t in topics:
@@ -432,10 +560,14 @@ def run_reduce(client, map_results, sections_by_id):
                 f"  section_ids: {t['section_ids']}\n"
                 f"  gist: {gist}"
             )
-    user_content = f"Day-span groups to merge ({len(lines)} total):\n\n" + "\n\n".join(lines)
+    return len(lines), f"Day-span groups to merge ({len(lines)} total):\n\n" + "\n\n".join(lines)
+
+
+def run_reduce(client, map_results, sections_by_id):
+    n_lines, user_content = reduce_user_content(map_results, sections_by_id)
 
     tokens = count_tokens(client, REDUCE_SYSTEM_PROMPT, user_content)
-    print(f"  [reduce] input: {len(lines)} day-span topic group(s), {tokens} tokens")
+    print(f"  [reduce] input: {n_lines} day-span topic group(s), {tokens} tokens")
 
     valid_ids = set(sections_by_id.keys())
     topics, usage = call_reduce_once(client, user_content)
@@ -489,11 +621,27 @@ def run_stage1(client, conn, start: str, end: str) -> list[dict]:
 
     map_results = []
     for i, window_dates in enumerate(windows, 1):
-        topics, usage, retries = run_map(client, i, window_dates, rows_by_date)
+        _, window_content = map_user_content(window_dates, rows_by_date)
+        ck_path = _checkpoint_path(start, end, f"map{i}", _content_key(MODEL, MAP_SYSTEM_PROMPT, MAP_TOOL, window_content))
+        ck = load_checkpoint(ck_path)
+        if ck is not None:
+            topics = ck["topics"]
+            print(f"  [map window {i}] {window_dates[0]}..{window_dates[-1]}: reusing checkpoint ({len(topics)} topic(s)) - no API call")
+        else:
+            topics, usage, retries = run_map(client, i, window_dates, rows_by_date)
+            save_checkpoint(ck_path, topics, usage, retries)
         map_results.append((f"W{i}({window_dates[0]}..{window_dates[-1]})", topics))
 
-    print("  running reduce...")
-    final_topics, usage, retries = run_reduce(client, map_results, sections_by_id)
+    _, reduce_content = reduce_user_content(map_results, sections_by_id)
+    rk_path = _checkpoint_path(start, end, "reduce", _content_key(MODEL, REDUCE_SYSTEM_PROMPT, REDUCE_TOOL, reduce_content))
+    rk = load_checkpoint(rk_path)
+    if rk is not None:
+        final_topics = rk["topics"]
+        print(f"  reduce: reusing checkpoint ({len(final_topics)} final topic(s)) - no API call")
+    else:
+        print("  running reduce...")
+        final_topics, usage, retries = run_reduce(client, map_results, sections_by_id)
+        save_checkpoint(rk_path, final_topics, usage, retries)
 
     enriched = []
     for t in final_topics:
@@ -566,14 +714,15 @@ def write_biweekly_topic(client, topic: dict, days: list[dict], feedback: str = 
         f"{feedback_block}\n"
         f"Daily entries in chronological order ({len(days)} total):\n\n{days_text}"
     )
-    response = client.messages.create(
+    response = call_with_retry(f"topic {topic['topic_label_en'][:40]}", lambda: client.messages.create(
         model=MODEL,
         max_tokens=8000,
         system=[{"type": "text", "text": BIWEEKLY_STAGE2_SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         tools=[BIWEEKLY_COMPARE_TOOL],
         tool_choice={"type": "tool", "name": "record_biweekly_topic"},
         messages=[{"role": "user", "content": user_content}],
-    )
+    ))
+    record_usage(response.usage)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     result = dict(tool_use.input)
     usage = {
@@ -665,14 +814,15 @@ def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
 def write_overview(client, topics: list[dict]) -> tuple[dict, dict]:
     lines = [f"- {t['topic_label_en']} ({t['n_distinct_days']}d, {t['n_sources']} src)" for t in topics]
     user_content = "Topics in this edition, by source-breadth:\n\n" + "\n".join(lines)
-    response = client.messages.create(
+    response = call_with_retry("overview", lambda: client.messages.create(
         model=MODEL,
         max_tokens=2000,
         system=OVERVIEW_SYSTEM_PROMPT,
         tools=[OVERVIEW_TOOL],
         tool_choice={"type": "tool", "name": "record_overview"},
         messages=[{"role": "user", "content": user_content}],
-    )
+    ))
+    record_usage(response.usage)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     result = dict(tool_use.input)
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
@@ -774,6 +924,11 @@ def main() -> int:
              "missing dates. Separate from --force on purpose: overwriting a period and accepting "
              "an incomplete one are different decisions.",
     )
+    parser.add_argument(
+        "--stage1-only", action="store_true",
+        help="Run only the grouping stage (map + reduce), print its token usage/cost, and stop before any "
+             "narrative writing. Map/reduce results are checkpointed, so a following full run re-uses them.",
+    )
     args = parser.parse_args()
 
     conn = get_connection()
@@ -833,6 +988,12 @@ def main() -> int:
         conn.close()
         return 0
 
+    print(usage_summary("stage 1"))
+    if args.stage1_only:
+        print(f"--stage1-only: stopping after stage 1 ({len(stage1_topics)} grouped topic(s)); nothing written to the DB.")
+        conn.close()
+        return 0
+
     topics = load_topics_for_stage2(conn, stage1_topics)
     print(f"{len(topics)} topic(s) cleared the >={MIN_DISTINCT_DAYS}-day inclusion threshold.")
     if not topics:
@@ -844,6 +1005,10 @@ def main() -> int:
 
     period_id = write_period_to_db(conn, start, end, overview, kept_topics, args.force)
     print(f"Wrote biweekly period id={period_id} ({start}..{end}), {len(kept_topics)} topic(s), to tracker.db.")
+    print(usage_summary("full run"))
+    removed = clear_checkpoints(start, end)
+    if removed:
+        print(f"Removed {removed} checkpoint file(s) for {start}..{end}.")
 
     conn.close()
     return 0
