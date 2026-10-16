@@ -94,7 +94,11 @@ TIMEOUTS = {
     "analyze": 60 * 60,
     "synthesize": 20 * 60,
     "orphan_review": 5 * 60,
-    "render": 25 * 60,
+    # Raised 15 -> 25 min on 2026-10-13 and 25 -> 60 min on 2026-10-16 (PROJECT_LOG
+    # 4.101): render time scales with the number of sections (PDF generation is
+    # ~12 min per language at 137 sections). 16.10 (137 sections, the largest day
+    # so far) was cut at 25 min with the German PDF still missing.
+    "render": 60 * 60,
     # Used by scripts/biweekly_autorun.py (which shares run_step), not by this
     # script's own sequence. The map-reduce (Stage 1) + per-topic narrative
     # writing (Stage 2) for a full 14-day period - a few minutes for the
