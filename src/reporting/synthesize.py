@@ -23,6 +23,7 @@ import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
@@ -46,6 +47,8 @@ from src.common.db import (
 # to a file, which raises UnicodeEncodeError on any print() containing a
 # character outside it (e.g. Balkan/Slavic names) - fatal mid-run otherwise.
 sys.stdout.reconfigure(encoding="utf-8")
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 MODEL = "claude-sonnet-5"
 
@@ -88,6 +91,8 @@ Rules:
 - A topic can be covered by anywhere from one source to all of them.
 - Every article id you were given must appear in exactly one topic's article_ids - do not omit any article, and do not place the same article in more than one topic.
 - If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), they still belong together in the same topic here - a later pass handles merging them into one voice.
+
+Character set: every output field may contain ONLY Hebrew letters (in Hebrew text), Latin letters (including accented ones such as ä ö ü ß é), digits and standard punctuation - never Cyrillic, Arabic, Devanagari, Thai, CJK or any other script, not even as a by-product of trying to phonetically transcribe a non-English name. When you are not certain of the exact Hebrew transliteration of a name (Russian names, German names with umlauts, etc.), keep the name in its original Latin spelling instead of transliterating it.
 
 For each topic, call record_topic_groups with one entry containing:
 - topic_label_he / topic_label_en: a short section heading identifying the topic/story, in Hebrew and English respectively. Pay attention to correct Hebrew grammar, including gender agreement between numbers and nouns.
@@ -223,6 +228,8 @@ Newspaper names always take grammatically MASCULINE agreement in Hebrew (verbs, 
 
 German: topic_label_de and comparison_text_de must read as if written natively in German by a professional journalist, in the same formal-but-readable register (Hochsprache) as this real excerpt of the project's established German house style: "{_GERMAN_STYLE_ANCHOR}" - match that register and, where it fits naturally, its established terms (e.g. "Meinungsbeitrag(e)" for an opinion piece, "Vergleich" for the cross-source comparison, "Quelle"/"Zeitung" for a source). topic_label_de is a natural German label for this topic, not a translation of topic_label_en or topic_label_he - use those two only as context for what the topic is. Pay particular attention to German article/adjective/case agreement (der/die/das and declension) and noun-number agreement; reread each German sentence for this kind of agreement error before finalizing it.
 
+Character set: every output field may contain ONLY Hebrew letters (in Hebrew text), Latin letters (including accented ones such as ä ö ü ß é), digits and standard punctuation - never Cyrillic, Arabic, Devanagari, Thai, CJK or any other script, not even as a by-product of trying to phonetically transcribe a non-English name. When you are not certain of the exact Hebrew transliteration of a name (Russian names, German names with umlauts, etc.), keep the name in its original Latin spelling instead of transliterating it.
+
 Call record_topic_comparison exactly once with topic_label_de, comparison_text_he, comparison_text_en, and comparison_text_de."""
 
 COMPARE_TOOL = {
@@ -319,6 +326,85 @@ def _looks_suspicious(text: str) -> bool:
     return bool(_SUSPICIOUS_TAG_FRAGMENT.search(text) or _SUSPICIOUS_BARE_NUMBER.match(text.strip()))
 
 
+# ---------------------------------------------------------------------------
+# Final-text audit (2026-10-19, PROJECT_LOG 4.102). Cross-model proofreading of
+# the published 18.10/19.10 PDFs found text that no prompt rule had prevented:
+# characters from other scripts leaking into Hebrew words (Cyrillic inside a
+# surname, Arabic inside "Frankfurter Allgemeine Zeitung") and a prose number
+# ("four newspapers") that disagreed with the sources actually cited. A scan
+# of the whole archive showed the script leak is systemic (99 stray characters
+# on 19 dates), not two isolated cases. So, per the project's rule of preferring
+# a generic code-level net over case-by-case prompt fixes:
+#   * foreign-script characters make a topic's comparison count as "suspicious"
+#     in the existing per-topic retry gate (retry once, then per-article fallback);
+#   * audit_sections() then checks every field of the final sections - including
+#     the stage-1 labels that the retry gate cannot re-ask - and reports flags.
+# ---------------------------------------------------------------------------
+# Hebrew block, printable ASCII, Latin-1/Extended-A/B, IPA + spacing modifiers,
+# combining marks, general punctuation, currency, arrows, minus, bullet, bidi controls.
+# Calibrated against the full archive: every legitimate character in it is covered.
+_ALLOWED_TEXT_CHAR = re.compile(
+    r"[\u0590-\u05FF\u0020-\u007E\u00A0-\u024F\u0250-\u02FF\u0300-\u036F\u2000-\u206F"
+    r"\u20A0-\u20CF\u2190-\u21FF\u2212\u2022\u200E\u200F\u202A-\u202E\n\r\t]"
+)
+
+
+def foreign_script_chars(text: str) -> list[str]:
+    """Characters in text that are outside Hebrew/Latin/punctuation/digits (empty list = clean)."""
+    return sorted({ch for ch in (text or "") if not _ALLOWED_TEXT_CHAR.match(ch)})
+
+
+# A digit 1 wedged between two names/words by a hyphen or space ("X-1 Y", "X 1-Y") - the
+# shape reviewers reported for a Hebrew vav-hyphen ("X ו-Y"). Narrowed to a Latin name on both
+# sides after the first archive-wide run flagged only legitimate text (the B-1 bomber, "ב-1 באוגוסט").
+# Flag-only, never blocks.
+_VAV_AS_ONE = re.compile(
+    r"(?<=[a-z])-1(?=[ \u00A0][A-Z])"
+    r"|(?<=[a-z])[ \u00A0]1-(?=[A-Z])"
+)
+
+_NUMBER_WORDS = {
+    "he": {"שניים": 2, "שני": 2, "שלושה": 3, "ארבעה": 4, "חמישה": 5, "שישה": 6, "שבעה": 7, "שמונה": 8, "תשעה": 9, "עשרה": 10},
+    "en": {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10},
+    "de": {"zwei": 2, "drei": 3, "vier": 4, "fünf": 5, "sechs": 6, "sieben": 7, "acht": 8, "neun": 9, "zehn": 10},
+}
+_NEWSPAPER_COUNT = {
+    "he": re.compile(r"(\d+|" + "|".join(_NUMBER_WORDS["he"]) + r")\s+עיתונ(?:ים|י)"),
+    "en": re.compile(r"\b(\d+|" + "|".join(_NUMBER_WORDS["en"]) + r")\s+(?:\w+\s+)?(?:newspapers|papers|dailies)\b", re.I),
+    "de": re.compile(r"\b(\d+|" + "|".join(_NUMBER_WORDS["de"]) + r")\s+(?:\w+\s+)?(?:Zeitungen|Blätter)\b", re.I),
+}
+
+
+def claimed_newspaper_counts(text: str, lang: str) -> list[int]:
+    out = []
+    for m in _NEWSPAPER_COUNT[lang].finditer(text or ""):
+        token = m.group(1)
+        out.append(int(token) if token.isdigit() else _NUMBER_WORDS[lang][token.lower()])
+    return out
+
+
+def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
+    """Read-only checks over the final model-written sections. Returns human-readable flags."""
+    newspaper_by_id = {a["id"]: a["newspaper"] for a in articles}
+    flags = []
+    for sec in sections:
+        name = sec.get("topic_label_en", "?")
+        for field in ("topic_label_he", "topic_label_en", "topic_label_de",
+                      "comparison_text_he", "comparison_text_en", "comparison_text_de"):
+            bad = foreign_script_chars(sec.get(field) or "")
+            if bad:
+                flags.append(f"FOREIGN SCRIPT in {field} of '{name}': " + " ".join(f"U+{ord(c):04X}" for c in bad))
+        if _VAV_AS_ONE.search(sec.get("comparison_text_he") or ""):
+            flags.append(f"DIGIT-1 BETWEEN NAMES (possible garbled 'ו-') in comparison_text_he of '{name}'")
+        real = len({newspaper_by_id[i] for i in sec.get("article_ids", []) if i in newspaper_by_id})
+        for lang in ("he", "en", "de"):
+            for claimed in claimed_newspaper_counts(sec.get(f"comparison_text_{lang}"), lang):
+                if claimed > real:
+                    flags.append(f"NEWSPAPER COUNT: comparison_text_{lang} of '{name}' says {claimed} newspapers, "
+                                 f"but its articles come from {real}")
+    return flags
+
+
 def write_topic_comparison_with_retry(client, topic, topic_articles):
     """One quick retry on failure; returns None (not an exception) if both attempts fail -
     the caller treats that topic's articles as needing individual fallback, exactly like
@@ -340,7 +426,10 @@ def write_topic_comparison_with_retry(client, topic, topic_articles):
         suspicious_langs = [
             lang for lang in ("he", "en", "de")
             if _looks_suspicious(comparison[f"comparison_text_{lang}"])
+            or foreign_script_chars(comparison[f"comparison_text_{lang}"])
         ]
+        if foreign_script_chars(comparison.get("topic_label_de", "")):
+            suspicious_langs.append("label_de")
         if suspicious_langs and attempt == 0:
             print(
                 f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} produced suspicious "
@@ -560,6 +649,18 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
         f"  coverage: {len(sections)} topic(s) with a real comparison, {len(missing)} article(s) "
         f"falling back individually ({coverage_ratio:.0%} of articles covered by a real comparison)."
     )
+
+    flags = audit_sections(sections, articles)
+    if flags:
+        print(f"  REVIEW FLAGS ({len(flags)}) - written text needs a manual look before relying on it:")
+        for f in flags:
+            print(f"    - {f}")
+        if not dry_run:
+            flag_dir = PROJECT_ROOT / "data" / "processed" / "review_flags"
+            flag_dir.mkdir(parents=True, exist_ok=True)
+            (flag_dir / f"{report_date}.txt").write_text("\n".join(flags) + "\n", encoding="utf-8")
+    else:
+        print("  audit: no foreign-script characters, garbled-vav patterns or newspaper-count mismatches.")
 
     for stage_num in (1, 2):
         stage_usage = [u for u in usage_log if u["stage"] == stage_num]
