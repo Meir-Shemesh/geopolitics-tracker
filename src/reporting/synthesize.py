@@ -370,9 +370,12 @@ _NUMBER_WORDS = {
 }
 _NEWSPAPER_COUNT = {
     "he": re.compile(r"(\d+|" + "|".join(_NUMBER_WORDS["he"]) + r")\s+עיתונ(?:ים|י)"),
-    "en": re.compile(r"\b(\d+|" + "|".join(_NUMBER_WORDS["en"]) + r")\s+(?:\w+\s+)?(?:newspapers|papers|dailies)\b", re.I),
-    "de": re.compile(r"\b(\d+|" + "|".join(_NUMBER_WORDS["de"]) + r")\s+(?:\w+\s+)?(?:Zeitungen|Blätter)\b", re.I),
+    "en": re.compile(r"\b(\d+|" + "|".join(_NUMBER_WORDS["en"]) + r")\s+(?:\w+\s+)?(?:newspapers|papers|dailies|outlets)\b", re.I),
+    "de": re.compile(r"\b(\d+|" + "|".join(_NUMBER_WORDS["de"]) + r")\s+(?:\w+\s+)?(?:Zeitungen|Blätter|Medien)\b", re.I),
 }
+
+
+MAX_PLAUSIBLE_SOURCES = 15  # the source list has 13 entries; claims above this are not about it
 
 
 def claimed_newspaper_counts(text: str, lang: str) -> list[int]:
@@ -399,7 +402,9 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
         real = len({newspaper_by_id[i] for i in sec.get("article_ids", []) if i in newspaper_by_id})
         for lang in ("he", "en", "de"):
             for claimed in claimed_newspaper_counts(sec.get(f"comparison_text_{lang}"), lang):
-                if claimed > real:
+                # a number above the size of the whole source list ("about 20 news outlets" in a story about a
+                # disinformation campaign) is an external fact, not a claim about the sections's own sources
+                if real < claimed <= MAX_PLAUSIBLE_SOURCES:
                     flags.append(f"NEWSPAPER COUNT: comparison_text_{lang} of '{name}' says {claimed} newspapers, "
                                  f"but its articles come from {real}")
     return flags

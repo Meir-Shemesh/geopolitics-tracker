@@ -58,6 +58,18 @@ class AuditTest(unittest.TestCase):
                                                  comparison_text_de="Vier Zeitungen berichten")], self.ARTICLES)
         self.assertEqual(len(flags), 2)
 
+    def test_outlets_and_medien_wordings_are_counted_too(self):
+        # found by hand in the 2026-09-04/05/21 sections: "Five outlets", "Die fünf Medien"
+        flags = syn.audit_sections([self.section(comparison_text_en="Five outlets weigh the pressure",
+                                                 comparison_text_de="Die fünf Medien nähern sich")], self.ARTICLES)
+        self.assertEqual(len(flags), 2)
+
+    def test_external_fact_with_a_large_number_is_not_flagged(self):
+        # 2026-10-10: "placed in roughly 100 articles across about 20 news outlets" (a disinformation campaign)
+        flags = syn.audit_sections([self.section(comparison_text_en="placed in articles across about 20 news outlets")],
+                                   self.ARTICLES)
+        self.assertEqual(flags, [])
+
     def test_label_leak_is_reported_even_though_the_retry_gate_cannot_reask_it(self):
         flags = syn.audit_sections([self.section(topic_label_he="תקיפה בשדה लन")], self.ARTICLES)
         self.assertEqual(len(flags), 1)
