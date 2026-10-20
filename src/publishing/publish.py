@@ -2588,6 +2588,62 @@ _TOPIC_JS_TEMPLATE = """
 
 # Plain (non f-string) template so JS/CSS braces don't need doubling - __TOKEN__
 # placeholders are substituted with .replace() in build_homepage_html() instead.
+# ---------------------------------------------------------------------------
+# Shared CTA-card pieces (2026-10-20, PROJECT_LOG 4.104). One CSS block and one JS
+# function build every "big number + one-line preview + call to action" card, so the
+# latest-daily-report card and the latest-biweekly-report card on the homepage (and any
+# future page, e.g. archive.html) are the same component instead of two hand-copied ones -
+# the exact duplication the 2026-10-08 page-chrome unification removed from the nav.
+# ---------------------------------------------------------------------------
+def cta_card_css() -> str:
+    return """
+  .cta-card { display: flex; flex-direction: column; gap: .6rem; flex: 1; justify-content: center; }
+  .cta-card a { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: .6rem; }
+  .cta-card-label { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .04em; color: var(--masthead-accent); text-transform: uppercase; }
+  .cta-card-number { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }
+  /* a date range ("1.10-14.10") is wider than a single date: a little smaller so it never wraps or overflows a column */
+  .cta-card-number.is-range { font-size: 2.1rem; }
+  .cta-card-preview {
+    margin: 0;
+    font-size: .95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .cta-card-cta { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
+  .cta-module:has(a:hover) { border-color: var(--masthead-accent); }
+"""
+
+
+# Defines renderCtaCard(card, {href, label, number, isRange, preview, cta}) - inserted into page scripts.
+CTA_CARD_JS = """
+  function renderCtaCard(card, o) {
+    var link = document.createElement("a");
+    link.href = o.href;
+    if (o.label) {
+      var labelEl = document.createElement("p");
+      labelEl.className = "cta-card-label";
+      labelEl.textContent = o.label;
+      link.appendChild(labelEl);
+    }
+    var numberEl = document.createElement("p");
+    numberEl.className = "cta-card-number" + (o.isRange ? " is-range" : "");
+    numberEl.textContent = o.number;
+    link.appendChild(numberEl);
+    var previewEl = document.createElement("p");
+    previewEl.className = "cta-card-preview";
+    previewEl.textContent = o.preview || "";
+    link.appendChild(previewEl);
+    var cta = document.createElement("p");
+    cta.className = "cta-card-cta";
+    cta.textContent = o.cta;
+    link.appendChild(cta);
+    card.appendChild(link);
+  }
+"""
+
+
 _HOMEPAGE_JS_TEMPLATE = """
 (function () {
   var LANG = "__LANG__";
@@ -2603,6 +2659,7 @@ _HOMEPAGE_JS_TEMPLATE = """
     renderMap(manifest);
     renderTimeline(manifest);
     renderLatestCard(manifest);
+    renderBiweeklyCard(manifest);
     renderRegionChips(manifest);
     renderConflictChips(manifest);
     if (manifest.latest_date) {
@@ -2712,32 +2769,43 @@ _HOMEPAGE_JS_TEMPLATE = """
     });
   }
 
+__CTA_CARD_JS__
   function renderLatestCard(manifest) {
     var card = document.getElementById("latest-card");
     if (!card || !manifest.latest_date) return;
     var dateInfo = manifest.dates[manifest.latest_date];
     var firstSectionId = dateInfo.section_ids[0];
     var section = firstSectionId !== undefined ? manifest.sections[firstSectionId] : null;
+    renderCtaCard(card, {
+      href: section ? hrefFor(section) : "#",
+      number: formatShortDate(manifest.latest_date),
+      preview: section ? topicFor(section) : "",
+      cta: LANG === "he" ? "לדוח המלא ←" : LANG === "de" ? "Zum vollständigen Bericht →" : "Full report →"
+    });
+  }
 
-    var link = document.createElement("a");
-    link.href = section ? hrefFor(section) : "#";
-
-    var numberEl = document.createElement("p");
-    numberEl.className = "latest-card-number";
-    numberEl.textContent = formatShortDate(manifest.latest_date);
-
-    var previewEl = document.createElement("p");
-    previewEl.className = "latest-card-preview";
-    previewEl.textContent = section ? topicFor(section) : "";
-
-    var cta = document.createElement("p");
-    cta.className = "latest-card-cta";
-    cta.textContent = LANG === "he" ? "לדוח המלא ←" : LANG === "de" ? "Zum vollständigen Bericht →" : "Full report →";
-
-    link.appendChild(numberEl);
-    link.appendChild(previewEl);
-    link.appendChild(cta);
-    card.appendChild(link);
+  // The latest biweekly trends report, linked DIRECTLY (not the trends hub). Same component as the
+  // daily card. Without a published period (or without manifest.biweekly_latest) the server-rendered
+  // trends-hub card that already sits in this slot simply stays - nothing breaks, nothing is empty.
+  function renderBiweeklyCard(manifest) {
+    var b = manifest.biweekly_latest;
+    var slot = document.getElementById("trends-module");
+    if (!b || !slot) return;
+    var href = b["href_" + LANG];
+    if (!href) return;
+    slot.textContent = "";
+    var card = document.createElement("div");
+    card.className = "cta-card";
+    card.id = "biweekly-card";
+    slot.appendChild(card);
+    renderCtaCard(card, {
+      href: PREFIX + href,
+      label: LANG === "he" ? "דוח מגמות דו-שבועי" : LANG === "de" ? "Zweiwöchiger Trendbericht" : "Biweekly trends report",
+      number: b.range_short,
+      isRange: true,
+      preview: b["overview_" + LANG] || "",
+      cta: LANG === "he" ? "לדוח המגמות המלא ←" : LANG === "de" ? "Zum vollständigen Trendbericht →" : "Full trends report →"
+    });
   }
 
   function renderRegionChips(manifest) {
@@ -2975,6 +3043,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
         .replace("__TOPIC_PREFIX__", topic_prefix)
+        .replace("__CTA_CARD_JS__", CTA_CARD_JS)
     )
 
     return f"""<!doctype html>
@@ -3161,18 +3230,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   }}
   .timeline-cell.is-selected {{ border-color: var(--masthead-accent); border-width: 2px; font-weight: 700; }}
 
-  .latest-card {{ display: flex; flex-direction: column; gap: .6rem; flex: 1; justify-content: center; }}
-  .latest-card a {{ text-decoration: none; color: inherit; }}
-  .latest-card-number {{ margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }}
-  .latest-card-preview {{
-    margin: 0;
-    font-size: .95rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }}
-  .latest-card-cta {{ margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
+  {cta_card_css()}
 
   /* Redesigned (PROJECT_LOG 4.8x) to match latest-card's own title/
      description/CTA structure - same visual prominence as the other home-
@@ -3185,7 +3243,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
      real weekly source-counts) still unreadable as information, so this
      deliberately stops pretending to convey data at this size and instead
      just symbolizes "trend" the way an arrow or rising-stairs icon would. */
-  .trends-module:has(a:hover) {{ border-color: var(--masthead-accent); }}
+  .trends-module:has(a:hover) {{ border-color: var(--masthead-accent); }}  /* the static fallback card; the JS-built one uses .cta-module */
   .trends-card {{ display: flex; flex: 1; }}
   .trends-card a {{ display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; text-decoration: none; color: inherit; }}
   .trends-card-title {{ margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; color: var(--masthead-accent); }}
@@ -3249,10 +3307,10 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
         </div>
         <div class="timeline-track" id="timeline-track"></div>
       </section>
-      <section class="home-module latest-module">
-        <div class="latest-card" id="latest-card"></div>
+      <section class="home-module latest-module cta-module">
+        <div class="cta-card" id="latest-card"></div>
       </section>
-      <section class="home-module trends-module" id="trends-module">
+      <section class="home-module trends-module cta-module" id="trends-module">
         <div class="trends-card">
           <a href="{esc(trends_href)}">
             <p class="trends-card-title">{esc(trends_card_title)}</p>
@@ -3413,6 +3471,24 @@ def _load_map_svg_inline(lang: str, countries: dict) -> str:
     return raw
 
 
+def _biweekly_latest_entry(conn) -> dict | None:
+    """The newest published biweekly period, for the homepage's direct-link CTA card. Links are relative to
+    docs/ without an asset prefix, same convention as every `href_*` in this manifest. None = nothing published."""
+    periods = get_all_biweekly_periods(conn)
+    if not periods:
+        return None
+    p = periods[0]
+    d0, d1 = date.fromisoformat(p["start_date"]), date.fromisoformat(p["end_date"])
+    return {
+        "start_date": p["start_date"],
+        "end_date": p["end_date"],
+        "range_short": f"{d0.day}.{d0.month}\u2013{d1.day}.{d1.month}",
+        "topic_count": len(get_biweekly_topics_for_period(conn, p["id"])),
+        **{f"overview_{lang}": p[f"overview_{lang}"] for lang in ALL_LANGS},
+        **{f"href_{lang}": f"{lang}/{period_filename(p['start_date'], p['end_date'], lang)}" for lang in ALL_LANGS},
+    }
+
+
 def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
     """Build the static geo/timeline manifest consumed by the future homepage.
 
@@ -3508,6 +3584,7 @@ def build_manifest(conn, entries: list[tuple[str, list[str]]]) -> dict:
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "latest_date": entries[0][0] if entries else None,
+        "biweekly_latest": _biweekly_latest_entry(conn),
         "sections": sections,
         "countries": countries_out,
         "conflict_zones": conflict_zones_out,

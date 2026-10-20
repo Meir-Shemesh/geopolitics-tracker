@@ -365,10 +365,14 @@
   }
   .timeline-cell.is-selected { border-color: var(--masthead-accent); border-width: 2px; font-weight: 700; }
 
-  .latest-card { display: flex; flex-direction: column; gap: .6rem; flex: 1; justify-content: center; }
-  .latest-card a { text-decoration: none; color: inherit; }
-  .latest-card-number { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }
-  .latest-card-preview {
+  
+  .cta-card { display: flex; flex-direction: column; gap: .6rem; flex: 1; justify-content: center; }
+  .cta-card a { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: .6rem; }
+  .cta-card-label { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .04em; color: var(--masthead-accent); text-transform: uppercase; }
+  .cta-card-number { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }
+  /* a date range ("1.10-14.10") is wider than a single date: a little smaller so it never wraps or overflows a column */
+  .cta-card-number.is-range { font-size: 2.1rem; }
+  .cta-card-preview {
     margin: 0;
     font-size: .95rem;
     display: -webkit-box;
@@ -376,7 +380,9 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .latest-card-cta { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
+  .cta-card-cta { margin: .25rem 0 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
+  .cta-module:has(a:hover) { border-color: var(--masthead-accent); }
+
 
   /* Redesigned (PROJECT_LOG 4.8x) to match latest-card's own title/
      description/CTA structure - same visual prominence as the other home-
@@ -389,7 +395,7 @@
      real weekly source-counts) still unreadable as information, so this
      deliberately stops pretending to convey data at this size and instead
      just symbolizes "trend" the way an arrow or rising-stairs icon would. */
-  .trends-module:has(a:hover) { border-color: var(--masthead-accent); }
+  .trends-module:has(a:hover) { border-color: var(--masthead-accent); }  /* the static fallback card; the JS-built one uses .cta-module */
   .trends-card { display: flex; flex: 1; }
   .trends-card a { display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; text-decoration: none; color: inherit; }
   .trends-card-title { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.01em; color: var(--masthead-accent); }
@@ -562,10 +568,10 @@
         </div>
         <div class="timeline-track" id="timeline-track"></div>
       </section>
-      <section class="home-module latest-module">
-        <div class="latest-card" id="latest-card"></div>
+      <section class="home-module latest-module cta-module">
+        <div class="cta-card" id="latest-card"></div>
       </section>
-      <section class="home-module trends-module" id="trends-module">
+      <section class="home-module trends-module cta-module" id="trends-module">
         <div class="trends-card">
           <a href="he/trends.html">
             <p class="trends-card-title">מגמות</p>
@@ -8713,6 +8719,7 @@
     renderMap(manifest);
     renderTimeline(manifest);
     renderLatestCard(manifest);
+    renderBiweeklyCard(manifest);
     renderRegionChips(manifest);
     renderConflictChips(manifest);
     if (manifest.latest_date) {
@@ -8822,32 +8829,67 @@
     });
   }
 
+
+  function renderCtaCard(card, o) {
+    var link = document.createElement("a");
+    link.href = o.href;
+    if (o.label) {
+      var labelEl = document.createElement("p");
+      labelEl.className = "cta-card-label";
+      labelEl.textContent = o.label;
+      link.appendChild(labelEl);
+    }
+    var numberEl = document.createElement("p");
+    numberEl.className = "cta-card-number" + (o.isRange ? " is-range" : "");
+    numberEl.textContent = o.number;
+    link.appendChild(numberEl);
+    var previewEl = document.createElement("p");
+    previewEl.className = "cta-card-preview";
+    previewEl.textContent = o.preview || "";
+    link.appendChild(previewEl);
+    var cta = document.createElement("p");
+    cta.className = "cta-card-cta";
+    cta.textContent = o.cta;
+    link.appendChild(cta);
+    card.appendChild(link);
+  }
+
   function renderLatestCard(manifest) {
     var card = document.getElementById("latest-card");
     if (!card || !manifest.latest_date) return;
     var dateInfo = manifest.dates[manifest.latest_date];
     var firstSectionId = dateInfo.section_ids[0];
     var section = firstSectionId !== undefined ? manifest.sections[firstSectionId] : null;
+    renderCtaCard(card, {
+      href: section ? hrefFor(section) : "#",
+      number: formatShortDate(manifest.latest_date),
+      preview: section ? topicFor(section) : "",
+      cta: LANG === "he" ? "לדוח המלא ←" : LANG === "de" ? "Zum vollständigen Bericht →" : "Full report →"
+    });
+  }
 
-    var link = document.createElement("a");
-    link.href = section ? hrefFor(section) : "#";
-
-    var numberEl = document.createElement("p");
-    numberEl.className = "latest-card-number";
-    numberEl.textContent = formatShortDate(manifest.latest_date);
-
-    var previewEl = document.createElement("p");
-    previewEl.className = "latest-card-preview";
-    previewEl.textContent = section ? topicFor(section) : "";
-
-    var cta = document.createElement("p");
-    cta.className = "latest-card-cta";
-    cta.textContent = LANG === "he" ? "לדוח המלא ←" : LANG === "de" ? "Zum vollständigen Bericht →" : "Full report →";
-
-    link.appendChild(numberEl);
-    link.appendChild(previewEl);
-    link.appendChild(cta);
-    card.appendChild(link);
+  // The latest biweekly trends report, linked DIRECTLY (not the trends hub). Same component as the
+  // daily card. Without a published period (or without manifest.biweekly_latest) the server-rendered
+  // trends-hub card that already sits in this slot simply stays - nothing breaks, nothing is empty.
+  function renderBiweeklyCard(manifest) {
+    var b = manifest.biweekly_latest;
+    var slot = document.getElementById("trends-module");
+    if (!b || !slot) return;
+    var href = b["href_" + LANG];
+    if (!href) return;
+    slot.textContent = "";
+    var card = document.createElement("div");
+    card.className = "cta-card";
+    card.id = "biweekly-card";
+    slot.appendChild(card);
+    renderCtaCard(card, {
+      href: PREFIX + href,
+      label: LANG === "he" ? "דוח מגמות דו-שבועי" : LANG === "de" ? "Zweiwöchiger Trendbericht" : "Biweekly trends report",
+      number: b.range_short,
+      isRange: true,
+      preview: b["overview_" + LANG] || "",
+      cta: LANG === "he" ? "לדוח המגמות המלא ←" : LANG === "de" ? "Zum vollständigen Trendbericht →" : "Full trends report →"
+    });
   }
 
   function renderRegionChips(manifest) {
