@@ -19,6 +19,40 @@ ANCHOR_START = date(2026, 8, 20)  # first Thursday the archive's daily reports b
 PERIOD_LENGTH_DAYS = 14
 
 
+# --- Rolling window (decided 2026-10-20, see CLAUDE.md / PROJECT_LOG 4.106) -----------------------
+# Instead of the fixed, non-overlapping periods above, every weekly run synthesizes the 14 days
+# ending on the last COMPLETE day before the run (a full, independent synthesis - no state carried
+# from the previous report). The four periods already published (2026-08-20 .. 2026-10-14) stay in
+# the archive exactly as they are; the rolling windows start after them and may overlap each other
+# (and the last fixed period).
+#
+# ROLLING_WINDOW_ENABLED is the switch the overnight wrapper and the daily warning read. It is False
+# until a human has looked at a real rolling report; flipping it to True is the whole go-live.
+ROLLING_WINDOW_ENABLED = False
+ROLLING_WINDOW_DAYS = 14
+WEEKLY_RUN_WEEKDAY = 3  # Thursday (date.weekday()): the scheduled task's firing day, unchanged
+
+
+def rolling_window(as_of: date) -> tuple[date, date]:
+    """(start, end) of the 14-day window for a run on `as_of`: end is YESTERDAY, the last day that
+    can have a published daily report (the overnight run fires at 01:30, before today's daily report
+    exists - a window ending on `as_of` itself could never pass missing_published_days). Computed
+    from the date alone: independent of any list of earlier periods and of what was published."""
+    end = as_of - timedelta(days=1)
+    return end - timedelta(days=ROLLING_WINDOW_DAYS - 1), end
+
+
+def latest_weekly_run_day(as_of: date) -> date:
+    """The most recent firing day (Thursday) on or before `as_of`."""
+    return as_of - timedelta(days=(as_of.weekday() - WEEKLY_RUN_WEEKDAY) % 7)
+
+
+def expected_rolling_window(as_of: date) -> tuple[date, date]:
+    """The window the most recent scheduled run should have produced by `as_of` - what the daily
+    run's read-only warning checks for."""
+    return rolling_window(latest_weekly_run_day(as_of))
+
+
 def period_containing(d: date) -> tuple[date, date]:
     """Returns (start, end) of the 14-day period `d` falls in, counting from
     ANCHOR_START - always returns a pair, even if `d` is before the anchor

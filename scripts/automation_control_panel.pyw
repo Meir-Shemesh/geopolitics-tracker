@@ -32,6 +32,13 @@ from tkinter import font as tkfont
 from tkinter import messagebox, ttk
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+# The window arithmetic lives in src/common/biweekly.py (pure stdlib date math) so the panel shows
+# exactly what the wrapper will compute instead of a second copy of the rule.
+sys.path.insert(0, str(PROJECT_ROOT))
+try:
+    from src.common import biweekly as bw_schedule
+except Exception:  # the panel must still open if the project code is broken
+    bw_schedule = None
 STATE_DIR = PROJECT_ROOT / "automation_state"
 LOG_DIR = STATE_DIR / "logs"
 STATE_FILE = STATE_DIR / "state.json"
@@ -62,11 +69,29 @@ TASKBAR_ALLOWANCE = 48  # logical px kept clear at the bottom of the screen for 
 # "no data": it is the expected result most Thursdays, and it is not a report.
 BW_OUTCOME_TEXT = {
     "published": ("רצה ופרסמה דוח חדש", GREEN),
-    "skipped": ("רצה ודילגה כצפוי - אין תקופה חדשה שהגיע זמנה", BLUE),
+    "skipped": ("רצה ודילגה כצפוי - אין תקופה/חלון חדש להפקה (הדוח לחלון הזה כבר קיים)", BLUE),
     "failed": ("נכשלה - הייתה תקופה שהגיע זמנה ולא הופק דוח", RED),
     "paused": ("דולגה - השהיה ידנית לריצה אחת (תקופה הייתה מוכנה)", AMBER),
     "stopped": ("לא רצה - מפסק-החירום הדו-שבועי פעיל", RED),
 }
+
+def rolling_enabled() -> bool:
+    return bool(bw_schedule and bw_schedule.ROLLING_WINDOW_ENABLED)
+
+
+def bw_next_window_text(now: datetime) -> str:
+    """The window the next scheduled run will synthesize (rolling mode only - empty text hides the
+    line). The run fires at 01:30, so on a Thursday before that it is still today's."""
+    if not rolling_enabled():
+        return ""
+    day = now.date()
+    days_ahead = (bw_schedule.WEEKLY_RUN_WEEKDAY - day.weekday()) % 7
+    if days_ahead == 0 and (now.hour, now.minute) >= (1, 30):
+        days_ahead = 7
+    run_day = day + timedelta(days=days_ahead)
+    start, end = bw_schedule.rolling_window(run_day)
+    return f"החלון שיופק בריצה הבאה: {start.isoformat()} עד {end.isoformat()}"
+
 
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
 
@@ -275,7 +300,7 @@ class ControlPanel(tk.Tk):
         status_frame.pack(fill="x", padx=12, pady=3)
         self.bw_labels: dict[str, tk.Label] = {}
         self.bw_status_frame = status_frame
-        for key in ("task", "next_run", "last_run", "last_period", "last_reason_caption", "last_reason",
+        for key in ("task", "next_run", "next_window", "last_run", "last_period", "last_reason_caption", "last_reason",
                     "freshness", "failures", "killswitch", "pause_next"):
             # "last_reason" shows the wrapper's own English text verbatim, so it
             # is laid out left-to-right on a line of its own - mixed into a
@@ -307,8 +332,11 @@ class ControlPanel(tk.Tk):
 
         tk.Label(
             tab, font=self.hebrew_font, anchor="e", justify="right", wraplength=430, fg="#555",
-            text="המשימה רצה כל יום חמישי ב-01:30 ומפיקה דוח רק בחמישי שאחרי סגירת תקופה (אחת לשבועיים). "
-                 "בשאר השבועות \"דילגה כצפוי\" היא התוצאה התקינה.",
+            text=("המשימה רצה כל יום חמישי ב-01:30 ובכל הרצה מפיקה דוח על 14 הימים שהסתיימו אתמול (חלון נגלל, "
+                  "הדוחות חופפים). \"דילגה כצפוי\" פירושו שהדוח לחלון הזה כבר קיים."
+                  if rolling_enabled() else
+                  "המשימה רצה כל יום חמישי ב-01:30 ומפיקה דוח רק בחמישי שאחרי סגירת תקופה (אחת לשבועיים). "
+                  "בשאר השבועות \"דילגה כצפוי\" היא התוצאה התקינה."),
         ).pack(fill="x", padx=12, pady=(1, 4))
 
     # ---------- state reading + rendering ----------
@@ -340,6 +368,7 @@ class ControlPanel(tk.Tk):
                 fg=GREEN if enabled else RED,
             )
         L["next_run"].config(text=f"ריצה הבאה: {task_info['next_run'] or '-'}")
+        L["next_window"].config(text=bw_next_window_text(datetime.now()))
 
         # Like the daily tab: this is the automated MECHANISM's last run (what
         # scripts/biweekly_autorun.py recorded), not "the latest published

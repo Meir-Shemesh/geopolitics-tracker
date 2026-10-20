@@ -14,7 +14,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from src.common.biweekly import latest_closed_period, missing_published_days, period_closing_on  # noqa: E402
+from unittest import mock  # noqa: E402
+
+from src.common import biweekly  # noqa: E402
+from src.common.biweekly import (  # noqa: E402
+    expected_rolling_window,
+    latest_closed_period,
+    latest_weekly_run_day,
+    missing_published_days,
+    period_closing_on,
+    rolling_window,
+)
 import biweekly_autorun  # noqa: E402
 
 P3 = (date(2026, 9, 17), date(2026, 9, 30))
@@ -172,6 +182,65 @@ class MissingPublishedDaysTest(unittest.TestCase):
         days = self.all_days(*P4)
         self.publish(*days)
         self.assertEqual(missing_published_days(*P4, set(days[1:]), self.docs), ["2026-10-01"])
+
+
+class RollingWindowTest(unittest.TestCase):
+    """The rolling mode (PROJECT_LOG 4.106): 14 days ending YESTERDAY, from the run date alone."""
+
+    def test_window_is_the_14_days_ending_the_day_before_the_run(self):
+        start, end = rolling_window(date(2026, 10, 22))  # a Thursday
+        self.assertEqual((start, end), (date(2026, 10, 8), date(2026, 10, 21)))
+        self.assertEqual((end - start).days + 1, 14)
+        self.assertEqual(end.strftime("%A"), "Wednesday")
+
+    def test_window_never_depends_on_the_fixed_periods(self):
+        # Not 2026-10-28 (what the fixed cadence would close next): an ordinary Thursday gives its own window,
+        # overlapping the last archived fixed period (10-01..10-14) on purpose.
+        self.assertEqual(rolling_window(date(2026, 10, 22)), (date(2026, 10, 8), date(2026, 10, 21)))
+        self.assertEqual(rolling_window(date(2026, 10, 29)), (date(2026, 10, 15), date(2026, 10, 28)))
+        self.assertEqual(rolling_window(date(2026, 11, 5)), (date(2026, 10, 22), date(2026, 11, 4)))
+
+    def test_year_boundary(self):
+        self.assertEqual(rolling_window(date(2027, 1, 7)), (date(2026, 12, 24), date(2027, 1, 6)))
+
+    def test_latest_weekly_run_day_and_expected_window(self):
+        self.assertEqual(latest_weekly_run_day(date(2026, 10, 22)), date(2026, 10, 22))  # Thursday itself
+        self.assertEqual(latest_weekly_run_day(date(2026, 10, 25)), date(2026, 10, 22))  # Sunday after
+        self.assertEqual(latest_weekly_run_day(date(2026, 10, 21)), date(2026, 10, 15))  # Wednesday before
+        self.assertEqual(expected_rolling_window(date(2026, 10, 24)), (date(2026, 10, 8), date(2026, 10, 21)))
+
+    def test_due_unless_a_report_with_that_end_date_exists(self):
+        window = (date(2026, 10, 8), date(2026, 10, 21))
+        self.assertEqual(biweekly_autorun.due_rolling_window(date(2026, 10, 22), exists(ALREADY_IN_DB)), window)
+        self.assertIsNone(biweekly_autorun.due_rolling_window(date(2026, 10, 22), exists({"2026-10-21"})))
+
+    def test_every_thursday_is_due_unlike_the_fixed_mode(self):
+        done = set(ALREADY_IN_DB)
+        for run_day in (date(2026, 10, 22), date(2026, 10, 29), date(2026, 11, 5), date(2026, 11, 12)):
+            window = biweekly_autorun.due_rolling_window(run_day, exists(done))
+            self.assertIsNotNone(window, run_day)
+            done.add(window[1].isoformat())  # that Thursday's report is written
+            self.assertIsNone(biweekly_autorun.due_rolling_window(run_day, exists(done)))
+
+    def test_the_switch_chooses_the_mode(self):
+        in_db = exists(ALREADY_IN_DB | {"2026-10-14"})
+        with mock.patch.object(biweekly, "ROLLING_WINDOW_ENABLED", False):
+            self.assertIsNone(biweekly_autorun.select_due(date(2026, 10, 22), in_db))  # fixed: nothing due on this Thursday
+        with mock.patch.object(biweekly, "ROLLING_WINDOW_ENABLED", True):
+            self.assertEqual(biweekly_autorun.select_due(date(2026, 10, 22), in_db), (date(2026, 10, 8), date(2026, 10, 21)))
+
+    def test_the_hub_and_homepage_pick_the_latest_by_end_date_not_by_insertion_order(self):
+        # get_all_biweekly_periods orders by end_date DESC and _biweekly_latest_entry takes the first row;
+        # a rolling report inserted later but ending earlier than an existing one must not win.
+        import sqlite3
+        from src.common import db
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        db.init_db(conn)
+        for start, end in (("2026-10-08", "2026-10-21"), ("2026-10-01", "2026-10-14"), ("2026-10-15", "2026-10-28")):
+            db.insert_biweekly_period(conn, start, end, "o", "o", "o", "2026-10-30T00:00:00+00:00")
+        self.assertEqual([r["end_date"] for r in db.get_all_biweekly_periods(conn)],
+                         ["2026-10-28", "2026-10-21", "2026-10-14"])
 
 
 if __name__ == "__main__":

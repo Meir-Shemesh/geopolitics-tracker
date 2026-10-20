@@ -60,7 +60,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
-from src.common.biweekly import PERIOD_LENGTH_DAYS, latest_closed_period  # noqa: E402
+from src.common import biweekly  # noqa: E402
+from src.common.biweekly import PERIOD_LENGTH_DAYS, expected_rolling_window, latest_closed_period  # noqa: E402
 VENV_PYTHON = PROJECT_ROOT / "venv" / "Scripts" / "python.exe"
 
 STATE_DIR = PROJECT_ROOT / "automation_state"
@@ -295,7 +296,12 @@ def missing_biweekly_period_warning(today: date) -> str:
     an old gap stops being this run's news (publish.py's hub simply lists
     whatever periods exist)."""
     try:
-        period = latest_closed_period(today, max_age_days=PERIOD_LENGTH_DAYS)
+        if biweekly.ROLLING_WINDOW_ENABLED:
+            # Rolling mode: every Thursday's overnight run should have produced the window ending the
+            # day before it - that, not "a fixed period closed", is what can be missing.
+            period = expected_rolling_window(today)
+        else:
+            period = latest_closed_period(today, max_age_days=PERIOD_LENGTH_DAYS)
         if period is None:
             return "no closed period to check"
         start, end = period[0].isoformat(), period[1].isoformat()
@@ -308,7 +314,7 @@ def missing_biweekly_period_warning(today: date) -> str:
         if exists:
             return f"latest closed period {start}..{end} is in tracker.db"
         return (
-            f"*** WARNING: period {start}..{end} closed {(today - period[1]).days} day(s) ago and has NO "
+            f"*** WARNING: period {start}..{end} ended {(today - period[1]).days} day(s) ago and has NO "
             f"report in tracker.db - the overnight run (scripts/biweekly_autorun.py) did not produce it. "
             f"Check automation_state/logs/biweekly_*.log, or run it by hand: "
             f"python -m src.reporting.synthesize_biweekly --start {start} --end {end} ***"

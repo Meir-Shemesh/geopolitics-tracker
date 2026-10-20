@@ -9,6 +9,12 @@ that don't follow a closing Wednesday this script finds nothing due and
 exits without doing (or emailing) anything - the real work happens one
 Thursday in two.
 
+Rolling-window mode (from the go-live that flips biweekly.ROLLING_WINDOW_ENABLED, PROJECT_LOG 4.106):
+the task still fires every Thursday, but EVERY firing now produces a report - the 14 days ending
+yesterday, computed from the run date alone (src.common.biweekly.rolling_window). Nothing is "due"
+only when a report with that end date already exists. The fixed-period text below describes the
+mode that applies until then, and how the four archived periods were produced.
+
 Which period: the most recent one that ended before today, if it has no row
 in tracker.db yet and ended at most CATCH_UP_DAYS ago. Asking "did a period
 close TODAY" (src.common.biweekly.period_closing_on) would be wrong here -
@@ -77,7 +83,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import daily_autorun as autorun  # noqa: E402  (also puts PROJECT_ROOT on sys.path)
 
-from src.common.biweekly import latest_closed_period, missing_published_days  # noqa: E402
+from src.common import biweekly  # noqa: E402
+from src.common.biweekly import latest_closed_period, missing_published_days, rolling_window  # noqa: E402
 from src.common.db import biweekly_period_exists, get_connection, get_report_dates_in_range  # noqa: E402
 
 CATCH_UP_DAYS = 8
@@ -110,6 +117,23 @@ def due_period(as_of: date, period_exists) -> tuple[date, date] | None:
     if period is None or period_exists(period[1].isoformat()):
         return None
     return period
+
+
+def due_rolling_window(as_of: date, period_exists) -> tuple[date, date] | None:
+    """Rolling-window mode (biweekly.ROLLING_WINDOW_ENABLED): the window is computed from the run
+    date alone - 14 days ending yesterday - and is due unless a report with that end date already
+    exists (a second run the same night, or a manual run in between). `period_exists(end_iso) ->
+    bool` is injected, as in due_period."""
+    window = rolling_window(as_of)
+    return None if period_exists(window[1].isoformat()) else window
+
+
+def select_due(as_of: date, period_exists) -> tuple[date, date] | None:
+    """The one place the two modes meet: fixed periods (legacy, the default until go-live) or the
+    rolling window. Everything after this point treats the result as just (start, end)."""
+    if biweekly.ROLLING_WINDOW_ENABLED:
+        return due_rolling_window(as_of, period_exists)
+    return due_period(as_of, period_exists)
 
 
 def missing_days_problem(conn, period: tuple[date, date]) -> str | None:
@@ -240,27 +264,31 @@ def main() -> int:
 
         conn = get_connection()
         try:
-            period = due_period(today, lambda end: biweekly_period_exists(conn, end))
+            period = select_due(today, lambda end: biweekly_period_exists(conn, end))
             problem = missing_days_problem(conn, period) if period else None
         finally:
             conn.close()
 
         if period is None:
-            log("Nothing due: no closed period without a report in the catch-up window.")
+            if biweekly.ROLLING_WINDOW_ENABLED:
+                log(f"Nothing due: the report for the window ending {rolling_window(today)[1].isoformat()} already exists.")
+            else:
+                log("Nothing due: no closed period without a report in the catch-up window.")
             if args.dry_run:
                 return 0
             return finish("skipped", "no period due")
 
         start, end = period[0].isoformat(), period[1].isoformat()
         label = f"{start}..{end}"
-        log(f"Period due: {label} (closed {(today - period[1]).days} day(s) ago)")
+        log(f"{'Rolling window' if biweekly.ROLLING_WINDOW_ENABLED else 'Period'} due: {label} "
+            f"(ends {(today - period[1]).days} day(s) before this run)")
 
         if PAUSE_NEXT_FLAG.exists():
             log(f"Paused: {PAUSE_NEXT_FLAG.name} present - skipping this one due run.")
             if args.dry_run:
                 return 0
             PAUSE_NEXT_FLAG.unlink()
-            log(f"Removed {PAUSE_NEXT_FLAG.name} (one-shot). Next Thursday's run will retry {label} if still missing.")
+            log(f"Removed {PAUSE_NEXT_FLAG.name} (one-shot). {'Next Thursday computes a new window (this one is not retried).' if biweekly.ROLLING_WINDOW_ENABLED else f'Next Thursday will retry {label} if still missing.'}")
             return finish("paused", "one-shot manual pause", label)
 
         manual = [
@@ -282,7 +310,9 @@ def main() -> int:
                     "Publish the missing daily report(s) first, then run by hand:", *manual,
                     "If those days are a known, permanent gap, add --allow-missing-days to the first command.",
                     "",
-                    "(Next Thursday's run will also retry on its own if the period is still missing.)",
+                    ("(Next Thursday's run computes a newer window; this one is only produced by hand.)"
+                     if biweekly.ROLLING_WINDOW_ENABLED else
+                     "(Next Thursday's run will also retry on its own if the period is still missing.)"),
                 ],
             )
 
