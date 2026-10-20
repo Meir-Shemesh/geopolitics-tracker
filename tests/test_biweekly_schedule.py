@@ -243,5 +243,31 @@ class RollingWindowTest(unittest.TestCase):
                          ["2026-10-28", "2026-10-21", "2026-10-14"])
 
 
+class StartEmailTest(unittest.TestCase):
+    PERIOD = (date(2026, 10, 8), date(2026, 10, 21))
+
+    def test_the_start_email_names_the_window_and_the_mode(self):
+        sent = []
+        with mock.patch.object(biweekly_autorun.autorun, "send_email", lambda subj, body: sent.append((subj, body))):
+            with mock.patch.object(biweekly, "ROLLING_WINDOW_ENABLED", True):
+                self.assertTrue(biweekly_autorun.notify_started(self.PERIOD, Path("x.log"), lambda m: None))
+        subject, body = sent[0]
+        self.assertIn("2026-10-08..2026-10-21", subject)
+        self.assertIn("run started", subject)
+        self.assertIn("2026-10-08 .. 2026-10-21 (14 days)", body)
+        self.assertIn("rolling 14-day window", body)
+
+    def test_a_mail_failure_never_stops_the_run_or_touches_state(self):
+        logged = []
+
+        def boom(subject, body):
+            raise OSError("smtp down")
+
+        with mock.patch.object(biweekly_autorun.autorun, "send_email", boom),                 mock.patch.object(biweekly_autorun.autorun, "save_json") as save:
+            self.assertFalse(biweekly_autorun.notify_started(self.PERIOD, Path("x.log"), logged.append))
+        save.assert_not_called()
+        self.assertTrue(any("Could not send start email" in m for m in logged))
+
+
 if __name__ == "__main__":
     unittest.main()

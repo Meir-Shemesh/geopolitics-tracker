@@ -26,9 +26,9 @@ PERIOD_LENGTH_DAYS = 14
 # the archive exactly as they are; the rolling windows start after them and may overlap each other
 # (and the last fixed period).
 #
-# ROLLING_WINDOW_ENABLED is the switch the overnight wrapper and the daily warning read. It is False
-# until a human has looked at a real rolling report; flipping it to True is the whole go-live.
-ROLLING_WINDOW_ENABLED = False
+# ROLLING_WINDOW_ENABLED is the switch the overnight wrapper and the daily warning read. It stayed
+# False until a human had looked at a real rolling report; switched to True on 2026-10-20 after that review.
+ROLLING_WINDOW_ENABLED = True
 ROLLING_WINDOW_DAYS = 14
 WEEKLY_RUN_WEEKDAY = 3  # Thursday (date.weekday()): the scheduled task's firing day, unchanged
 

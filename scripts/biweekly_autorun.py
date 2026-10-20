@@ -153,6 +153,34 @@ def missing_days_problem(conn, period: tuple[date, date]) -> str | None:
     return f"{len(missing)} of {total} day(s) have no published daily report: {', '.join(missing)}"
 
 
+def notify_started(period: tuple[date, date], log_path: Path, log) -> bool:
+    """Short "the run has begun" email, sent once every pre-check has passed and just before the first
+    step. Purely informational: it never changes state, never counts toward the circuit breaker, and a
+    failure to send it is logged and ignored - the report itself must not depend on the mail server.
+    Together with the closing email it lets a silent night be told apart from a finished one."""
+    start, end = period[0].isoformat(), period[1].isoformat()
+    subject = f"[Geopolitics Tracker] Biweekly report {start}..{end}: run started"
+    body = "\n".join([
+        "The overnight biweekly run has started.",
+        "",
+        f"  Window to be synthesized: {start} .. {end} ({(period[1] - period[0]).days + 1} days)",
+        f"  Mode: {'rolling 14-day window' if biweekly.ROLLING_WINDOW_ENABLED else 'fixed period'}",
+        f"  Started at: {datetime.now().isoformat(timespec='seconds')}",
+        "",
+        "Expect a second email when it finishes (published or failed). Synthesis usually takes about "
+        "20-60 minutes.",
+        "",
+        f"Log: {log_path}",
+    ])
+    try:
+        autorun.send_email(subject, body)
+        log(f"Start email sent ({start}..{end}).")
+        return True
+    except Exception as e:
+        log(f"Could not send start email ({e!r}) - the run continues.")
+        return False
+
+
 def apply_outcome(state: dict, outcome: str, detail: str, period: str | None, now_iso: str) -> tuple[dict, bool]:
     """Returns (new_state, tripped). Pure - the caller does the file writes."""
     failures = state.get("consecutive_failures", 0)
@@ -320,6 +348,8 @@ def main() -> int:
             log(f"DRY RUN: would run synthesize_biweekly --start {start} --end {end}, then publish, "
                 f"then git add {' '.join(GIT_PATHS)} / commit / push.")
             return 0
+
+        notify_started(period, log_path, log)
 
         results = []
         ok = True
