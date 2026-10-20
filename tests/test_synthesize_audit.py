@@ -83,6 +83,50 @@ class AuditTest(unittest.TestCase):
             self.assertEqual(syn.audit_sections([self.section(comparison_text_he=ok)], self.ARTICLES), [], ok)
 
 
+class NewspaperNameAndPromptTest(unittest.TestCase):
+    ARTICLES = [{"id": 1, "newspaper": "Guardian"}]
+
+    def flagged(self, **fields):
+        base = {"topic_label_he": "נושא", "topic_label_en": "Topic", "topic_label_de": "Thema", "comparison_text_he": "טקסט",
+                "comparison_text_en": "text", "comparison_text_de": "Text", "article_ids": [1]}
+        base.update(fields)
+        return syn.audit_sections([base], self.ARTICLES)
+
+    def test_hebrew_letter_newspaper_names_are_flagged(self):
+        for bad in ("הדיילי טלגרף מוביל את הסיקור", "ב-פרנקפורטר אלגמיינה צייטונג", "מתוך הלאוזיצר רונדשאו", "נוישה צירכר צייטונג"):
+            self.assertTrue(self.flagged(comparison_text_he=bad), bad)
+        self.assertEqual(self.flagged(comparison_text_he="The Daily Telegraph ו-Frankfurter Allgemeine Zeitung מדווחים"), [])
+
+    def test_prompt_lists_every_canonical_newspaper_name_and_the_new_style_rules(self):
+        from src.reporting.render import NEWSPAPER_DISPLAY_NAMES
+        for name in NEWSPAPER_DISPLAY_NAMES.values():
+            self.assertIn(f'"{name}"', syn.STAGE2_SYSTEM_PROMPT, name)
+        for needle in ("ניגוד העניינים", "בדלנות", "Remoaners", "בכתבתה של קריסטין פיליפס, מוסיף זווית", "Lausitzer Rundschau"):
+            self.assertIn(needle, syn.STAGE2_SYSTEM_PROMPT, needle)
+        self.assertIn("calque", syn.STAGE1_SYSTEM_PROMPT)
+
+
+class EmptyTopicTest(unittest.TestCase):
+    def test_topic_without_a_valid_article_is_dropped_before_stage_2(self):
+        articles = [{"id": 1, "newspaper": "Guardian"}, {"id": 2, "newspaper": "Daily Telegraph"}]
+        topics = [
+            {"topic_label_he": "נושא", "topic_label_en": "Real topic", "category": "security_conflict", "article_ids": [1, 2]},
+            {"topic_label_he": "ג", "topic_label_en": "placeholder duplicate remove", "category": "security_conflict", "article_ids": []},
+            {"topic_label_he": "ד", "topic_label_en": "points at an unknown id", "category": "security_conflict", "article_ids": [99]},
+        ]
+        written = []
+
+        def fake_stage2(client, topic, topic_articles):
+            written.append(topic["topic_label_en"])
+            return {}, {"topic_label_de": "Thema", "comparison_text_he": "א" * 60, "comparison_text_en": "b" * 60, "comparison_text_de": "c" * 60}
+
+        with mock.patch.object(syn, "group_articles_into_topics", return_value=(topics, {"input_tokens": 0, "output_tokens": 0})), \
+                mock.patch.object(syn, "write_topic_comparison_with_retry", side_effect=fake_stage2):
+            sections, _ = syn.synthesize_day_two_stage(None, articles)
+        self.assertEqual(written, ["Real topic"])
+        self.assertEqual([s["topic_label_en"] for s in sections], ["Real topic"])
+
+
 class RetryGateTest(unittest.TestCase):
     def comparison(self, he):
         return {"topic_label_de": "Thema", "comparison_text_he": he,

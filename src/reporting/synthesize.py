@@ -29,6 +29,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from src.common.about_content import CONTENT
+from src.reporting.render import NEWSPAPER_DISPLAY_NAMES
 from src.common.db import (
     delete_report,
     get_articles_for_date,
@@ -95,7 +96,7 @@ Rules:
 Character set: every output field may contain ONLY Hebrew letters (in Hebrew text), Latin letters (including accented ones such as ä ö ü ß é), digits and standard punctuation - never Cyrillic, Arabic, Devanagari, Thai, CJK or any other script, not even as a by-product of trying to phonetically transcribe a non-English name. When you are not certain of the exact Hebrew transliteration of a name (Russian names, German names with umlauts, etc.), keep the name in its original Latin spelling instead of transliterating it.
 
 For each topic, call record_topic_groups with one entry containing:
-- topic_label_he / topic_label_en: a short section heading identifying the topic/story, in Hebrew and English respectively. Pay attention to correct Hebrew grammar, including gender agreement between numbers and nouns.
+- topic_label_he / topic_label_en: a short section heading identifying the topic/story, in Hebrew and English respectively. Pay attention to correct Hebrew grammar, including gender agreement between numbers and nouns. The Hebrew heading must be natural, idiomatic Hebrew that means exactly what the English one means - never a word-for-word calque. Failures seen in published reports: "Iran war spillover" rendered as "מהומות עוטפות מערכת היחסים", "Trump tactics" rendered as "מרגלות טראמפ", "gerrymandering" written "גרמנדרינג" (the standard form is "ג'רימנדרינג"). If you cannot find a natural Hebrew equivalent, simplify the heading rather than inventing wording.
 - category: the single best-fitting category for this topic, chosen from a fixed list (see the tool schema) - security_conflict, diplomacy_international, trade_economics, domestic_politics, migration_society, society_culture, technology_media, or energy_environment. Pick whichever category captures the topic's primary/dominant angle; every topic must get exactly one.
 - article_ids: the ids of every input article belonging to this topic.
 
@@ -212,6 +213,12 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles, model: str
 # expansion - see CLAUDE.md "השלב הבא: תלת-לשוניות" for why this lives in Stage 2 only, not Stage 1.
 _GERMAN_STYLE_ANCHOR = CONTENT["de"]["sections"][0]["blocks"][0][1]
 
+# Built from the canonical mapping instead of typed out: the typed copy that used to sit in the prompt
+# stopped at 11 names and silently lacked Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung and The
+# Globe and Mail (added 2026-10-12) - the 19.10 report then rendered the first one in Hebrew letters
+# with Arabic characters in the middle (PROJECT_LOG 4.105).
+_NEWSPAPER_NAME_LIST = ", ".join(f'"{name}"' for name in NEWSPAPER_DISPLAY_NAMES.values())
+
 STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor for a geopolitical news-monitoring report, writing the cross-source comparison for ONE already-identified topic (grouping already happened in an earlier pass). You will be given every article assigned to this topic - each with an id, source newspaper, headline, an original per-article topic tag, a stance summary, and a key excerpt - plus that topic's already-decided English and Hebrew labels, for reference only.
 
 Your task: write a comparative analysis (a few sentences to a short paragraph) of how the sources covering this topic frame it differently - their differing emphasis, stance, or angle - not a neutral summary of "what happened." If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), treat them as ONE voice for that newspaper in your narrative - do not present that newspaper's position on the same event twice, even though you were given both ids. If only one source covers the topic, describe that source's stance/angle on its own.
@@ -220,11 +227,16 @@ Attribution: some articles carry an "author (byline)" line - this marks a named 
 
 Reference sources by name only - never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en/de, in any language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report..." - never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one into the other (and not a translation of comparison_text_he or comparison_text_en into German either - compose comparison_text_de independently, from the same source articles).
 
-Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt", "The New York Times International", "The Wall Street Journal", "Los Angeles Times", "USA Today", "The Washington Post", "The Economist", "Der Spiegel". This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name.
+Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: {_NEWSPAPER_NAME_LIST}. This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name. The same rule covers ANY other newspaper, magazine or media outlet you mention by name - for example a regional paper that one of the sources quotes, such as "Lausitzer Rundschau" (never "הלאוזיצר רונדשאו"): keep its original Latin-script name.
 
 Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify - for example "שתי זוויות" not "שני זוויות" (זווית is feminine), "שלוש כתבות" not "שלושה כתבות" (כתבה is feminine). When attributing a claim to a named columnist, use exactly the form "בטור ב-{{שם המקור}}" (for example "בטור ב-Süddeutsche Zeitung", "בטור ב-The Guardian") - never insert an extra word between "בטור ב" and the source name (for example "בטור בזמן Die Welt" is wrong - no such word belongs in this phrase, regardless of which source it precedes). Also watch for part-of-speech mismatches between an adjective and the noun it modifies - an adjective like "מושחת" (corrupt) correctly describes a concrete entity (a regime, an administration, officials, an economy - e.g. "מערכת מושחתת", "פקידים מושחתים") but not an abstract concept such as a fear or concern (never "חששות מושחתות" - if the intended meaning involves corruption as a concept, phrase it with "שחיתות" itself as the noun, e.g. "חששות מפני שחיתות"). Reread each Hebrew sentence you write for all of these kinds of errors before finalizing it.
 
-Newspaper names always take grammatically MASCULINE agreement in Hebrew (verbs, possessive suffixes, relative pronouns), regardless of any grammatical gender implied by the source language or the English name's surface form - this applies even when a newspaper name is itself grammatically feminine in its own language, such as German "Die Welt" or "Die Zeit" ("die" is feminine in German), or sounds like it could be feminine in English. Correct: "Die Welt מציע", "Die Welt, המציג את העמדה". Incorrect: "Die Welt מציעה", "Die Welt, המציגה את העמדה". This rule applies only when the newspaper name itself is the direct grammatical subject - a sentence whose real subject is a feminine Hebrew noun like "הכתבה" (the article) or "כתבה חתומה בידי X" (an article signed by X) correctly keeps feminine agreement with that noun even when the newspaper is named nearby (e.g. "הכתבה ב-Der Spiegel ממסגרת..." is correct - "הכתבה", not "Der Spiegel", is the subject there). Never introduce a Hebrew descriptor that misidentifies what kind of outlet a source is just to make the grammar work (e.g. calling Der Spiegel a "סוכנות ידיעות" - a news agency - is both factually wrong, it is a magazine, and forces incorrect feminine agreement since "סוכנות" is a feminine noun) - if a sentence's grammar would require that kind of workaround, restructure the sentence instead.
+Hebrew style rules (each one is a mistake observed in published reports, PROJECT_LOG 4.105):
+(1) Definite construct state (smichut): in a definite chain "X of Y" the definite article belongs to the SECOND noun (the dependent one), never to the first. Correct: "ושאלת ניגוד העניינים", "בנתוני דעת הקהל", "ניגוד העניינים". Incorrect: "ושאלת הניגוד עניינים", "בנתוני הדעת הקהל".
+(2) Terminology: write "בדלנות" / "בדלנים" / "בדלנית" for separatism / separatists / separatist - never "פרדתנות", "פרדתנים" or "פרדתנית" (a non-standard rendering of the word).
+(3) Direct quotations are translated into the language of the text you are writing. Keep a quotation in its original language only when translating it would lose something real - a pun, a coined word, or a distinctive turn of phrase whose exact wording is the point - and then give a short paraphrase in the text's own language next to it. Translate: Trump's plain statement "doesn't want to end this war, and probably never did" becomes "אינו רוצה לסיים את המלחמה, וכנראה מעולם לא רצה". Keep (with a paraphrase): a coinage like "Remoaners", whose meaning depends on the English wording.
+
+Newspaper names always take grammatically MASCULINE agreement in Hebrew (verbs, possessive suffixes, relative pronouns), regardless of any grammatical gender implied by the source language or the English name's surface form - this applies even when a newspaper name is itself grammatically feminine in its own language, such as German "Die Welt" or "Die Zeit" ("die" is feminine in German), or sounds like it could be feminine in English. Correct: "Die Welt מציע", "Die Welt, המציג את העמדה". Incorrect: "Die Welt מציעה", "Die Welt, המציגה את העמדה". The agreement must survive a phrase placed between the newspaper name and the verb - in particular the name of an author of a different grammatical gender: correct "USA Today, בכתבתה של קריסטין פיליפס, מוסיף זווית"; incorrect "USA Today, בכתבתה של קריסטין פיליפס, מוסיפה זווית" (the verb wrongly agrees with the feminine author instead of the newspaper). The same applies to a compound subject: "Neue Zürcher Zeitung ו-Süddeutsche Zeitung נוקטים" not "נוקטות". This rule applies only when the newspaper name itself is the direct grammatical subject - a sentence whose real subject is a feminine Hebrew noun like "הכתבה" (the article) or "כתבה חתומה בידי X" (an article signed by X) correctly keeps feminine agreement with that noun even when the newspaper is named nearby (e.g. "הכתבה ב-Der Spiegel ממסגרת..." is correct - "הכתבה", not "Der Spiegel", is the subject there). Never introduce a Hebrew descriptor that misidentifies what kind of outlet a source is just to make the grammar work (e.g. calling Der Spiegel a "סוכנות ידיעות" - a news agency - is both factually wrong, it is a magazine, and forces incorrect feminine agreement since "סוכנות" is a feminine noun) - if a sentence's grammar would require that kind of workaround, restructure the sentence instead.
 
 German: topic_label_de and comparison_text_de must read as if written natively in German by a professional journalist, in the same formal-but-readable register (Hochsprache) as this real excerpt of the project's established German house style: "{_GERMAN_STYLE_ANCHOR}" - match that register and, where it fits naturally, its established terms (e.g. "Meinungsbeitrag(e)" for an opinion piece, "Vergleich" for the cross-source comparison, "Quelle"/"Zeitung" for a source). topic_label_de is a natural German label for this topic, not a translation of topic_label_en or topic_label_he - use those two only as context for what the topic is. Pay particular attention to German article/adjective/case agreement (der/die/das and declension) and noun-number agreement; reread each German sentence for this kind of agreement error before finalizing it.
 
@@ -386,6 +398,28 @@ def claimed_newspaper_counts(text: str, lang: str) -> list[int]:
     return out
 
 
+# Hebrew-letter renderings of newspaper names that must stay Latin. The base list (the original sources)
+# is the biweekly writer's; the extras cover the sources added since and the regional-paper case.
+_EXTRA_NEWSPAPER_TELLS = {
+    "פרנקפורטר": "Frankfurter Allgemeine Zeitung",
+    "נוישה": "Neue Zürcher Zeitung",
+    "צירכר": "Neue Zürcher Zeitung",
+    "גלוב אנד מייל": "The Globe and Mail",
+    "רונדשאו": "(a newspaper named Rundschau)",
+}
+
+
+def hebrew_newspaper_name_tells(text: str) -> dict[str, str]:
+    from src.reporting.synthesize_biweekly import TRANSLITERATION_TELLS  # lazy: that module imports this one
+
+    tells = {**TRANSLITERATION_TELLS, **_EXTRA_NEWSPAPER_TELLS}
+    # "לוס אנג'לס" (the city) and "וול סטריט" (the market) are ordinary Hebrew place names; flagging them
+    # produced only false positives on the daily archive (checked 2026-10-20) - the biweekly writer keeps them.
+    for place in ("לוס אנג'לס", "וול סטריט"):
+        tells.pop(place, None)
+    return {tell: name for tell, name in tells.items() if tell in (text or "")}
+
+
 def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
     """Read-only checks over the final model-written sections. Returns human-readable flags."""
     newspaper_by_id = {a["id"]: a["newspaper"] for a in articles}
@@ -397,6 +431,11 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
             bad = foreign_script_chars(sec.get(field) or "")
             if bad:
                 flags.append(f"FOREIGN SCRIPT in {field} of '{name}': " + " ".join(f"U+{ord(c):04X}" for c in bad))
+        for field in ("topic_label_he", "comparison_text_he"):
+            tells = hebrew_newspaper_name_tells(sec.get(field))
+            if tells:
+                flags.append(f"NEWSPAPER NAME IN HEBREW LETTERS in {field} of '{name}': "
+                             + ", ".join(f"{t} (= {n})" for t, n in tells.items()))
         if _VAV_AS_ONE.search(sec.get("comparison_text_he") or ""):
             flags.append(f"DIGIT-1 BETWEEN NAMES (possible garbled 'ו-') in comparison_text_he of '{name}'")
         real = len({newspaper_by_id[i] for i in sec.get("article_ids", []) if i in newspaper_by_id})
@@ -557,6 +596,15 @@ def synthesize_day_two_stage(
         # existed, so even a quiet case shouldn't pass with zero mention.
         print(f"  stage 1: {len(duplicated)} article(s) duplicate-assigned across topics (below retry threshold).")
     print(f"  stage 1: {len(topics)} topic(s) grouped from {len(articles)} article(s).")
+
+    # A topic with no valid article id has nothing to compare: stage 2 then writes "No articles were provided
+    # for this topic" - sometimes under a junk heading ("placeholder", "duplicate remove"). 15 such sections
+    # (no linked article) reached published reports between 25.8 and 16.10, PROJECT_LOG 4.105. Drop them first.
+    empty = [t for t in topics if not [i for i in t["article_ids"] if i in valid_ids]]
+    if empty:
+        print(f"  stage 1: dropping {len(empty)} topic(s) with no valid article: "
+              + "; ".join(repr(t["topic_label_en"]) for t in empty))
+        topics = [t for t in topics if t not in empty]
 
     if not topics:
         return [], usage_log
