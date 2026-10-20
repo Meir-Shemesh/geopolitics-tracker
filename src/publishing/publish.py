@@ -2858,7 +2858,11 @@ __CTA_CARD_JS__
       cell.classList.add("is-selected");
       cell.scrollIntoView({ inline: "center", block: "nearest" });
     }
-    renderResults(manifest, manifest.dates[date].section_ids, formatLongDate(date));
+    var ids = manifest.dates[date].section_ids;
+    // The timeline cell IS a report date, so the panel also offers the full report of that day.
+    var first = ids.length ? manifest.sections[ids[0]] : null;
+    var fullReportHref = first ? hrefFor(first).split("#")[0] : undefined;
+    renderResults(manifest, ids, formatLongDate(date), fullReportHref);
   }
 
   function selectRegion(manifest, regionKey) {
@@ -2927,6 +2931,15 @@ __CTA_CARD_JS__
       item.appendChild(topic);
       panel.appendChild(item);
     });
+
+    // The panel sits below the map and the timeline: without this a click on a date looks like
+    // nothing happened, because the results are rendered off-screen.
+    var top = panel.getBoundingClientRect().top;
+    if (top > window.innerHeight - 160 || top < 0) {
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      panel.style.scrollMarginTop = "1rem";
+      panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    }
   }
 
   function formatShortDate(iso) {
