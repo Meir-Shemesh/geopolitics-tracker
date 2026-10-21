@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 import anthropic
 from dotenv import load_dotenv
 
-from src.common.db import get_connection, get_unscreened_pages, init_db, insert_page_screening
+from src.common.db import get_connection, get_unscreened_pages, init_db, insert_page_screening, record_api_usage
 
 # Windows defaults stdout to the cp1252 console codepage even when redirected
 # to a file, which raises UnicodeEncodeError on any print() containing a
@@ -59,7 +59,7 @@ SCREEN_TOOL = {
 }
 
 
-def screen_page(client: anthropic.Anthropic, raw_text: str, model: str = MODEL) -> tuple[bool, str]:
+def screen_page(client: anthropic.Anthropic, raw_text: str, model: str = MODEL, ref: str | None = None) -> tuple[bool, str]:
     """`model` defaults to the production screening model (MODEL) - the parameter
     exists so a controlled experiment can swap this one call (e.g. comparing
     Haiku 4.5 vs. Haiku 5.5, 2026-10-10) without touching any other part of the
@@ -80,6 +80,7 @@ def screen_page(client: anthropic.Anthropic, raw_text: str, model: str = MODEL) 
         tool_choice={"type": "tool", "name": "record_screening"},
         messages=[{"role": "user", "content": raw_text}],
     )
+    record_api_usage("screen", model, response.usage, ref=ref)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return bool(tool_use.input["is_relevant"]), tool_use.input["reasoning"]
 
@@ -184,7 +185,9 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
             )
         else:
             try:
-                is_relevant, reasoning = screen_page(client, page["raw_text"], model=screen_model)
+                is_relevant, reasoning = screen_page(
+                    client, page["raw_text"], model=screen_model, ref=f"{page['file_id']}:{page['page_number']}"
+                )
                 model_used = screen_model
             except Exception as exc:
                 print(f"  failed: file_id={page['file_id']} page={page['page_number']} ({exc})")

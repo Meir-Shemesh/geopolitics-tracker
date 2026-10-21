@@ -24,6 +24,7 @@ from src.common.db import (
     init_db,
     insert_article_conflict_zones,
     insert_article_countries,
+    record_api_usage,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, country_codes, country_list_prompt_text
 
@@ -96,6 +97,7 @@ def tag_batch(client: anthropic.Anthropic, articles) -> list[dict]:
             }
         ],
     )
+    record_api_usage("geo_tag_backfill", MODEL, response.usage)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return tool_use.input["tags"]
 

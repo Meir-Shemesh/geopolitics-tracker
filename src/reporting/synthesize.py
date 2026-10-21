@@ -40,6 +40,7 @@ from src.common.db import (
     insert_report,
     insert_report_section,
     link_section_article,
+    record_api_usage,
     report_exists,
     report_row_exists,
 )
@@ -181,6 +182,7 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles, model: str
         tool_choice=tool_choice,
         messages=[{"role": "user", "content": user_content}],
     )
+    record_api_usage("synthesize_stage1", model, response.usage)
     usage = {
         "input_tokens": response.usage.input_tokens,
         "output_tokens": response.usage.output_tokens,
@@ -302,6 +304,7 @@ def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_artic
             }
         ],
     )
+    record_api_usage("synthesize_stage2", MODEL, response.usage, ref=topic["topic_label_en"][:60])
     tool_use = next(b for b in response.content if b.type == "tool_use")
     comparison = {
         "topic_label_de": tool_use.input["topic_label_de"],

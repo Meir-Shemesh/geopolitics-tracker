@@ -23,6 +23,7 @@ from src.common.db import (
     insert_article,
     insert_article_conflict_zones,
     insert_article_countries,
+    record_api_usage,
     set_analysis_status,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, country_codes, country_list_prompt_text
@@ -166,18 +167,24 @@ def filter_self_tagged_articles(articles: list[dict]) -> tuple[list[dict], list[
     return kept, excluded
 
 
-def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_letters_page_: bool = False) -> list[dict]:
+def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_letters_page_: bool = False,
+                 ref: str | None = None) -> list[dict]:
     letters_note = _LETTERS_PAGE_NOTE if is_letters_page_ else ""
     response = client.messages.create(
         model=MODEL,
         max_tokens=8192,
         thinking={"type": "adaptive"},
         output_config={"effort": "medium"},
-        system=SYSTEM_PROMPT,
+        # The system prompt and the tool schema are identical for every page of a run (~4,000 tokens,
+        # measured 2026-10-20 = 44% of each call's input). The cache breakpoint on the system block
+        # covers the tools before it too, so every page after the first reads that prefix at 10% of
+        # the input price. The output is unaffected (PROJECT_LOG 4.107).
+        system=[{"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}}],
         tools=[ANALYZE_TOOL],
         tool_choice={"type": "tool", "name": "record_articles"},
         messages=[{"role": "user", "content": f"Newspaper: {newspaper}\n{letters_note}Page text:\n\n{raw_text}"}],
     )
+    record_api_usage("analyze", MODEL, response.usage, ref=ref)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return tool_use.input["articles"]
 
@@ -202,7 +209,10 @@ def run(file_id: int | None = None) -> None:
         letters_page = is_letters_page(page["raw_text"])
 
         try:
-            articles = analyze_page(client, newspaper, page["raw_text"], is_letters_page_=letters_page)
+            articles = analyze_page(
+                client, newspaper, page["raw_text"], is_letters_page_=letters_page,
+                ref=f"{page['file_id']}:{page['page_number']}",
+            )
             if not isinstance(articles, list):
                 raise TypeError(f"expected a list of articles, got {type(articles).__name__}")
             required_keys = {

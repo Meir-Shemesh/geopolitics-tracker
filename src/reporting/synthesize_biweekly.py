@@ -46,6 +46,7 @@ from dotenv import load_dotenv
 
 from src.common.biweekly import missing_published_days, period_closing_on
 from src.common.db import (
+    record_api_usage,
     biweekly_period_exists,
     delete_biweekly_period,
     get_connection,
@@ -111,7 +112,8 @@ USAGE = {"calls": 0, "input": 0, "output": 0, "cache_create": 0, "cache_read": 0
 PRICE_IN, PRICE_OUT = 2.00, 10.00
 
 
-def record_usage(usage) -> None:
+def record_usage(usage, stage: str = "biweekly") -> None:
+    record_api_usage(stage, MODEL, usage)  # persistent record (api_usage); the counters below are this process's summary
     with _USAGE_LOCK:
         USAGE["calls"] += 1
         USAGE["input"] += getattr(usage, "input_tokens", 0) or 0
@@ -476,7 +478,7 @@ def call_map_once(client, dates, rows, user_content):
             return stream.get_final_message()
 
     response = call_with_retry(f"map {dates[0]}..{dates[-1]}", _call)
-    record_usage(response.usage)
+    record_usage(response.usage, "biweekly_map")
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
@@ -537,7 +539,7 @@ def call_reduce_once(client, user_content):
             return stream.get_final_message()
 
     response = call_with_retry("reduce", _call)
-    record_usage(response.usage)
+    record_usage(response.usage, "biweekly_reduce")
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
@@ -722,7 +724,7 @@ def write_biweekly_topic(client, topic: dict, days: list[dict], feedback: str = 
         tool_choice={"type": "tool", "name": "record_biweekly_topic"},
         messages=[{"role": "user", "content": user_content}],
     ))
-    record_usage(response.usage)
+    record_usage(response.usage, "biweekly_topic")
     tool_use = next(b for b in response.content if b.type == "tool_use")
     result = dict(tool_use.input)
     usage = {
@@ -822,7 +824,7 @@ def write_overview(client, topics: list[dict]) -> tuple[dict, dict]:
         tool_choice={"type": "tool", "name": "record_overview"},
         messages=[{"role": "user", "content": user_content}],
     ))
-    record_usage(response.usage)
+    record_usage(response.usage, "biweekly_overview")
     tool_use = next(b for b in response.content if b.type == "tool_use")
     result = dict(tool_use.input)
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}

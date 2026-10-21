@@ -7,8 +7,10 @@ new column here is enough for existing tracker.db files to pick it up on the
 next run, with no manual migration step or need to delete the DB.
 """
 
+import os
 import re
 import sqlite3
+import sys
 from datetime import date as date_cls
 from datetime import datetime, timedelta, tzinfo
 from pathlib import Path
@@ -108,6 +110,21 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "section_id": "INTEGER NOT NULL REFERENCES report_sections(id)",
         "article_id": "INTEGER NOT NULL REFERENCES articles(id)",
     },
+    # One row per Anthropic API call that completed (PROJECT_LOG 4.107, action item 44): the only record
+    # of what the pipeline spends. Written by record_api_usage() - never raises, never blocks a stage.
+    # run_date is the local pipeline day the call was made on (not the report date it served).
+    "api_usage": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "called_at": "TEXT NOT NULL",
+        "run_date": "TEXT NOT NULL",
+        "stage": "TEXT NOT NULL",
+        "model": "TEXT NOT NULL",
+        "input_tokens": "INTEGER NOT NULL",
+        "output_tokens": "INTEGER NOT NULL",
+        "cache_creation_tokens": "INTEGER NOT NULL DEFAULT 0",
+        "cache_read_tokens": "INTEGER NOT NULL DEFAULT 0",
+        "ref": "TEXT",
+    },
     # Biweekly narrative-trends reports (promoted from the scripts/biweekly_stage{1,2}_dryrun.py
     # dry-run tooling to a real pipeline output - see CLAUDE.md for the full specification:
     # Thu-Wed 14-day cadence, >=5-distinct-day inclusion threshold, the three Stage-2 guards).
@@ -182,6 +199,38 @@ def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def record_api_usage(stage: str, model: str, usage, ref: str | None = None, db_path: Path | None = None) -> None:
+    """Log one completed API call's token usage to api_usage. Deliberately swallows every error:
+    accounting must never fail a screening/analysis/synthesis run. Opens its own short-lived
+    connection (stage 2 calls run in parallel threads, and a shared sqlite3 connection must not be
+    used across threads). Skipped when TRACKER_NO_USAGE_LOG is set (experiments, tests) or when
+    `usage` has no real integer token counts (a mocked response)."""
+    try:
+        if os.environ.get("TRACKER_NO_USAGE_LOG"):
+            return
+        input_tokens = getattr(usage, "input_tokens", None)
+        output_tokens = getattr(usage, "output_tokens", None)
+        if not isinstance(input_tokens, int) or not isinstance(output_tokens, int):
+            return
+        cache_create = getattr(usage, "cache_creation_input_tokens", 0)
+        cache_read = getattr(usage, "cache_read_input_tokens", 0)
+        cache_create = cache_create if isinstance(cache_create, int) else 0
+        cache_read = cache_read if isinstance(cache_read, int) else 0
+        conn = sqlite3.connect(db_path or DB_PATH, timeout=5)
+        try:
+            conn.execute(
+                "INSERT INTO api_usage (called_at, run_date, stage, model, input_tokens, output_tokens, "
+                "cache_creation_tokens, cache_read_tokens, ref) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (datetime.now().astimezone().isoformat(timespec="seconds"), date_cls.today().isoformat(), stage,
+                 model, input_tokens, output_tokens, cache_create, cache_read, ref),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        print(f"  (usage logging skipped: {exc!r})", file=sys.stderr)
 
 
 def init_db(conn: sqlite3.Connection) -> None:
