@@ -514,7 +514,7 @@ def esc(text: str) -> str:
 
 
 LOGO_LINK_LABEL = {
-    "he": "גאופוליטיקה יומי - דף הבית", "en": "Daily Geopolitics - home", "de": "Tägliche Geopolitik - Startseite",
+    "he": "מעקב גאופוליטיקה יומי - דף הבית", "en": "Daily Geopolitics - home", "de": "Tägliche Geopolitik - Startseite",
 }
 PDF_LABEL = {"he": "⬇ הורד PDF", "en": "⬇ Download PDF", "de": "⬇ PDF herunterladen"}
 CONTACT_EMAIL = "meir@meirshemesh.com"
@@ -920,7 +920,7 @@ def build_report_html(
         "en": f"Daily Geopolitics Report - {date_str}",
         "de": f"Tagesbericht - {date_str}",
     }[lang]
-    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     sources_label = {
         "he": "עיתונים שנסקרו היום:", "en": "Sources covering today:", "de": "Heutige Quellen:",
     }[lang]

@@ -29,7 +29,7 @@ from src.reporting.render import (
 
 PAGE_LABELS = {
     "he": {
-        "eyebrow": "גאופוליטיקה יומי",
+        "eyebrow": "מעקב גאופוליטיקה יומי",
         "badge": "דוח מגמות דו-שבועי",
         "sources_word": "מקורות",
         "days_word": "מתוך 14 יום",

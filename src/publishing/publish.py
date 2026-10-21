@@ -103,10 +103,10 @@ def build_index_html(
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
     page_title = {
-        "he": "כל הדוחות - גאופוליטיקה יומי", "en": "All Reports - Daily Geopolitics",
+        "he": "כל הדוחות - מעקב גאופוליטיקה יומי", "en": "All Reports - Daily Geopolitics",
         "de": "Alle Berichte - Tägliche Geopolitik",
     }[lang]
-    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     heading = {"he": "כל הדוחות", "en": "All Reports", "de": "Alle Berichte"}[lang]
 
     cards = []
@@ -208,10 +208,10 @@ def build_about_html(lang: str) -> str:
     content = CONTENT[lang]
 
     page_title = {
-        "he": "אודות הפרויקט - גאופוליטיקה יומי", "en": "About the Project - Daily Geopolitics",
+        "he": "אודות הפרויקט - מעקב גאופוליטיקה יומי", "en": "About the Project - Daily Geopolitics",
         "de": "Über das Projekt - Tägliche Geopolitik",
     }[lang]
-    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     heading = {"he": "אודות הפרויקט", "en": "About the Project", "de": "Über das Projekt"}[lang]
 
     sections_html = render_sections_html(content["sections"])
@@ -333,7 +333,7 @@ def _build_static_page_html(
 ) -> str:
     is_he = lang == "he"
     dir_attr = "rtl" if is_he else "ltr"
-    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
 
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
@@ -411,7 +411,7 @@ PROFESSIONAL_HOMEPAGE_URL = "https://meirshemesh.com"
 
 def build_accessibility_html(lang: str) -> str:
     if lang == "he":
-        page_title = "הצהרת נגישות - גאופוליטיקה יומי"
+        page_title = "הצהרת נגישות - מעקב גאופוליטיקה יומי"
         heading = "הצהרת נגישות"
         body_html = f"""
     <p>אתר זה שואף לעמוד בדרישות תקן ישראלי (ת"י) 5568 חלק 1, המבוסס על הנחיות
@@ -498,7 +498,7 @@ def build_accessibility_html(lang: str) -> str:
 
 def build_terms_html(lang: str) -> str:
     if lang == "he":
-        page_title = "תנאי שימוש - גאופוליטיקה יומי"
+        page_title = "תנאי שימוש - מעקב גאופוליטיקה יומי"
         heading = "תנאי שימוש"
         body_html = """
     <h2>1. אופי התוכן</h2>
@@ -566,7 +566,7 @@ def build_terms_html(lang: str) -> str:
 # treated as finalized legal advice.
 def build_privacy_html(lang: str) -> str:
     if lang == "he":
-        page_title = "מדיניות פרטיות - גאופוליטיקה יומי"
+        page_title = "מדיניות פרטיות - מעקב גאופוליטיקה יומי"
         heading = "מדיניות פרטיות"
         body_html = f"""
     <h2>1. אילו נתונים נאספים</h2>
@@ -1082,10 +1082,10 @@ def build_filter_html(lang: str) -> str:
     dir_attr = "rtl" if is_he else "ltr"
 
     page_title = {
-        "he": "סינון מתקדם - גאופוליטיקה יומי", "en": "Advanced Filter - Daily Geopolitics",
+        "he": "סינון מתקדם - מעקב גאופוליטיקה יומי", "en": "Advanced Filter - Daily Geopolitics",
         "de": "Erweiterte Filterung - Tägliche Geopolitik",
     }[lang]
-    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     heading = {"he": "סינון מתקדם", "en": "Advanced filter", "de": "Erweiterte Filterung"}[lang]
 
     form_html = _filter_builder_form_html(lang, show_close=False)
@@ -1163,8 +1163,8 @@ def build_filter_html(lang: str) -> str:
 
 _TRENDS_LABELS = {
     "he": {
-        "page_title": "מגמות סיקור (בטא) - גאופוליטיקה יומי",
-        "eyebrow": "גאופוליטיקה יומי",
+        "page_title": "מגמות סיקור (בטא) - מעקב גאופוליטיקה יומי",
+        "eyebrow": "מעקב גאופוליטיקה יומי",
         "heading": "מגמות סיקור לפי מדינה",
         "beta_badge": "בטא",
         "beta_note": "הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.",
@@ -1671,8 +1671,8 @@ def build_trends_chart_html(lang: str) -> str:
 
 _TRENDS_HUB_LABELS = {
     "he": {
-        "page_title": "מגמות - גאופוליטיקה יומי",
-        "eyebrow": "גאופוליטיקה יומי",
+        "page_title": "מגמות - מעקב גאופוליטיקה יומי",
+        "eyebrow": "מעקב גאופוליטיקה יומי",
         "heading": "מגמות",
         "tagline": "כיסוי גאופוליטי לאורך זמן - דוחות נרטיביים דו-שבועיים, וניתוח-מגמות גיאוגרפי",
         "periods_heading": "דוחות מגמות דו-שבועיים",
@@ -1858,10 +1858,10 @@ def build_topic_html(lang: str) -> str:
     dir_attr = "rtl" if is_he else "ltr"
 
     page_title = {
-        "he": "תוצאות לפי סינון - גאופוליטיקה יומי", "en": "Filtered Results - Daily Geopolitics",
+        "he": "תוצאות לפי סינון - מעקב גאופוליטיקה יומי", "en": "Filtered Results - Daily Geopolitics",
         "de": "Gefilterte Ergebnisse - Tägliche Geopolitik",
     }[lang]
-    eyebrow = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    eyebrow = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     loading_label = {"he": "טוען…", "en": "Loading…", "de": "Wird geladen…"}[lang]
     edit_filter_label = {"he": "ערוך סינון", "en": "Edit filter", "de": "Filter bearbeiten"}[lang]
     export_label = {"he": "ייצוא / הדפסה", "en": "Export / Print", "de": "Exportieren / Drucken"}[lang]
@@ -2503,7 +2503,7 @@ _TOPIC_JS_TEMPLATE = """
     var title = parts.length ? parts.join(" · ") : allResultsLabel;
     var titleEl = document.getElementById("topic-title");
     if (titleEl) titleEl.textContent = title;
-    var suffix = LANG === "he" ? " - גאופוליטיקה יומי" : LANG === "de" ? " - Tägliche Geopolitik" : " - Daily Geopolitics";
+    var suffix = LANG === "he" ? " - מעקב גאופוליטיקה יומי" : LANG === "de" ? " - Tägliche Geopolitik" : " - Daily Geopolitics";
     document.title = title + suffix;
 
     var countEl = document.getElementById("topic-count");
@@ -2722,7 +2722,7 @@ _HOMEPAGE_JS_TEMPLATE = """
         titleEl.textContent = country[LABEL_KEY];
       }
       el.addEventListener("click", function () {
-        selectCountry(manifest, code);
+        selectCountry(manifest, code, true);
       });
       if (tooltip) {
         // Reads the same aria-label text already set at build time (see
@@ -2763,7 +2763,7 @@ _HOMEPAGE_JS_TEMPLATE = """
       cell.style.background = coverageColor(intensity);
       cell.textContent = formatShortDate(d);
       cell.addEventListener("click", function () {
-        selectDate(manifest, d);
+        selectDate(manifest, d, true);
       });
       track.appendChild(cell);
     });
@@ -2819,7 +2819,7 @@ __CTA_CARD_JS__
       chip.dataset.region = key;
       chip.textContent = region[LABEL_KEY];
       chip.addEventListener("click", function () {
-        selectRegion(manifest, key);
+        selectRegion(manifest, key, true);
       });
       container.appendChild(chip);
     });
@@ -2842,16 +2842,19 @@ __CTA_CARD_JS__
     });
   }
 
-  function selectCountry(manifest, code) {
+  // `scrollToPanel` is true only for a click by the visitor. The page also selects the latest day by
+  // itself when it loads (init) to pre-fill the panel; scrolling then would throw every visitor past the
+  // header, map and timeline straight onto the posts (regression of 2026-10-20, fixed 2026-10-21).
+  function selectCountry(manifest, code, scrollToPanel) {
     clearSelection();
     var el = document.getElementById(code.toLowerCase());
     if (el) el.classList.add("is-selected");
     var country = manifest.countries[code];
     var name = country[LABEL_KEY];
-    renderResults(manifest, country.section_ids, name);
+    renderResults(manifest, country.section_ids, name, undefined, scrollToPanel);
   }
 
-  function selectDate(manifest, date) {
+  function selectDate(manifest, date, scrollToPanel) {
     clearSelection();
     var cell = document.querySelector('.timeline-cell[data-date="' + date + '"]');
     if (cell) {
@@ -2862,10 +2865,10 @@ __CTA_CARD_JS__
     // The timeline cell IS a report date, so the panel also offers the full report of that day.
     var first = ids.length ? manifest.sections[ids[0]] : null;
     var fullReportHref = first ? hrefFor(first).split("#")[0] : undefined;
-    renderResults(manifest, ids, formatLongDate(date), fullReportHref);
+    renderResults(manifest, ids, formatLongDate(date), fullReportHref, scrollToPanel);
   }
 
-  function selectRegion(manifest, regionKey) {
+  function selectRegion(manifest, regionKey, scrollToPanel) {
     clearSelection();
     var region = manifest.regions[regionKey];
     if (!region) return;
@@ -2877,7 +2880,7 @@ __CTA_CARD_JS__
     });
     var name = region[LABEL_KEY];
     var fullReportHref = TOPIC_PREFIX + "topic.html?region=" + encodeURIComponent(regionKey);
-    renderResults(manifest, region.section_ids, name, fullReportHref);
+    renderResults(manifest, region.section_ids, name, fullReportHref, scrollToPanel);
   }
 
   function clearSelection() {
@@ -2886,7 +2889,7 @@ __CTA_CARD_JS__
     });
   }
 
-  function renderResults(manifest, sectionIds, headingLabel, fullReportHref) {
+  function renderResults(manifest, sectionIds, headingLabel, fullReportHref, scrollToPanel) {
     var panel = document.getElementById("results-panel");
     if (!panel) return;
     panel.innerHTML = "";
@@ -2935,7 +2938,7 @@ __CTA_CARD_JS__
     // The panel sits below the map and the timeline: without this a click on a date looks like
     // nothing happened, because the results are rendered off-screen.
     var top = panel.getBoundingClientRect().top;
-    if (top > window.innerHeight - 160 || top < 0) {
+    if (scrollToPanel && (top > window.innerHeight - 160 || top < 0)) {
       var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       panel.style.scrollMarginTop = "1rem";
       panel.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
@@ -2992,7 +2995,7 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
     filter_href = "he/filter.html" if is_root else "filter.html"
     trends_href = "he/trends.html" if is_root else "trends.html"
 
-    page_title = {"he": "גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
+    page_title = {"he": "מעקב גאופוליטיקה יומי", "en": "Daily Geopolitics", "de": "Tägliche Geopolitik"}[lang]
     eyebrow = page_title
 
     story_text = {
