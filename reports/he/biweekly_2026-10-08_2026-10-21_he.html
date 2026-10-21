@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>דוח מגמות דו-שבועי - 8.10–21.10.2026 - מעקב גאופוליטיקה יומי</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .biweekly-badge {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--masthead-accent);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    margin-bottom: .75rem;
+  }
+  /* direction:ltr - the date-range string ("30.9.2026-17.9") is almost
+     entirely Latin/numeric with no Hebrew characters of its own; left
+     undeclared inside an RTL masthead it bidi-reorders and overflows past
+     the viewport edge on narrow screens (same fix already used for
+     citation boxes elsewhere in this project, see render.py). */
+  .report-title { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; direction: ltr; text-align: right; }
+  .biweekly-overview {
+    max-width: 44rem;
+    margin: 1.5rem auto 0;
+    padding: 0 1.5rem;
+    font-size: 1.02rem;
+    color: var(--text-muted);
+  }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+
+  .biweekly-topic {
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .biweekly-topic:first-child { padding-top: 0; }
+  .biweekly-topic-title { margin: 0 0 .4rem; font-size: 1.3rem; font-weight: 700; }
+  /* overflow-wrap: a long comma-separated Latin-script source list mixed
+     with a short Hebrew/German prefix can overflow the viewport on narrow
+     screens instead of wrapping - same class of bidi-mixing issue the
+     citation boxes handle elsewhere in this project, fixed here with a
+     blunter, reliably-safe wrap rule rather than isolating direction. */
+  .biweekly-topic-byline { margin: 0 0 .8rem; font-size: .82rem; color: var(--text-muted); overflow-wrap: break-word; }
+  .biweekly-topic-text { margin: 0; font-size: 1rem; }
+  .biweekly-daily-links {
+    margin-top: .9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+    direction: ltr;
+  }
+  .biweekly-daily-links-label {
+    font-size: .78rem;
+    color: var(--text-muted);
+    margin-inline-end: .3rem;
+  }
+  .daily-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .2rem .65rem;
+  }
+  .daily-link:hover { border-color: var(--masthead-accent); text-decoration: underline; }
+
+  @media print {
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+  }
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="מעקב גאופוליטיקה יומי - דף הבית"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="trends.html">← לכל הדוחות</a>
+      <a class="top-nav-link" href="filter.html">סינון מתקדם</a>
+      <a class="top-nav-link" href="trends.html">מגמות</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-10-08_2026-10-21_en.html">English</a>
+      <a class="top-nav-link top-nav-lang-link" href="biweekly_2026-10-08_2026-10-21_de.html">Deutsch</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">צור קשר</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">אימייל</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">אתר אישי</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">לינקדאין</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="מצב כהה" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <span class="biweekly-badge">דוח מגמות דו-שבועי</span>
+      <h1 class="report-title">8.10–21.10.2026</h1>
+    </div>
+  </header>
+  <p class="biweekly-overview">השבועיים האחרונים נשלטו על ידי שילוב של לחץ פיסקלי במערב ואי-יציבות פוליטית פנימית: בריטניה וצרפת מתמודדות עם משבר חוב ריבוני, צרפת גם עם גל מחאות סטודנטים ובתי ספר, וממשלות בגרמניה, ספרד וישראל מתנדנדות תחת מחלוקות קואליציוניות ובחירות. מקביל לכך, זירות הסכסוך המתמשכות - אוקראינה-רוסיה, תימן, סודאן ואתיופיה-אריתריאה - ממשיכות להזין כותרות לצד ניסיונות דיפלומטיים חדשים כמו עסקת גז אפשרית בין טראמפ לפוטין. נושא חוצה-גבולות בולט נוסף הוא הפוליטיקה האמריקאית תחת לחץ - ממסע הבחירות של טראמפ לקראת הביניים ועד לפרשת איליהן עומר ושאלות של ביטחון וטרור פנים - המשתלבת עם דאגות גוברות סביב בינה מלאכותית ויציבות פיננסית גלובלית.</p>
+  <main>
+    
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מהפגנות תלמידים ללאומיות של מהומות ופרעות בצרפת</h2>
+      <p class="biweekly-topic-byline">11 מתוך 14 יום · 12 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Handelsblatt, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר ממחאת תלמידים ממוקדת לבעיות חינוך ומדיניות צנע למשבר לאומי רחב המאיים על המשטר עצמו. ב-8-9 באוקטובר, The Guardian ו-Süddeutsche Zeitung מיקדו בטענות התלמידים נגד קיצוצים ואלימות משטרתית, תוך השוואה ל-1968. עד 18-19 באוקטובר, לאחר שכ-550,000-800,000 מפגינים יצאו לרחובות, הדיווח (The Daily Telegraph, USA Today) עסק בהצתת בניינים ציבוריים, בהתמוטטות סדר ציבורי ובסיכון למכירת אג&quot;ח ולמשבר פיסקלי. ב-21 באוקטובר הפרשנות התרחבה לשאלות על עתיד הרפובליקה: Bernard-Henri Lévy ב-Süddeutsche Zeitung תיאר ברבריות חסרת מטרה, בעוד Gilles Kepel ב-Neue Zürcher Zeitung הזהיר מוואקום שלטוני העלול להוביל למלחמת אזרחים. The Daily Telegraph הדגיש כל העת סיכון פיסקלי אירופי, בעוד העיתונים הגרמניים התמקדו בכשלים מבניים ומוסדיים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3501">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3569">9.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3823">12.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3934">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4025">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4147">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4265">17.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4288">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4341">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4403">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4458">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4460">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4569">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מלחמת האזרחים בתימן והסלמת העימות עם החות&#x27;ים</h2>
+      <p class="biweekly-topic-byline">14 מתוך 14 יום · 12 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Handelsblatt, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מתיאור התקפי החות&#x27;ים כהצלחות צבאיות נגד ה&quot;פרוקסי האיראני&quot; לכדי תמונה של משבר אזורי חסר מוצא, שבו סעודיה נחשפת כפגיעה ובעלות בריתה נגררות פנימה בהדרגה. ב-8 באוקטובר תיאר Die Welt מתקפה נגדית סעודית מוצלחת, בעוד Süddeutsche Zeitung כבר הזהירה מתסבוכת רב-צדדית מתרחבת. עד 15-16 באוקטובר, לאחר ההתקפה על שדה התעופה בריאד, ניתחו Neue Zürcher Zeitung ו-The Guardian (נסרין מאליק) את התקיפות כסימן לעידן חדש של חוסר יציבות שסעודיה אינה מסוגלת לנצח בו בלי מלחמה כוללת. עד 19-20 באוקטובר תיארה The Washington Post את העימות כ&quot;משחק סכום אפס&quot; ללא משא ומתן, המאיים על שיט עולמי. קו שבר ברור הפריד בין תיאורים עובדתיים-קרביים (Los Angeles Times, The Daily Telegraph) ובין ניתוחים אסטרטגיים עמוקים יותר שהציבו את תימן בלב התחרות האיראנית-סעודית-אמריקאית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3512">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3538">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3686">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3744">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3772">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3857">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3963">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4027">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4116">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4119">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4262">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4352">18.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4353">18.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4377">18.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4392">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4410">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4462">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4576">21.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4580">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מלחמת רוסיה-אוקראינה: מתקיפות הדדיות לקרע עמוק בין וושינגטון לקייב</h2>
+      <p class="biweekly-topic-byline">14 מתוך 14 יום · 11 מקורות: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Handelsblatt, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">בתחילת התקופה (8-9 באוקטובר) הסיקור התמקד במתקפות רוסיות קטלניות על אזרחים, עם האשמות חדות של זלנסקי כלפי מוסקבה, כפי שתואר ב-The Guardian וב-The Daily Telegraph. עד אמצע-סוף התקופה הדגש עבר לקרע חריף בין וושינגטון לקייב: עסקת הדיזל הרוסי של טראמפ (10 באוקטובר), קריאתו להדחת זלנסקי (11 באוקטובר), והגבלת שירות Starlink שתוארה כ&quot;מכה גרעינית&quot; (15-17 באוקטובר). עד 20-21 באוקטובר רוב כתבי העת, ובראשם Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung ו-The Washington Post, כבר מתארים את המדיניות האמריקאית כהטיה שיטתית לטובת פוטין, כולל האשמות ישירות ב&quot;בגידה&quot;. הדיווח של The Daily Telegraph ב-11 באוקטובר על עסקת הדיזל, לעומת הסיקור הניטרלי יחסית של Los Angeles Times, ממחיש כבר מוקדם את הפער בין תקשורת אמריקאית לאירופית, פער שהעמיק עד הסוף.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3489">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3567">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3655">10.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3656">10.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3706">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3730">11.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3736">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3765">12.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3769">12.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3798">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3860">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3932">14.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3981">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4018">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4101">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4105">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4131">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4178">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4220">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4238">17.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4239">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4350">18.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4396">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4406">19.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4408">19.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4409">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4459">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4461">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4463">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4467">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4559">21.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4573">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">בריטניה, האיחוד האירופי וסין: מאבק המכסים על רכב חשמלי</h2>
+      <p class="biweekly-topic-byline">11 מתוך 14 יום · 10 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Handelsblatt, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר מוויכוח דיפלומטי מופשט לעימות מוחשי ומתגבש. ב-8 וב-10 באוקטובר The Daily Telegraph ו-Die Welt דנו בעיקר בשאלה אם בריטניה תתיישר עם מכסי האיחוד האירופי כעיקרון מיקוח, בעוד Süddeutsche Zeitung הזהירה מפני הסתמכות-יתר על אמצעי הגנה. עד ה-16-17 באוקטובר הדיון הבשיל: The Guardian ו-Telegraph תיעדו משא ומתן קונקרטי סביב תוכנית ה&quot;Made in Europe&quot;, עם צרפת ובריטניה מתמקחות על תנאים ממשיים, ו-Frankfurter Allgemeine Zeitung דיווח על הסכם בפועל להגבלת ייבוא כלי רכב היברידיים סיניים. עד ה-20 באוקטובר, Süddeutsche Zeitung כבר הציגה את שיטפון מכוניות הפועלה הסיניות בבריטניה כאזהרה לאיחוד. ההבדל המרכזי בין המקורות: הגרמנים (Die Welt, FAZ) דחפו לכיוון הגנה מתואמת, ואילו הבריטים (Telegraph, Guardian) הדגישו עצמאות וחשש מעליית מחירים לצרכן.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3516">8.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3685">10.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3786">12.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3792">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3889">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3953">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4028">15.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4031">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4136">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4137">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4213">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4279">17.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4283">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4366">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4420">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4536">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">משבר החוב הריבוני של צרפת וסיכון לגוש האירו</h2>
+      <p class="biweekly-topic-byline">8 מתוך 14 יום · 9 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Handelsblatt, Neue Zürcher Zeitung, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">הסיפור נפתח ב-8-9 באוקטובר כדואליות אנגלו-צרפתית - The Daily Telegraph תיאר תחרות בין בריטניה לצרפת על &quot;מקום בליגת האלופות&quot; של פזרנות פיסקלית - אך תוך ימים הזירה הבריטית נעלמה כמעט לגמרי, והכיסוי התמקד בצרפת כ&quot;נקודת המשבר&quot; המרכזית של גוש האירו. עד 21 באוקטובר, הן Frankfurter Allgemeine Zeitung והן Neue Zürcher Zeitung תיארו תשואות אג&quot;ח צרפתיות בשיא רב-שנתי ומחאות רחוב אלימות כאיום מערכתי שעלול לגרור מדינות נוספות. בין לבין, Der Spiegel ו-Die Welt (9-10 באוקטובר) הוסיפו ממד פוליטי-גרמני, בהצגת לה פן ומלנשון כמאיימים על הציר הצרפתי-גרמני ועל האיחוד האירופי עצמו. ההבדל המרכזי בהתמסגרות: כלי תקשורת גרמנים ושוויצריים הדגישו סיכון מערכתי מתמשך, בעוד Washington Post ו-Daily Telegraph (11 באוקטובר) ניצלו את המשבר הצרפתי כאזהרה לקוראים הבריטים והאמריקאים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3494">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3525">9.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3551">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3680">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3748">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3793">12.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3998">14.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4417">19.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4593">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">עסקת הדיזל/גז בין טראמפ לפוטין</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 9 מקורות: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מאזהרה נקודתית לגינוי רחב וממוסגר מוסרית. ב-9 באוקטובר רק The Daily Telegraph דיווח על התוכנית, דרך חששות גרמניים מ&quot;עסקה מלוכלכת&quot; הפוגעת באירופה. עד 13-14 באוקטובר, עם חשיפת העסקה בפועל, מקורות כמו The Washington Post, Frankfurter Allgemeine Zeitung ו-Die Welt תיארו אותה כהפרת חוק סנקציות ו&quot;בגידה&quot; המממנת את מלחמת פוטין, תוך חשיפת לחץ אמריקני סמוי על קייב. ב-17 באוקטובר הדיון כבר ניתח זאת כדפוס רחב של כריתת ברית חד-צדדית. הבדל מרכזי: מקורות אירופיים הדגישו את הסיכון התלותי לאירופה, ואילו פרשנים אמריקנים-קנדיים התמקדו בבגידה המוסרית בבעלות ברית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3534">9.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3865">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3928">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4040">15.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4295">17.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הבחירות בישראל והאתגר לנתניהו</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 9 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">המסגור עבר מדיון מדיני-אידאולוגי לשאלת התלות האמריקאית. ב-9 באוקטובר נדונה הבחירה כמשאל אמון פנימי על נתניהו (Daily Telegraph) לצד ספקנות גרמנית שגם הדחתו לא תחולל פריצת דרך מדינית (Der Spiegel); ב-17 באוקטובר The Guardian תיאר תזוזה אידאולוגית עמוקה ימינה בחברה הישראלית. עד 19-21 באוקטובר הדגש עבר לתמיכת טראמפ בנתניהו, לביקור הגסת ולסירוב ואנס לתמוך בו - חשיפת סדק בתוך הממשל האמריקאי עצמו סביב הבחירה. בולטת גם ההבדלה בין Die Welt, שתיארה את תמיכת טראמפ כ&quot;זהב פוליטי&quot; לנתניהו, לבין Los Angeles Times שהדגיש את הטון המאיים שבדברי טראמפ.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3547">9.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4249">17.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4411">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4464">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4562">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">בטיחות בינה מלאכותית, רגולציה וסיכוני ביטחון ביולוגי</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 9 מקורות: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הדיון עבר מעימות רחב ורב-קולי על עצם ההיגיון שבפיקוח ממשלתי לכתיבות בודדות ומצומצמות המניחות סיכון כעובדה ומציעות מנגנונים קונקרטיים. ב-15 באוקטובר הציגו The Guardian, Los Angeles Times, The Washington Post ו-USA Today מחלוקת חזיתית - בין קריאה לפיקוח לבין חשד שהתעשייה מנצלת את שיח הסיכון כדי להבטיח רגולציה עצמית רכה. לעומת זאת ב-20-21 באוקטובר נותרו רק קולות בודדים: ב-Washington Post הוצעה הסכמת פיקוח גרעיני-סגנון מול סין, ובמאמר נוסף נקראה אסטרטגיית ביו-ביטחון לאומית דחופה, ללא כל ויכוח נגדי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-15_he.html#section-4068">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4151">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4263">17.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4430">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4479">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4551">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4608">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">אלימות מתנחלים בגדה המערבית</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 9 מקורות: Daily Telegraph, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">המסגור עבר מתיעוד מבודד של אלימות אל סיפור משברי מתמשך עם לחץ בינלאומי ממשי. ב-16 באוקטובר Frankfurter Allgemeine Zeitung דיווח עובדתית על מגפת תקיפות בקטיף הזיתים לצד אי-אכיפה ישראלית. עד 18-19 באוקטובר, לאחר תקיפת דיפלומטים אירופים וצלמת The Washington Post, הסיקור (The Guardian, Los Angeles Times, The Washington Post) החריף: The Guardian מצטט את השגריר מייק האקבי המכנה זאת &quot;מעשה טרור&quot;, ומתאר ניסיונות שיטתיים של נתניהו להכפיש מבקרים. ב-20 באוקטובר נבחנו המעצרים כחריגה נדירה לתרבות חסינות, לפי נתוני Yesh Din. הגרמנים והאמריקאים התמקדו בעובדות ואכיפה, ואילו The Guardian הציג את המסגור הביקורתי החד ביותר כלפי ישראל.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-16_he.html#section-4114">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4243">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4390">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4407">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4466">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4603">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מתכנית שידור חי להוצאה להורג לביטולה</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 8 מקורות: Daily Telegraph, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">מ-10 עד 14 באוקטובר שלטה גינוי כמעט אחידה: עיתונים כה שונים כמו The Guardian, The Daily Telegraph, Süddeutsche Zeitung ו-Washington Post השוו את התוכנית לשידור הוצאתו להורג של ניידל חסן לנוהגי משטרים סמכותניים. עד 16-17 באוקטובר, לאחר הביטול, הדיווח התפצל: The Daily Telegraph הדגיש שיקול דעת אסטרטגי של טראמפ, ואילו Frankfurter Allgemeine Zeitung ו-USA Today מיקדו את העניין בהיחלשות המעמד הפוליטי של שר ההגנה הגסת&#x27;.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-10_he.html#section-3661">10.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3695">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3755">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3777">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3902">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3964">14.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4120">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4270">17.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">פרס נובל לשלום לנאבי פילאי והמחלוקת על &quot;רצח העם&quot; בעזה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 8 מקורות: Daily Telegraph, Die Welt, Guardian, Handelsblatt, Los Angeles Times, Neue Zürcher Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מהתמקדות בעובדות הפרס עצמו, ב-10-11 באוקטובר, להתגבשות ביקורת גלויה כלפי פילאי ו/או ועדת נובל עד 12-13 באוקטובר. בתחילה The Guardian וה-Washington Post הציגו את הפרס בעיקר כהוקרה על קריירה משפטית, לצד זעם ישראלי ותגובת טראמப. עד 13 באוקטובר, Die Welt ו-Neue Zürcher Zeitung כבר טענו במפורש שהפרס מהווה הטיה נגד ישראל ושפילאי אינה ראויה להערצה. ב-16 באוקטובר חזר The Guardian להציג את הפרס כמחזק את מסקנת רצח העם.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-10_he.html#section-3664">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3746">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3790">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3867">13.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4112">16.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">קמפיין טראמפ לקראת הבחירות לקונגרס 2026</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 8 מקורות: Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מניתוח יחיד וממוקד למערך רחב ומגוון של זוויות. ב-13 באוקטובר הציג Süddeutsche Zeitung בלבד טענה שהופעות טראמפ עלולות דווקא להזיק למועמדי מפלגתו. עד ה-18-21 באוקטובר האבחנה התרחבה משמעותית: כתבות ב-The Washington Post, Los Angeles Times ו-Neue Zürcher Zeitung תיארו אי-שקט בקרב מצביעים לטינים, חקלאים וקהילות ערביות-יהודיות כאחד, לצד חשש פנימי בבית הלבן. עד ה-21 באוקטובר, Süddeutsche Zeitung עצמו הציג שני קולות מנוגדים - גל כחול צפוי מול אזהרת פולסטרים מהפתעה רפובליקנית. בעוד מקורות אמריקאיים התמקדו במנגנוני בחירות מקומיים, Die Welt היה הגוף היחיד שמסגר את הסוגיה דרך עתיד נאט&quot;ו.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-13_he.html#section-3912">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3951">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4065">15.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4389">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4431">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4494">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4609">21.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4621">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הרחפן... לא - מחיקת רשימות הבוחרים בהודו וגל המחאות</h2>
+      <p class="biweekly-topic-byline">9 מתוך 14 יום · 7 מקורות: Daily Telegraph, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Neue Zürcher Zeitung, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מדיווח עובדתי מצומצם על מעצרים לכדי פרשנות נוקבת המציגה את ממשלת מודי כנואשת ומדכאת. ב-10-11 באוקטובר רק The Guardian וה-The Daily Telegraph דיווחו על מעצרי מנהיגי מחאה, בטון איפוק יחסי. ב-12 באוקטובר, עם התרחבות הסיקור לחמישה כלי תקשורת, כבר הופיעו ניסוחים חריפים: Süddeutsche Zeitung טען שהשלטון מעדיף לכלוא מפגינים מראש, ו-Neue Zürcher Zeitung תיאר תגובה לא פרופורציונלית (&quot;פטיש כדי להרוג זבוב&quot;). עד 15 ו-20 באוקטובר, Rana Ayyub ב-The Washington Post ו-Meena Kandasamy ב-The Guardian טענו במפורש שהדיכוי חושף לא עוצמה אלא פחד ואובדן שליטה של מודי. בעוד ה-The Daily Telegraph שמר על טון עובדתי לאורך התקופה, הטורים הביקורתיים בגרמנית ובאנגלית הם שהעצימו בהדרגה את מסגור המשטר כפגיע.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-10_he.html#section-3704">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3741">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3778">12.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3807">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3884">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-4009">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4022">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4193">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4315">17.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4514">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">משאל העם על פרישת אלברטה</h2>
+      <p class="biweekly-topic-byline">8 מתוך 14 יום · 7 מקורות: Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מדיון פנים-קנדי צר לניתוח גיאופוליטי רחב, ולבסוף לפרשנות על התוצאה. באמצע אוקטובר שלט ה-Globe and Mail כמעט לבדו, עם טורים (כמו של אייוויק דיי ומ. אריק מילר) שהתמקדו בטיעונים כלכליים ולאומיים נגד פרישה. ב-19 באוקטובר הסיפור התרחב דרמטית: עיתונים גרמניים כמו Die Welt ו-Süddeutsche Zeitung מיסגרו את המשאל כזירת מאבק בין ארה&quot;ב לרוסיה על קנדה, ו-Los Angeles Times דיווח על אסון קטלני בבסיס צבאי שהאפיל על ההצבעה. לאחר התבוסה המכרעת של הפרישה ב-21 באוקטובר, ה-Globe and Mail הציג עימות פנימי עז בין טורים שראו בכך ניצחון מנופח או מהלך מניפולטיבי, בעוד עיתונים אמריקאיים ראו בתוצאה בעיקר ניצחון עבור קרני מול איומי טראמפ.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-12_he.html#section-3800">12.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3974">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4075">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4188">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4189">16.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4385">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4415">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4499">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4500">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4564">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">חקירת וחיפוש בביתה של ח&quot;כ אילהאן עומר</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 7 מקורות: Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור נפתח ב-13-14 באוקטובר כסיפור פוליטי מובהק: רוב המקורות, מ-The Washington Post ועד Süddeutsche Zeitung ו-Neue Zürcher Zeitung, מיקדו את הסיפור בטענת עומר ל&quot;טרגוט יריבים פוליטיים&quot;, על רקע הבחירות ועוינות ארוכת שנים של טראמפ כלפיה. עד 17-18 באוקטובר הדגש עבר לפרטים משפטיים-פרוצדורליים: ה-Los Angeles Times הציג גם את עמדת משרד המשפטים, ועד 18 באוקטובר The Washington Post דיווח על טענת עורכי דינה של עומר כי ה-FBI חרג מגבולות הצו - מסגור טכני-משפטי בלי התייחסות לממד הבינלאומי. כך עבר הסיקור מהאשמה פוליטית רחבה לדיון משפטי מצומצם.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-13_he.html#section-3919">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3959">14.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4211">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4316">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4395">18.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">פרשת הריגול של ראש ה-BND לשעבר הנינג</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 6 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר מתיאור שערוריית ריגול בודדת לכדי משבר מוסדי וגיאופוליטי רחב. ב-8-9 באוקטובר הדגישו The Daily Telegraph ו-The Guardian את מעצרו של הנינג כפרשה אישית-משפטית, בעוד Süddeutsche Zeitung ו-Der Spiegel כבר פרסו תמונה מערכתית של כשלי פיקוח ורגולציה רופפת על בכירים לשעבר. עד 10-11 באוקטובר, Der Spiegel תיאר מכירת כ-2,000 מסמכים מסווגים לגורמים הקשורים לאזרבייג&#x27;ן, רוסיה וסין, ואילו Anne McElvoy ב-The Daily Telegraph מיקמה זאת כביטוי לפגיעות מבנית כרונית מאז המלחמה הקרה. עד 18 באוקטובר, Frankfurter Allgemeine Zeitung חשף זיקות ארוכות טווח לפטרושב ולרשתות אזרבייג&#x27;ניות, תוך מעבר מסיפור שחיתות אישית למחקר על חדירה רוסית מתמשכת. ההבדל המרכזי: עיתונים בריטיים הדגישו את הפגיעה באמון המודיעיני עם בעלות ברית, בעוד המקורות הגרמניים התמקדו בכשלי הרגולציה הפנימית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3478">8.10</a><a class="daily-link" href="report_2026-10-08_he.html#section-3485">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3548">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3660">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3750">11.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4371">18.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">משבר הדיור בספרד והתפוררות השמאל לקראת הבחירות</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 6 מקורות: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Neue Zürcher Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר ממוקד אנושי-דרמטי לניתוח אסטרטגי מפוכח יותר. ב-8-9 באוקטובר, The Guardian מיקד את הסיפור במות הפנסיונרית אבסקל והציג זאת כמהפכה אירופית רחבה, בעוד Der Spiegel ניתח את הימורו הפוליטי של סנצ&#x27;ס בקריאה לבחירות מוקדמות. עד 19-21 באוקטובר, הדגש עבר לכישלון השמאל לאחד שורות ולביקורת חריפה יותר על סנצ&#x27;ס עצמו - ב-Neue Zürcher Zeitung ו-Frankfurter Allgemeine Zeitung טענו שצמיחה כלכלית מסתירה משבר דיור ורווחה שעלול להפיל אותו. ההבדל המרכזי: עיתונים גרמניים ושוויצריים נטו לניתוח אסטרטגי-ביקורתי, בעוד The Guardian הדגיש את הזווית האנושית-חברתית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3480">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3554">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3672">10.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3817">12.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4426">19.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4585">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">אתיופיה-אריתריאה: מסלול להסלמה מלחמתית</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 6 מקורות: Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור, שהגיע תמיד ממקור בודד ביום נתון, עבר ממיקוד בחדירת כוחות אריתראים לטיגראי להערכה חמורה יותר שמדובר למעשה במלחמה אזורית מתקרבת. ב-9 באוקטובר תיארה The Guardian את הכניסה האריתראית על רקע עוינות היסטורית ושאיפת אתיופיה ל&quot;גישה ריבונית לים&quot;. עד 19 באוקטובר, Süddeutsche Zeitung כבר העריכה שממשלת אביי אחמד עשויה להוביל במכוון למלחמה, שעלולה להסתיים בשליטה אתיופית בנמל עצאב ואף בהחלפת שלטון באריתריאה. בין לבין, The Washington Post (14 באוקטובר) הציגה גם את הכחשת אריתריאה ופנייתה לאו&quot;ם.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3568">9.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3882">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-4011">14.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4446">19.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4560">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מלחמת האזרחים בסודאן: מהתרעה לקטל חוזר ונשנה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 6 מקורות: Daily Telegraph, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">המסגור עבר מאזהרה פוליטית מורכבת לדיווח עובדתי חוזר על טבח המוני. ב-11 באוקטובר הטיעון המרכזי (The Daily Telegraph) היה מדיניות-חוץ: סודאן כ&quot;מלחמה נשכחת&quot; שתפגע בבריטניה. בהמשך, ב-13 באוקטובר, Süddeutsche Zeitung הוסיפה ממד של מעורבות כלכלית-צבאית של מצרים ואיחוד האמירויות בכרייה. עד 20-21 באוקטובר, Los Angeles Times ו-The Washington Post מדווחים כבר על התקפות רחפנים קטלניות חוזרות (כ-80 וכ-153 הרוגים), ללא ניתוח - רק תיעוד קר של קנה מידה הולך וגדל.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-11_he.html#section-3749">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3782">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3913">13.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3915">13.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4554">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4594">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">בועת ההשקעות בבינה מלאכותית וסיכון פיננסי גלובלי</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 6 מקורות: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Neue Zürcher Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר מאזהרה מוסדית רחבה לתיעוד של תקריות שוק קונקרטיות ולבסוף לפרשנות הזדמנותית. ב-14 באוקטובר, The Guardian ו-The Daily Telegraph דיווחו על אזהרת קרן המטבע מפני בועת הבינה המלאכותית כסיכון מערכתי גלובלי, בעוד Neue Zürcher Zeitung שמר על טון חגיגי כלפי רווחי הבנקים. עד 16-17 באוקטובר הדיווחים עברו לאירועים ממשיים - קריסת הנפקת Firmus ב-The Daily Telegraph וחששות סביב Coreweave ב-Neue Zürcher Zeitung. ב-20 באוקטובר Die Welt כבר מציג את המכירה המאסיבית כהזדמנות קנייה סלקטיבית ולא רק כסכנה.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-14_he.html#section-3938">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4041">15.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4043">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4133">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4333">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4379">18.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4489">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">פרשת &quot;ציונות היא גזענות&quot; במפלגת הירוקים הבריטית</h2>
+      <p class="biweekly-topic-byline">7 מתוך 14 יום · 5 מקורות: Daily Telegraph, Die Welt, Globe and Mail, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור, שנשען כמעט כולו על The Daily Telegraph, עבר מכתבות חדשותיות שמתעדות &quot;חדירה&quot; אידיאולוגית לכדי מערכה פובליציסטית הולכת ומתרחבת. ב-8 באוקטובר עוד הופיע קול שונה - פרופיל מרוחק יחסית ב-Süddeutsche Zeitung על זאק פולנסקי - אך כבר ב-10 וב-11 באוקטובר הפכה הסוגיה לכר נרחב לטורי דעה ב-Telegraph הקוראים להתפטרותו. עד 18 באוקטובר הדגש עבר לנזק הפוליטי בפועל (צניחה בפופולריות), ועד 20 באוקטובר הסיפור התרחב לדיווחים על אנטישמיות גואלת בבריטניה, תוך שב-Die Welt וב-Süddeutsche Zeitung מופיעות פרשנויות מורכבות יותר, פחות גינוי חד-משמעי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3484">8.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3665">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3734">11.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4354">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4418">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4475">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4605">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הצבעות הביניים: מלחמת איראן כמשא פוליטי על רפובליקנים</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 5 מקורות: Daily Telegraph, Guardian, Los Angeles Times, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">לאורך התקופה הסיפור עבר מניתוח אסטרטגי כולל לתיעוד עימותים נקודתיים קונקרטיים: ב-8 וב-10 באוקטובר תיארו USA Today וה-Los Angeles Times מגמה רחבה של מועמדים רפובליקנים המתרחקים מטראמפ בשל מחיר הדלק והמלחמה באיראן, תוך ציטוט מפורש של שבירת קו המפלגה. עד ה-10 וה-12 באוקטובר הסיפור הצטמצם לדיבייטים ספציפיים (מישיגן, ג&#x27;ורג&#x27;יה) ב-The Washington Post וב-USA Today, שבהם איראן הפכה לכלי תקיפה אישי בין המועמדים עצמם ולא רק נושא למדיניות. הבדל מסגור בולט: The Guardian התמקד בדרמה הרגעית של עצרת טראמפ, בעוד The Daily Telegraph מיקם אותה בתוך נרטיב רחב של פגיעות אלקטורלית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3492">8.10</a><a class="daily-link" href="report_2026-10-09_he.html#section-3543">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3711">10.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3722">10.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3751">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3840">12.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">תורת ההרתעה החדשה של נאט&quot;ו מול רוסיה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 5 מקורות: Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Los Angeles Times, Neue Zürcher Zeitung</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מספקנות לגבי מחויבות ארה&quot;ב למסגרת הרתעה מפורטת ובטוחה בעצמה. ב-8 באוקטובר, קרוליינה דרוטן ב-Die Welt הטילה ספק אם ארצות הברית תספק כוחות בעת משבר, במסגרת &quot;Nato 3.0&quot; הערפילי של טראמפ. עד 14-13 באוקטובר, הגנרל גרינקביץ&#x27; חשף את תורת ה&quot;חסום, הכהה, שבור&quot;, וב-FAZ ניקולאס בוסה עדיין הזהיר שזו &quot;הבטחה לא ממומנת&quot; לנוכח ספקות טראמפ לגבי סעיף 5. עד 18 באוקטובר, FAZ דיווח ללא עוררין על תרגיל &quot;Steadfast Duel&quot; של 32 מדינות ו-20,000 חיילים, עם ביטחון עצמי מוחלט של נאט&quot;ו. ההבדל המרכזי: גרמניה (Die Welt, FAZ) התמקדה במתח פוליטי-צבאי, בעוד Los Angeles Times קשר זאת לחבלה הרוסית השוטפת.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3508">8.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3863">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3947">14.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4104">16.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4153">16.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4380">18.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מדיניות ההגירה הבריטית ומעבר התעלה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 5 מקורות: Daily Telegraph, Guardian, Los Angeles Times, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מהצגת עמדות חד-צדדיות ומבודדות לדיון ישיר ועימותי בין אותם עיתונים על אותה מחלוקת. ב-11 וב-18 באוקטובר הציגו כתבות ב-The Daily Telegraph בלבד עמדה אוהדת לאכיפה קשוחה ולהסכמי צד שלישי, ללא דעה מנוגדת; ב-12 באוקטובר הציג The Guardian לבדו עמדת ארגוני סיוע התומכת במסלולים חוקיים. לעומת זאת, ב-20 באוקטובר שני העיתונים סיקרו יחד את אותו סכסוך קבינט סביב מדיניות שבנה מחמוד, כששניהם מצטטים את אותה שרה אך The Daily Telegraph מדגיש את הדרמה הפוליטית בממשלה ו-The Guardian מדגיש את הפגיעה האנושית בפליטים ובמהגרים.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-11_he.html#section-3738">11.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3806">12.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4344">18.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4424">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4474">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">תוכנית התנקשות בראש ממשלת פולין טוסק ופיגועי הדקירה בבתי ספר</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 5 מקורות: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר ממסגור גיאופוליטי רחב לטיפול משפטי-פוליטי מצומצם יותר. ב-12 באוקטובר חמישה עיתונים - ובהם The Daily Telegraph ו-The Guardian - קישרו את התוכנית הנטענת כנגד טוסק לחבלה רוסית היברידית נגד פולין כמדינת חזית נאט&quot;ו. עד 15-16 באוקטובר נותרה רק כתבה בודדת מדי יום (Frankfurter Allgemeine Zeitung, אז The Guardian), שדיווחו יבשות על כתב אישום בן תשעה סעיפים נגד חשוד בן 66, בלי ההקשר הרוסי הרחב. ב-20 באוקטובר Die Welt מיזגה את הפרשה עם גל דקירות בבתי ספר למאבק כוח פוליטי פנימי בין ממשלת טוסק למחנה הנשיא נברוצקי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-12_he.html#section-3767">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3916">13.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4060">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4223">16.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4486">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">משא ומתן על קואליציה בברלין ועימותים סביב &quot;די לינקה&quot; ואנטישמיות</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 4 מקורות: Die Welt, Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר מדאגה ממוקדת לקרע פוליטי רחב: ב-8 באוקטובר Die Welt הציגה בעיקר עתירה של יהודים ברלינאים וטור אישי של פוזנר נגד כשירות &quot;די לינקה&quot; לשלוט. עד 19-21 באוקטובר הסיפור התרחב למאבק מפלגתי כולל - Die Welt ו-Frankfurter Allgemeine Zeitung מתארים &quot;קץ המרכז הפוליטי&quot; ומרד של עשרים חברי בונדסטג מה-SPD עצמו, בעוד Süddeutsche Zeitung וה-NZZ ממשיכים לסקר גם היבטים מדיניים ניטרליים. ההבדל המרכזי: העיתונים השמרניים מסגרים את ההסכם כסכנה מוסרית-אידאולוגית, ואילו Süddeutsche Zeitung נותנת במה גם לטענות הצד השני.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-08_he.html#section-3507">8.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3862">13.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4413">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4485">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4565">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">בין ביקורת פנימית לפרופיל אירופי: מרץ תחת מבחן</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 4 מקורות: Der Spiegel, Die Welt, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הדיון על מרץ עבר ממוקד הגנתי-פנימי למסגור אירופי מורכב יותר. בתחילת התקופה, ב-9 וב-10 באוקטובר, זוזנה בייר ב-Der Spiegel הגנה בלהט על מרץ מפני קריאות להתפטרות, בטענה שאין מנהיג חלופי אמין ושהתפרקות המרכז הפוליטי רק תשמח את ה-AfD ואת הקרמלין. עד 17 באוקטובר הדיון התרחב: הוברט וצל ב-Süddeutsche Zeitung הציג הערכה מעורבת - שבח על עמידתו של מרץ מול רוסיה וסין לצד ביקורת על סגנונו החד-צדדי בברוקסל. בעוד הכתבות הגרמניות המוקדמות התמקדו בהישרדותו הפוליטית הביתית, המאוחרות בחנו את משקלו הדיפלומטי באירופה.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3556">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3676">10.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3901">13.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4168">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4299">17.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">שיתוף פעולה בין BSW ל-AfD בפוליטיקה המדינתית הגרמנית</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 4 מקורות: Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר ממאמר דעה בודד ומבודד לדיון ציבורי רחב ומודאג. ב-9 וב-10 באוקטובר רק Der Spiegel דן בנושא, בטור ביקורתי חריף שתיאר את שיתוף הפעולה של BSW עם AfD בזקסן-אנהלט כ&quot;משחק כפול&quot; מסוכן. עד 15 באוקטובר הסיפור כבר הניע שבע כתבות בשלושה עיתונים: Die Welt התמקד בתגובת הקנצלר מרץ ברמה הפדרלית, בעוד Frankfurter Allgemeine Zeitung ו-Süddeutsche Zeitung, בטורים של גוסטב זייבט ואחרים, הזהירו מפני חזרה לחוסר היציבות שלפני 1914. ההבדל המרכזי: Die Welt נתן ל-BSW במה להציג עמדתו, ואילו העיתונים האחרים מסגרו את הנושא כאיום מוסדי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3559">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3677">10.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3869">13.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3943">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4035">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4141">16.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הסנקציות האמריקאיות נגד בית הדין הפלילי הבינלאומי</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 4 מקורות: Frankfurter Allgemeine Zeitung, Los Angeles Times, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מדיווח עובדתי רחב-יריעה על הסנקציות ועל ההתנגדות הבינלאומית אליהן, לסדרת זוויות נישתיות ומבודדות יותר - משפטית, עקרונית וכלכלית. ב-10 באוקטובר תיארו Los Angeles Times ו-The Washington Post את הצעד כמהלך מדיני-דיפלומטי מרכזי, תוך קישורו לפרס נובל לשלום ולגינויים בינלאומיים נרחבים. בהמשך, ב-12 וב-14 באוקטובר, Süddeutsche Zeitung מיקדה את הדיון בשאלת הצביעות וההגנה על ערכי בית הדין, ואילו עד ה-16 באוקטובר הצטמצם הסיקור, באותו עיתון בלבד, להשלכות קונקרטיות על הבנקאות האירופית. ההבדל הבולט: עיתונים אמריקאיים דיווחו בניטרליות עובדתית, בעוד הפרשנות הגרמנית העמיקה לכיוון ביקורתי-עקרוני.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-10_he.html#section-3710">10.10</a><a class="daily-link" href="report_2026-10-12_he.html#section-3788">12.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-4007">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4082">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4184">16.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">משא ומתן על תקציב האיחוד האירופי 2028-2034</h2>
+      <p class="biweekly-topic-byline">6 מתוך 14 יום · 4 מקורות: Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור נפתח כמחלוקת טכנית על גודל הקיצוץ המבוקש (Frankfurter Allgemeine Zeitung ו-Süddeutsche Zeitung, 12-13 באוקטובר), אך עד 16-17 באוקטובר הוא הצטייר כמשבר גיאופוליטי רחב בהרבה, המשלב עימות צרפתי-גרמני, איום מועמדותה של לה פן וחשש מנטישה אמריקאית של אוקראינה (Die Welt). עד 21 באוקטובר, פיטר גאוויילר ב-Die Welt מחבר את הדיון לשאלה חוקתית גרמנית פנימית - שחיקת מגבלות הפריסה הצבאית - ומרחיק מהמסגור התקציבי-אירופי המקורי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-12_he.html#section-3791">12.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3885">13.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4032">15.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4143">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4260">17.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4563">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">מדיניות פיסקלית בבריטניה ואזהרות בנק אנגליה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Daily Telegraph, Guardian, Neue Zürcher Zeitung</p>
+      <p class="biweekly-topic-text">המסגור עבר מאזהרה פיסקלית ממוקדת למשבר מבני רחב. ב-9 באוקטובר The Daily Telegraph וה-The Guardian דיווחו שניהם על אזהרת נגיד בנק אנגליה בנוגע לתשואות אג&quot;ח, כש-The Daily Telegraph הזהיר מחזרה על משבר טראס וה-The Guardian מיתן את הטון. עד 14-15 באוקטובר הדיווח (The Guardian, The Daily Telegraph) עסק עדיין בביקורת פיסקלית ממוקדת מצד קרן המטבע. אך ב-19-20 באוקטובר ההתמקדות עברה לרשת החשמל, לנסיגת מיקרוסופט ממרכז נתונים ולאיום שביתות בים הצפוני - סימן למעבר מדאגה תקציבית צרה לתחושת שבריריות כלכלית כוללת.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3525">9.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3978">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4026">15.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4425">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4482">20.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4508">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">בריטניה-אא&quot;ה: ויכוח הברקזיט והצטרפות מחדש</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Daily Telegraph, Die Welt, Guardian</p>
+      <p class="biweekly-topic-text">הסיקור נפתח ב-9 באוקטובר כסיפור חדשותי מתפתח סביב יוזמת אנדי ברנהם, כש-The Guardian מציג אותו בניטרליות יחסית מול The Daily Telegraph התוקף מראש. עד 17-20 באוקטובר, לאחר דיווחי The Guardian על ירידה חדה ביצוא מזון לאיחוד, הוויכוח הקצין: The Guardian עצמו (טוינבי) תומך בכיוון ההצטרפות מחדש, בעוד The Daily Telegraph מגייס קולות רבים - מו&#x27;לין, היית&#x27;, טומיני - המתארים זאת כבגידה דמוקרטית, ו-Die Welt מצטרף בטענה שברנהם משרת את מוסקבה. הבדל מרכזי: The Daily Telegraph עצמו מאכסן טווח דעות פנימי, מגינוי ברקזיט ועד הגנה נלהבת עליו כריבונות שאינה ניתנת למיקוח.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3531">9.10</a><a class="daily-link" href="report_2026-10-11_he.html#section-3745">11.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4252">17.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4257">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4365">18.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4367">18.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4481">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">המלחמה ההיברידית של רוסיה נגד אירופה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Der Spiegel, Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הכיסוי עבר מניתוח מומחים ממוקד לתמונה ממוסדת ורחבה יותר של איום מתמשך. ב-9 וב-10 באוקטובר Der Spiegel הציג בעיקר את פרשנותה של חנה נוטה על אסטרטגיית ההסלמה הזהירה של פוטין באזור האפור שמתחת לסף סעיף 5. עד 13 באוקטובר הדיון עבר למישור הממשלתי: Süddeutsche Zeitung דיווח על אזהרת גורמי מודיעין גרמנים ששאפתם &quot;לערער סופית&quot; את גרמניה ואת המערב, תוך הוספת זווית ביקורתית על פרשת ריגול ב-BND. עד 19 באוקטובר הכיסוי, שעבר כולו ל-Frankfurter Allgemeine Zeitung, התמקד בראיות מוחשיות - תצלומי לוויין מקלינינגרד ומצי הצללים הרוסי בים הבלטי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-09_he.html#section-3552">9.10</a><a class="daily-link" href="report_2026-10-10_he.html#section-3668">10.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3873">13.10</a><a class="daily-link" href="report_2026-10-13_he.html#section-3878">13.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4164">16.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4429">19.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הקשחת מדיניות המקלט בשווייץ ובאירופה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Die Welt, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הכיסוי נע מתיאור ענייני של צעדי הרתעה שווייצריים וגרמניים ב-12 וב-14 באוקטובר, לביקורת גוברת כלפי יישום-היתר הגרמני עד 20-21 באוקטובר. ב-20 באוקטובר תיארה Süddeutsche Zeitung מקרה של תינוק כמעט גורש כדי להראות שגרמניה מחמירה מעבר לנדרש ברפורמת האיחוד האירופי (CEAS), וב-21 באוקטובר הציג Die Welt כיצד מדינות כמו הונגריה, דנמרק ופולין מערערות את ההסכמה האירופית המשותפת. כך המוקד עבר מהצדקת הרתעה לעימות בין ריבונות לאומית למנגנון אירופי משותף.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-12_he.html#section-3821">12.10</a><a class="daily-link" href="report_2026-10-14_he.html#section-3946">14.10</a><a class="daily-link" href="report_2026-10-15_he.html#section-4029">15.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4533">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4561">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">המחלוקת על רחפני... (לא רלוונטי) מצביעים לא-אזרחים בקליפורניה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 3 מקורות: Los Angeles Times, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">הסיקור עבר מהתמקדות עובדתית בתביעה הראשונית, עם ניגוד ברור בין The Los Angeles Times, USA Today ו-The Washington Post לגבי מניעי הממשל, להסלמה דרמטית שסוקרה כמעט אך ורק על ידי Los Angeles Times. ב-16 באוקטובר עוד הוצגו פרשנויות שונות; עד 18 באוקטובר הדיווח כבר עסק באיומי העמדה לדין פלילי נגד פקידים מקומיים, ועד 21 באוקטובר הטור של Chabria טען במפורש שמדובר בדיכוי בוחרים מכוון. ככל שהעניין התפתח, קולות מתחרים נעלמו והנרטיב הפך חד-צדדי וביקורתי כלפי הממשל הפדרלי.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-16_he.html#section-4209">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4311">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4382">18.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4515">20.10</a><a class="daily-link" href="report_2026-10-21_he.html#section-4599">21.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">הטיה נגד ישראל בתקשורת הבריטית וה-BBC מול טראמפ</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 2 מקורות: Daily Telegraph, Los Angeles Times</p>
+      <p class="biweekly-topic-text">הנושא נפתח ב-11 באוקטובר כביקורת רחבה של The Daily Telegraph על הטיה נגד ישראל ב-BBC ובערוץ LuaLua TV הקשור לאיראן, תוך קריאה לרגולטור הבריטי Ofcom לפעול. עד 18 באוקטובר הביקורת של The Daily Telegraph הצרה את המוקד ישירות ל-BBC עצמו - חשיפות על עובדי ממשל סמויים ועל עובד עם עבר אנטי-ישראלי. במקביל, מאז 16 באוקטובר הסיפור המרכזי עבר לזירה משפטית: תביעת הדיבה של טראמפ נגד ה-BBC, המכוסה רק על ידי Los Angeles Times ולאחר מכן The Daily Telegraph, שמתמקדים בעיכובים הפרוצדורליים ובשאלת רצינות התביעה. כך הדגש עבר מביקורת תקשורתית-ערכית לדרמה משפטית-פרוצדורלית.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-11_he.html#section-3737">11.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4214">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4324">17.10</a><a class="daily-link" href="report_2026-10-18_he.html#section-4347">18.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4477">20.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">קריסת שיתוף הפעולה הביטחוני בין צרפת לגרמניה</h2>
+      <p class="biweekly-topic-byline">5 מתוך 14 יום · 2 מקורות: Die Welt, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">הסיקור עבר מאבחנה כללית לדרמה מוסדית קונקרטית: ב-13 באוקטובר תיארה Die Welt את קריסת תוכניות הטנק MGCS והמטוס FCAS כתוצאה של סכסוכים תעשייתיים וחוסר רצון פוליטי, בעוד ב-17 באוקטובר הציעה Süddeutsche Zeitung מוצא אסטרטגי - הצטרפות לתוכנית הבריטית GCAP כ&quot;מיזם משותף של דמוקרטיות&quot; הרחק מוושינגטון וממדיניותו ההפכפכת של טראמפ. עד 19-20 באוקטובר המוקד עבר לחברת KNDS עצמה: Die Welt דיווחה על תוכנית הלאמה גרמנית מחשש ל&quot;איירבאס 2.0&quot;, ואילו Süddeutsche Zeitung הביאה את עמדת מנכ&quot;ל KNDS, שדחף להנפקה מהירה. לאורך כל התקופה כל כתבה הגיעה ממקור בודד, ללא עימות אמיתי בין נקודות מבט.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">ראו בדוחות היומיים:</span>
+        <a class="daily-link" href="report_2026-10-13_he.html#section-3871">13.10</a><a class="daily-link" href="report_2026-10-16_he.html#section-4183">16.10</a><a class="daily-link" href="report_2026-10-17_he.html#section-4294">17.10</a><a class="daily-link" href="report_2026-10-19_he.html#section-4423">19.10</a><a class="daily-link" href="report_2026-10-20_he.html#section-4537">20.10</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
+    <a class="footer-link" href="terms.html">תנאי שימוש</a>
+    <a class="footer-link" href="privacy.html">מדיניות פרטיות</a>
+  </footer>
+</body>
+</html>
