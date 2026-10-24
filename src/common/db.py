@@ -12,7 +12,7 @@ import re
 import sqlite3
 import sys
 from datetime import date as date_cls
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 
 DB_PATH = Path(__file__).resolve().parents[2] / "data" / "processed" / "tracker.db"
@@ -32,6 +32,13 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         # Which report this file's articles belong to - see REPORT_DATE_SQL below.
         # Nullable on purpose: rows ingested before the rule existed stay NULL.
         "report_date": "TEXT",
+        # Set only when claim_report_date_on_first_scan() moves report_date to a later day because the
+        # file was first screened after its download day (PROJECT_LOG 4.109). All three stay NULL for a
+        # file screened on the day it was downloaded.
+        "report_date_original": "TEXT",
+        "report_date_shifted_at": "TEXT",
+        # Why the daily run held the file back from screening (e.g. a pdf_health_check SUSPECT verdict).
+        "screening_hold_reason": "TEXT",
     },
     "extracted_pages": {
         "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -555,6 +562,70 @@ def report_exists(conn: sqlite3.Connection, report_date: str) -> bool:
 def report_row_exists(conn: sqlite3.Connection, report_date: str) -> bool:
     """Raw presence of the `reports` header row, with or without sections."""
     return conn.execute("SELECT 1 FROM reports WHERE report_date = ?", (report_date,)).fetchone() is not None
+
+
+def record_screening_hold(conn: sqlite3.Connection, file_id: int, reason: str) -> None:
+    """Remember why a file was kept out of screening, so the report-date shift log can say so later."""
+    conn.execute("UPDATE downloaded_files SET screening_hold_reason = ? WHERE id = ?", (reason, file_id))
+    conn.commit()
+
+
+def claim_report_date_on_first_scan(
+    conn: sqlite3.Connection, file_id: int, now: str | None = None, tz: tzinfo | None = None
+) -> dict | None:
+    """Narrow exception to the download-day rule (PROJECT_LOG 4.109): a file whose first screening happens on a
+    later processing day than its report_date joins the report of that processing day, not the already
+    published report of its download day.
+
+    Call right before the first page_screening row of a file is written. It does nothing when the file
+    already has a screening row (so the date is claimed once and never drifts, even after an interrupted
+    run) or when the processing day is not later than the current report_date. The processing day uses the
+    same REPORT_DATE_CUTOFF_HOUR rule as downloads, so a run that crosses midnight does not move the files
+    it downloaded itself. Never reopens a published report; the file simply lands in a later one.
+
+    Returns None when nothing changed, else {"file_id", "newspaper", "file_name", "original", "new",
+    "downloaded_at", "hold_reason"}.
+    """
+    if conn.execute("SELECT 1 FROM page_screening WHERE file_id = ? LIMIT 1", (file_id,)).fetchone():
+        return None
+    row = conn.execute(
+        "SELECT newspaper, file_name, downloaded_at, screening_hold_reason, "
+        "COALESCE(report_date, date(published_at)) AS current_day FROM downloaded_files WHERE id = ?",
+        (file_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    stamp = now or datetime.now(timezone.utc).isoformat()
+    processing_day = report_date_for_download(stamp, tz)
+    if processing_day <= row["current_day"]:
+        return None
+    conn.execute(
+        "UPDATE downloaded_files SET report_date = ?, report_date_original = ?, report_date_shifted_at = ? WHERE id = ?",
+        (processing_day, row["current_day"], stamp, file_id),
+    )
+    conn.commit()
+    return {
+        "file_id": file_id,
+        "newspaper": row["newspaper"],
+        "file_name": row["file_name"],
+        "original": row["current_day"],
+        "new": processing_day,
+        "downloaded_at": row["downloaded_at"],
+        "hold_reason": row["screening_hold_reason"],
+    }
+
+
+def get_report_date_shifts(conn: sqlite3.Connection, report_day: str) -> list[sqlite3.Row]:
+    """Files that claim_report_date_on_first_scan() moved onto `report_day`."""
+    return conn.execute(
+        "SELECT id, newspaper, file_name, downloaded_at, report_date_original, report_date, screening_hold_reason "
+        "FROM downloaded_files WHERE report_date = ? AND report_date_original IS NOT NULL ORDER BY id",
+        (report_day,),
+    ).fetchall()
+
+
+def count_articles_for_date(conn: sqlite3.Connection, report_date: str) -> int:
+    return len(get_articles_for_date(conn, report_date))
 
 
 def get_report_dates_in_range(conn: sqlite3.Connection, start_date: str, end_date: str) -> set[str]:

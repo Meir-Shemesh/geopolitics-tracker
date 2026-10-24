@@ -16,7 +16,14 @@ from datetime import datetime, timezone
 import anthropic
 from dotenv import load_dotenv
 
-from src.common.db import get_connection, get_unscreened_pages, init_db, insert_page_screening, record_api_usage
+from src.common.db import (
+    claim_report_date_on_first_scan,
+    get_connection,
+    get_unscreened_pages,
+    init_db,
+    insert_page_screening,
+    record_api_usage,
+)
 
 # Windows defaults stdout to the cp1252 console codepage even when redirected
 # to a file, which raises UnicodeEncodeError on any print() containing a
@@ -160,6 +167,7 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
 
     scanned = 0
     relevant = 0
+    claim_checked: set[int] = set()  # files already offered to claim_report_date_on_first_scan() this run
 
     for page in pages:
         canonical_id = duplicate_of.get(page["file_id"])
@@ -192,6 +200,17 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
             except Exception as exc:
                 print(f"  failed: file_id={page['file_id']} page={page['page_number']} ({exc})")
                 continue
+
+        if page["file_id"] not in claim_checked:
+            claim_checked.add(page["file_id"])
+            shift = claim_report_date_on_first_scan(conn, page["file_id"])
+            if shift:
+                reason = shift["hold_reason"] or (
+                    f"no reason recorded - not screened on its download day (downloaded "
+                    f"{datetime.fromisoformat(shift['downloaded_at']).astimezone():%H:%M} local)"
+                )
+                print(f"  REPORT_DATE_SHIFT file_id={shift['file_id']} ({shift['newspaper']}, {shift['file_name']}): "
+                      f"{shift['original']} -> {shift['new']} (first screening happens on {shift['new']}; {reason})")
 
         insert_page_screening(
             conn,

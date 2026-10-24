@@ -323,6 +323,65 @@ def missing_biweekly_period_warning(today: date) -> str:
         return f"check failed ({e!r})"
 
 
+# Daily synthesize input (articles of one report date) above which the run only WARNS. Stage 1 groups all of a
+# day's articles in one call; 380 was the largest success ever measured and the ceiling is estimated at
+# ~450-480 (CLAUDE.md, "השלכות ידועות" 1), so the threshold sits conservatively below. Never blocks.
+SYNTHESIS_VOLUME_WARN_THRESHOLD = 320
+
+
+def record_screening_holds(log, entries: list[dict]) -> None:
+    """Persist why each file was kept out of screening, so a later report_date shift can explain itself."""
+    from src.common.db import get_connection, record_screening_hold
+    conn = get_connection()
+    try:
+        for entry in entries:
+            record_screening_hold(conn, entry["id"], entry.get("reason") or "excluded from screening by the daily run")
+    except Exception as e:  # the hold reason is bookkeeping - never fail the day over it
+        log(f"Could not record screening hold reasons ({e!r}).")
+    finally:
+        conn.close()
+
+
+def report_date_shift_notes(today: str) -> list[str]:
+    """One line per file whose report_date was moved onto `today` by its first screening (db.claim_report_date_on_first_scan)."""
+    try:
+        from src.common.db import get_connection, get_report_date_shifts
+        conn = get_connection()
+        try:
+            rows = get_report_date_shifts(conn, today)
+        finally:
+            conn.close()
+        notes = []
+        for r in rows:
+            reason = r["screening_hold_reason"] or (
+                f"no reason recorded - not screened on its download day (downloaded "
+                f"{datetime.fromisoformat(r['downloaded_at']).astimezone():%H:%M} local)"
+            )
+            notes.append(f"{r['newspaper']} / {r['file_name']}: download-day report {r['report_date_original']} -> "
+                         f"first screened {r['report_date']} ({reason})")
+        return notes
+    except Exception as e:
+        return [f"check failed ({e!r})"]
+
+
+def synthesis_volume_note(today: str) -> tuple[str, bool]:
+    """(text, is_warning) - how many articles synthesize will receive for `today`."""
+    try:
+        from src.common.db import count_articles_for_date, get_connection
+        conn = get_connection()
+        try:
+            n = count_articles_for_date(conn, today)
+        finally:
+            conn.close()
+    except Exception as e:
+        return f"check failed ({e!r})", False
+    if n > SYNTHESIS_VOLUME_WARN_THRESHOLD:
+        return (f"*** WARNING: unusual synthesize input volume ({n} articles, above the {SYNTHESIS_VOLUME_WARN_THRESHOLD} "
+                f"threshold; the largest day ever verified was 380, the estimated ceiling is ~450-480) - "
+                f"check the result by hand before approving ***"), True
+    return f"{n} articles (threshold {SYNTHESIS_VOLUME_WARN_THRESHOLD})", False
+
+
 def load_env() -> None:
     """Same convention as every pipeline script - python-dotenv from .env at
     the project root, no new dependency (already in requirements.txt)."""
@@ -404,6 +463,10 @@ def main() -> int:
                     summary = json.loads(r.stdout.strip().splitlines()[-1]) if r.stdout.strip() else {}
                     suspects = summary.get("suspects", [])
                     good_files = summary.get("ok", [])
+                    for w in summary.get("warnings", []):
+                        log(f"pdf_health_check WARNING (non-blocking, file is screened as usual): {w['file_name']} - {w['reason']}")
+                    if suspects:
+                        record_screening_holds(log, suspects)
                 except Exception as e:
                     log(f"Could not parse pdf_health_check --json output ({e!r}) - treating as no suspects, "
                         f"screen.py will run its normal blanket pass.")
@@ -428,13 +491,20 @@ def main() -> int:
                 results["screen"] = r
                 day_ok = r.ok
 
+        shift_notes = report_date_shift_notes(today)
+        for note in shift_notes:
+            log(f"REPORT_DATE_SHIFT: {note}")
+
         if day_ok:
             r = run_step(log, "analyze", ["src.analysis.analyze"])
             results["analyze"] = r
             day_ok = r.ok
 
+        volume_note = "not checked (an earlier step failed)"
         # --- synthesize: exactly one retry, then abort-the-day on failure ---
         if day_ok:
+            volume_note, _ = synthesis_volume_note(today)
+            log(f"Synthesize input volume: {volume_note}")
             r = run_step(log, "synthesize", ["src.reporting.synthesize", "--date", today])
             if not r.ok:
                 log("synthesize failed once - retrying (allowed exactly once per the failure policy).")
@@ -499,6 +569,13 @@ def main() -> int:
                 status = "?"
             lines.append(f"  {name}: {status}")
         lines.append(f"  biweekly check: {biweekly_note}")
+        lines.append(f"  synthesize input volume: {volume_note}")
+        if shift_notes:
+            lines.append(f"  *** WARNING: {len(shift_notes)} file(s) joined today's report because they were first screened "
+                         f"after their download day (not screened on the day they were downloaded): ***")
+            lines += [f"    - {note}" for note in shift_notes]
+        else:
+            lines.append("  report_date shifts: none")
         lines.append(f"  git: {'OK' if day_ok else 'FAILED'} ({git_note})")
         lines += [
             "",
