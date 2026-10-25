@@ -74,7 +74,10 @@ def guess_newspaper(file_name: str) -> str | None:
     # original `lowered` instead, since it relies on literal hyphens.
     normalized = re.sub(r"[_-]+", " ", lowered)
 
-    if "guardian" in normalized:
+    # "The Observer" is the Guardian's Sunday sister paper (same group, 144-page weekly posted every Sunday);
+    # its file name never contains "guardian", so it was silently skipped as "not an MVP source" until
+    # 2026-10-25 (PROJECT_LOG 4.110). Mapped to the same source key, not a new one.
+    if "guardian" in normalized or re.search(r"\bobserver\b", normalized):
         return "Guardian"
     if "telegraph" in normalized:
         return "Daily Telegraph"
