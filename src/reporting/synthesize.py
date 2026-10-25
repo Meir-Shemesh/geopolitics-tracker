@@ -390,7 +390,7 @@ _NEWSPAPER_COUNT = {
 }
 
 
-MAX_PLAUSIBLE_SOURCES = 15  # the source list has 13 entries; claims above this are not about it
+MAX_PLAUSIBLE_SOURCES = 15  # the source list has 15 entries; claims above this are not about it
 
 
 def claimed_newspaper_counts(text: str, lang: str) -> list[int]:
@@ -408,6 +408,8 @@ _EXTRA_NEWSPAPER_TELLS = {
     "נוישה": "Neue Zürcher Zeitung",
     "צירכר": "Neue Zürcher Zeitung",
     "גלוב אנד מייל": "The Globe and Mail",
+    "אובזרבר": "The Observer",
+    "אובסרבר": "The Observer",
     "רונדשאו": "(a newspaper named Rundschau)",
 }
 

@@ -91,6 +91,7 @@ FALLBACK_CATEGORY = "additional_coverage"
 
 NEWSPAPER_DISPLAY_NAMES = {
     "Guardian": "The Guardian",
+    "Observer": "The Observer",
     "Daily Telegraph": "The Daily Telegraph",
     "Süddeutsche Zeitung": "Süddeutsche Zeitung",
     "Die Welt": "Die Welt",
@@ -110,6 +111,7 @@ NEWSPAPER_DISPLAY_NAMES = {
 # a display value, so no "The"/short-form nuance needed like NEWSPAPER_DISPLAY_NAMES.
 NEWSPAPER_LANGUAGES = {
     "Guardian": "en",
+    "Observer": "en",
     "Daily Telegraph": "en",
     "Wall Street Journal": "en",
     "Los Angeles Times": "en",
