@@ -107,6 +107,28 @@ NEWSPAPER_DISPLAY_NAMES = {
     "Globe and Mail": "The Globe and Mail",
 }
 
+# Home country of each source, used only by the stage-2 opening-sentence gate (synthesize.national_framing_conflict):
+# two sources of the same country can disagree, so an opening that divides the coverage by country is checkable.
+# The Economist is deliberately "International" - the project treats it as a cross-border outlet, and a shared
+# label would let it trigger the gate together with any British paper.
+NEWSPAPER_COUNTRIES = {
+    "Guardian": "UK",
+    "Observer": "UK",
+    "Daily Telegraph": "UK",
+    "Economist": "International",
+    "Wall Street Journal": "US",
+    "Los Angeles Times": "US",
+    "USA Today": "US",
+    "Washington Post": "US",
+    "New York Times International": "US",
+    "Süddeutsche Zeitung": "Germany",
+    "Die Welt": "Germany",
+    "Der Spiegel": "Germany",
+    "Frankfurter Allgemeine Zeitung": "Germany",
+    "Neue Zürcher Zeitung": "Switzerland",
+    "Globe and Mail": "Canada",
+}
+
 # Used only to sort topics by cross-border reach (see section_coverage) - not
 # a display value, so no "The"/short-form nuance needed like NEWSPAPER_DISPLAY_NAMES.
 NEWSPAPER_LANGUAGES = {

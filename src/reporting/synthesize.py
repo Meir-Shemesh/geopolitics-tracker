@@ -29,7 +29,7 @@ import anthropic
 from dotenv import load_dotenv
 
 from src.common.about_content import CONTENT
-from src.reporting.render import NEWSPAPER_DISPLAY_NAMES
+from src.reporting.render import NEWSPAPER_COUNTRIES, NEWSPAPER_DISPLAY_NAMES
 from src.common.db import (
     delete_report,
     get_articles_for_date,
@@ -279,7 +279,7 @@ def format_articles_for_prompt(articles) -> str:
     return "\n\n".join(blocks)
 
 
-def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_articles) -> tuple[dict, dict]:
+def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_articles, feedback: str | None = None) -> tuple[dict, dict]:
     """Returns (usage, comparison). Raises on failure - caller handles retry/fallback."""
     articles_text = format_articles_for_prompt(topic_articles)
     response = client.messages.create(
@@ -300,6 +300,7 @@ def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_artic
                 "content": (
                     f"Topic: {topic['topic_label_en']} / {topic['topic_label_he']}\n\n"
                     f"Articles ({len(topic_articles)} total):\n\n{articles_text}"
+                    + (f"\n\n{feedback}" if feedback else "")
                 ),
             }
         ],
@@ -425,6 +426,128 @@ def hebrew_newspaper_name_tells(text: str) -> dict[str, str]:
     return {tell: name for tell, name in tells.items() if tell in (text or "")}
 
 
+# --- Opening-sentence framing gate (PROJECT_LOG 4.112) ---------------------------------------------------------
+# Stage 2 is a forced tool call (no thinking), so the framing sentence that opens each comparison is written before
+# the model has laid out the individual sources. 2026-10-26 section 4990 opened "splits clearly between the British
+# and the German-language press" while its body put the Telegraph against the Guardian (both British). The gate below
+# is deterministic: it fires only when the opening divides the coverage by country/language AND at least one country
+# is represented by two or more of the topic's newspapers (otherwise no internal contradiction is possible).
+_ORIGIN_ADJECTIVE = {  # adjectives naming the press's origin; topic nouns ("Germany", "Canada") deliberately excluded
+    "en": [(r"brit(?:ish|ain's)", "UK"), (r"german(?:-language|-speaking)?", "DE"), (r"american", "US"), (r"swiss", "CH"),
+           (r"canadian", "CA"), (r"european", "EU"), (r"anglo-?(?:american|saxon|phone)|english-language", "ANGLO")],
+    "he": [("בריט", "UK"), ("גרמנ", "DE"), ("אמריק", "US"), ("שוויצר", "CH"), ("קנד", "CA"), ("אירופ", "EU"), ("אנגל", "ANGLO")],
+    "de": [(r"britisch", "UK"), (r"deutsch", "DE"), (r"amerikanisch", "US"), (r"schweiz", "CH"), (r"kanadisch", "CA"),
+           (r"europäisch", "EU"), (r"angelsächsisch|englischsprachig", "ANGLO")],
+}
+_ORIGIN_CASE_SENSITIVE = {"en": [("UK", "UK"), ("US", "US")], "he": [], "de": [("UK", "UK"), ("US", "US"), ("USA", "US")]}
+# nouns that make an origin adjective describe a press, not a topic: "British press", "הדיווח הבריטי", "britischen Presse"
+_ORIGIN_NOUN = {
+    "en": r"press|outlets?|papers?|newspapers?|media|coverage|reporting|accounts?|commentary|journalism|angles?|perspectives?|lens|framing|stance|readings?|views?|voices?",
+    "he": r"סיקור|דיווח|עיתונות|עיתונים|עיתון|תקשורת|מקורות|כיסוי|זווית|זוויות|עמדות|עמדה|גישה|גישות|מסגור",
+    "de": r"Berichterstattung|Presse|Medien|Zeitungen|Blätter|Quellen|Darstellung|Berichte|Blickwinkel|Perspektiven?|Sichtweisen?",
+}
+_NATIONAL_PHRASES = {  # explicit "split by nationality" phrasing, no origin-noun needed
+    "en": r"\bnational (?:lines|divide|split|framing|lens|vantage|and \w+ lines)|\balong (?:\w+ )?(?:national|linguistic|geographic|country|language) |\bby (?:country|nationality|language)\b|\bgeographic lines",
+    "he": r"(?:קווים|קו|זירות|זירה|זוויות|זווית|חלוקה|נקודות מבט|פרספקטיבה|פרספקטיבות|מסגור|ממד|הקשר)\s+(?:לאומי|לאומית|לאומיים|לאומיות)|(?<!\w)לפי (?:מדינ|שפה|לאום)",
+    "de": r"\bnationale[nr]? (?:Linien|Grenzen|Perspektiven?|Blickwinkel|Lesarten?|Rahmen)|entlang (?:nationaler|der Länder)|nach Ländern|nach Nationalität|nach Sprach",
+}
+_DIVISION_WORD = {
+    "en": r"split|divid|diverg|differ|contrast|between|along|polari|gap|fall|versus|\bvs",
+    "he": r"מתחלק|מתפצל|נחלק|חלוקה|שונ|פער|בין|לעומת|מול|נבדל|מתפלג",
+    "de": r"spaltet|teilt|fällt|auseinander|unterscheid|zwischen|gegenüber|entlang|verläuft|Gegensatz",
+}
+_NEGATORS = {  # whole words only: "statt" must not match inside "Berichterstattung"
+    "en": r"(?<!\w)(?:less|not|rather than|instead of|beyond|no longer|than along)(?!\w)",
+    "he": r"(?<!\w)(?:פחות|ולא|במקום|מאשר|לא רק|אין)(?!\w)",
+    "de": r"(?<!\w)(?:weniger|nicht|statt|anstatt|jenseits)(?!\w)",
+}
+
+
+def opening_sentence(text: str) -> str:
+    flat = (text or "").strip().replace("U.S.", "US")
+    m = re.match(r"(.+?[.!?])(?:\s|$)", flat, re.S)
+    return m.group(1) if m else flat[:300]
+
+
+def _origin_groups(sentence: str, lang: str) -> set[str]:
+    """Origin groups the sentence attaches to a press/angle noun ("British press", "הדיווח הבריטי", "britischen
+    Presse"); a country merely named as the subject matter ("US-Canada friction") does not count."""
+    tokens = re.findall(r"[\w'’-]+", sentence)
+    noun = re.compile(_ORIGIN_NOUN[lang], re.I)
+    found = set()
+    for i, token in enumerate(tokens):
+        labels = {label for stem, label in _ORIGIN_ADJECTIVE[lang] if re.search(stem, token, re.I)}
+        labels |= {label for word, label in _ORIGIN_CASE_SENSITIVE[lang] if token == word}
+        if not labels:
+            continue
+        # Hebrew puts the noun before the adjective ("הדיווח הבריטי"); English and German put it after
+        window = tokens[max(0, i - 3):i] if lang == "he" else tokens[i + 1:i + 6]
+        if any(noun.search(t) for t in window):
+            found |= labels
+    return found
+
+
+def frames_by_nationality(text: str, lang: str) -> bool:
+    """True when the opening sentence of `text` divides the coverage by country, nationality or language group.
+    A negated mention ("less along national lines than over ...") does not count."""
+    sentence = opening_sentence(text)
+    if not sentence:
+        return False
+    for m in re.finditer(_NATIONAL_PHRASES[lang], sentence, re.I):
+        before = sentence[max(0, m.start() - 40):m.start()]
+        if not re.search(_NEGATORS[lang], before, re.I):
+            return True
+    return (
+        len(_origin_groups(sentence, lang)) >= 2
+        and bool(re.search(_DIVISION_WORD[lang], sentence, re.I))
+        and not re.search(_NEGATORS[lang], sentence, re.I)
+    )
+
+
+def same_country_groups(newspapers) -> dict[str, list[str]]:
+    """{country: [display names]} for every country represented by two or more of the given newspapers.
+    'International' (The Economist) never forms a group."""
+    by_country: dict[str, set[str]] = {}
+    for n in newspapers:
+        country = NEWSPAPER_COUNTRIES.get(n)
+        if country and country != "International":
+            by_country.setdefault(country, set()).add(n)
+    return {c: sorted(NEWSPAPER_DISPLAY_NAMES.get(n, n) for n in ns) for c, ns in by_country.items() if len(ns) >= 2}
+
+
+def national_framing_conflict(comparison: dict, newspapers) -> dict | None:
+    """Gate decision: {"languages": [...], "groups": {country: [names]}} when the opening divides the coverage by
+    country/language in any of the three texts AND some country has two or more of the topic's newspapers; else None."""
+    groups = same_country_groups(newspapers)
+    if not groups:
+        return None
+    langs = [lang for lang in ("he", "en", "de") if frames_by_nationality(comparison.get(f"comparison_text_{lang}") or "", lang)]
+    return {"languages": langs, "groups": groups} if langs else None
+
+
+def framing_retry_feedback(conflict: dict) -> str:
+    pairs = "; ".join(f"{country}: {' and '.join(names)}" for country, names in conflict["groups"].items())
+    return (
+        "FEEDBACK ON YOUR PREVIOUS ANSWER: your opening framing sentence divided the coverage by country or language "
+        f"({', '.join(conflict['languages'])}), but this topic contains several newspapers from the same country ({pairs}), "
+        "and newspapers from the same country can take different positions. Rewrite all three comparison texts so that "
+        "the opening framing sentence groups the sources by what they actually argue about THIS event (their position), "
+        "not by country or language of the press. Mention a country or language as the dividing line only if every "
+        "newspaper of each named country takes the same position and the countries' positions differ. Keep the rest of "
+        "the analysis as it was."
+    )
+
+
+def _suspicious_langs(comparison: dict) -> list[str]:
+    langs = [
+        lang for lang in ("he", "en", "de")
+        if _looks_suspicious(comparison[f"comparison_text_{lang}"]) or foreign_script_chars(comparison[f"comparison_text_{lang}"])
+    ]
+    if foreign_script_chars(comparison.get("topic_label_de", "")):
+        langs.append("label_de")
+    return langs
+
+
 def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
     """Read-only checks over the final model-written sections. Returns human-readable flags."""
     newspaper_by_id = {a["id"]: a["newspaper"] for a in articles}
@@ -451,6 +574,15 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
                 if real < claimed <= MAX_PLAUSIBLE_SOURCES:
                     flags.append(f"NEWSPAPER COUNT: comparison_text_{lang} of '{name}' says {claimed} newspapers, "
                                  f"but its articles come from {real}")
+        conflict = national_framing_conflict(
+            sec, [newspaper_by_id[i] for i in sec.get("article_ids", []) if i in newspaper_by_id]
+        )
+        if conflict:
+            flags.append(
+                f"OPENING DIVIDES BY COUNTRY/LANGUAGE ({', '.join(conflict['languages'])}) in '{name}', but sources of the same "
+                f"country are in it ({'; '.join(f'{c}: ' + ' and '.join(ns) for c, ns in conflict['groups'].items())}) - "
+                f"check that the opening matches the body"
+            )
     return flags
 
 
@@ -472,13 +604,7 @@ def write_topic_comparison_with_retry(client, topic, topic_articles):
         except Exception as exc:
             print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} failed: {exc}")
             continue
-        suspicious_langs = [
-            lang for lang in ("he", "en", "de")
-            if _looks_suspicious(comparison[f"comparison_text_{lang}"])
-            or foreign_script_chars(comparison[f"comparison_text_{lang}"])
-        ]
-        if foreign_script_chars(comparison.get("topic_label_de", "")):
-            suspicious_langs.append("label_de")
+        suspicious_langs = _suspicious_langs(comparison)
         if suspicious_langs and attempt == 0:
             print(
                 f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} produced suspicious "
@@ -491,8 +617,34 @@ def write_topic_comparison_with_retry(client, topic, topic_articles):
                 f"({', '.join(suspicious_langs)}) - treating as failed, falling back per-article."
             )
             return None
-        return usage, comparison
+        return _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
     return None
+
+
+def _retry_for_national_framing(client, topic, topic_articles, usage, comparison):
+    """The opening-sentence gate: when the first sentence divides the coverage by country/language although some
+    country has two or more of this topic's newspapers, rewrite once with explicit feedback. A failed or suspicious
+    rewrite keeps the original; a rewrite that still frames by nationality is kept and flagged by audit_sections()
+    (flag only, never blocks). One extra call, only for the ~0.6% of topics where the gate fires."""
+    newspapers = [a["newspaper"] for a in topic_articles]
+    conflict = national_framing_conflict(comparison, newspapers)
+    if not conflict:
+        return usage, comparison
+    print(f"  topic '{topic['topic_label_en']}': opening divides by country/language ({', '.join(conflict['languages'])}) "
+          f"but same-country sources are present - rewriting once with feedback.")
+    try:
+        retry_usage, retry_comparison = write_topic_comparison(
+            client, topic, topic_articles, feedback=framing_retry_feedback(conflict)
+        )
+    except Exception as exc:
+        print(f"  framing retry for '{topic['topic_label_en']}' failed ({exc}) - keeping the original; audit will flag it.")
+        return usage, comparison
+    if _suspicious_langs(retry_comparison):
+        print(f"  framing retry for '{topic['topic_label_en']}' came back suspicious - keeping the original; audit will flag it.")
+        return usage, comparison
+    if national_framing_conflict(retry_comparison, newspapers):
+        print(f"  framing retry for '{topic['topic_label_en']}' still divides by country/language - kept, flagged by audit.")
+    return retry_usage, retry_comparison
 
 
 def build_fallback_section(article) -> dict:
