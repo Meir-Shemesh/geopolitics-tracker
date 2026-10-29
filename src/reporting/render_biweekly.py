@@ -100,7 +100,9 @@ def build_biweekly_report_html(
     range_label = format_period_range(start, end, lang)
     page_title = f"{L['badge']} - {range_label} - {L['eyebrow']}"
 
-    lang_hrefs = {o: period_filename(start, end, o) for o in other_langs(lang)}
+    # Each language lives in its own docs/{lang}/ folder, so the switcher must climb out of the current one
+    # (same convention as the daily report's "../de/report_..._de.html").
+    lang_hrefs = {o: f"../{o}/{period_filename(start, end, o)}" for o in other_langs(lang)}
     nav_html = build_nav_html("trends.html", lang_hrefs, lang)
 
     topic_blocks = []
