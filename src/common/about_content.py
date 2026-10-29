@@ -111,7 +111,7 @@ CONTENT = {
                         "בשבוע האחרון המבט הרחב הזה הפך ממושג לתוצר. הדוח היומי רץ כעת "
                         "באופן אוטומטי לחלוטין, עם בדיקות תקינות ועצירה אוטומטית בכשלים "
                         "חוזרים. לצדו עלה מדור “מגמות” חדש, בשני רכיבים: דוח מגמות נרטיבי, "
-                        "מתפרסם אחת לשבועיים, עוקב אחרי איך הסיקור של נושא משתנה על פני "
+                        "שמתעדכן כל שבוע ומסכם את שני השבועות האחרונים, עוקב אחרי איך הסיקור של נושא משתנה על פני "
                         "התקופה - מבוסס על הדוחות היומיים עצמם, ונכתב כמוהם בשלוש השפות; "
                         "ותצוגה גרפית של כיסוי לפי מדינה, עדיין בשלב מוקדם (בטא).",
                     ),
@@ -131,8 +131,8 @@ CONTENT = {
                         "בחזרה; ומעליהם המפעיל האנושי, שרואה את שני הכלים בו-זמנית ובעיקר "
                         "בולם ובודק. לאורך הדרך, זו הייתה שוב ושוב הנקודה שבה נתפסו טעויות - "
                         "תוצאה שנראתה “כמעט טובה” אך לא נבדקה באמת. תוכן ההשוואה בכל דוח "
-                        "מופק באמצעות מודל שפה (Claude API של Anthropic), באותה שיטה בדיוק: "
-                        "בדיקה אנושית לפני כל פרסום, ורשת-ביטחון קבועה בקוד לכל כשל שחוזר "
+                        "מופק באמצעות מודל שפה (Claude API של Anthropic), באותה שיטה: "
+                        "בקרה אנושית בנקודות קריטיות ובביקורות תקופתיות, ורשת-ביטחון קבועה בקוד לכל כשל שחוזר "
                         "על עצמו.",
                     ),
                 ],
@@ -151,8 +151,9 @@ CONTENT = {
                         "בהמשך התווספו עוד שלושה מקורות (Frankfurter Allgemeine Zeitung, "
                         "Neue Zürcher Zeitung, The Globe and Mail) שמביאים "
                         "זוויות גרמנית-שמרנית, שווייצרית-ליברלית וקנדית - ומקטינים את "
-                        "המשקל היחסי של ארה\"ב בתמהיל. היום המערכת עוקבת אחרי 12 מקורות "
-                        "בשתי שפות, בטווח פוליטי רחב בכל זירה.",
+                        "המשקל היחסי של ארה\"ב בתמהיל. לאחרונה הצטרף גם The Observer הבריטי. "
+                        "היום המערכת עוקבת אחרי 13 מקורות פעילים בשתי שפות (שמונה באנגלית, "
+                        "חמישה בגרמנית), בטווח פוליטי רחב בכל זירה.",
                     ),
                 ],
             },
@@ -278,7 +279,7 @@ CONTENT = {
                         "product. The daily report now runs fully automatically, with "
                         "health checks and automatic stop on repeated failures. Alongside "
                         "it came a new \"Trends\" section, with two components: a "
-                        "narrative trend report, published every two weeks, tracking how "
+                        "narrative trend report, updated weekly over a rolling two-week window, tracking how "
                         "coverage of a topic shifts over the period - built from the daily "
                         "reports themselves, and written like them in all three languages; "
                         "and a graphical view of coverage by country, still at an early "
@@ -306,7 +307,7 @@ CONTENT = {
                         "result that looked \"almost good\" but hadn't actually been "
                         "verified. Every report's comparison content is produced using a "
                         "language model (Anthropic's Claude API), by exactly the same "
-                        "method: human review before every publish, and a standing safety "
+                        "method: human review at critical points and periodic audits, alongside a standing safety "
                         "net in the code for any failure that repeats.",
                     ),
                 ],
@@ -326,9 +327,10 @@ CONTENT = {
                         "sources were added later (Frankfurter Allgemeine Zeitung, Neue "
                         "Zürcher Zeitung, The Globe and Mail), bringing "
                         "German-conservative, Swiss-liberal and Canadian perspectives - "
-                        "and reducing the US's relative weight in the mix. Today the "
-                        "system follows 12 sources across two languages, spanning a wide "
-                        "political range in every arena.",
+                        "and reducing the US's relative weight in the mix. The Observer, a British "
+                        "title, joined most recently. Today the system follows 13 active "
+                        "sources across two languages (eight in English, five in German), "
+                        "spanning a wide political range in every arena.",
                     ),
                 ],
             },
@@ -469,7 +471,7 @@ CONTENT = {
                         "automatisch, mit Funktionsprüfungen und automatischem Stopp bei "
                         "wiederholten Fehlern. Daneben entstand ein neuer Bereich "
                         "„Trends“, mit zwei Komponenten: ein narrativer Trendbericht, der "
-                        "alle zwei Wochen erscheint und verfolgt, wie sich die "
+                        "wöchentlich über ein rollierendes Zwei-Wochen-Fenster aktualisiert wird und verfolgt, wie sich die "
                         "Berichterstattung zu einem Thema über den Zeitraum verändert - "
                         "aufgebaut auf den Tagesberichten selbst und wie diese in allen "
                         "drei Sprachen geschrieben; und eine grafische Ansicht der "
@@ -498,8 +500,8 @@ CONTENT = {
                         "entdeckt - ein Ergebnis, das „fast gut“ aussah, aber nie wirklich "
                         "geprüft worden war. Der Vergleichsinhalt jedes Berichts wird mit "
                         "einem Sprachmodell erzeugt (Anthropics Claude API), nach genau "
-                        "derselben Methode: menschliche Prüfung vor jeder "
-                        "Veröffentlichung, und ein fest im Code verankertes "
+                        "derselben Methode: menschliche Prüfung an kritischen Punkten und bei "
+                        "regelmäßigen Audits, neben einem fest im Code verankerten "
                         "Sicherheitsnetz für jeden wiederkehrenden Fehler.",
                     ),
                 ],
@@ -521,9 +523,10 @@ CONTENT = {
                         "(Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, "
                         "The Globe and Mail), die deutsch-konservative, "
                         "schweizerisch-liberale und kanadische Perspektiven einbringen - "
-                        "und das relative Gewicht der USA im Mix verringern. Heute "
-                        "verfolgt das System 12 Quellen in zwei Sprachen, mit breitem "
-                        "politischem Spektrum in jedem Raum.",
+                        "und das relative Gewicht der USA im Mix verringern. Zuletzt kam noch "
+                        "The Observer aus Großbritannien hinzu. Heute verfolgt das System "
+                        "13 aktive Quellen in zwei Sprachen (acht auf Englisch, fünf auf "
+                        "Deutsch), mit breitem politischem Spektrum in jedem Raum.",
                     ),
                 ],
             },
