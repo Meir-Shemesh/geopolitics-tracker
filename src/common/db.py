@@ -46,6 +46,9 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "page_number": "INTEGER NOT NULL",
         "raw_text": "TEXT NOT NULL",
         "extracted_at": "TEXT NOT NULL",
+        # SHA-256 of the normalized page text, filled by screen.py (ensure_text_hashes); '' = page too short to
+        # compare, NULL = not computed yet. Used for page-level duplicate detection (PROJECT_LOG 4.113).
+        "text_hash": "TEXT",
     },
     "page_screening": {
         "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -448,14 +451,17 @@ def insert_page_screening(
     reasoning: str,
     screened_at: str,
     model_used: str,
+    analysis_status: str = "pending",
 ) -> None:
+    """`analysis_status` is 'pending' for a page analyze.py should pick up; screen.py passes 'skipped_duplicate' for a
+    relevant page whose text was already screened (and queued for analysis) elsewhere - analyze.py only reads 'pending'."""
     conn.execute(
         """
         INSERT INTO page_screening
-            (file_id, page_number, is_relevant, screening_reasoning, screened_at, model_used)
-        VALUES (?, ?, ?, ?, ?, ?)
+            (file_id, page_number, is_relevant, screening_reasoning, screened_at, model_used, analysis_status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-        (file_id, page_number, int(is_relevant), reasoning, screened_at, model_used),
+        (file_id, page_number, int(is_relevant), reasoning, screened_at, model_used, analysis_status),
     )
     conn.commit()
 
