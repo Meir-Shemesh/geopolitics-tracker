@@ -12,6 +12,7 @@ import argparse
 import re
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
@@ -189,6 +190,59 @@ def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_
     return tool_use.input["articles"]
 
 
+# --- Operator skip list (PROJECT_LOG 4.113) ------------------------------------------------------------------
+# On 2026-10-30 two duplicate issues were already queued when the run was under way and nothing could stop their
+# analysis: this stage loads its whole page list at start, and the process could not be killed from outside. One
+# file_id per line in this file (blank lines and "#" comments allowed) makes the loop skip that file's pages. It is
+# re-read whenever it changes, so adding a line takes effect on the very next page of a run already in progress.
+# The pages stay 'pending' (nothing is rewritten): removing the line lets a later run analyze them.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SKIP_FILES_PATH = PROJECT_ROOT / "automation_state" / "skip_files.txt"
+
+
+def parse_skip_file_ids(text: str) -> tuple[set[int], list[str]]:
+    """(file ids, unreadable lines). A line is `<id>` optionally followed by a `#` comment."""
+    ids: set[int] = set()
+    bad: list[str] = []
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        if line.isdigit():
+            ids.add(int(line))
+        else:
+            bad.append(raw.strip())
+    return ids, bad
+
+
+class SkipList:
+    """The skip-list file, re-read only when its modification time or size changes. A missing or unreadable file
+    means "nothing to skip" (or the last good content) - it must never be able to stop or crash a run."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._stamp: tuple[int, int] | None = None
+        self._ids: set[int] = set()
+
+    def ids(self) -> set[int]:
+        try:
+            stat = self.path.stat()
+        except OSError:
+            self._stamp, self._ids = None, set()
+            return self._ids
+        stamp = (stat.st_mtime_ns, stat.st_size)
+        if stamp != self._stamp:
+            try:
+                ids, bad = parse_skip_file_ids(self.path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError):
+                return self._ids
+            self._stamp, self._ids = stamp, ids
+            print(f"  skip list: {sorted(ids) if ids else 'empty'} ({self.path.name})")
+            for line in bad:
+                print(f"  skip list: ignoring unreadable line {line!r}")
+        return self._ids
+
+
 def run(file_id: int | None = None) -> None:
     load_dotenv()
 
@@ -203,7 +257,13 @@ def run(file_id: int | None = None) -> None:
     total_articles = 0
     total_self_excluded = 0
 
+    skip_list = SkipList(SKIP_FILES_PATH)
+    skipped_pages: dict[int, int] = {}
+
     for page in pages:
+        if page["file_id"] in skip_list.ids():
+            skipped_pages[page["file_id"]] = skipped_pages.get(page["file_id"], 0) + 1
+            continue
         newspaper = page["newspaper"]
         language = NEWSPAPER_LANGUAGES.get(newspaper, "")
         letters_page = is_letters_page(page["raw_text"])
@@ -241,24 +301,33 @@ def run(file_id: int | None = None) -> None:
         total_self_excluded += len(self_excluded)
 
         now = datetime.now(timezone.utc).isoformat()
-        for article in articles:
-            article_id = insert_article(
-                conn,
-                page["file_id"],
-                page["page_number"],
-                newspaper,
-                language,
-                article["headline"],
-                article["author"],
-                article["region_topic"],
-                article["stance_summary"],
-                article["key_excerpt"],
-                now,
-            )
-            insert_article_countries(conn, article_id, article["country_codes"])
-            insert_article_conflict_zones(conn, article_id, article["conflict_zones"])
+        # One transaction per page: the articles, their country/zone rows and the page's 'completed' status are
+        # committed together, so a crash or kill in the middle leaves the page 'pending' with nothing half-written
+        # (previously each insert committed on its own and a retry could insert the same article twice).
+        try:
+            for article in articles:
+                article_id = insert_article(
+                    conn,
+                    page["file_id"],
+                    page["page_number"],
+                    newspaper,
+                    language,
+                    article["headline"],
+                    article["author"],
+                    article["region_topic"],
+                    article["stance_summary"],
+                    article["key_excerpt"],
+                    now,
+                    commit=False,
+                )
+                insert_article_countries(conn, article_id, article["country_codes"], commit=False)
+                insert_article_conflict_zones(conn, article_id, article["conflict_zones"], commit=False)
 
-        set_analysis_status(conn, page["file_id"], page["page_number"], "completed")
+            set_analysis_status(conn, page["file_id"], page["page_number"], "completed", commit=False)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
         pages_analyzed += 1
         total_articles += len(articles)
         print(f"  page {page['page_number']} (file {page['file_id']}): {len(articles)} article(s)")
@@ -270,6 +339,11 @@ def run(file_id: int | None = None) -> None:
         f"{total_articles} article(s) identified in total, "
         f"{total_self_excluded} article(s) auto-excluded (self-tagged non-geopolitical)"
     )
+    if skipped_pages:
+        print(
+            f"Skipped by the skip list ({SKIP_FILES_PATH.name}): {sum(skipped_pages.values())} page(s) "
+            f"of file_id(s) {sorted(skipped_pages)} - left 'pending'"
+        )
 
 
 if __name__ == "__main__":

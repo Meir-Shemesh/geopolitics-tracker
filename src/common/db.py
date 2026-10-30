@@ -482,12 +482,13 @@ def get_pages_pending_analysis(conn: sqlite3.Connection, file_id: int | None = N
     return conn.execute(query, params).fetchall()
 
 
-def set_analysis_status(conn: sqlite3.Connection, file_id: int, page_number: int, status: str) -> None:
+def set_analysis_status(conn: sqlite3.Connection, file_id: int, page_number: int, status: str, commit: bool = True) -> None:
     conn.execute(
         "UPDATE page_screening SET analysis_status = ? WHERE file_id = ? AND page_number = ?",
         (status, file_id, page_number),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def insert_article(
@@ -502,6 +503,7 @@ def insert_article(
     stance_summary: str,
     key_excerpt: str,
     analyzed_at: str,
+    commit: bool = True,
 ) -> int:
     cursor = conn.execute(
         """
@@ -523,7 +525,8 @@ def insert_article(
             analyzed_at,
         ),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return cursor.lastrowid
 
 
@@ -760,22 +763,24 @@ def get_section_citations(conn: sqlite3.Connection, section_id: int):
     ).fetchall()
 
 
-def insert_article_countries(conn: sqlite3.Connection, article_id: int, country_codes: list[str]) -> None:
+def insert_article_countries(conn: sqlite3.Connection, article_id: int, country_codes: list[str], commit: bool = True) -> None:
     for code in country_codes:
         conn.execute(
             "INSERT OR IGNORE INTO article_countries (article_id, country_code) VALUES (?, ?)",
             (article_id, code),
         )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
-def insert_article_conflict_zones(conn: sqlite3.Connection, article_id: int, conflict_zones: list[str]) -> None:
+def insert_article_conflict_zones(conn: sqlite3.Connection, article_id: int, conflict_zones: list[str], commit: bool = True) -> None:
     for zone in conflict_zones:
         conn.execute(
             "INSERT OR IGNORE INTO article_conflict_zones (article_id, conflict_zone) VALUES (?, ?)",
             (article_id, zone),
         )
-    conn.commit()
+    if commit:
+        conn.commit()
 
 
 def get_countries_for_article(conn: sqlite3.Connection, article_id: int) -> list[str]:
