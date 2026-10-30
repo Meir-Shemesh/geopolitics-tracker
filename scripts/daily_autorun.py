@@ -99,7 +99,9 @@ TIMEOUTS = {
     # 4.101): render time scales with the number of sections (PDF generation is
     # ~12 min per language at 137 sections). 16.10 (137 sections, the largest day
     # so far) was cut at 25 min with the German PDF still missing.
-    "render": 60 * 60,
+    # Raised 60 -> 120 min on 2026-10-30: 158 sections (466 articles) needed ~24 min per
+    # PDF language and the run was cut at 60 min with the German PDF unfinished.
+    "render": 120 * 60,
     # Used by scripts/biweekly_autorun.py (which shares run_step), not by this
     # script's own sequence. The map-reduce (Stage 1) + per-topic narrative
     # writing (Stage 2) for a full 14-day period - a few minutes for the
