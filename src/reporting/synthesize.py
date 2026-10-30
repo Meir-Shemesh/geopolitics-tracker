@@ -63,6 +63,25 @@ FALLBACK_PREFIX_DE = "Zusätzliche Berichterstattung (nicht in einen quellenübe
 # which is cheap to recheck and retry (one small call, not the whole day's work).
 GROUPING_RATIO_THRESHOLD = 0.20
 
+# Stage 1 output budget. Raised 16,000 -> 20,000 on 2026-10-30 (PROJECT_LOG 4.113): the 466-article day used
+# 13,970 tokens (~30 per article, 87% of the old ceiling), so the old ceiling held ~530 articles. 20,000 stays under
+# the ~21,333 cutoff above which the SDK refuses a non-streaming request. A truncated answer is not a crash: it
+# shows up as unassigned articles (retry once, then per-article fallback sections), so the warning below fires
+# BEFORE that happens.
+STAGE1_MAX_TOKENS = 20000
+STAGE1_NEAR_CEILING_RATIO = 0.85
+
+
+def stage1_ceiling_warning(output_tokens: int, stop_reason: str | None, max_tokens: int = STAGE1_MAX_TOKENS) -> str | None:
+    """A human-readable warning when the stage-1 answer came close to (or hit) its output ceiling, else None."""
+    if stop_reason == "max_tokens" or output_tokens >= max_tokens:
+        return (f"STAGE-1 OUTPUT HIT THE CEILING: {output_tokens} of {max_tokens} tokens (stop_reason={stop_reason}) - "
+                f"the grouping is probably truncated; unassigned articles will fall back to individual sections")
+    if output_tokens >= STAGE1_NEAR_CEILING_RATIO * max_tokens:
+        return (f"STAGE-1 OUTPUT NEAR CEILING: {output_tokens} of {max_tokens} tokens "
+                f"({output_tokens / max_tokens:.0%}) - one more heavy day may truncate the grouping")
+    return None
+
 # Not rate-limit-driven (this tier allows far more - measured: 1000 req/min, 2M
 # input tok/min, 400K output tok/min, vs. the ~25-30 calls a typical day needs) -
 # a plain engineering choice for manageable error-handling/progress-reporting.
@@ -174,7 +193,7 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles, model: str
 
     response = client.messages.create(
         model=model,
-        max_tokens=16000,  # well under the ~21,333 non-streaming cutoff for this model
+        max_tokens=STAGE1_MAX_TOKENS,  # under the ~21,333 non-streaming cutoff for this model
         thinking={"type": "adaptive"},
         output_config={"effort": "medium"},
         system=STAGE1_SYSTEM_PROMPT,
@@ -189,6 +208,10 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles, model: str
         "cache_creation_input_tokens": getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
         "cache_read_input_tokens": getattr(response.usage, "cache_read_input_tokens", 0) or 0,
     }
+    ceiling_warning = stage1_ceiling_warning(response.usage.output_tokens, response.stop_reason)
+    if ceiling_warning:
+        print(f"  *** {ceiling_warning} ***")
+        usage["ceiling_warning"] = ceiling_warning
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     if tool_use is None:
         print(
@@ -618,7 +641,8 @@ def write_topic_comparison_with_retry(client, topic, topic_articles):
                 f"({', '.join(suspicious_langs)}) - treating as failed, falling back per-article."
             )
             return None
-        return _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
+        usage, comparison = _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
+        return _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison)
     return None
 
 
@@ -645,6 +669,57 @@ def _retry_for_national_framing(client, topic, topic_articles, usage, comparison
         return usage, comparison
     if national_framing_conflict(retry_comparison, newspapers):
         print(f"  framing retry for '{topic['topic_label_en']}' still divides by country/language - kept, flagged by audit.")
+    return retry_usage, retry_comparison
+
+
+def _hebrew_name_tells_in(comparison: dict) -> dict[str, str]:
+    """Hebrew-letter newspaper names in the two Hebrew fields audit_sections() checks."""
+    tells: dict[str, str] = {}
+    for field in ("topic_label_he", "comparison_text_he"):
+        tells.update(hebrew_newspaper_name_tells(comparison.get(field)))
+    return tells
+
+
+def hebrew_name_retry_feedback(tells: dict[str, str]) -> str:
+    found = "; ".join(f"{tell} (this is {name})" for tell, name in tells.items())
+    return (
+        "FEEDBACK ON YOUR PREVIOUS ANSWER: the Hebrew text wrote a newspaper name in Hebrew letters: "
+        f"{found}. A newspaper name must always stay in its exact Latin spelling, even inside Hebrew text. "
+        f"Use only these forms: {_NEWSPAPER_NAME_LIST}. Rewrite all the fields, replacing every Hebrew-letter "
+        "rendering of a newspaper name with its exact Latin name, and keep everything else as it was."
+    )
+
+
+def _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison):
+    """A newspaper name rendered in Hebrew letters ("טלגרף" for The Daily Telegraph) is the most frequent defect left in
+    the Hebrew text: 49 of 2,338 October sections, flagged on each of the last 11 days (PROJECT_LOG 4.113). Same shape as
+    the framing gate: one rewrite with explicit feedback, only when the deterministic check fires. A failed, suspicious or
+    no-better rewrite keeps the original (audit_sections() still flags it); a rewrite that brings back a national-framing
+    conflict the original did not have is also dropped. Applies to newly written sections only."""
+    tells = _hebrew_name_tells_in(comparison)
+    if not tells:
+        return usage, comparison
+    print(f"  topic '{topic['topic_label_en']}': newspaper name in Hebrew letters ({', '.join(tells)}) - rewriting once with feedback.")
+    try:
+        retry_usage, retry_comparison = write_topic_comparison(
+            client, topic, topic_articles, feedback=hebrew_name_retry_feedback(tells)
+        )
+    except Exception as exc:
+        print(f"  name retry for '{topic['topic_label_en']}' failed ({exc}) - keeping the original; audit will flag it.")
+        return usage, comparison
+    if _suspicious_langs(retry_comparison):
+        print(f"  name retry for '{topic['topic_label_en']}' came back suspicious - keeping the original; audit will flag it.")
+        return usage, comparison
+    remaining = _hebrew_name_tells_in(retry_comparison)
+    if len(remaining) >= len(tells):
+        print(f"  name retry for '{topic['topic_label_en']}' did not remove the Hebrew-letter name(s) - keeping the original; audit will flag it.")
+        return usage, comparison
+    newspapers = [a["newspaper"] for a in topic_articles]
+    if national_framing_conflict(retry_comparison, newspapers) and not national_framing_conflict(comparison, newspapers):
+        print(f"  name retry for '{topic['topic_label_en']}' reintroduced a country-based opening - keeping the original; audit will flag it.")
+        return usage, comparison
+    if remaining:
+        print(f"  name retry for '{topic['topic_label_en']}' removed some but not all ({', '.join(remaining)}) - kept, flagged by audit.")
     return retry_usage, retry_comparison
 
 
@@ -862,6 +937,8 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
     )
 
     flags = audit_sections(sections, articles)
+    # the stage-1 ceiling warning travels with the other review flags (written to review_flags/, committed)
+    flags += [w for w in dict.fromkeys(u["ceiling_warning"] for u in usage_log if u.get("ceiling_warning"))]
     if flags:
         print(f"  REVIEW FLAGS ({len(flags)}) - written text needs a manual look before relying on it:")
         for f in flags:
