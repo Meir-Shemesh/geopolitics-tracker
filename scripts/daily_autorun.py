@@ -280,6 +280,18 @@ def send_email(subject: str, body: str) -> None:
         server.sendmail(address, [to_address], msg.as_string())
 
 
+def send_email_safely(log, subject: str, body: str) -> bool:
+    """send_email() for main(): a failure to send (SMTP down, bad credentials, no network - e.g. the machine just
+    woke from standby) is logged and swallowed, so it can neither crash the wrapper before its remaining cleanup
+    (state, final log line, exit code) nor hide the real outcome of the run. Returns True if the send did not raise."""
+    try:
+        send_email(subject, body)
+        return True
+    except Exception as e:
+        log(f"EMAIL SEND FAILED ({e!r}) for subject {subject!r} - continuing; the outcome is in this log and state.json.")
+        return False
+
+
 def disable_scheduled_task(log) -> None:
     """Best-effort - a permissions failure here must never itself crash the
     wrapper (the killswitch.flag file is the real, always-effective stop;
@@ -407,7 +419,8 @@ def main() -> int:
         if KILLSWITCH_FLAG.exists():
             log("Skipped: killswitch.flag present from an earlier run - automation stays off until a human "
                 "clears it by hand (delete the file, and re-enable the scheduled task if it was disabled).")
-            send_email(
+            send_email_safely(
+                log,
                 f"[Geopolitics Tracker] Automation still paused (kill-switch) - {today}",
                 f"The kill-switch tripped on an earlier day and hasn't been cleared yet.\n"
                 f"No pipeline run was attempted today.\n\n"
@@ -420,7 +433,8 @@ def main() -> int:
         if config.get("end_date") and today > config["end_date"]:
             log(f"Stopping: end_date {config['end_date']} has passed.")
             disable_scheduled_task(log)
-            send_email(
+            send_email_safely(
+                log,
                 f"[Geopolitics Tracker] Automation window ended - {today}",
                 f"config.json's end_date ({config['end_date']}) has passed. The scheduled task has been "
                 f"disabled (no pipeline run happened today). Edit automation_state/config.json and "
@@ -430,7 +444,8 @@ def main() -> int:
         if config.get("remaining_runs") is not None and config["remaining_runs"] <= 0:
             log("Stopping: remaining_runs quota exhausted.")
             disable_scheduled_task(log)
-            send_email(
+            send_email_safely(
+                log,
                 f"[Geopolitics Tracker] Automation run quota exhausted - {today}",
                 f"config.json's remaining_runs reached 0. The scheduled task has been disabled (no pipeline "
                 f"run happened today). Edit automation_state/config.json and re-enable the scheduled task "
@@ -600,7 +615,7 @@ def main() -> int:
         subject = f"[Geopolitics Tracker] Daily run {'OK' if day_ok else 'FAILED'} - {today}"
         if killswitch_tripped:
             subject = f"[Geopolitics Tracker] AUTOMATION PAUSED (kill-switch) - {today}"
-        send_email(subject, "\n".join(lines))
+        send_email_safely(log, subject, "\n".join(lines))
 
         log(f"=== daily_autorun.py finished for {today}: {'success' if day_ok else 'failure'} ===")
         return 0 if day_ok else 1

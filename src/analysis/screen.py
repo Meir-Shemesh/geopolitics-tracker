@@ -11,6 +11,7 @@ One-shot run - not a long-running daemon.
 import argparse
 import hashlib
 import sys
+import time
 from datetime import datetime, timezone
 
 import anthropic
@@ -228,8 +229,39 @@ class PageTextIndex:
             self._by_newspaper.setdefault(newspaper, self._load(newspaper)).setdefault(text_hash, (file_id, page_number))
 
 
+class ScreenTimings:
+    """Splits the wall time of each page into API time (the request, including any SDK-internal retries, until the
+    answer is back) and code time (everything else in the page's turn: text hashing, duplicate lookups, DB writes,
+    printing). Added 2026-11-01 to tell a slow API/network from a regression in this module's own work, after the
+    per-call interval went from ~2 s to 5-10 s from 2026-10-31 (PROJECT_LOG 4.113) with unchanged payloads."""
+
+    def __init__(self) -> None:
+        self.api: list[float] = []  # one entry per page that actually called the API
+        self.code: list[float] = []  # one entry per page processed
+
+    def add(self, api_seconds: float, code_seconds: float) -> None:
+        self.code.append(code_seconds)
+        if api_seconds > 0:
+            self.api.append(api_seconds)
+
+    @staticmethod
+    def _stats(values: list[float], digits: int) -> str:
+        ordered = sorted(values)
+        p95 = ordered[min(len(ordered) - 1, int(len(ordered) * 0.95))]
+        return (f"{len(ordered)} x, total {sum(ordered):.{digits}f}s, mean {sum(ordered) / len(ordered):.{digits}f}s, "
+                f"median {ordered[len(ordered) // 2]:.{digits}f}s, p95 {p95:.{digits}f}s, max {ordered[-1]:.{digits}f}s")
+
+    def summary(self, setup_seconds: float) -> str:
+        if not self.code:
+            return f"Timing: no page processed (setup {setup_seconds:.1f}s)"
+        api_part = self._stats(self.api, 2) if self.api else "no API calls"
+        return f"Timing: setup {setup_seconds:.1f}s | API: {api_part} | code per page: {self._stats(self.code, 3)}"
+
+
 def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> None:
     load_dotenv()
+    setup_started = time.perf_counter()
+    timings = ScreenTimings()
 
     conn = get_connection()
     init_db(conn)
@@ -262,8 +294,11 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
     duplicates = 0
     duplicates_relevant = 0
     claim_checked: set[int] = set()  # files already offered to claim_report_date_on_first_scan() this run
+    setup_seconds = time.perf_counter() - setup_started
 
     for page in pages:
+        page_started = time.perf_counter()
+        api_seconds = 0.0
         canonical_id = duplicate_of.get(page["file_id"])
         newspaper = newspaper_by_file.get(page["file_id"])
         copied_verdict = None
@@ -305,14 +340,18 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
                 "none (empty page, skipped)",
             )
         else:
+            api_started = time.perf_counter()
             try:
                 is_relevant, reasoning = screen_page(
                     client, page["raw_text"], model=screen_model, ref=f"{page['file_id']}:{page['page_number']}"
                 )
                 model_used = screen_model
             except Exception as exc:
-                print(f"  failed: file_id={page['file_id']} page={page['page_number']} ({exc})")
+                api_seconds = time.perf_counter() - api_started
+                timings.add(api_seconds, time.perf_counter() - page_started - api_seconds)
+                print(f"  failed: file_id={page['file_id']} page={page['page_number']} after {api_seconds:.2f}s ({exc})")
                 continue
+            api_seconds = time.perf_counter() - api_started
 
         if page["file_id"] not in claim_checked:
             claim_checked.add(page["file_id"])
@@ -342,13 +381,17 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
         relevant += int(is_relevant)
         duplicates += int(copied_verdict is not None)
         duplicates_relevant += int(copied_verdict is not None and is_relevant)
+        code_seconds = time.perf_counter() - page_started - api_seconds
+        timings.add(api_seconds, code_seconds)
         tag =f"DUPLICATE of {duplicate_label}, copied" if copied_verdict is not None else "relevant"
-        print(f"  page {page['page_number']} (file {page['file_id']}): {tag}={is_relevant} - {reasoning}")
+        print(f"  page {page['page_number']} (file {page['file_id']}): {tag}={is_relevant} "
+              f"[api {api_seconds:.2f}s, code {code_seconds:.3f}s] - {reasoning}")
 
     conn.close()
 
     pct = (relevant / scanned * 100) if scanned else 0
     print(f"\nScreening: {scanned} page(s) scanned, {relevant} flagged relevant ({pct:.0f}%)")
+    print(timings.summary(setup_seconds))
     if duplicates:
         print(f"Duplicates: {duplicates} page(s) copied a verdict instead of being screened, "
               f"{duplicates_relevant} of them relevant - not queued for analysis again")
