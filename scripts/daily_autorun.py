@@ -91,7 +91,9 @@ TIMEOUTS = {
     # a single ordinary day's extraction (714 pages that day) already brushes
     # the old 1200s ceiling - before any backlog/duplicate pages add to the
     # queue. 3000s covers a normal day plus a real backlog with headroom.
-    "screen": 50 * 60,
+    # Raised 50 -> 90 min on 2026-10-31: 851 pages ran at 4.8 s/page (API slowdown, normally ~2 s)
+    # and timed out at 624 pages; the same day's rerun finished the rest at the normal rate.
+    "screen": 90 * 60,
     "analyze": 60 * 60,
     "synthesize": 20 * 60,
     "orphan_review": 5 * 60,
