@@ -175,6 +175,26 @@ class ScreenDuplicateTest(unittest.TestCase):
         self.assertEqual(rows[1], screen.page_text_hash(LONG))
         self.assertEqual(rows[2], "")
 
+    def test_the_newspaper_index_is_loaded_once_per_newspaper_per_run_and_still_catches_in_run_duplicates(self):
+        # PageTextIndex.add() used to call _load() on every page (eager setdefault default): a full scan of
+        # extracted_pages per screened page, 0.3 s warm and ~10 s with a cold file cache on the 330 MB archive
+        third = "Farmers blocked the main border crossing for a second day to protest the new import quotas. " * 4
+        a = self.add_file("Los Angeles Times", 1)
+        for number, text in ((1, LONG), (2, OTHER), (3, LONG)):  # page 3 repeats page 1, later in the same run
+            self.add_page(a, number, text)
+        b = self.add_file("Guardian", 2)
+        for number, text in ((1, third), (2, third)):
+            self.add_page(b, number, text)
+        with mock.patch.object(screen.PageTextIndex, "_load", autospec=True, side_effect=screen.PageTextIndex._load) as load:
+            self.run_screen()
+        self.assertEqual([call.args[1] for call in load.call_args_list].count("Los Angeles Times"), 1)
+        self.assertEqual([call.args[1] for call in load.call_args_list].count("Guardian"), 1)
+        self.assertEqual(load.call_count, 2)
+        self.assertEqual(self.api_calls, [f"{a}:1", f"{a}:2", f"{b}:1"])  # the two repeats never reached the API
+        self.assertEqual(self.screened(a, 3)["analysis_status"], screen.SKIPPED_DUPLICATE)
+        self.assertEqual(self.screened(b, 2)["analysis_status"], screen.SKIPPED_DUPLICATE)
+        self.assertEqual(self.screened(a, 2)["analysis_status"], "pending")
+
 
 if __name__ == "__main__":
     unittest.main()

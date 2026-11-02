@@ -226,7 +226,9 @@ class PageTextIndex:
     def add(self, newspaper: str | None, text_hash: str, file_id: int, page_number: int) -> None:
         """Registers a page screened in this run, so a later page of the same run can match it."""
         if newspaper and text_hash:
-            self._by_newspaper.setdefault(newspaper, self._load(newspaper)).setdefault(text_hash, (file_id, page_number))
+            if newspaper not in self._by_newspaper:  # setdefault(..., self._load(...)) would reload on every page
+                self._by_newspaper[newspaper] = self._load(newspaper)
+            self._by_newspaper[newspaper].setdefault(text_hash, (file_id, page_number))
 
 
 class ScreenTimings:
