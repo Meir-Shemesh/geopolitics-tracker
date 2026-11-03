@@ -165,7 +165,9 @@
     border-radius: .4rem;
     padding: .2rem .55rem;
   }
-  .beta-note { margin: .6rem 0 0; font-size: .88rem; color: var(--text-muted); max-width: 40rem; }
+  .beta-callout { margin: .9rem 0 0; max-width: 40rem; padding: .8rem 1rem; border: 1px solid var(--border); background: var(--bg-elevated); border-radius: .5rem; font-size: .9rem; }
+  .beta-callout-title { margin: 0 0 .4rem; font-weight: 700; }
+  .beta-callout-list { margin: 0; padding-inline-start: 1.2rem; display: grid; gap: .3rem; }
 
   .trends-body { max-width: 48rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 
@@ -378,7 +380,14 @@
         <h1 class="report-title">מגמות סיקור לפי מדינה</h1>
         <span class="beta-badge">בטא</span>
       </div>
-      <p class="beta-note">הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.</p>
+      <div class="beta-callout" role="note">
+        <p class="beta-callout-title">גרסת בטא: לקרוא בזהירות</p>
+        <ul class="beta-callout-list">
+          <li id="callout-weeks" hidden></li>
+          <li id="callout-sources" hidden></li>
+          <li>ימי השלמת פרסום אינם מנוטרלים במלואם.</li>
+        </ul>
+      </div>
     </div>
   </header>
   <main class="trends-body">
@@ -429,7 +438,7 @@
   </footer>
   <script>
 (function () {
-  var LABELS = {"page_title": "מגמות סיקור (בטא) - מעקב גאופוליטיקה יומי", "eyebrow": "מעקב גאופוליטיקה יומי", "heading": "מגמות סיקור לפי מדינה", "beta_badge": "בטא", "beta_note": "הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.", "ranked_intro": "מה זז השבוע", "ranked_subtitle": "שינוי במספר המקורות הייחודיים שסיקרו כל מדינה, מול השבוע הקודם", "col_country": "מדינה", "col_change": "שינוי שבועי", "backlog_banner": "השבוע האחרון כולל השלמת-פרסום של ימים שהתעכבו - המספרים לא משקפים שבוע רגיל, והדירוג למטה מושפע מכך.", "backlog_point_note": "שבוע זה כולל השלמת ימים שלא פורסמו בזמן - המספר לא משקף שבוע רגיל.", "back_to_list": "חזרה לרשימה", "legend_selected": "המדינה הנבחרת", "legend_others": "מדינות זמינות אחרות", "new_label": "חדש", "week_of": "שבוע של", "sources_label": "מקורות", "table_caption": "מקורות ייחודיים שסיקרו את {country}, לפי שבוע", "loading": "טוען…"};
+  var LABELS = {"page_title": "מגמות סיקור (בטא) - מעקב גאופוליטיקה יומי", "eyebrow": "מעקב גאופוליטיקה יומי", "heading": "מגמות סיקור לפי מדינה", "beta_badge": "בטא", "callout_title": "גרסת בטא: לקרוא בזהירות", "callout_weeks": "מבוסס על {weeks} שבועות בלבד.", "callout_sources": "מספר העיתונים הנסרקים גדל במהלך התקופה (מ-{from} ל-{to} עיתונים בשבוע), ולכן חלק מהשינויים בכיסוי משקפים הרחבת מקורות ולא שינוי בשיח.", "callout_backlog": "ימי השלמת פרסום אינם מנוטרלים במלואם.", "ranked_intro": "מה זז השבוע", "ranked_subtitle": "שינוי במספר המקורות הייחודיים שסיקרו כל מדינה, מול השבוע הקודם", "col_country": "מדינה", "col_change": "שינוי שבועי", "backlog_banner": "השבוע האחרון כולל השלמת-פרסום של ימים שהתעכבו - המספרים לא משקפים שבוע רגיל, והדירוג למטה מושפע מכך.", "backlog_point_note": "שבוע זה כולל השלמת ימים שלא פורסמו בזמן - המספר לא משקף שבוע רגיל.", "back_to_list": "חזרה לרשימה", "legend_selected": "המדינה הנבחרת", "legend_others": "מדינות זמינות אחרות", "new_label": "חדש", "week_of": "שבוע של", "sources_label": "מקורות", "table_caption": "מקורות ייחודיים שסיקרו את {country}, לפי שבוע", "loading": "טוען…"};
   var LANG = "he";
   var NAME_KEY = "name_" + LANG;
   var container = document.getElementById("trends-root");
@@ -616,9 +625,31 @@
 
   document.getElementById("back-to-list").addEventListener("click", closeExpanded);
 
+  // Beta callout numbers come from the data file itself, so they never go stale: week count, and the number of
+  // newspapers seen per week (the best-covered country each week is covered by every active paper).
+  function renderCallout(data) {
+    var weeks = data.weeks || [];
+    if (!weeks.length) return;
+    var perWeek = weeks.map(function (w, i) {
+      var m = 0;
+      data.countries.forEach(function (c) { if ((c.n_sources[i] || 0) > m) m = c.n_sources[i]; });
+      return m;
+    });
+    var elWeeks = document.getElementById("callout-weeks");
+    elWeeks.textContent = LABELS.callout_weeks.split("{weeks}").join(String(weeks.length));
+    elWeeks.hidden = false;
+    var first = perWeek[0], last = perWeek[perWeek.length - 1];
+    if (last > first) {
+      var elSources = document.getElementById("callout-sources");
+      elSources.textContent = LABELS.callout_sources.split("{from}").join(String(first)).split("{to}").join(String(last));
+      elSources.hidden = false;
+    }
+  }
+
   fetch("../assets/data/trends.json")
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      renderCallout(data);
       document.getElementById("trends-loading").hidden = true;
       document.getElementById("ranked-view").hidden = false;
       renderRanked(data);

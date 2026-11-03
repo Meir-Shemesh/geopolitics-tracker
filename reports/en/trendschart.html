@@ -165,7 +165,9 @@
     border-radius: .4rem;
     padding: .2rem .55rem;
   }
-  .beta-note { margin: .6rem 0 0; font-size: .88rem; color: var(--text-muted); max-width: 40rem; }
+  .beta-callout { margin: .9rem 0 0; max-width: 40rem; padding: .8rem 1rem; border: 1px solid var(--border); background: var(--bg-elevated); border-radius: .5rem; font-size: .9rem; }
+  .beta-callout-title { margin: 0 0 .4rem; font-weight: 700; }
+  .beta-callout-list { margin: 0; padding-inline-start: 1.2rem; display: grid; gap: .3rem; }
 
   .trends-body { max-width: 48rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 
@@ -378,7 +380,14 @@
         <h1 class="report-title">Coverage Trends by Country</h1>
         <span class="beta-badge">Beta</span>
       </div>
-      <p class="beta-note">The archive currently spans about 7 weeks of data - longer-term trends will become more reliable as it grows.</p>
+      <div class="beta-callout" role="note">
+        <p class="beta-callout-title">Beta: read with care</p>
+        <ul class="beta-callout-list">
+          <li id="callout-weeks" hidden></li>
+          <li id="callout-sources" hidden></li>
+          <li>Days of catch-up publishing are not fully neutralized.</li>
+        </ul>
+      </div>
     </div>
   </header>
   <main class="trends-body">
@@ -429,7 +438,7 @@
   </footer>
   <script>
 (function () {
-  var LABELS = {"page_title": "Coverage Trends (Beta) - Daily Geopolitics", "eyebrow": "Daily Geopolitics", "heading": "Coverage Trends by Country", "beta_badge": "Beta", "beta_note": "The archive currently spans about 7 weeks of data - longer-term trends will become more reliable as it grows.", "ranked_intro": "What moved this week", "ranked_subtitle": "Change in distinct sources covering each country, vs. the previous week", "col_country": "Country", "col_change": "Weekly change", "backlog_banner": "The most recent week includes catch-up publishing for days that were delayed - the numbers don't reflect a typical week, and the ranking below is affected.", "backlog_point_note": "This week includes catch-up publishing for days that were delayed - the number doesn't reflect a typical week.", "back_to_list": "Back to list", "legend_selected": "Selected country", "legend_others": "Other available countries", "new_label": "New", "week_of": "Week of", "sources_label": "sources", "table_caption": "Distinct sources covering {country}, by week", "loading": "Loading…"};
+  var LABELS = {"page_title": "Coverage Trends (Beta) - Daily Geopolitics", "eyebrow": "Daily Geopolitics", "heading": "Coverage Trends by Country", "beta_badge": "Beta", "callout_title": "Beta: read with care", "callout_weeks": "Based on only {weeks} weeks of data.", "callout_sources": "The number of newspapers scanned grew during this period (from {from} to {to} per week), so part of the change in coverage reflects broader sourcing, not a shift in the conversation.", "callout_backlog": "Days of catch-up publishing are not fully neutralized.", "ranked_intro": "What moved this week", "ranked_subtitle": "Change in distinct sources covering each country, vs. the previous week", "col_country": "Country", "col_change": "Weekly change", "backlog_banner": "The most recent week includes catch-up publishing for days that were delayed - the numbers don't reflect a typical week, and the ranking below is affected.", "backlog_point_note": "This week includes catch-up publishing for days that were delayed - the number doesn't reflect a typical week.", "back_to_list": "Back to list", "legend_selected": "Selected country", "legend_others": "Other available countries", "new_label": "New", "week_of": "Week of", "sources_label": "sources", "table_caption": "Distinct sources covering {country}, by week", "loading": "Loading…"};
   var LANG = "en";
   var NAME_KEY = "name_" + LANG;
   var container = document.getElementById("trends-root");
@@ -616,9 +625,31 @@
 
   document.getElementById("back-to-list").addEventListener("click", closeExpanded);
 
+  // Beta callout numbers come from the data file itself, so they never go stale: week count, and the number of
+  // newspapers seen per week (the best-covered country each week is covered by every active paper).
+  function renderCallout(data) {
+    var weeks = data.weeks || [];
+    if (!weeks.length) return;
+    var perWeek = weeks.map(function (w, i) {
+      var m = 0;
+      data.countries.forEach(function (c) { if ((c.n_sources[i] || 0) > m) m = c.n_sources[i]; });
+      return m;
+    });
+    var elWeeks = document.getElementById("callout-weeks");
+    elWeeks.textContent = LABELS.callout_weeks.split("{weeks}").join(String(weeks.length));
+    elWeeks.hidden = false;
+    var first = perWeek[0], last = perWeek[perWeek.length - 1];
+    if (last > first) {
+      var elSources = document.getElementById("callout-sources");
+      elSources.textContent = LABELS.callout_sources.split("{from}").join(String(first)).split("{to}").join(String(last));
+      elSources.hidden = false;
+    }
+  }
+
   fetch("../assets/data/trends.json")
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      renderCallout(data);
       document.getElementById("trends-loading").hidden = true;
       document.getElementById("ranked-view").hidden = false;
       renderRanked(data);
