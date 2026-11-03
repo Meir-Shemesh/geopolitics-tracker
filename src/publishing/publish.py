@@ -1167,7 +1167,10 @@ _TRENDS_LABELS = {
         "eyebrow": "מעקב גאופוליטיקה יומי",
         "heading": "מגמות סיקור לפי מדינה",
         "beta_badge": "בטא",
-        "beta_note": "הארכיון כולל כרגע כ-7 שבועות של נתונים - מגמות ארוכות-טווח ייעשו אמינות יותר ככל שהארכיון יגדל.",
+        "callout_title": "גרסת בטא: לקרוא בזהירות",
+        "callout_weeks": "מבוסס על {weeks} שבועות בלבד.",
+        "callout_sources": "מספר העיתונים הנסרקים גדל במהלך התקופה (מ-{from} ל-{to} עיתונים בשבוע), ולכן חלק מהשינויים בכיסוי משקפים הרחבת מקורות ולא שינוי בשיח.",
+        "callout_backlog": "ימי השלמת פרסום אינם מנוטרלים במלואם.",
         "ranked_intro": "מה זז השבוע",
         "ranked_subtitle": "שינוי במספר המקורות הייחודיים שסיקרו כל מדינה, מול השבוע הקודם",
         "col_country": "מדינה",
@@ -1188,7 +1191,10 @@ _TRENDS_LABELS = {
         "eyebrow": "Daily Geopolitics",
         "heading": "Coverage Trends by Country",
         "beta_badge": "Beta",
-        "beta_note": "The archive currently spans about 7 weeks of data - longer-term trends will become more reliable as it grows.",
+        "callout_title": "Beta: read with care",
+        "callout_weeks": "Based on only {weeks} weeks of data.",
+        "callout_sources": "The number of newspapers scanned grew during this period (from {from} to {to} per week), so part of the change in coverage reflects broader sourcing, not a shift in the conversation.",
+        "callout_backlog": "Days of catch-up publishing are not fully neutralized.",
         "ranked_intro": "What moved this week",
         "ranked_subtitle": "Change in distinct sources covering each country, vs. the previous week",
         "col_country": "Country",
@@ -1209,7 +1215,10 @@ _TRENDS_LABELS = {
         "eyebrow": "Tägliche Geopolitik",
         "heading": "Berichterstattungstrends nach Land",
         "beta_badge": "Beta",
-        "beta_note": "Das Archiv umfasst derzeit etwa 7 Wochen an Daten - längerfristige Trends werden zuverlässiger, je größer das Archiv wird.",
+        "callout_title": "Beta: mit Vorsicht lesen",
+        "callout_weeks": "Basiert auf nur {weeks} Wochen an Daten.",
+        "callout_sources": "Die Zahl der ausgewerteten Zeitungen ist im Beobachtungszeitraum gestiegen (von {from} auf {to} pro Woche); ein Teil der Veränderungen in der Berichterstattung spiegelt daher die breitere Quellenbasis wider und keinen Wandel im Diskurs.",
+        "callout_backlog": "Tage mit nachgeholter Veröffentlichung sind nicht vollständig herausgerechnet.",
         "ranked_intro": "Was sich diese Woche bewegt hat",
         "ranked_subtitle": "Veränderung der eindeutigen Quellen pro Land im Vergleich zur Vorwoche",
         "col_country": "Land",
@@ -1417,9 +1426,31 @@ _TRENDS_JS_TEMPLATE = """
 
   document.getElementById("back-to-list").addEventListener("click", closeExpanded);
 
+  // Beta callout numbers come from the data file itself, so they never go stale: week count, and the number of
+  // newspapers seen per week (the best-covered country each week is covered by every active paper).
+  function renderCallout(data) {
+    var weeks = data.weeks || [];
+    if (!weeks.length) return;
+    var perWeek = weeks.map(function (w, i) {
+      var m = 0;
+      data.countries.forEach(function (c) { if ((c.n_sources[i] || 0) > m) m = c.n_sources[i]; });
+      return m;
+    });
+    var elWeeks = document.getElementById("callout-weeks");
+    elWeeks.textContent = LABELS.callout_weeks.split("{weeks}").join(String(weeks.length));
+    elWeeks.hidden = false;
+    var first = perWeek[0], last = perWeek[perWeek.length - 1];
+    if (last > first) {
+      var elSources = document.getElementById("callout-sources");
+      elSources.textContent = LABELS.callout_sources.split("{from}").join(String(first)).split("{to}").join(String(last));
+      elSources.hidden = false;
+    }
+  }
+
   fetch("../assets/data/trends.json")
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      renderCallout(data);
       document.getElementById("trends-loading").hidden = true;
       document.getElementById("ranked-view").hidden = false;
       renderRanked(data);
@@ -1516,7 +1547,9 @@ def build_trends_chart_html(lang: str) -> str:
     border-radius: .4rem;
     padding: .2rem .55rem;
   }}
-  .beta-note {{ margin: .6rem 0 0; font-size: .88rem; color: var(--text-muted); max-width: 40rem; }}
+  .beta-callout {{ margin: .9rem 0 0; max-width: 40rem; padding: .8rem 1rem; border: 1px solid var(--border); background: var(--bg-elevated); border-radius: .5rem; font-size: .9rem; }}
+  .beta-callout-title {{ margin: 0 0 .4rem; font-weight: 700; }}
+  .beta-callout-list {{ margin: 0; padding-inline-start: 1.2rem; display: grid; gap: .3rem; }}
 
   .trends-body {{ max-width: 48rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }}
 
@@ -1619,7 +1652,14 @@ def build_trends_chart_html(lang: str) -> str:
         <h1 class="report-title">{esc(L['heading'])}</h1>
         <span class="beta-badge">{esc(L['beta_badge'])}</span>
       </div>
-      <p class="beta-note">{esc(L['beta_note'])}</p>
+      <div class="beta-callout" role="note">
+        <p class="beta-callout-title">{esc(L['callout_title'])}</p>
+        <ul class="beta-callout-list">
+          <li id="callout-weeks" hidden></li>
+          <li id="callout-sources" hidden></li>
+          <li>{esc(L['callout_backlog'])}</li>
+        </ul>
+      </div>
     </div>
   </header>
   <main class="trends-body">
