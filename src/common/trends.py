@@ -28,9 +28,11 @@ conflated:
     total rather than standing alone as a visible spike).
 """
 
+import json
 from collections import defaultdict
 from datetime import date, timedelta
 
+from src.common.country_aliases import article_text, named_countries
 from src.common.db import REPORT_DATE_SQL
 from src.common.geo_taxonomy import COUNTRY_TO_REGION
 
@@ -65,6 +67,69 @@ COUNTRY_DAY_COVERAGE_THRESHOLD = 0.85
 
 WEEK_LENGTH_DAYS = 7
 
+# --- Conservative display (PROJECT_LOG 4.122) --------------------------------------------------------------
+# trends.json counts a country in an article only if the article itself names it (see country_aliases.py), and
+# marks every value as a lower bound. A weekly point built from fewer than this many named articles is flagged
+# low_volume so the page can hide it: below it, one article more or less moves the point visibly.
+MIN_ARTICLES_PER_POINT = 10
+
+# --- Scope and source-roster breaks (PROJECT_LOG 4.116) -------------------------------------------------------
+# A weekly series must not be read across one of these dates as if nothing changed. Two independent axes:
+#   analysis_scope - what analyze.py counts as an article (the 4.10 decision: significant factual coverage, not only
+#                    opinion/analysis; applied retroactively to 2-4.10, earlier dates were not re-analysed)
+#   source_roster  - which newspapers feed the archive
+# Dates are report dates. Edit this tuple by hand when a break happens; it is deliberately not derived.
+SCOPE_BREAKS = (
+    {"date": "2026-08-20", "axis": "source_roster",
+     "label_he": "הארכיון מתחיל עם 4 עיתונים: Telegraph, Welt, Guardian, SZ",
+     "label_en": "The archive starts with 4 newspapers: Telegraph, Welt, Guardian, SZ",
+     "label_de": "Das Archiv beginnt mit 4 Zeitungen: Telegraph, Welt, Guardian, SZ"},
+    {"date": "2026-08-28", "axis": "source_roster",
+     "label_he": "נוספים LA Times, USA Today, WSJ, Spiegel, Economist ו-NYT International",
+     "label_en": "LA Times, USA Today, WSJ, Spiegel, Economist and NYT International are added",
+     "label_de": "LA Times, USA Today, WSJ, Spiegel, Economist und NYT International kommen hinzu"},
+    {"date": "2026-09-12", "axis": "source_roster",
+     "label_he": "Washington Post מחליף את NYT International",
+     "label_en": "Washington Post replaces NYT International",
+     "label_de": "Die Washington Post ersetzt die NYT International"},
+    {"date": "2026-09-26", "axis": "source_roster",
+     "label_he": "WSJ מושעה זמנית",
+     "label_en": "WSJ is suspended for now",
+     "label_de": "Das WSJ wird vorerst ausgesetzt"},
+    {"date": "2026-10-02", "axis": "analysis_scope",
+     "label_he": "הרחבת היקף הניתוח: נכללים גם סיקורים עובדתיים משמעותיים (החלטה מ-4.10, מוחל מ-2.10)",
+     "label_en": "Analysis scope widened: significant factual coverage is included too (decided 4 Oct, applied from 2 Oct)",
+     "label_de": "Analyseumfang erweitert: auch bedeutende Tatsachenberichte werden erfasst (am 4.10. beschlossen, ab 2.10. angewandt)"},
+    {"date": "2026-10-12", "axis": "source_roster",
+     "label_he": "נוספים FAZ, NZZ ו-Globe and Mail",
+     "label_en": "FAZ, NZZ and Globe and Mail are added",
+     "label_de": "FAZ, NZZ und Globe and Mail kommen hinzu"},
+    {"date": "2026-10-26", "axis": "source_roster",
+     "label_he": "נוסף The Observer (מהדורת יום ראשון)",
+     "label_en": "The Observer is added (Sunday edition)",
+     "label_de": "The Observer kommt hinzu (Sonntagsausgabe)"},
+)
+
+
+def scope_breaks_for_json() -> list[dict]:
+    """SCOPE_BREAKS as plain dicts for trends.json (additive key; the page ignores it until it draws the markers)."""
+    return [dict(b) for b in SCOPE_BREAKS]
+
+
+def weekly_roster(conn, weeks: list[dict]) -> list[list[str]]:
+    """For each {"start","end"} week: the sorted union of reports.sources_included over the report dates inside it.
+    A union, not a count per day - the daily roster swings between 4 and 12 papers with the weekend gaps and the
+    weekly magazines. [] for a week with no report."""
+    by_date = {row["report_date"]: json.loads(row["sources_included"]) for row in conn.execute("SELECT report_date, sources_included FROM reports")}
+    roster = []
+    for w in weeks:
+        papers = set()
+        for d, sources in by_date.items():
+            if w["start"] <= d <= w["end"]:
+                papers.update(sources)
+        roster.append(sorted(papers))
+    return roster
+
 
 def week_chunks(start: date, end: date) -> list[tuple[date, date]]:
     """Sequential WEEK_LENGTH_DAYS-day chunks from start to end (the last
@@ -87,6 +152,44 @@ def _week_index_for(d: date, chunks: list[tuple[date, date]]) -> int | None:
         if ws <= d <= we:
             return i
     return None
+
+
+# --- Core series and the cadence-based definition of an "active" paper (PROJECT_LOG 4.116) ----------------------
+# CORE_V1 is fixed by decision (3.11.2026), not recomputed on every run: the nine newspapers that are active
+# (below) in every week from week 3 (3.9.2026) to the end of the archive. Wall Street Journal is out (suspended
+# 26.9); FAZ, NZZ and Globe and Mail (from 7.10) and The Observer (from 25.10) are out because they have not been
+# present long enough. Changing the list means adding CORE_V2, never editing this one, so a series built on v1
+# stays reproducible.
+CORE_V1 = (
+    "Daily Telegraph",
+    "Der Spiegel",
+    "Die Welt",
+    "Economist",
+    "Guardian",
+    "Los Angeles Times",
+    "Süddeutsche Zeitung",
+    "USA Today",
+    "Washington Post",
+)
+
+# Cadence: a paper delivering on fewer than 35% of the days in its own span is weekly (Economist, Spiegel, Observer).
+CADENCE_WEEKLY_RATE_MAX = 0.35
+# Active in a week: a weekly paper needs one issue; a daily paper needs at least half of the issues it is expected to
+# deliver that week (never fewer than one). Expected issues come from the paper's own weekday pattern.
+ACTIVE_DAILY_MIN_SHARE = 0.5
+
+
+def paper_cadence(delivery_rate: float) -> str:
+    """'weekly' or 'daily' from the share of days in the paper's own active span on which it delivered."""
+    return "weekly" if delivery_rate < CADENCE_WEEKLY_RATE_MAX else "daily"
+
+
+def is_paper_active(cadence: str, deliveries: int, expected_issues: float) -> bool:
+    if expected_issues <= 0:
+        return False  # outside the paper's own span (before its first or after its last issue)
+    if cadence == "weekly":
+        return deliveries >= 1
+    return deliveries >= max(1.0, ACTIVE_DAILY_MIN_SHARE * expected_issues)
 
 
 def get_daily_article_totals(conn) -> dict[str, int]:
@@ -140,26 +243,40 @@ def detect_backlog_dates(
     return flagged
 
 
-def get_country_date_source_rows(conn) -> list[tuple[str, str, str]]:
-    """Every distinct (country_code, report_date, newspaper) triple - the
-    finest-grained signal everything else in this module is built from.
-    Deliberately NOT pre-aggregated to (country, date) here: week-bucketing
-    needs to re-count DISTINCT sources per week, and aggregating per-day
-    first and summing would double-count a source that published on two
-    different days of the same week."""
-    # Alias "rdate", not "report_date" - see get_daily_article_totals()'s
-    # comment for why the latter silently groups/orders by the wrong column
-    # (a real, mostly-NULL downloaded_files.report_date in scope via the
-    # join) instead of this computed expression. This query has no GROUP BY/
-    # ORDER BY naming the alias, but kept consistent for the same reason and
-    # to avoid the trap resurfacing if this query is ever extended.
+def get_country_article_rows(conn, named_only: bool = False) -> list[tuple[str, str, str, int]]:
+    """Every distinct (country_code, report_date, newspaper, article_id) quadruple.
+
+    named_only=True keeps a tag only if the article names that country in its headline, stance summary or key
+    excerpt (country_aliases.named_countries) - a filter on existing tags, never an addition. The default keeps
+    every tag, which is what the eligibility gate below still uses."""
+    # Alias "rdate", not "report_date" - see get_daily_article_totals()'s comment for why the latter silently
+    # groups/orders by the wrong column (a real, mostly-NULL downloaded_files.report_date in scope via the join).
     query = f"""
-        SELECT DISTINCT ac.country_code, {REPORT_DATE_SQL} AS rdate, a.newspaper
+        SELECT DISTINCT ac.country_code, {REPORT_DATE_SQL} AS rdate, a.newspaper, a.id AS article_id,
+               a.headline, a.stance_summary, a.key_excerpt
         FROM article_countries ac
         JOIN articles a ON a.id = ac.article_id
         JOIN downloaded_files df ON df.id = a.file_id
     """
-    return [(row["country_code"], row["rdate"], row["newspaper"]) for row in conn.execute(query)]
+    named: dict[int, set[str]] = {}
+    rows = []
+    for row in conn.execute(query):
+        if named_only:
+            aid = row["article_id"]
+            if aid not in named:
+                named[aid] = named_countries(article_text(row["headline"], row["stance_summary"], row["key_excerpt"]))
+            if row["country_code"] not in named[aid]:
+                continue
+        rows.append((row["country_code"], row["rdate"], row["newspaper"], row["article_id"]))
+    return rows
+
+
+def get_country_date_source_rows(conn, named_only: bool = False) -> list[tuple[str, str, str]]:
+    """Every distinct (country_code, report_date, newspaper) triple - the finest-grained signal everything else
+    in this module is built from. Deliberately NOT pre-aggregated to (country, date) here: week-bucketing needs
+    to re-count DISTINCT sources per week, and aggregating per-day first and summing would double-count a source
+    that published on two different days of the same week."""
+    return list({(cc, rdate, newspaper) for cc, rdate, newspaper, _ in get_country_article_rows(conn, named_only)})
 
 
 def get_country_day_coverage_fractions(conn) -> dict[str, float]:
@@ -200,46 +317,54 @@ def _week_backlog_dates(chunks: list[tuple[date, date]], backlog_dates: set[str]
     return dict(result)
 
 
-def _build_week_trends(conn, group_by) -> dict:
+def _build_week_trends(conn, group_by, named_only: bool = False) -> dict:
     """Shared implementation for build_country_week_trends() (group_by=None,
     keys by country_code directly) and build_region_week_trends() (group_by=
-    COUNTRY_TO_REGION.get, keys by region, dropping unmapped countries)."""
-    rows = get_country_date_source_rows(conn)
-    if not rows:
+    COUNTRY_TO_REGION.get, keys by region, dropping unmapped countries).
+
+    The week grid always comes from the UNFILTERED date range, and every key gets one entry per week (zeros when
+    it has no data): a conservative filter must not shift or shorten the weeks, and callers must not depend on
+    which key they happen to look at first."""
+    all_rows = get_country_date_source_rows(conn)
+    if not all_rows:
         return {}
 
-    all_dates = sorted({date.fromisoformat(r[1]) for r in rows})
+    all_dates = sorted({date.fromisoformat(r[1]) for r in all_rows})
     chunks = week_chunks(all_dates[0], all_dates[-1])
     week_backlog = _week_backlog_dates(chunks, detect_backlog_dates(conn))
 
-    buckets: dict[tuple[str, int], set[str]] = defaultdict(set)
-    for cc, rdate, newspaper in rows:
+    sources: dict[tuple[str, int], set[str]] = defaultdict(set)
+    articles: dict[tuple[str, int], set[int]] = defaultdict(set)
+    for cc, rdate, newspaper, article_id in get_country_article_rows(conn, named_only):
         key = group_by(cc) if group_by else cc
         if key is None:
             continue
         wi = _week_index_for(date.fromisoformat(rdate), chunks)
         if wi is not None:
-            buckets[(key, wi)].add(newspaper)
+            sources[(key, wi)].add(newspaper)
+            articles[(key, wi)].add(article_id)
 
-    result: dict[str, list[dict]] = defaultdict(list)
-    for (key, wi), sources in buckets.items():
-        ws, we = chunks[wi]
-        flagged = week_backlog.get(wi, [])
-        result[key].append(
-            {
-                "week_start": ws.isoformat(),
-                "week_end": we.isoformat(),
-                "n_sources": len(sources),
-                "has_backlog": bool(flagged),
-                "backlog_dates": flagged,
-            }
-        )
-    for key in result:
-        result[key].sort(key=lambda r: r["week_start"])
-    return dict(result)
+    keys = {key for key, _ in sources}
+    result: dict[str, list[dict]] = {}
+    for key in sorted(keys):
+        entries = []
+        for wi, (ws, we) in enumerate(chunks):
+            flagged = week_backlog.get(wi, [])
+            entries.append(
+                {
+                    "week_start": ws.isoformat(),
+                    "week_end": we.isoformat(),
+                    "n_sources": len(sources.get((key, wi), ())),
+                    "n_articles": len(articles.get((key, wi), ())),
+                    "has_backlog": bool(flagged),
+                    "backlog_dates": flagged,
+                }
+            )
+        result[key] = entries
+    return result
 
 
-def build_country_week_trends(conn) -> dict:
+def build_country_week_trends(conn, named_only: bool = False) -> dict:
     """{country_code: [{week_start, week_end, n_sources, has_backlog,
     backlog_dates}, ...]} for every country that appears at all (callers
     filter by eligible_countries() themselves - this function does not
@@ -251,15 +376,17 @@ def build_country_week_trends(conn) -> dict:
     daily counts - see get_country_date_source_rows()). backlog_dates lists
     which specific date(s) inside that week's calendar span were flagged by
     detect_backlog_dates() (empty if none); has_backlog is just
-    bool(backlog_dates) for callers that only need a flag."""
-    return _build_week_trends(conn, group_by=None)
+    bool(backlog_dates) for callers that only need a flag. n_articles is the
+    distinct articles behind the week's point. named_only=True is the
+    conservative display (see MIN_ARTICLES_PER_POINT's note)."""
+    return _build_week_trends(conn, group_by=None, named_only=named_only)
 
 
-def build_region_week_trends(conn) -> dict:
+def build_region_week_trends(conn, named_only: bool = False) -> dict:
     """Same shape as build_country_week_trends(), aggregated to the 8 fixed
     regions in geo_taxonomy.COUNTRY_TO_REGION instead of countries. Not
     gated by eligible_countries() / an equivalent region threshold - regions
     aggregate many countries each, so sparsity was not observed to be a
     concern for them (not empirically re-verified per-region here; revisit
     if a region turns out thin when this is actually built into a view)."""
-    return _build_week_trends(conn, group_by=COUNTRY_TO_REGION.get)
+    return _build_week_trends(conn, group_by=COUNTRY_TO_REGION.get, named_only=named_only)

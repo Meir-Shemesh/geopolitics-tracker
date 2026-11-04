@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>Zweiwöchentliche Trendberichte - Tägliche Geopolitik</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .report-title { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }
+  .tagline { margin: .6rem 0 0; font-size: 1.02rem; color: var(--text-muted); max-width: 38rem; }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+  .section-heading { font-size: 1.1rem; font-weight: 700; margin: 0 0 1rem; }
+
+  .period-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1rem;
+  }
+  .period-card:hover { border-color: var(--masthead-accent); }
+  .period-card-range { margin: 0 0 .4rem; font-size: 1.1rem; font-weight: 700; color: var(--masthead-accent); }
+  .period-card-overview {
+    margin: 0 0 .5rem;
+    font-size: .92rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .period-card-count { margin: 0; font-size: .78rem; color: var(--text-muted); }
+  .no-periods { color: var(--text-muted); font-size: .92rem; }
+
+  .chart-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.3rem;
+    margin-top: 1.75rem;
+  }
+  .chart-card:hover { border-color: var(--masthead-accent); }
+  .chart-card-title { margin: 0 0 .4rem; font-size: 1.02rem; font-weight: 700; }
+  .chart-card-body { margin: 0 0 .5rem; font-size: .88rem; color: var(--text-muted); }
+  .chart-card-cta { margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
+  .map-card { margin: 0 0 1.25rem; }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Tägliche Geopolitik - Startseite"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="archive.html">← Alle Berichte</a>
+      <a class="top-nav-link" href="filter.html">Erweiterte Filterung</a>
+      <a class="top-nav-link" href="trends.html">Trends</a>
+      <a class="top-nav-link top-nav-lang-link" href="../he/trendsreports.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/trendsreports.html">English</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">Kontakt</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">E-Mail</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">Webseite</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dunkelmodus" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">Tägliche Geopolitik</p>
+      <h1 class="report-title">Zweiwöchentliche Trendberichte</h1>
+      <p class="tagline">Berichte in Erzählform über die Themen, die in der Berichterstattung über 14 Tage hinweg wiederkehrten und sich weiterentwickelten.</p>
+    </div>
+  </header>
+  <main>
+    <a class="chart-card map-card" href="trends.html">
+      <p class="chart-card-title">Trendkarte</p>
+      <p class="chart-card-body">Wie sich der Anteil jedes Landes an der Berichterstattung der ausgewerteten Zeitungen von Woche zu Woche verändert.</p>
+      <p class="chart-card-cta">Zur Karte →</p>
+    </a>
+    
+      <a class="period-card" href="biweekly_2026-10-15_2026-10-28_de.html">
+        <p class="period-card-range">15.–28. Oktober 2026</p>
+        <p class="period-card-overview">Die vergangenen zwei Wochen zeigen zwei sich überschneidende Linien: weitverbreitete innenpolitische Unruhen und fiskalischer Druck - von den französischen Studenten- und Gelbwesten-Protesten inmitten einer Schuldenkrise über Serbiens Anti-Vucic-Bewegung bis zu Albertas Separatismusdebatte und Indiens Jugendprotesten - sowie eine Reihe sicherheitspolitischer Eskalationen rund um Russland und den Nahen Osten, darunter die Trump-Selenskyj/Starlink-Spannungen um die Ukraine, russische hybride Kriegsführung gegen Europa, Huthi-Angriffe nahe Saudi-Arabien und iranische Aktivitäten in der Straße von Hormus. Israel stand durch mehrere eigenständige Themen im Fokus - Netanjahus innenpolitische Probleme, Siedlergewalt im Westjordanland und die Kriegsführung in Gaza -, was insgesamt das Bild von Regierungen unter innenpolitischem Druck bei gleichzeitig eskalierenden regionalen Konflikten verstärkt.</p>
+        <p class="period-card-count">35 Themen</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-10-08_2026-10-21_de.html">
+        <p class="period-card-range">8.–21. Oktober 2026</p>
+        <p class="period-card-overview">Die vergangenen zwei Wochen waren geprägt von einer Verbindung aus fiskalischem Druck im Westen und innenpolitischer Instabilität: Großbritannien und Frankreich kämpfen beide mit Staatsschuldenkrisen, Frankreich zusätzlich mit landesweiten Studenten- und Schulprotesten, während Regierungen in Deutschland, Spanien und Israel unter Koalitionsspannungen und Wahlkämpfen wanken. Parallel dazu sorgten die andauernden Konfliktherde - Russland-Ukraine, Jemen, Sudan und Äthiopien-Eritrea - weiterhin für breite Berichterstattung, begleitet von neuen diplomatischen Vorstößen wie einem möglichen Gas-Deal zwischen Trump und Putin. Ein weiterer roter Faden ist die US-Innenpolitik unter Druck, vom Zwischenwahlkampf Trumps bis zur Ilhan-Omar-Affäre sowie Debatten über KI-Sicherheit und Finanzblasenrisiken, was zeigt, wie wirtschaftliche und sicherheitspolitische Sorgen die innenpolitischen Auseinandersetzungen auf beiden Seiten des Atlantiks befeuern.</p>
+        <p class="period-card-count">37 Themen</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-10-01_2026-10-14_de.html">
+        <p class="period-card-range">1.–14. Oktober 2026</p>
+        <p class="period-card-overview">Die vergangenen zwei Wochen waren geprägt von zwei miteinander verwobenen Strömungen: einer sicherheitspolitischen Eskalation an mehreren Fronten - Jemen, Russland-Ukraine, ein mutmaßlich iranisch gestützter Anschlagsplan gegen britische Militärbasen und russische Hybrid-Sabotage in Europa - sowie innenpolitischen Spannungen in westlichen Demokratien, sichtbar an den Unruhen und dem Sparhaushalt in Frankreich, dem Aufstieg der AfD und des rechten Populismus sowie der europäischen Industrie unter dem Druck chinesischer Konkurrenz und hoher Energiekosten. Ein weiterer roter Faden betrifft Israel und jüdisches Leben, von der Flydubai-Entführungsgeschichte über den diplomatischen Bruch zwischen Großbritannien und Israel bis zu Marginalisierungsdebatten in der Literaturszene und der deutschen Parteipolitik. Ein einzelnes, die ganze Ausgabe verbindendes Muster lässt sich darüber hinaus nicht erkennen; nach Berichterstattungsbreite stechen vor allem der Jemen-Konflikt und der Krieg zwischen Russland und der Ukraine als bedeutendste Einzelthemen hervor.</p>
+        <p class="period-card-count">26 Themen</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-09-17_2026-09-30_de.html">
+        <p class="period-card-range">17.–30. September 2026</p>
+        <p class="period-card-overview">Die vergangenen zwei Wochen waren geprägt von einer sich ausweitenden Konfrontation zwischen Russland und dem Westen: Der intensivierte Drohnen-/Luftkrieg gegen die Ukraine ging einher mit zunehmender russischer hybrider Sabotage gegen NATO und Europa, während innenpolitisch Druck auf die russische Opposition vor den Duma-Wahlen wuchs. Parallel dazu deutet ein Bündel von Krisenherden - Houthis/Rotes Meer, der US-Iran-Konflikt und Venezuela - auf ein breiteres Muster amerikanischer Konfrontation mit Iran-nahen und gegnerischen Akteuren in mehreren Regionen zugleich hin. Daneben standen die Risiken und der globale Regulierungswettbewerb rund um KI sowie die turbulente deutsche Innenpolitik (BSW, AfD) als bedeutende, aber weitgehend eigenständige Themen ohne übergreifenden Zusammenhang.</p>
+        <p class="period-card-count">24 Themen</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-09-03_2026-09-16_de.html">
+        <p class="period-card-range">3.–16. September 2026</p>
+        <p class="period-card-overview">Die vergangenen zwei Wochen standen im Zeichen eines unter Druck geratenen Europas: russische hybride Kriegsführung und Drohnensabotage gegen Deutschland, der Aufstieg der AfD in Sachsen-Anhalt und die Krise der deutschen Autoindustrie angesichts chinesischer Konkurrenz zeichnen das Bild eines Kontinents, der gleichzeitig mit äußeren Bedrohungen und innenpolitischer Unruhe kämpft. Parallel dazu zeigen die Iran-USA-Spannungen am Golf und die von den USA vermittelten Russland-Ukraine-Friedensgespräche, dass die großen diplomatischen Bemühungen ohne klaren Durchbruch weiterlaufen. Darüber hinaus gibt es kein durchgängiges Muster, das alle Themen verbindet - die Ausgabe deckt ein breites Spektrum eigenständiger Entwicklungen ab, vom 25. Jahrestag von 9/11 bis zu wachsenden Sicherheitsbedenken rund um KI.</p>
+        <p class="period-card-count">20 Themen</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-08-20_2026-09-02_de.html">
+        <p class="period-card-range">20.–2. September 2026</p>
+        <p class="period-card-overview">In den vergangenen zwei Wochen prägten zwei große Entwicklungslinien die Berichterstattung: wirtschaftlicher Druck und sicherheitspolitische Eskalation. Wirtschaftlich rücken der US-kanadische Handelskrieg, die Turbulenzen an den globalen Anleihemärkten sowie fiskalische Sorgen in Großbritannien die Frage der ökonomischen Stabilität in den Vordergrund, während sicherheitspolitisch die anhaltenden Angriffe auf Kiew, die Furcht vor einem Krieg mit dem Iran sowie zunehmende russische Spionage- und Sabotageaktivitäten gegen Deutschland und die NATO auf eine sich verschärfende hybride Konfrontation zwischen Russland und dem Westen hindeuten. Daneben zeigt sich mit dem Aufstieg der AfD und der Debatte um die &quot;Brandmauer&quot; in Deutschland sowie den internen Auseinandersetzungen der US-Demokraten ein wiederkehrendes Muster unter Druck geratener Demokratien, während der US-chinesische Wettlauf um KI einen parallelen technologisch-strategischen Machtkampf markiert.</p>
+        <p class="period-card-count">12 Themen</p>
+      </a>
+    
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Barrierefreiheitserklärung</a>
+    <a class="footer-link" href="terms.html">Nutzungsbedingungen</a>
+    <a class="footer-link" href="privacy.html">Datenschutzerklärung</a>
+  </footer>
+</body>
+</html>

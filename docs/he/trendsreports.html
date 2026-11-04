@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>דוחות מגמות דו-שבועיים - מעקב גאופוליטיקה יומי</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .report-title { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; }
+  .tagline { margin: .6rem 0 0; font-size: 1.02rem; color: var(--text-muted); max-width: 38rem; }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+  .section-heading { font-size: 1.1rem; font-weight: 700; margin: 0 0 1rem; }
+
+  .period-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1rem;
+  }
+  .period-card:hover { border-color: var(--masthead-accent); }
+  .period-card-range { margin: 0 0 .4rem; font-size: 1.1rem; font-weight: 700; color: var(--masthead-accent); }
+  .period-card-overview {
+    margin: 0 0 .5rem;
+    font-size: .92rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .period-card-count { margin: 0; font-size: .78rem; color: var(--text-muted); }
+  .no-periods { color: var(--text-muted); font-size: .92rem; }
+
+  .chart-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--border);
+    border-radius: .9rem;
+    padding: 1.1rem 1.3rem;
+    margin-top: 1.75rem;
+  }
+  .chart-card:hover { border-color: var(--masthead-accent); }
+  .chart-card-title { margin: 0 0 .4rem; font-size: 1.02rem; font-weight: 700; }
+  .chart-card-body { margin: 0 0 .5rem; font-size: .88rem; color: var(--text-muted); }
+  .chart-card-cta { margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }
+  .map-card { margin: 0 0 1.25rem; }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="מעקב גאופוליטיקה יומי - דף הבית"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="archive.html">← לכל הדוחות</a>
+      <a class="top-nav-link" href="filter.html">סינון מתקדם</a>
+      <a class="top-nav-link" href="trends.html">מגמות</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/trendsreports.html">English</a>
+      <a class="top-nav-link top-nav-lang-link" href="../de/trendsreports.html">Deutsch</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">צור קשר</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">אימייל</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">אתר אישי</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">לינקדאין</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="מצב כהה" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">מעקב גאופוליטיקה יומי</p>
+      <h1 class="report-title">דוחות מגמות דו-שבועיים</h1>
+      <p class="tagline">דוחות נרטיביים על הנושאים שחזרו והתפתחו בסיקור לאורך 14 ימים.</p>
+    </div>
+  </header>
+  <main>
+    <a class="chart-card map-card" href="trends.html">
+      <p class="chart-card-title">מפת מגמות</p>
+      <p class="chart-card-body">איך משתנה משבוע לשבוע החלק של כל מדינה בסיקור של העיתונים הנסקרים.</p>
+      <p class="chart-card-cta">למפה ←</p>
+    </a>
+    
+      <a class="period-card" href="biweekly_2026-10-15_2026-10-28_he.html">
+        <p class="period-card-range">15.10–28.10.2026</p>
+        <p class="period-card-overview">השבועיים האחרונים מתאפיינים בשני צירים מקבילים: גל של מחאה ואי-יציבות פוליטית-כלכלית ברחבי העולם - צרפת (מחאות סטודנטים ו&quot;אפודים צהובים&quot; לצד משבר חוב), סרביה, קנדה (אלברטה) והודו - לצד הסלמה ביטחונית מתואמת סביב רוסיה ואיראן/תימן: מתיחות טראמפ-זלנסקי וסטארלינק באוקראינה, התקפות חות&#x27;ים מול חופי סעודיה ואיראן במיצר הורמוז, ולוחמה היברידית רוסית נגד אירופה. ישראל ממשיכה להופיע בכותרות דרך כמה זוויות - הפוליטיקה הפנימית נגד נתניהו, אלימות מתנחלים בגדה המערבית והתנהלות המלחמה בעזה - מה שמחזק תמונה של עולם שבו לחץ פנימי על מנהיגים נפגש עם עימותים אזוריים מתמשכים.</p>
+        <p class="period-card-count">35 נושאים</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-10-08_2026-10-21_he.html">
+        <p class="period-card-range">8.10–21.10.2026</p>
+        <p class="period-card-overview">השבועיים האחרונים נשלטו על ידי שילוב של לחץ פיסקלי במערב ואי-יציבות פוליטית פנימית: בריטניה וצרפת מתמודדות עם משבר חוב ריבוני, צרפת גם עם גל מחאות סטודנטים ובתי ספר, וממשלות בגרמניה, ספרד וישראל מתנדנדות תחת מחלוקות קואליציוניות ובחירות. מקביל לכך, זירות הסכסוך המתמשכות - אוקראינה-רוסיה, תימן, סודאן ואתיופיה-אריתריאה - ממשיכות להזין כותרות לצד ניסיונות דיפלומטיים חדשים כמו עסקת גז אפשרית בין טראמפ לפוטין. נושא חוצה-גבולות בולט נוסף הוא הפוליטיקה האמריקאית תחת לחץ - ממסע הבחירות של טראמפ לקראת הביניים ועד לפרשת איליהן עומר ושאלות של ביטחון וטרור פנים - המשתלבת עם דאגות גוברות סביב בינה מלאכותית ויציבות פיננסית גלובלית.</p>
+        <p class="period-card-count">37 נושאים</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-10-01_2026-10-14_he.html">
+        <p class="period-card-range">1.10–14.10.2026</p>
+        <p class="period-card-overview">השבועיים האחרונים הדגישו שתי מגמות מרכזיות: הסלמה ביטחונית רב-זירתית - תימן, אוקראינה, תכנית פיגוע חשודה מול בסיסי בריטניה וחבלה היברידית רוסית באירופה - לצד משברים פוליטיים-כלכליים פנימיים במערב, הבאים לידי ביטוי במהומות ובתקציב הצנע בצרפת, בעלייתה של AfD ושל הפופוליזם הימני, ובלחץ שמפעילה התחרות הסינית על התעשייה האירופית. נושאים נוספים הנוגעים לישראל וליהדות - פרשת החטיפה המתוכננת של טיסת Flydubai, המתיחות הדיפלומטית עם בריטניה, ושאלות של דה-לגיטימציה בעולם הספרות ובפוליטיקה הגרמנית - ממשיכים לככב כקו משנה עקבי. מעבר לכך, אין דפוס חוצה-נושאים יחיד השולט בגיליון; הנושאים הבולטים ביותר מבחינת היקף הסיקור הם המלחמה בתימן והמלחמה ברוסיה-אוקראינה.</p>
+        <p class="period-card-count">26 נושאים</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-09-17_2026-09-30_he.html">
+        <p class="period-card-range">17.9–30.9.2026</p>
+        <p class="period-card-overview">השבועיים האחרונים הדגישו את התרחבות העימות המערבי-רוסי מעבר לשדה הקרב האוקראיני: לצד המלחמה האווירית/רחפנים המתגברת נגד אוקראינה, נרשמה עלייה בפעולות חבלה והיברידיות רוסיות נגד נאט&quot;ו ואירופה, ומולן גם לחץ פנימי על האופוזיציה הרוסית סביב הבחירות לדומה. בנוסף, בולטת סדרת מוקדי מתיחות בזירות ים אדום/תימן, איראן וונצואלה, המצביעה על התעצמות רוסיה-איראן-גורמים אזוריים מול ארה&quot;ב בו-זמנית, לצד נושא חוצה-גבולות בפני עצמו - בינה מלאכותית, רגולציה ותחרות גלובלית - וזירה גרמנית פנימית סוערת (BSW, AfD). אין כאן נרטיב אחיד יחיד, אלא שילוב של הסלמה ביטחונית מול רוסיה/איראן/ים אדום יחד עם משברי פוליטיקה פנימית במערב.</p>
+        <p class="period-card-count">24 נושאים</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-09-03_2026-09-16_he.html">
+        <p class="period-card-range">3.9–16.9.2026</p>
+        <p class="period-card-overview">השבועיים האחרונים הדגישו ביטחון אירופי תחת לחץ: חבלת רחפנים ולוחמה היברידית רוסית נגד גרמניה ואירופה, לצד עליית ה-AfD בבחירות סקסוניה-אנהלט ומשבר תעשיית הרכב הגרמנית מול התחרות הסינית, מציירים יבשת המתמודדת בו-זמנית עם איומים חיצוניים ותסיסה פנימית. מקביל לכך, המתיחות בין איראן לארה&quot;ב במפרץ והמגעים המתווכים להסכם רוסיה-אוקראינה מראים שהדיפלומטיה הגדולה ממשיכה לנוע בלי פריצת דרך ברורה. מעבר לכך, אין דפוס מאחד יחיד שחוצה את רוב הנושאים - מדובר במגוון רחב של התפתחויות אזוריות ופנימיות, מ-11 בספטמבר ועד חששות הבטיחות סביב בינה מלאכותית.</p>
+        <p class="period-card-count">20 נושאים</p>
+      </a>
+      <a class="period-card" href="biweekly_2026-08-20_2026-09-02_he.html">
+        <p class="period-card-range">20.8–2.9.2026</p>
+        <p class="period-card-overview">השבועיים האחרונים חידדו תחושה של עולם הנתון בלחץ כפול - כלכלי וביטחוני. מצד אחד, מלחמת הסחר בין ארה&quot;ב לקנדה, מתיחות בשוקי האג&quot;ח הגלובליים וחששות הפיסקליים בבריטניה ובמקומות אחרים מצביעים על כך שמדיניות כלכלית ויציבות פיסקלית חוזרות למרכז הבמה; מצד שני, המשך ההפצצות על קייב, החשש ממלחמה באיראן והתגברות פעילות הריגול והחבלה הרוסית בגרמניה ובנאט&quot;ו מציירים תמונה של מלחמה היברידית מתפשטת מול המערב ורוסיה. לצד אלה, הפוליטיקה הפנימית - עלייתה של AfD בגרמניה, המחלוקות סביב ה&quot;חומת האש&quot; הפוליטית, והוויכוחים בקרב הדמוקרטים בארה&quot;ב - משקפת נושא חוזר של מערכות דמוקרטיות המתמודדות עם קיטוב וחוסר יציבות פנימי, בד בבד עם המרוץ הטכנולוגי-אסטרטגי בין ארה&quot;ב לסין בתחום הבינה המלאכותית.</p>
+        <p class="period-card-count">12 נושאים</p>
+      </a>
+    
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
+    <a class="footer-link" href="terms.html">תנאי שימוש</a>
+    <a class="footer-link" href="privacy.html">מדיניות פרטיות</a>
+  </footer>
+</body>
+</html>

@@ -31,7 +31,7 @@ from src.common.db import (
     init_db,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, COUNTRY_LIST, COUNTRY_TO_REGION, REGION_LABELS
-from src.common.trends import build_country_week_trends, eligible_countries
+from src.common.trends import build_country_week_trends, eligible_countries, scope_breaks_for_json, weekly_roster
 from src.reporting.render_biweekly import build_biweekly_report_html, format_period_range, period_filename
 from src.reporting.render import (
     ALL_LANGS,
@@ -71,8 +71,19 @@ FONT_SOURCE_PATH = REPORTS_DIR / "assets" / "fonts" / FONT_FILENAME
 LOGO_SOURCE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "assets" / "MS_Logo.png"
 FAVICON_SOURCE_DIR = Path(__file__).resolve().parents[2] / "scripts" / "assets"
 MAP_SOURCE_PATH = Path(__file__).resolve().parent / "assets" / "map" / "world.svg"
+
+# The old coverage-trends chart (trendschart.html) was replaced by the tile-map page (PROJECT_LOG 4.123). Its code stays
+# here behind this switch: off, the page is not generated and its URL becomes a short redirect page to the new one.
+LEGACY_TRENDS_CHART_ENABLED = False
+# "Trends" in the top navigation of every existing page points at trends.html, so the map page takes that name and the
+# biweekly reports index (the old trends.html) moves to its own file.
+TRENDS_PAGE = "trends.html"
+TRENDS_REPORTS_PAGE = "trendsreports.html"
 MANIFEST_RELATIVE_PATH = Path("assets") / "data" / "manifest.json"
 TRENDS_RELATIVE_PATH = Path("assets") / "data" / "trends.json"
+TRENDS_MAP_RELATIVE_PATH = Path("assets") / "data" / "trends_map.json"
+# The few bytes the home-page miniature needs (src/common/trends_map.build_trends_map_mini); the full file stays off the home page.
+TRENDS_MAP_MINI_RELATIVE_PATH = Path("assets") / "data" / "trends_map_mini.json"
 CONTENT_DIR_RELATIVE = Path("assets") / "data" / "content"
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -1709,13 +1720,56 @@ def build_trends_chart_html(lang: str) -> str:
 """
 
 
+_TRENDS_CHART_MOVED_LABELS = {
+    "he": {"title": "הדף הועבר - מעקב גאופוליטיקה יומי", "heading": "הדף הועבר", "body": "תצוגת המגמות עברה אל דף המגמות החדש.", "link": "מעבר לדף המגמות"},
+    "en": {"title": "This page has moved - Daily Geopolitics", "heading": "This page has moved", "body": "The trends view now lives on the new Trends page.", "link": "Go to Trends"},
+    "de": {"title": "Diese Seite ist umgezogen - Tägliche Geopolitik", "heading": "Diese Seite ist umgezogen", "body": "Die Trendansicht befindet sich jetzt auf der neuen Trends-Seite.", "link": "Zu den Trends"},
+}
+
+
+def build_trends_chart_redirect_html(lang: str) -> str:
+    """What the old trendschart.html URL serves now: a short page that sends the reader to the new Trends page
+    (meta refresh plus a plain link, so it works without JavaScript) and tells search engines to drop it."""
+    L = _TRENDS_CHART_MOVED_LABELS[lang]
+    dir_attr = "rtl" if lang == "he" else "ltr"
+    return f"""<!doctype html>
+<html lang="{lang}" dir="{dir_attr}">
+<head>
+{head_meta_html(L['title'], "../")}
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="0; url={TRENDS_PAGE}">
+<style>
+  {font_face_css(f"../assets/fonts/{FONT_FILENAME}")}
+
+{theme_tokens_css()}
+
+  body {{ margin: 0; background: var(--bg); color: var(--text); font-family: "{FONT_FAMILY}", system-ui, sans-serif; line-height: 1.7; }}
+  main {{ max-width: 36rem; margin: 0 auto; padding: 4rem 1.5rem; }}
+  h1 {{ margin: 0 0 .5rem; font-size: 1.6rem; }}
+  a {{ color: var(--masthead-accent); font-weight: 600; }}
+  {shared_chrome_css()}
+</style>
+</head>
+<body>
+  <main>
+    <h1>{esc(L['heading'])}</h1>
+    <p>{esc(L['body'])}</p>
+    <p><a href="{TRENDS_PAGE}">{esc(L['link'])}</a></p>
+  </main>
+</body>
+</html>
+"""
+
+
 _TRENDS_HUB_LABELS = {
     "he": {
-        "page_title": "מגמות - מעקב גאופוליטיקה יומי",
+        "page_title": "דוחות מגמות דו-שבועיים - מעקב גאופוליטיקה יומי",
         "eyebrow": "מעקב גאופוליטיקה יומי",
-        "heading": "מגמות",
-        "tagline": "כיסוי גאופוליטי לאורך זמן - דוחות נרטיביים דו-שבועיים, וניתוח-מגמות גיאוגרפי",
-        "periods_heading": "דוחות מגמות דו-שבועיים",
+        "heading": "דוחות מגמות דו-שבועיים",
+        "tagline": "דוחות נרטיביים על הנושאים שחזרו והתפתחו בסיקור לאורך 14 ימים.",
+        "map_card_title": "מפת מגמות",
+        "map_card_body": "איך משתנה משבוע לשבוע החלק של כל מדינה בסיקור של העיתונים הנסקרים.",
+        "map_card_cta": "למפה ←",
         "no_periods": "עדיין לא פורסמו דוחות דו-שבועיים.",
         "topics_word": "נושאים",
         "chart_card_title": "ניתוח-מגמות גיאוגרפי (גרסה ראשונית)",
@@ -1723,11 +1777,13 @@ _TRENDS_HUB_LABELS = {
         "chart_card_cta": "לתצוגה ←",
     },
     "en": {
-        "page_title": "Trends - Daily Geopolitics",
+        "page_title": "Biweekly Trends Reports - Daily Geopolitics",
         "eyebrow": "Daily Geopolitics",
-        "heading": "Trends",
-        "tagline": "Geopolitical coverage over time - biweekly narrative reports, and geographic trend analysis",
-        "periods_heading": "Biweekly Trends Reports",
+        "heading": "Biweekly Trends Reports",
+        "tagline": "Narrative reports on the topics that kept returning and developing in the coverage over 14 days.",
+        "map_card_title": "Trends Map",
+        "map_card_body": "How each country's share of the surveyed newspapers' coverage changes from week to week.",
+        "map_card_cta": "View map →",
         "no_periods": "No biweekly reports have been published yet.",
         "topics_word": "topics",
         "chart_card_title": "Geographic Trend Analysis (Initial Version)",
@@ -1735,11 +1791,13 @@ _TRENDS_HUB_LABELS = {
         "chart_card_cta": "View ←",
     },
     "de": {
-        "page_title": "Trends - Tägliche Geopolitik",
+        "page_title": "Zweiwöchentliche Trendberichte - Tägliche Geopolitik",
         "eyebrow": "Tägliche Geopolitik",
-        "heading": "Trends",
-        "tagline": "Geopolitische Berichterstattung im Zeitverlauf - zweiwöchentliche Erzählberichte und geografische Trendanalyse",
-        "periods_heading": "Zweiwöchentliche Trendberichte",
+        "heading": "Zweiwöchentliche Trendberichte",
+        "tagline": "Berichte in Erzählform über die Themen, die in der Berichterstattung über 14 Tage hinweg wiederkehrten und sich weiterentwickelten.",
+        "map_card_title": "Trendkarte",
+        "map_card_body": "Wie sich der Anteil jedes Landes an der Berichterstattung der ausgewerteten Zeitungen von Woche zu Woche verändert.",
+        "map_card_cta": "Zur Karte →",
         "no_periods": "Es wurden noch keine zweiwöchentlichen Berichte veröffentlicht.",
         "topics_word": "Themen",
         "chart_card_title": "Geografische Trendanalyse (Erste Version)",
@@ -1778,6 +1836,16 @@ def build_trends_hub_html(lang: str, periods: list[dict]) -> str:
         <p class="period-card-count">{p['topic_count']} {esc(L['topics_word'])}</p>
       </a>""")
     periods_html = "".join(period_cards) if period_cards else f'<p class="no-periods">{esc(L["no_periods"])}</p>'
+    # The card to the old chart only exists while the old chart is generated (LEGACY_TRENDS_CHART_ENABLED).
+    chart_card_html = (
+        f"""<a class="chart-card" href="trendschart.html">
+      <p class="chart-card-title">{esc(L['chart_card_title'])}</p>
+      <p class="chart-card-body">{esc(L['chart_card_body'])}</p>
+      <p class="chart-card-cta">{esc(L['chart_card_cta'])}</p>
+    </a>"""
+        if LEGACY_TRENDS_CHART_ENABLED
+        else ""
+    )
 
     return f"""<!doctype html>
 <html lang="{lang}" dir="{dir_attr}">
@@ -1856,12 +1924,13 @@ def build_trends_hub_html(lang: str, periods: list[dict]) -> str:
   .chart-card-title {{ margin: 0 0 .4rem; font-size: 1.02rem; font-weight: 700; }}
   .chart-card-body {{ margin: 0 0 .5rem; font-size: .88rem; color: var(--text-muted); }}
   .chart-card-cta {{ margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
+  .map-card {{ margin: 0 0 1.25rem; }}
 
   {shared_chrome_css()}
 </style>
 </head>
 <body>
-{build_nav_html("archive.html", {o: f"../{o}/trends.html" for o in other_langs(lang)}, lang)}
+{build_nav_html("archive.html", {o: f"../{o}/{TRENDS_REPORTS_PAGE}" for o in other_langs(lang)}, lang)}
   <header class="masthead">
     <div class="masthead-inner">
       <p class="eyebrow">{esc(L['eyebrow'])}</p>
@@ -1870,13 +1939,13 @@ def build_trends_hub_html(lang: str, periods: list[dict]) -> str:
     </div>
   </header>
   <main>
-    <h2 class="section-heading">{esc(L['periods_heading'])}</h2>
-    {periods_html}
-    <a class="chart-card" href="trendschart.html">
-      <p class="chart-card-title">{esc(L['chart_card_title'])}</p>
-      <p class="chart-card-body">{esc(L['chart_card_body'])}</p>
-      <p class="chart-card-cta">{esc(L['chart_card_cta'])}</p>
+    <a class="chart-card map-card" href="{TRENDS_PAGE}">
+      <p class="chart-card-title">{esc(L['map_card_title'])}</p>
+      <p class="chart-card-body">{esc(L['map_card_body'])}</p>
+      <p class="chart-card-cta">{esc(L['map_card_cta'])}</p>
     </a>
+    {periods_html}
+    {chart_card_html}
   </main>
 {build_footer_html(lang, *footer_hrefs_for(lang))}
 </body>
@@ -2642,7 +2711,10 @@ def cta_card_css() -> str:
   .cta-card-label { margin: 0; font-size: .72rem; font-weight: 700; letter-spacing: .04em; color: var(--masthead-accent); text-transform: uppercase; }
   .cta-card-number { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -0.02em; color: var(--masthead-accent); }
   /* a date range ("1.10-14.10") is wider than a single date: a little smaller so it never wraps or overflows a column */
-  .cta-card-number.is-range { font-size: 2.1rem; }
+  .cta-card-number.is-range { font-size: 2.1rem; white-space: nowrap; }
+  /* In the four-tile row the range ("15.10-28.10") must stay on one line, so its size follows the width of its tile. */
+  .cta-module { container-type: inline-size; }
+  @supports (width: 1cqw) { .cta-card-number.is-range { font-size: min(2.1rem, 18cqw); } }
   .cta-card-preview {
     margin: 0;
     font-size: .95rem;
@@ -2694,6 +2766,38 @@ _HOMEPAGE_JS_TEMPLATE = """
     .then(function (r) { return r.json(); })
     .then(init)
     .catch(function (err) { console.error("Failed to load manifest.json", err); });
+
+  // The map tile's miniature: a small file of its own (assets/data/trends_map_mini.json), independent of the manifest.
+  // Any failure leaves the tile as it is server-rendered (text and link), without the miniature and without an error.
+  var MAPMINI_WEEK = __MAPMINI_WEEK__;
+  var MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function mapMiniDate(iso) {
+    var p = iso.split("-"), d = parseInt(p[2], 10), m = parseInt(p[1], 10);
+    return LANG === "en" ? MONTHS_EN[m - 1] + " " + d : LANG === "de" ? d + "." + m + "." : d + "." + m;
+  }
+  function renderMapMini() {
+    var svg = document.getElementById("mapmini-svg"), week = document.getElementById("mapmini-week");
+    if (!svg || !week) return;
+    fetch(PREFIX + "assets/data/trends_map_mini.json")
+      .then(function (r) { if (!r.ok) throw new Error("mini"); return r.json(); })
+      .then(function (m) {
+        if (!m || !m.tiles || !m.tiles.length || !m.week_start || !m.week_end || !m.steps) return;
+        var html = "";
+        html += '<defs><pattern id="mini-hatch" patternUnits="userSpaceOnUse" width="12" height="12" patternTransform="rotate(45)">' +
+                '<rect class="hatch-a" width="6" height="12"></rect><rect class="hatch-b" x="6" width="6" height="12"></rect></pattern></defs>';
+        m.tiles.forEach(function (t) {
+          var cls = typeof t.s === "number" ? (t.s === 0 ? "mini-flat" : t.s > 0 ? "mini-up" : "mini-down") : "mini-low";
+          var p = typeof t.s === "number" ? ' style="--p:' + Math.round(Math.abs(t.s) * 100 / m.steps) + '%"' : "";
+          html += '<rect class="' + cls + '"' + p + ' x="' + (t.x * 57) + '" y="' + (t.y * 57) + '" width="54" height="54" rx="7"></rect>';
+        });
+        svg.innerHTML = html;
+        svg.removeAttribute("hidden");
+        week.textContent = MAPMINI_WEEK.replace("{from}", mapMiniDate(m.week_start)).replace("{to}", mapMiniDate(m.week_end));
+        week.hidden = false;
+      })
+      .catch(function () {});
+  }
+  renderMapMini();
 
   function init(manifest) {
     renderMap(manifest);
@@ -3095,11 +3199,22 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
         "de": "Zweiwöchentliche Trendberichte und Berichterstattungsanalyse nach Land",
     }[lang]
     trends_card_cta = {"he": "לצפייה ←", "en": "View →", "de": "Ansehen →"}[lang]
+    # The map tile (a link to trends.html with a small live miniature of the map's opening view).
+    mapmini_title = {"he": "מפת מגמות", "en": "Trends Map", "de": "Trendkarte"}[lang]
+    mapmini_body = {
+        "he": "איך משתנה משבוע לשבוע החלק של כל מדינה בסיקור של העיתונים הנסקרים.",
+        "en": "How each country's share of the surveyed newspapers' coverage changes from week to week.",
+        "de": "Wie sich der Anteil jedes Landes an der Berichterstattung der ausgewerteten Zeitungen von Woche zu Woche verändert.",
+    }[lang]
+    mapmini_beta = {"he": "בטא", "en": "Beta", "de": "Beta"}[lang]
+    mapmini_cta = {"he": "למפה ←", "en": "View map →", "de": "Zur Karte →"}[lang]
+    mapmini_week = {"he": "שבוע {from} עד {to}", "en": "Week of {from} to {to}", "de": "Woche {from} bis {to}"}[lang]
     js_code = (
         _HOMEPAGE_JS_TEMPLATE.replace("__LANG__", lang)
         .replace("__PREFIX__", asset_prefix)
         .replace("__TOPIC_PREFIX__", topic_prefix)
         .replace("__CTA_CARD_JS__", CTA_CARD_JS)
+        .replace("__MAPMINI_WEEK__", json.dumps(mapmini_week, ensure_ascii=False))
     )
 
     return f"""<!doctype html>
@@ -3148,13 +3263,14 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
 
   .home-top-row {{
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: start;
     gap: 1.25rem;
     margin-bottom: 1.25rem;
   }}
   @media (max-width: 860px) {{
-    .home-top-row {{ grid-template-columns: minmax(0, 1fr); }}
+    .home-top-row {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }}
+    .home-top-row .home-module {{ padding: .9rem .8rem; }}
   }}
 
   .home-module {{
@@ -3308,6 +3424,27 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
   .trends-card-desc {{ margin: 0; font-size: .88rem; color: var(--text); }}
   .trends-card-cta {{ margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
 
+  /* The map tile: a decorative miniature of the trends map's opening view. The colour tokens are the trends page's own. */
+  :root {{ --map-up: var(--masthead-accent); --map-down: #1066a3; --map-neutral: var(--bg-elevated); --hatch-a: var(--border); --hatch-b: var(--bg); }}
+  @media (prefers-color-scheme: dark) {{ :root:not([data-theme="light"]) {{ --map-down: #4a93c2; }} }}
+  :root[data-theme="dark"] {{ --map-down: #4a93c2; }}
+  .mapmini-module:has(a:hover) {{ border-color: var(--masthead-accent); }}
+  .mapmini-card {{ display: flex; flex-direction: column; gap: .5rem; flex: 1; justify-content: center; text-decoration: none; color: inherit; }}
+  .mapmini-title {{ margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em; color: var(--masthead-accent); display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }}
+  .mapmini-beta {{ font-size: .68rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--chip-selected-text); background: var(--masthead-accent); border-radius: .35rem; padding: .1rem .45rem; }}
+  .mapmini-svg {{ width: 100%; height: auto; display: block; }}
+  .mapmini-svg[hidden] {{ display: none; }}
+  .mapmini-svg rect {{ stroke: var(--border); stroke-width: 2; }}
+  .mapmini-svg .mini-flat {{ fill: var(--map-neutral); }}
+  .mapmini-svg .mini-up {{ fill: var(--map-neutral); fill: color-mix(in srgb, var(--map-up) var(--p), var(--map-neutral)); }}
+  .mapmini-svg .mini-down {{ fill: var(--map-neutral); fill: color-mix(in srgb, var(--map-down) var(--p), var(--map-neutral)); }}
+  .mapmini-svg .mini-low {{ fill: url(#mini-hatch); }}
+  .mapmini-svg .hatch-a {{ fill: var(--hatch-a); stroke: none; }}
+  .mapmini-svg .hatch-b {{ fill: var(--hatch-b); stroke: none; }}
+  .mapmini-body {{ margin: 0; font-size: .82rem; color: var(--text); }}
+  .mapmini-week {{ margin: 0; font-size: .75rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }}
+  .mapmini-cta {{ margin: 0; font-size: .85rem; font-weight: 600; color: var(--masthead-accent); }}
+
   .results-heading {{ font-size: 1.05rem; font-weight: 700; margin: 0 0 1rem; }}
   .results-full-link {{
     display: inline-block;
@@ -3379,6 +3516,15 @@ def build_homepage_html(lang: str, is_root: bool, countries: dict) -> str:
             <p class="trends-card-cta">{esc(trends_card_cta)}</p>
           </a>
         </div>
+      </section>
+      <section class="home-module mapmini-module" id="mapmini-module">
+        <a class="mapmini-card" href="{esc(trends_href)}">
+          <p class="mapmini-title">{esc(mapmini_title)} <span class="mapmini-beta">{esc(mapmini_beta)}</span></p>
+          <svg class="mapmini-svg" id="mapmini-svg" viewBox="0 0 798 399" aria-hidden="true" focusable="false" hidden></svg>
+          <p class="mapmini-body">{esc(mapmini_body)}</p>
+          <p class="mapmini-week" id="mapmini-week" hidden></p>
+          <p class="mapmini-cta">{esc(mapmini_cta)}</p>
+        </a>
       </section>
     </div>
     <section class="home-module map-module">
@@ -3675,12 +3821,18 @@ def build_trends_json(conn) -> dict:
     should be rare for countries that cleared eligible_countries()'s density
     gate in the first place).
     """
-    weeks_trends = build_country_week_trends(conn)
+    # Local import: keeps this change independent of the module-level import block.
+    from src.common.trends import MIN_ARTICLES_PER_POINT
+
+    # Conservative display (PROJECT_LOG 4.122): a tag counts only where the article names the country. The
+    # eligibility gate deliberately stays on all tags, so the country list does not change with the display.
+    weeks_trends = build_country_week_trends(conn, named_only=True)
     elig = eligible_countries(conn)
 
     weeks: list[dict] = []
     if elig:
-        any_country = next(iter(elig))
+        # every country's series has the full week grid, so any one gives the weeks - pick it deterministically
+        any_country = next((c for c in sorted(elig) if c in weeks_trends), None)
         weeks = [
             {
                 "start": w["week_start"],
@@ -3690,11 +3842,15 @@ def build_trends_json(conn) -> dict:
             }
             for w in weeks_trends.get(any_country, [])
         ]
+        for w, papers in zip(weeks, weekly_roster(conn, weeks)):
+            w["active_papers"] = papers  # additive: the page does not read it yet
 
     countries = []
     for code in elig:
         by_week = {w["week_start"]: w["n_sources"] for w in weeks_trends.get(code, [])}
         n_sources = [by_week.get(w["start"], 0) for w in weeks]
+        articles_by_week = {w["week_start"]: w["n_articles"] for w in weeks_trends.get(code, [])}
+        n_articles = [articles_by_week.get(w["start"], 0) for w in weeks]
         info = COUNTRY_LIST.get(code, {})
         countries.append(
             {
@@ -3703,17 +3859,51 @@ def build_trends_json(conn) -> dict:
                 "name_en": info.get("name_en", code),
                 "name_de": info.get("name_de", code),
                 "n_sources": n_sources,
+                "n_articles": n_articles,
+                "low_volume": [n < MIN_ARTICLES_PER_POINT for n in n_articles],
             }
         )
     # Most-covered-overall first - a sensible stable default order; the page's
     # own ranked view re-sorts by week-over-week change client-side anyway.
-    countries.sort(key=lambda c: -sum(c["n_sources"]))
+    # code as the tie-break: `elig` is a set, so equal totals would otherwise come out in a different order per run
+    countries.sort(key=lambda c: (-sum(c["n_sources"]), c["code"]))
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "weeks": weeks,
+        "scope_breaks": scope_breaks_for_json(),
         "countries": countries,
+        "counting": {
+            "method": "named_only",
+            "lower_bound": True,
+            "min_articles_per_point": MIN_ARTICLES_PER_POINT,
+        },
     }
+
+
+def build_trends_map_json(conn) -> dict:
+    """Static data file for the tile-map trends page (PROJECT_LOG 4.123) - the data layer is
+    src/common/trends_map.py; this only supplies the printed newspaper names."""
+    # Local import: keeps this change independent of the module-level import block.
+    from src.common.trends_map import build_trends_map
+
+    return build_trends_map(conn, NEWSPAPER_DISPLAY_NAMES)
+
+
+def _write_trends_map_json(data: dict) -> None:
+    payload = json.dumps(data, ensure_ascii=False)
+    for base_dir in (DOCS_DIR, REPORTS_DIR):
+        dest = base_dir / TRENDS_MAP_RELATIVE_PATH
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(payload, encoding="utf-8")
+
+
+def _write_trends_map_mini_json(data: dict) -> None:
+    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+    for base_dir in (DOCS_DIR, REPORTS_DIR):
+        dest = base_dir / TRENDS_MAP_MINI_RELATIVE_PATH
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(payload, encoding="utf-8")
 
 
 def _write_trends_json(data: dict) -> None:
@@ -3874,6 +4064,7 @@ def run() -> None:
     # tag the map's accessibility markup - see _load_map_svg_inline().
     manifest = build_manifest(conn, entries)
     trends_data = build_trends_json(conn)
+    trends_map_data = build_trends_map_json(conn)
     _write_section_content_files(conn, entries)
 
     # Biweekly narrative-trends reports (src/reporting/synthesize_biweekly.py) -
@@ -3925,17 +4116,26 @@ def run() -> None:
             (out_dir / "filter.html").write_text(filter_html, encoding="utf-8")
         print(f"  wrote filter.html for '{lang}'")
 
-        trends_chart_html = build_trends_chart_html(lang)
+        trends_chart_html = build_trends_chart_html(lang) if LEGACY_TRENDS_CHART_ENABLED else build_trends_chart_redirect_html(lang)
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
             (out_dir / "trendschart.html").write_text(trends_chart_html, encoding="utf-8")
         print(f"  wrote trendschart.html for '{lang}'")
 
+        # Local import: keeps this change independent of the module-level import block.
+        from src.publishing.trends_map_page import build_trends_map_html
+
+        trends_map_html = build_trends_map_html(lang, page_name=TRENDS_PAGE, reports_href=TRENDS_REPORTS_PAGE)
+        for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
+            out_dir.mkdir(parents=True, exist_ok=True)
+            (out_dir / TRENDS_PAGE).write_text(trends_map_html, encoding="utf-8")
+        print(f"  wrote {TRENDS_PAGE} (tile map) for '{lang}'")
+
         trends_hub_html = build_trends_hub_html(lang, biweekly_periods_data)
         for out_dir in (REPORTS_DIR / lang, DOCS_DIR / lang):
             out_dir.mkdir(parents=True, exist_ok=True)
-            (out_dir / "trends.html").write_text(trends_hub_html, encoding="utf-8")
-        print(f"  wrote trends.html (hub) for '{lang}'")
+            (out_dir / TRENDS_REPORTS_PAGE).write_text(trends_hub_html, encoding="utf-8")
+        print(f"  wrote {TRENDS_REPORTS_PAGE} (biweekly reports index) for '{lang}'")
 
         for period in biweekly_periods_data:
             dates_sources_by_topic = {t["id"]: (t["_days"], t["_sources"]) for t in period["topics"]}
@@ -3997,6 +4197,13 @@ def run() -> None:
     print(f"  wrote {len(entries) * len(ALL_LANGS)} section-content file(s) under assets/data/content/")
 
     _write_trends_json(trends_data)
+    _write_trends_map_json(trends_map_data)
+    from src.common.trends_map import build_trends_map_mini
+
+    mini = build_trends_map_mini(trends_map_data)
+    _write_trends_map_mini_json(mini)
+    print(f"  wrote trends_map_mini.json ({len(mini.get('tiles', []))} tile(s))")
+    print(f"  wrote trends_map.json ({len(trends_map_data.get('tiles', []))} tile(s))")
     print(f"  wrote trends.json ({len(trends_data['countries'])} eligible countrie(s), {len(trends_data['weeks'])} week(s))")
 
     print(f"\nPublish complete: {len(entries)} report date(s) -> {DOCS_DIR}")
