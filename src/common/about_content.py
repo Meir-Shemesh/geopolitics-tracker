@@ -67,7 +67,7 @@ CONTENT = {
         ),
         "about_title": "אודות הפרויקט",
         "about_subtitle": (
-            "איך אותו אירוע נראה אחרת מעיתון לעיתון - ומה תהליך הבנייה עצמו מלמד על "
+            "איך אותו אירוע נראה אחרת מעיתון לעיתון, ומה תהליך הבנייה עצמו מלמד על "
             "עבודה משותפת בין אדם לבינה מלאכותית"
         ),
         "sections": [
@@ -76,11 +76,11 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "בכל יום, עשרות עיתונים מובילים בעולם מפרסמים מאות מאמרי דעה ופרשנות "
-                        "על אותם אירועים גאופוליטיים בדיוק. אף אדם אינו יכול לקרוא את כולם - "
-                        "וכל אחד מאיתנו קורא זווית אחת או שתיים, לרוב אלה שהוא כבר מכיר, "
-                        "ומחמיץ את השיחה המלאה שמתקיימת בין מקורות שרואים את אותו אירוע דרך "
-                        "עדשות שונות.",
+                        "בכל יום, עשרות עיתונים מובילים בעולם מפרסמים מאות מאמרי דעה "
+                        "ופרשנות על אותם אירועים גאופוליטיים בדיוק. אף אדם אינו יכול לקרוא "
+                        "את כולם. כל אחד מאיתנו קורא זווית אחת או שתיים, לרוב אלה שהוא כבר "
+                        "מכיר, ומחמיץ את השיחה המלאה שמתקיימת בין מקורות שרואים את אותו "
+                        "אירוע דרך עדשות שונות.",
                     ),
                     (
                         "p",
@@ -88,32 +88,34 @@ CONTENT = {
                         "האנושית, אלא לתת לה כלי. מערכת שעוקבת אחרי עיתונים מובילים באנגלית "
                         "ובגרמנית, במגוון פוליטי רחב משמאל לימין, מזהה בתוכם מאמרי פרשנות "
                         "גאופוליטית ובונה מהם תמונה יומית: אילו נושאים תפסו את תשומת הלב, "
-                        "ואיך כל מקור בחר למסגר אותם. המטרה אינה לקבוע “מי צודק” - אלא "
-                        "להנגיש את מלוא מרחב הדעות, לא רק את הפינה שהקורא כבר מכיר.",
+                        "ואיך כל מקור בחר למסגר אותם. המטרה אינה לקבוע “מי צודק” אלא להנגיש "
+                        "את מלוא מרחב הדעות, לא רק את הפינה שהקורא כבר מכיר.",
                     ),
                 ],
             },
             {
-                "heading": "מתמונת-יום למגמה",
+                "heading": "מתמונת יום למגמה",
                 "blocks": [
                     (
                         "p",
                         "התוצר המיידי הוא דוח יומי: מסמך שמקבץ את מאמרי הפרשנות של אותו יום "
-                        "לפי נושא ממשי - לא לפי תיוג מכני - ומציג לצד כל נושא השוואה תמציתית "
-                        "בין המקורות. אבל דוח יומי בודד, ככל שיהיה מדויק, הוא רק תמונת-רגע. "
+                        "לפי נושא ממשי, לא לפי תיוג מכני, ומציג לצד כל נושא השוואה תמציתית "
+                        "בין המקורות. אבל דוח יומי בודד, ככל שיהיה מדויק, הוא רק תמונת רגע. "
                         "הערך האמיתי נחשף רק עם הזמן: כשמצטברים שבועות וחודשים של דוחות, "
-                        "אפשר לשאול שאלות שאף עיתון בודד לא יכול לענות עליהן - האם עמדה "
+                        "אפשר לשאול שאלות שאף עיתון בודד לא יכול לענות עליהן. האם עמדה "
                         "מסוימת מתעצבת מחדש? האם נושא שנעלם חוזר בפתאומיות? זו הסיבה שכל "
-                        "דוח יומי נבנה מלכתחילה גם כרשומת-ארכיון - אבן בניין למבט רחב יותר.",
+                        "דוח יומי נבנה מלכתחילה גם כרשומת ארכיון, אבן בניין למבט רחב יותר.",
                     ),
                     (
                         "p",
-                        "בשבוע האחרון המבט הרחב הזה הפך ממושג לתוצר. הדוח היומי רץ כעת "
-                        "באופן אוטומטי לחלוטין, עם בדיקות תקינות ועצירה אוטומטית בכשלים "
-                        "חוזרים. לצדו עלה מדור “מגמות” חדש, בשני רכיבים: דוח מגמות נרטיבי, "
-                        "שמתעדכן כל שבוע ומסכם את שני השבועות האחרונים, עוקב אחרי איך הסיקור של נושא משתנה על פני "
-                        "התקופה - מבוסס על הדוחות היומיים עצמם, ונכתב כמוהם בשלוש השפות; "
-                        "ותצוגה גרפית של כיסוי לפי מדינה, עדיין בשלב מוקדם (בטא).",
+                        "המבט הרחב הזה כבר אינו רק רעיון. הדוח היומי רץ באופן אוטומטי "
+                        "לחלוטין, עם בדיקות תקינות ועצירה אוטומטית בכשלים חוזרים. לצדו פועל "
+                        "מדור “מגמות” בשני רכיבים. הראשון הוא דוחות מגמות דו-שבועיים: מדי "
+                        "שבוע מתפרסם דוח שמסכם את שני השבועות האחרונים ועוקב אחרי האופן שבו "
+                        "הסיקור של נושא משתנה לאורך התקופה. הוא מבוסס על הדוחות היומיים "
+                        "עצמם ונכתב כמותם בשלוש השפות. השני הוא מפת מגמות (בטא): מפת אריחים "
+                        "של מדינות שמראה איך החלק של כל מדינה בסיקור של העיתונים הנסקרים "
+                        "השתנה לעומת השבוע הקודם או לעומת ארבעת השבועות שקדמו לו.",
                     ),
                 ],
             },
@@ -127,13 +129,13 @@ CONTENT = {
                         "המודל הפשטני “אדם מבקש, מכונה מבצעת” אינו מדויק. בפרויקט פועלים "
                         "שלושה גורמים: כלי שיחה ותכנון, שחושב על הבעיה לפני שנכתבת שורת קוד "
                         "ומתרגם החלטה מעורפלת (“אני רוצה שהמערכת תזהה מגמות”) למשימה "
-                        "קונקרטית; סוכן כתיבת קוד, שפועל בסביבת הפיתוח - כותב, מריץ, מדווח "
+                        "קונקרטית; סוכן כתיבת קוד, שפועל בסביבת הפיתוח: כותב, מריץ, מדווח "
                         "בחזרה; ומעליהם המפעיל האנושי, שרואה את שני הכלים בו-זמנית ובעיקר "
-                        "בולם ובודק. לאורך הדרך, זו הייתה שוב ושוב הנקודה שבה נתפסו טעויות - "
+                        "בולם ובודק. לאורך הדרך, זו הייתה שוב ושוב הנקודה שבה נתפסו טעויות: "
                         "תוצאה שנראתה “כמעט טובה” אך לא נבדקה באמת. תוכן ההשוואה בכל דוח "
-                        "מופק באמצעות מודל שפה (Claude API של Anthropic), באותה שיטה: "
-                        "בקרה אנושית בנקודות קריטיות ובביקורות תקופתיות, ורשת-ביטחון קבועה בקוד לכל כשל שחוזר "
-                        "על עצמו.",
+                        "מופק באמצעות מודל שפה (Claude API של Anthropic), באותה שיטה: בקרה "
+                        "אנושית בנקודות קריטיות ובביקורות תקופתיות, ורשת ביטחון קבועה בקוד "
+                        "לכל כשל שחוזר על עצמו.",
                     ),
                 ],
             },
@@ -142,18 +144,19 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "הפרויקט התחיל עם ארבעה מקורות - שני זוגות מאוזנים פוליטית: Guardian "
+                        "הפרויקט התחיל עם ארבעה מקורות, שני זוגות מאוזנים פוליטית: Guardian "
                         "מול Telegraph באנגלית, Süddeutsche Zeitung מול Die Welt בגרמנית. "
-                        "אחרי כמה ימים התברר פער בולט: הזירה האמריקאית לא הייתה מיוצגת "
-                        "כלל. נבחרו ארבעה עיתונים אמריקאים כדי לפרוש טווח פוליטי רחב "
-                        "(The Washington Post, Wall Street Journal, Los Angeles Times, USA "
+                        "אחרי כמה ימים התברר פער בולט: הזירה האמריקאית לא הייתה מיוצגת כלל. "
+                        "נבחרו ארבעה עיתונים אמריקאים כדי לפרוש טווח פוליטי רחב (The "
+                        "Washington Post, Wall Street Journal, Los Angeles Times, USA "
                         "Today), ולצדם שני שבועונים (Economist, Der Spiegel) שמביאים עומק. "
                         "בהמשך התווספו עוד שלושה מקורות (Frankfurter Allgemeine Zeitung, "
-                        "Neue Zürcher Zeitung, The Globe and Mail) שמביאים "
-                        "זוויות גרמנית-שמרנית, שווייצרית-ליברלית וקנדית - ומקטינים את "
-                        "המשקל היחסי של ארה\"ב בתמהיל. לאחרונה הצטרף גם The Observer הבריטי. "
-                        "היום המערכת עוקבת אחרי 13 מקורות פעילים בשתי שפות (שמונה באנגלית, "
-                        "חמישה בגרמנית), בטווח פוליטי רחב בכל זירה.",
+                        "Neue Zürcher Zeitung, The Globe and Mail) שמביאים זוויות "
+                        "גרמנית-שמרנית, שווייצרית-ליברלית וקנדית, ומקטינים את המשקל היחסי "
+                        "של ארה\"ב בתמהיל. לאחרונה הצטרף גם The Observer הבריטי. The Wall "
+                        "Street Journal, שנכלל בתחילה, הושעה בסוף ספטמבר ואינו נספר בין "
+                        "המקורות הפעילים. היום המערכת עוקבת אחרי 13 מקורות פעילים בשתי שפות "
+                        "(שמונה באנגלית, חמישה בגרמנית), בטווח פוליטי רחב בכל זירה.",
                     ),
                 ],
             },
@@ -163,10 +166,10 @@ CONTENT = {
                     (
                         "p",
                         "גאופוליטיקה היא שילוב של תפיסה מרחבית, זמנית וטקסטואלית. דף הבית "
-                        "בנוי סביב שלוש “עדשות” שוות-מעמד - מפה אינטראקטיבית (כולל אזורי "
+                        "בנוי סביב שלוש “עדשות” שוות מעמד: מפה אינטראקטיבית (כולל אזורי "
                         "קונפליקט פעילים: ישראל-פלסטין, איראן-מערב, רוסיה-אוקראינה), ציר "
-                        "זמן, וכניסה טקסטואלית - וכן אפשרות לגלוש בין דוחות לפי נושא, אזור "
-                        "או טווח תאריכים.",
+                        "זמן וכניסה טקסטואלית. בנוסף אפשר לגלוש בין דוחות לפי נושא, אזור או "
+                        "טווח תאריכים.",
                     ),
                 ],
             },
@@ -176,10 +179,10 @@ CONTENT = {
                     (
                         "p",
                         "האתר פורסם תחילה בעברית ובאנגלית בלבד. ההרחבה לגרמנית נעשתה בשני "
-                        "שלבים: כל דוח קיים בארכיון נכתב מחדש לגרמנית - לא תורגם מילולית - "
-                        "כדי לשמור על עקביות; מכאן ואילך, כל דוח חדש נכתב בגרמנית כטקסט "
-                        "מקורי במקביל לעברית ולאנגלית, מאותם מאמרי מקור - לא כתרגום "
-                        "שמתווסף אחר כך.",
+                        "שלבים: כל דוח קיים בארכיון נכתב מחדש לגרמנית, לא תורגם מילולית, "
+                        "כדי לשמור על עקביות. מכאן ואילך כל דוח חדש נכתב בגרמנית כטקסט "
+                        "מקורי במקביל לעברית ולאנגלית, מאותם מאמרי מקור ולא כתרגום שמתווסף "
+                        "אחר כך.",
                     ),
                 ],
             },
@@ -188,15 +191,15 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "קורא ביקורתי ראוי שיכיר כמה גבולות. כל המקורות הם עיתונות-איכות "
-                        "מערבית - לא מדגם מייצג של דעת-עולם. נפח הפרסום אינו מדד לחשיבות: "
-                        "עיתון שמפרסם הרבה טורי דעה עלול להיראות דומיננטי בלי שזה משקף "
-                        "חשיבות אמיתית; מנגנון המיון לפי רוחב-מקורות מקל על כך חלקית בלבד. "
-                        "אין שכבת אימות עובדתי - המערכת מסכמת מה שכל מקור טוען, לא בודקת "
-                        "אם זה נכון. כל דוח יומי נכתב כיחידה עצמאית; מעקב אחרי התפתחות "
-                        "נושא דרש עד כה קריאה ידנית של כמה דוחות - זה מה שהדוח הדו-שבועי "
-                        "בא להקל. שלוש גרסאות השפה נכתבות עצמאית זו מזו, לא כתרגום - כך "
-                        "שהבדלי ניסוח קלים ביניהן צפויים.",
+                        "קורא ביקורתי ראוי שיכיר כמה גבולות. כל המקורות הם עיתונות איכות "
+                        "מערבית, ולא מדגם מייצג של הדעות בעולם. נפח הפרסום אינו מדד "
+                        "לחשיבות: עיתון שמפרסם הרבה טורי דעה עלול להיראות דומיננטי בלי שזה "
+                        "משקף חשיבות אמיתית; מנגנון המיון לפי רוחב המקורות מקל על כך חלקית "
+                        "בלבד. אין שכבת אימות עובדתי: המערכת מסכמת מה שכל מקור טוען ואינה "
+                        "בודקת אם זה נכון. כל דוח יומי נכתב כיחידה עצמאית; מעקב אחרי "
+                        "התפתחות נושא דרש עד כה קריאה ידנית של כמה דוחות, וזה מה שהדוח "
+                        "הדו-שבועי בא להקל. שלוש גרסאות השפה נכתבות עצמאית זו מזו ולא "
+                        "כתרגום, כך שהבדלי ניסוח קלים ביניהן צפויים.",
                     ),
                 ],
             },
@@ -205,12 +208,13 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "הדוח היומי, הדוח הדו-שבועי ותצוגת-המגמות הגרפית קיימים כעת כולם - "
-                        "אך לא באותה בשלות. התצוגה הגרפית היא החוליה הפחות בשלה: היא "
-                        "מציגה נתונים גולמיים בלי להסביר מספיק את משמעותם, ותעבור עיצוב "
-                        "מחדש. מעבר לכך נותרו פתוחות שתי שאלות: חוויית שימוש בהירה יותר "
-                        "לקורא שאינו מכיר את הפרויקט, וקהל - האם להרחיב מעבר לחוקרים "
-                        "ואנשי מדיניות, למשל לגרסה נגישה לבני נוער.",
+                        "הדוח היומי, הדוח הדו-שבועי ומפת המגמות קיימים כעת כולם, אך לא "
+                        "באותה בשלות. מפת המגמות היא החוליה הצעירה ביותר: היא נבנתה כדי "
+                        "להסביר מה הצבעים אומרים ולא להציג שינוי במקום שאין לו ביסוס, אבל "
+                        "היא נשענת על מעט שבועות, ותתייצב רק ככל שיצטברו עוד נתונים. מעבר "
+                        "לכך נותרו פתוחות שתי שאלות: חוויית שימוש בהירה יותר לקורא שאינו "
+                        "מכיר את הפרויקט, וקהל: האם להרחיב מעבר לחוקרים ואנשי מדיניות, למשל "
+                        "לגרסה נגישה לבני נוער.",
                     ),
                 ],
             },
@@ -275,15 +279,17 @@ CONTENT = {
                     ),
                     (
                         "p",
-                        "This past week, that wider view turned from an idea into a "
-                        "product. The daily report now runs fully automatically, with "
-                        "health checks and automatic stop on repeated failures. Alongside "
-                        "it came a new \"Trends\" section, with two components: a "
-                        "narrative trend report, updated weekly over a rolling two-week window, tracking how "
-                        "coverage of a topic shifts over the period - built from the daily "
-                        "reports themselves, and written like them in all three languages; "
-                        "and a graphical view of coverage by country, still at an early "
-                        "(Beta) stage.",
+                        "That wider view is no longer just an idea. The daily report runs "
+                        "fully automatically, with health checks and an automatic stop "
+                        "after repeated failures. Alongside it sits a \"Trends\" section with "
+                        "two parts. The first is the biweekly trend reports: every week a "
+                        "new report covers the previous two weeks and follows how coverage "
+                        "of a topic develops over that window. It is built from the daily "
+                        "reports themselves and written, like them, in all three languages. "
+                        "The second is the Trends Map (beta), a tile map of countries "
+                        "showing how each country's share of the surveyed newspapers' "
+                        "coverage has changed since the previous week, or since the "
+                        "previous four weeks.",
                     ),
                 ],
             },
@@ -328,7 +334,9 @@ CONTENT = {
                         "Zürcher Zeitung, The Globe and Mail), bringing "
                         "German-conservative, Swiss-liberal and Canadian perspectives - "
                         "and reducing the US's relative weight in the mix. The Observer, a British "
-                        "title, joined most recently. Today the system follows 13 active "
+                        "title, joined most recently. The Wall Street Journal, included at the "
+                        "start, was suspended at the end of September and is not counted among "
+                        "the active sources. Today the system follows 13 active "
                         "sources across two languages (eight in English, five in German), "
                         "spanning a wide political range in every arena.",
                     ),
@@ -389,11 +397,12 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "The daily report, the biweekly report, and the graphical trends "
-                        "view all exist now - but not at the same level of maturity. The "
-                        "graphical view is the least mature piece: it shows raw numbers "
-                        "without explaining their meaning well enough, and it's due for a "
-                        "redesign. Beyond that, two questions remain open: a clearer "
+                        "The daily report, the biweekly report and the trends map all exist "
+                        "now, but not at the same level of maturity. The map is the "
+                        "youngest piece: it was built to explain what its colors mean and "
+                        "to show no change where the evidence is too thin, but it rests on "
+                        "only a few weeks of data and will settle only as more accumulate. "
+                        "Beyond that, two questions remain open: a clearer "
                         "experience for a reader unfamiliar with the project, and audience "
                         "- whether to expand beyond researchers and policy people, for "
                         "instance to a version accessible to teenagers.",
@@ -466,16 +475,18 @@ CONTENT = {
                     ),
                     (
                         "p",
-                        "In der vergangenen Woche wurde dieser weitere Blick vom Konzept "
-                        "zum Produkt. Der Tagesbericht läuft jetzt vollständig "
-                        "automatisch, mit Funktionsprüfungen und automatischem Stopp bei "
-                        "wiederholten Fehlern. Daneben entstand ein neuer Bereich "
-                        "„Trends“, mit zwei Komponenten: ein narrativer Trendbericht, der "
-                        "wöchentlich über ein rollierendes Zwei-Wochen-Fenster aktualisiert wird und verfolgt, wie sich die "
-                        "Berichterstattung zu einem Thema über den Zeitraum verändert - "
-                        "aufgebaut auf den Tagesberichten selbst und wie diese in allen "
-                        "drei Sprachen geschrieben; und eine grafische Ansicht der "
-                        "Berichterstattung nach Land, noch in einem frühen Stadium (Beta).",
+                        "Dieser weite Blick ist keine bloße Idee mehr. Der Tagesbericht "
+                        "läuft vollautomatisch, mit Funktionsprüfungen und automatischem "
+                        "Stopp bei wiederholten Fehlern. Daneben gibt es den Bereich "
+                        "„Trends“ mit zwei Teilen. Der erste sind die zweiwöchentlichen "
+                        "Trendberichte: Jede Woche erscheint ein neuer Bericht über die "
+                        "zurückliegenden zwei Wochen, der verfolgt, wie sich die "
+                        "Berichterstattung zu einem Thema in diesem Zeitraum entwickelt. Er "
+                        "beruht auf den Tagesberichten selbst und wird wie diese in allen "
+                        "drei Sprachen geschrieben. Der zweite ist die Trendkarte (Beta): "
+                        "eine Kachelkarte der Länder, die zeigt, wie sich der Anteil jedes "
+                        "Landes an der Berichterstattung der ausgewerteten Zeitungen "
+                        "gegenüber der Vorwoche oder den vier Vorwochen verändert hat.",
                     ),
                 ],
             },
@@ -524,7 +535,9 @@ CONTENT = {
                         "The Globe and Mail), die deutsch-konservative, "
                         "schweizerisch-liberale und kanadische Perspektiven einbringen - "
                         "und das relative Gewicht der USA im Mix verringern. Zuletzt kam noch "
-                        "The Observer aus Großbritannien hinzu. Heute verfolgt das System "
+                        "The Observer aus Großbritannien hinzu. Das Wall Street Journal, das "
+                        "anfangs dabei war, wurde Ende September ausgesetzt und zählt nicht zu "
+                        "den aktiven Quellen. Heute verfolgt das System "
                         "13 aktive Quellen in zwei Sprachen (acht auf Englisch, fünf auf "
                         "Deutsch), mit breitem politischem Spektrum in jedem Raum.",
                     ),
@@ -590,11 +603,13 @@ CONTENT = {
                 "blocks": [
                     (
                         "p",
-                        "Der Tagesbericht, der zweiwöchentliche Bericht und die "
-                        "grafische Trendansicht existieren jetzt alle - aber nicht auf "
-                        "demselben Reifegrad. Die grafische Ansicht ist das am wenigsten "
-                        "ausgereifte Glied: Sie zeigt Rohdaten, ohne ihre Bedeutung "
-                        "ausreichend zu erklären, und wird überarbeitet. Darüber hinaus "
+                        "Tagesbericht, zweiwöchentlicher Trendbericht und Trendkarte gibt "
+                        "es inzwischen alle, aber nicht in gleicher Reife. Die Karte ist "
+                        "der jüngste Baustein: Sie wurde so gebaut, dass klar wird, was die "
+                        "Farben bedeuten, und dass sie keine Veränderung zeigt, wo die "
+                        "Belege zu dünn sind. Sie beruht aber nur auf wenigen Wochen Daten "
+                        "und wird sich erst festigen, wenn weitere hinzukommen. "
+                        "Darüber hinaus "
                         "bleiben zwei Fragen offen: eine klarere Nutzererfahrung für "
                         "Leser, die das Projekt nicht kennen, und die Zielgruppe - ob man "
                         "über Forscher und Politikexperten hinaus erweitert, etwa zu "
