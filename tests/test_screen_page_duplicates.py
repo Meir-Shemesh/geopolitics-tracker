@@ -77,7 +77,7 @@ class ScreenDuplicateTest(unittest.TestCase):
 
     def run_screen(self) -> None:
         with mock.patch("builtins.print"):
-            screen.run()
+            screen.run(use_batch=False)
 
     def screen_first_then_second(self, first_text: str, second_text: str, newspapers=("Los Angeles Times", "Los Angeles Times")):
         """First file screened by an earlier run (an earlier day), second file arrives later."""

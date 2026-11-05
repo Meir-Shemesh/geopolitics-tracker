@@ -117,7 +117,7 @@ class ClaimReportDateTest(unittest.TestCase):
                 mock.patch.object(screen, "find_duplicate_canonicals", return_value={duplicate: canonical}), \
                 mock.patch.object(screen, "claim_report_date_on_first_scan",
                                   wraps=lambda c, f: db.claim_report_date_on_first_scan(c, f, "2026-10-24T13:00:00+00:00", ISRAEL)):
-            screen.run()
+            screen.run(use_batch=False)
         self.assertEqual(self.row(duplicate)["report_date"], "2026-10-24")
         self.assertEqual(self.row(duplicate)["report_date_original"], "2026-10-23")
         self.assertEqual(self.row(canonical)["report_date"], "2026-10-24")  # untouched: already screened

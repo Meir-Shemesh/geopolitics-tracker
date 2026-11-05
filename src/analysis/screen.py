@@ -56,7 +56,7 @@ API_CALL_TIMEOUT_SECONDS = 60.0
 # switch changes - same calls, same output, same dates. To turn on, set True here (commit), or run once with --batch.
 # The wait is bounded: a batch still running after SCREEN_BATCH_TIMEOUT_SECONDS is canceled and its pages are screened
 # with regular calls. daily_autorun's screen step allows 90 minutes, so wait + fallback calls must fit in that.
-SCREEN_USE_BATCH = False
+SCREEN_USE_BATCH = True
 SCREEN_BATCH_TIMEOUT_SECONDS = 15 * 60
 SCREEN_BATCH_POLL_SECONDS = 30.0
 

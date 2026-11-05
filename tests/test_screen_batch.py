@@ -190,14 +190,17 @@ class ScreenBatchTestBase(unittest.TestCase):
             conn.close()
 
     def run_screen(self, **kwargs) -> str:
+        kwargs.setdefault("use_batch", False)  # production default is now True (5.11); tests opt in explicitly
         with mock.patch("builtins.print") as printed:
             screen.run(**kwargs)
         return "\n".join(str(c.args[0]) for c in printed.call_args_list if c.args)
 
 
 class SwitchOffTest(ScreenBatchTestBase):
-    def test_default_is_off_and_nothing_touches_the_batches_api(self):
-        self.assertFalse(screen.SCREEN_USE_BATCH)
+    def test_production_default_is_on_since_2026_11_05(self):
+        self.assertTrue(screen.SCREEN_USE_BATCH, "flip to False (and commit) to roll back")
+
+    def test_switch_off_nothing_touches_the_batches_api(self):
         self.seed_four_pages()
         self.batches.create = mock.Mock(side_effect=AssertionError("batches API used with the switch off"))
         out = self.run_screen()
