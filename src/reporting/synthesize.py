@@ -209,6 +209,7 @@ def group_articles_into_topics(client: anthropic.Anthropic, articles, model: str
         "output_tokens": response.usage.output_tokens,
         "cache_creation_input_tokens": getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
         "cache_read_input_tokens": getattr(response.usage, "cache_read_input_tokens", 0) or 0,
+        "stop_reason": getattr(response, "stop_reason", None),  # audit only (stage-1 grouping audit below)
     }
     ceiling_warning = stage1_ceiling_warning(response.usage.output_tokens, response.stop_reason)
     if ceiling_warning:
@@ -788,8 +789,50 @@ def compute_stage1_problem_ratio(topics, valid_ids: set, key: str = "article_ids
     return missing, duplicated, ratio
 
 
+# --- Stage-1 grouping audit (2026-11-05, PROJECT_LOG 4.114) -------------------------------------------------
+# 5.11 left 14 of 224 articles without a topic and nothing on disk said why (stage-1 output is not persisted, the
+# log keeps only its tail, stop_reason was never stored). The audit below is RECORD-ONLY: it never changes a
+# grouping, a threshold, a prompt or a return value, and a failure to build or write it never stops a run.
+
+def _stage1_attempt_record(topics, usage, valid_ids: set) -> dict:
+    """One stage-1 call: token counts, stop_reason, unassigned ids, ids placed in more than one topic."""
+    stop = usage.get("stop_reason")
+    where: dict[int, list[str]] = {}
+    for t in topics:
+        for i in t.get("article_ids", []):
+            if i in valid_ids:
+                where.setdefault(i, []).append(str(t.get("topic_label_en", "?")))
+    missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids)
+    return {
+        "input_tokens": usage.get("input_tokens"),
+        "output_tokens": usage.get("output_tokens"),
+        "stop_reason": stop if isinstance(stop, str) else None,
+        "max_tokens": STAGE1_MAX_TOKENS,
+        "topic_count": len(topics),
+        "unassigned_ids": sorted(missing),
+        "multi_assigned": {str(i): where[i] for i in sorted(duplicated) if i in where},
+        "problem_ratio": round(ratio, 4),
+        "topics": [
+            {"label": str(t.get("topic_label_en", "")), "article_ids": [i for i in t.get("article_ids", []) if i in valid_ids]}
+            for t in topics
+        ],
+    }
+
+
+def write_stage1_audit(report_date: str, audit: dict) -> None:
+    """data/processed/review_flags/<date>.stage1.json (committed with the day's other flags). Never raises."""
+    try:
+        flag_dir = PROJECT_ROOT / "data" / "processed" / "review_flags"
+        flag_dir.mkdir(parents=True, exist_ok=True)
+        (flag_dir / f"{report_date}.stage1.json").write_text(
+            json.dumps(audit, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+        )
+    except Exception as exc:  # noqa: BLE001 - recording must never stop a run
+        print(f"  warning: could not write the stage-1 audit ({exc}) - continuing.")
+
+
 def synthesize_day_two_stage(
-    client: anthropic.Anthropic, articles, stage1_model: str = MODEL
+    client: anthropic.Anthropic, articles, stage1_model: str = MODEL, audit_out: dict | None = None
 ) -> tuple[list[dict], list[dict]]:
     """Returns (sections, usage_log). sections omits any article stage 1 didn't assign,
     or whose topic failed stage 2 twice - run()'s existing fallback loop covers those,
@@ -805,6 +848,12 @@ def synthesize_day_two_stage(
     topics, stage1_usage = group_articles_into_topics(client, articles, model=stage1_model)
     usage_log.append({**stage1_usage, "stage": 1})
     missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids)
+    audit_attempts: list[dict] = []
+    audit_chosen = 0
+    try:
+        audit_attempts.append(_stage1_attempt_record(topics, stage1_usage, valid_ids))
+    except Exception as exc:  # noqa: BLE001 - record-only
+        print(f"  warning: stage-1 audit record failed ({exc}) - continuing.")
 
     if ratio > GROUPING_RATIO_THRESHOLD:
         print(
@@ -814,7 +863,12 @@ def synthesize_day_two_stage(
         retry_topics, retry_usage = group_articles_into_topics(client, articles, model=stage1_model)
         usage_log.append({**retry_usage, "stage": 1})
         retry_missing, retry_duplicated, retry_ratio = compute_stage1_problem_ratio(retry_topics, valid_ids)
+        try:
+            audit_attempts.append(_stage1_attempt_record(retry_topics, retry_usage, valid_ids))
+        except Exception as exc:  # noqa: BLE001 - record-only
+            print(f"  warning: stage-1 audit record failed ({exc}) - continuing.")
         if retry_ratio < ratio:
+            audit_chosen = len(audit_attempts) - 1 if len(audit_attempts) > 1 else 0
             print(f"  stage 1 retry improved coverage ({ratio:.0%} -> {retry_ratio:.0%}) - using the retry result.")
             topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
         else:
@@ -836,6 +890,19 @@ def synthesize_day_two_stage(
     # for this topic" - sometimes under a junk heading ("placeholder", "duplicate remove"). 15 such sections
     # (no linked article) reached published reports between 25.8 and 16.10, PROJECT_LOG 4.105. Drop them first.
     empty = [t for t in topics if not [i for i in t["article_ids"] if i in valid_ids]]
+    if audit_out is not None and audit_attempts:
+        try:
+            audit_out.update({
+                "article_count": len(valid_ids),
+                "threshold": GROUPING_RATIO_THRESHOLD,
+                "stage1_model": stage1_model,
+                "retried": len(audit_attempts) > 1,
+                "chosen_attempt": audit_chosen,
+                "dropped_empty_topics": [str(t.get("topic_label_en", "")) for t in empty],
+                "attempts": audit_attempts,
+            })
+        except Exception as exc:  # noqa: BLE001 - record-only
+            print(f"  warning: stage-1 audit record failed ({exc}) - continuing.")
     if empty:
         print(f"  stage 1: dropping {len(empty)} topic(s) with no valid article: "
               + "; ".join(repr(t["topic_label_en"]) for t in empty))
@@ -930,8 +997,19 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
     client = anthropic.Anthropic()
     valid_ids = {a["id"] for a in articles}
 
-    sections, usage_log = synthesize_day_two_stage(client, articles, stage1_model=stage1_model)
+    stage1_audit: dict = {}
+    sections, usage_log = synthesize_day_two_stage(client, articles, stage1_model=stage1_model, audit_out=stage1_audit)
     missing = compute_missing_ids(sections, valid_ids)
+    if stage1_audit and not dry_run:
+        try:
+            chosen = stage1_audit["attempts"][stage1_audit["chosen_attempt"]]
+            stage1_audit["report_date"] = report_date
+            stage1_audit["final_fallback_ids"] = sorted(missing)
+            # a fallback id that stage 1 did place in a topic = that topic failed stage 2 twice
+            stage1_audit["stage2_failed_ids"] = sorted(set(missing) - set(chosen["unassigned_ids"]))
+        except Exception as exc:  # noqa: BLE001 - record-only
+            print(f"  warning: stage-1 audit summary failed ({exc}) - writing what exists.")
+        write_stage1_audit(report_date, stage1_audit)
     coverage_ratio = 1 - ((len(missing) / len(valid_ids)) if valid_ids else 0)
     print(
         f"  coverage: {len(sections)} topic(s) with a real comparison, {len(missing)} article(s) "
