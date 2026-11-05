@@ -46,7 +46,10 @@ from dotenv import load_dotenv
 
 from src.common.biweekly import missing_published_days, period_closing_on
 from src.common.db import (
+    print_usage_summary,
     record_api_usage,
+    record_biweekly_reduce_run,
+    usage_marker,
     biweekly_period_exists,
     delete_biweekly_period,
     get_connection,
@@ -603,15 +606,25 @@ def reduce_user_content(map_results, sections_by_id):
     return len(lines), f"Day-span groups to merge ({len(lines)} total):\n\n" + "\n\n".join(lines)
 
 
-def run_reduce(client, map_results, sections_by_id):
+def run_reduce(client, map_results, sections_by_id, period=None):
     n_lines, user_content = reduce_user_content(map_results, sections_by_id)
 
     tokens = count_tokens(client, REDUCE_SYSTEM_PROMPT, user_content)
     print(f"  [reduce] input: {n_lines} day-span topic group(s), {tokens} tokens")
 
     valid_ids = set(sections_by_id.keys())
+    start_date, end_date = period if period else (None, None)
+
+    def log_run(outcome, n_topics, n_missing, n_duplicated, ratio_, retried_, retry_used_, tokens_in, tokens_out, stop):
+        record_biweekly_reduce_run(
+            start_date=start_date, end_date=end_date, outcome=outcome, input_sections=len(valid_ids),
+            input_groups=n_lines, final_topics=n_topics, missing_count=n_missing, duplicated_count=n_duplicated,
+            problem_ratio=ratio_, retry_threshold=BIWEEKLY_GROUPING_RATIO_THRESHOLD, retried=int(retried_),
+            retry_used=int(retry_used_), input_tokens=tokens_in, output_tokens=tokens_out, stop_reason=stop)
+
     topics, usage, stop_reason = call_reduce_once(client, user_content)
     if stop_reason == "max_tokens":
+        log_run("truncated", 0, len(valid_ids), 0, 1.0, False, False, usage["input_tokens"], usage["output_tokens"], stop_reason)
         # A second identical request would be cut at the same place; fail now instead of paying for it.
         raise ReduceFailedError(
             f"reduce output was cut off at the {REDUCE_MAX_TOKENS}-token ceiling ({n_lines} groups, {tokens} input "
@@ -619,6 +632,8 @@ def run_reduce(client, map_results, sections_by_id):
     missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids, key="section_ids")
     usages = [usage]
     retries = 0
+    retry_used = False
+    final_stop = stop_reason
 
     if ratio > BIWEEKLY_GROUPING_RATIO_THRESHOLD:
         retries += 1
@@ -629,6 +644,7 @@ def run_reduce(client, map_results, sections_by_id):
         retry_missing, retry_duplicated, retry_ratio = compute_stage1_problem_ratio(retry_topics, valid_ids, key="section_ids")
         if retry_stop != "max_tokens" and retry_ratio < ratio:
             topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
+            retry_used, final_stop = True, retry_stop
             print(f"    retry improved ({ratio:.1%}) - using the retry result.")
         else:
             print(f"    retry did not improve - keeping the original grouping.")
@@ -638,6 +654,8 @@ def run_reduce(client, map_results, sections_by_id):
         "output_tokens": sum(u["output_tokens"] for u in usages),
     }
     print(f"  [reduce] -> {len(topics)} final topic(s), final: {len(missing)} missing, {len(duplicated)} duplicated")
+    log_run("ok" if topics else "empty", len(topics), len(missing), len(duplicated), ratio, retries > 0, retry_used,
+            total_usage["input_tokens"], total_usage["output_tokens"], final_stop)
     if not topics:
         raise ReduceFailedError(f"reduce returned no topics for {n_lines} groups - nothing was checkpointed or written")
     return topics, total_usage, retries
@@ -687,7 +705,7 @@ def run_stage1(client, conn, start: str, end: str) -> list[dict]:
         print(f"  reduce: reusing checkpoint ({len(final_topics)} final topic(s)) - no API call")
     else:
         print("  running reduce...")
-        final_topics, usage, retries = run_reduce(client, map_results, sections_by_id)
+        final_topics, usage, retries = run_reduce(client, map_results, sections_by_id, period=(start, end))
         save_checkpoint(rk_path, final_topics, usage, retries)
 
     enriched = []
@@ -1067,4 +1085,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    started = usage_marker()
+    try:
+        code = main()
+    finally:
+        print_usage_summary("biweekly", started, "biweekly_")
+    sys.exit(code)

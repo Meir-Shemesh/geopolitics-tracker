@@ -55,6 +55,9 @@ class ReduceTruncationTest(unittest.TestCase):
         p = mock.patch.object(sb, "record_usage")
         p.start()
         self.addCleanup(p.stop)
+        p = mock.patch.object(sb, "record_biweekly_reduce_run")  # never write to the real tracker.db from a test
+        p.start()
+        self.addCleanup(p.stop)
 
     def run_reduce(self, client, n_sections=6):
         secs = sections(n_sections)

@@ -24,7 +24,9 @@ from src.common.db import (
     insert_article,
     insert_article_conflict_zones,
     insert_article_countries,
+    print_usage_summary,
     record_api_usage,
+    usage_marker,
     set_analysis_status,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, country_codes, country_list_prompt_text
@@ -354,4 +356,8 @@ if __name__ == "__main__":
         help="Limit to pages belonging to this downloaded_files.id (for testing on a sample).",
     )
     args = parser.parse_args()
-    run(file_id=args.file_id)
+    started = usage_marker()
+    try:
+        run(file_id=args.file_id)
+    finally:
+        print_usage_summary("analyze", started, "analyze")

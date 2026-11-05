@@ -24,7 +24,9 @@ from src.common.db import (
     init_db,
     insert_article_conflict_zones,
     insert_article_countries,
+    print_usage_summary,
     record_api_usage,
+    usage_marker,
 )
 from src.common.geo_taxonomy import CONFLICT_ZONE_LABELS, country_codes, country_list_prompt_text
 
@@ -167,4 +169,8 @@ if __name__ == "__main__":
         help="Limit to articles published on this date (YYYY-MM-DD), for testing on a sample.",
     )
     args = parser.parse_args()
-    run(report_date=args.report_date)
+    started = usage_marker()
+    try:
+        run(report_date=args.report_date)
+    finally:
+        print_usage_summary("geo tag backfill", started, "geo_tag_backfill")

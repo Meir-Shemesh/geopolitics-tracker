@@ -135,6 +135,29 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "cache_read_tokens": "INTEGER NOT NULL DEFAULT 0",
         "ref": "TEXT",
     },
+    # One row per biweekly reduce pass (the grouping step): what it was given, what it returned and whether it was
+    # retried. The log tail and the checkpoints that the pipeline deletes after a success cannot answer "is the
+    # missing/duplicated share drifting towards the retry threshold?" - this table can. Written by
+    # record_biweekly_reduce_run(), which never raises. No unique key: a re-run of the same period adds a row.
+    "biweekly_reduce_runs": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "recorded_at": "TEXT NOT NULL",
+        "start_date": "TEXT",
+        "end_date": "TEXT",
+        "outcome": "TEXT NOT NULL",  # ok | truncated | empty
+        "input_sections": "INTEGER NOT NULL",
+        "input_groups": "INTEGER NOT NULL",
+        "final_topics": "INTEGER NOT NULL",
+        "missing_count": "INTEGER NOT NULL",
+        "duplicated_count": "INTEGER NOT NULL",
+        "problem_ratio": "REAL NOT NULL",
+        "retry_threshold": "REAL NOT NULL",
+        "retried": "INTEGER NOT NULL DEFAULT 0",
+        "retry_used": "INTEGER NOT NULL DEFAULT 0",
+        "input_tokens": "INTEGER NOT NULL",
+        "output_tokens": "INTEGER NOT NULL",
+        "stop_reason": "TEXT",
+    },
     # Biweekly narrative-trends reports (promoted from the scripts/biweekly_stage{1,2}_dryrun.py
     # dry-run tooling to a real pipeline output - see CLAUDE.md for the full specification:
     # Thu-Wed 14-day cadence, >=5-distinct-day inclusion threshold, the three Stage-2 guards).
@@ -241,6 +264,102 @@ def record_api_usage(stage: str, model: str, usage, ref: str | None = None, db_p
             conn.close()
     except Exception as exc:  # noqa: BLE001 - see docstring
         print(f"  (usage logging skipped: {exc!r})", file=sys.stderr)
+
+
+# $ per million tokens (input, output) for the models the pipeline calls - Anthropic's pricing page
+# (platform.claude.com/docs/en/about-claude/pricing, checked 2026-11-04). A 5-minute cache write costs 1.25x the
+# input price and a cache read 0.1x. An estimate of the invoice, not a copy of it: the console is the source of truth.
+API_PRICES_PER_MTOK = {
+    "claude-sonnet-5": (2.00, 10.00),
+    "claude-haiku-4-5-20251001": (1.00, 5.00),
+}
+
+
+def usage_marker() -> str:
+    """The moment a stage starts, in the same format record_api_usage() writes to api_usage.called_at."""
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def estimate_cost_usd(model: str, input_tokens: int, output_tokens: int, cache_write: int, cache_read: int) -> float | None:
+    """None for a model without a known price (never guessed)."""
+    if model not in API_PRICES_PER_MTOK:
+        return None
+    price_in, price_out = API_PRICES_PER_MTOK[model]
+    return (input_tokens * price_in + cache_write * price_in * 1.25 + cache_read * price_in * 0.10 + output_tokens * price_out) / 1e6
+
+
+def summarize_api_usage(since: str, stage_prefix: str = "", db_path: Path | None = None) -> dict:
+    """Totals of the api_usage rows written at or after `since` (a usage_marker() value) for stages starting with
+    `stage_prefix`: calls, the four token counts, the cache hit rate (cache reads out of every input token) and the
+    estimated cost. Read-only."""
+    conn = sqlite3.connect(db_path or DB_PATH, timeout=5)
+    try:
+        rows = conn.execute(
+            "SELECT model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens FROM api_usage "
+            "WHERE called_at >= ? AND stage LIKE ?",
+            (since, stage_prefix + "%"),
+        ).fetchall()
+    finally:
+        conn.close()
+    total = {"calls": len(rows), "input": 0, "output": 0, "cache_write": 0, "cache_read": 0, "cost": 0.0, "unpriced": 0}
+    for model, tokens_in, tokens_out, cache_write, cache_read in rows:
+        total["input"] += tokens_in
+        total["output"] += tokens_out
+        total["cache_write"] += cache_write
+        total["cache_read"] += cache_read
+        cost = estimate_cost_usd(model, tokens_in, tokens_out, cache_write, cache_read)
+        if cost is None:
+            total["unpriced"] += 1
+        else:
+            total["cost"] += cost
+    all_input = total["input"] + total["cache_write"] + total["cache_read"]
+    total["cache_hit_rate"] = total["cache_read"] / all_input if all_input else 0.0
+    return total
+
+
+def format_usage_summary(label: str, total: dict) -> str:
+    if not total["calls"]:
+        return f"API usage ({label}): no calls"
+    cost = f"${total['cost']:.2f}" + (f" (+{total['unpriced']} call(s) at an unknown price)" if total["unpriced"] else "")
+    return (
+        f"API usage ({label}): {total['calls']} calls | input {total['input']:,} | output {total['output']:,} | "
+        f"cache write {total['cache_write']:,} | cache read {total['cache_read']:,} | "
+        f"cache hit {total['cache_hit_rate']:.0%} of input tokens | est. {cost}"
+    )
+
+
+def print_usage_summary(label: str, since: str, stage_prefix: str = "") -> None:
+    """One line at the end of a stage: what its API calls cost and how much of the input came from the prompt cache.
+    Like record_api_usage(), never raises and never changes what a stage does."""
+    try:
+        print(format_usage_summary(label, summarize_api_usage(since, stage_prefix)))
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        print(f"  (usage summary skipped: {exc!r})", file=sys.stderr)
+
+
+def record_biweekly_reduce_run(db_path: Path | None = None, **fields) -> None:
+    """Persist one reduce pass's summary (see the biweekly_reduce_runs table). Same contract as record_api_usage():
+    never raises, never blocks the run, skipped when TRACKER_NO_USAGE_LOG is set (experiments, tests)."""
+    try:
+        if os.environ.get("TRACKER_NO_USAGE_LOG"):
+            return
+        columns = [c for c in TABLE_COLUMNS["biweekly_reduce_runs"] if c not in ("id", "recorded_at")]
+        unknown = set(fields) - set(columns)
+        if unknown:
+            raise ValueError(f"unknown biweekly_reduce_runs field(s): {sorted(unknown)}")
+        values = [fields.get(c) for c in columns]
+        conn = sqlite3.connect(db_path or DB_PATH, timeout=5)
+        try:
+            conn.execute(
+                f"INSERT INTO biweekly_reduce_runs (recorded_at, {', '.join(columns)}) "
+                f"VALUES (?, {', '.join('?' * len(columns))})",
+                [datetime.now().astimezone().isoformat(timespec="seconds"), *values],
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        print(f"  (reduce summary logging skipped: {exc!r})", file=sys.stderr)
 
 
 def init_db(conn: sqlite3.Connection) -> None:

@@ -40,7 +40,9 @@ from src.common.db import (
     insert_report,
     insert_report_section,
     link_section_article,
+    print_usage_summary,
     record_api_usage,
+    usage_marker,
     report_exists,
     report_row_exists,
 )
@@ -1084,4 +1086,8 @@ if __name__ == "__main__":
         ),
     )
     args = parser.parse_args()
-    run(report_date=args.date, force=args.force, dry_run=args.dry_run, stage1_model=args.stage1_model)
+    started = usage_marker()
+    try:
+        run(report_date=args.date, force=args.force, dry_run=args.dry_run, stage1_model=args.stage1_model)
+    finally:
+        print_usage_summary("synthesize", started, "synthesize_stage")

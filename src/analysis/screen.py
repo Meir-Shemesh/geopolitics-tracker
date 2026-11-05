@@ -23,7 +23,9 @@ from src.common.db import (
     get_unscreened_pages,
     init_db,
     insert_page_screening,
+    print_usage_summary,
     record_api_usage,
+    usage_marker,
 )
 
 # Windows defaults stdout to the cp1252 console codepage even when redirected
@@ -416,4 +418,8 @@ if __name__ == "__main__":
         ),
     )
     args = parser.parse_args()
-    run(file_name_contains=args.file_name_contains, screen_model=args.screen_model)
+    started = usage_marker()
+    try:
+        run(file_name_contains=args.file_name_contains, screen_model=args.screen_model)
+    finally:
+        print_usage_summary("screen", started, "screen")
