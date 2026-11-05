@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>Zweiwöchentlicher Trendbericht - 22.–4. November 2026 - Tägliche Geopolitik</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.25rem 1.5rem 1.75rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .biweekly-badge {
+    display: inline-block;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--masthead-accent);
+    border-radius: 999px;
+    padding: .3rem .9rem;
+    margin-bottom: .75rem;
+  }
+  /* direction:ltr - the date-range string ("30.9.2026-17.9") is almost
+     entirely Latin/numeric with no Hebrew characters of its own; left
+     undeclared inside an RTL masthead it bidi-reorders and overflows past
+     the viewport edge on narrow screens (same fix already used for
+     citation boxes elsewhere in this project, see render.py). */
+  .report-title { margin: 0; font-size: 1.9rem; font-weight: 800; letter-spacing: -0.01em; direction: ltr; text-align: left; }
+  .biweekly-overview {
+    max-width: 44rem;
+    margin: 1.5rem auto 0;
+    padding: 0 1.5rem;
+    font-size: 1.02rem;
+    color: var(--text-muted);
+  }
+
+  main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+
+  .biweekly-topic {
+    padding: 1.6rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .biweekly-topic:first-child { padding-top: 0; }
+  .biweekly-topic-title { margin: 0 0 .4rem; font-size: 1.3rem; font-weight: 700; }
+  /* overflow-wrap: a long comma-separated Latin-script source list mixed
+     with a short Hebrew/German prefix can overflow the viewport on narrow
+     screens instead of wrapping - same class of bidi-mixing issue the
+     citation boxes handle elsewhere in this project, fixed here with a
+     blunter, reliably-safe wrap rule rather than isolating direction. */
+  .biweekly-topic-byline { margin: 0 0 .8rem; font-size: .82rem; color: var(--text-muted); overflow-wrap: break-word; }
+  .biweekly-topic-text { margin: 0; font-size: 1rem; }
+  .biweekly-daily-links {
+    margin-top: .9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .45rem;
+    direction: ltr;
+  }
+  .biweekly-daily-links-label {
+    font-size: .78rem;
+    color: var(--text-muted);
+    margin-inline-end: .3rem;
+  }
+  .daily-link {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--masthead-accent);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .2rem .65rem;
+  }
+  .daily-link:hover { border-color: var(--masthead-accent); text-decoration: underline; }
+
+  @media print {
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+  }
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Tägliche Geopolitik - Startseite"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="trendsreports.html">← Alle Berichte</a>
+      <a class="top-nav-link" href="filter.html">Erweiterte Filterung</a>
+      <a class="top-nav-link" href="trends.html">Trends</a>
+      <a class="top-nav-link top-nav-lang-link" href="../he/biweekly_2026-10-22_2026-11-04_he.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/biweekly_2026-10-22_2026-11-04_en.html">English</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">Kontakt</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">E-Mail</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">Webseite</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dunkelmodus" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <span class="biweekly-badge">Zweiwöchentlicher Trendbericht</span>
+      <h1 class="report-title">22.–4. November 2026</h1>
+    </div>
+  </header>
+  <p class="biweekly-overview">Die vergangenen zwei Wochen waren vor allem von politischen Systemen unter öffentlichem Druck geprägt: Proteste und Unruhen erschütterten Frankreich, Serbien und eine breitere europäisch-globale Welle gegen hohe Lebenshaltungskosten, während in Brasilien, Israel und den USA (mit Blick auf die Zwischenwahlen 2026) Wahlen und Machtkämpfe die Widerstandsfähigkeit amtierender Regierungen auf die Probe stellten. Ein zweiter roter Faden verlief durch den Ukraine-Krieg, wo Waffenstillstandsdiplomatie und der Starlink-Streit mit wachsender Sorge vor einer US-Hinwendung zu Russland und verstärkter russischer hybrider Kriegsführung gegen Europa zusammenfielen. Daneben stachen Einzelthemen wie das Zugunglück in Spanien, Nordkoreas Rekord-Kryptoraub und die Krise in Venezuela hervor, ohne sich in ein größeres Muster einzufügen.</p>
+  <main>
+    
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russland-Ukraine-Krieg: Friedensdiplomatie von einzelnem Hoffnungsschimmer zu dauerhaftem Misstrauen</h2>
+      <p class="biweekly-topic-byline">13 von 14 Tagen · 13 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die zentrale Veränderung: Aus einer punktuellen Debatte über Putins Aufrichtigkeit wurde ein wiederkehrendes Muster, in dem jeder &quot;Durchbruch&quot; - Gefangenenfreilassungen, die humanitäre Waffenruhe in Oleschky, Telefonate nordischer Staatschefs mit Putin - als kosmetisch entlarvt und fast sofort von neuen Angriffen gefolgt wird. Am 22. Oktober drehte sich der Streit noch um Witkoffs Bezeichnung Putins als &quot;Humanist&quot;. Am 31. Oktober/1. November werten Frankfurter Allgemeine Zeitung und Neue Zürcher Zeitung die Evakuierung aus Oleschky als echte, aber propagandistisch überschattete Erleichterung, und am 4. November melden The Guardian sowie Neue Zürcher Zeitung einen tödlichen Angriff nur einen Tag nach eben dieser Waffenruhe. Parallel wächst seit dem 23. Oktober die Furcht vor einer &quot;neuen Jalta&quot;-Einigung zwischen den USA, Russland und China über Europas Kopf hinweg.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4633">22.10</a><a class="daily-link" href="report_2026-10-22_de.html#section-4640">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4727">23.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4728">23.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4773">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4835">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4836">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4959">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-4996">26.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5149">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5151">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5188">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5251">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5304">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5459">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5551">1.11</a><a class="daily-link" href="report_2026-11-01_de.html#section-5609">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5629">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5736">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5813">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Israels Wahl: vom Referendum über Netanjahu zur Koalitionsfrage um arabische Parteien</h2>
+      <p class="biweekly-topic-byline">14 von 14 Tagen · 13 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von der Deutung der Wahl als persönliches Referendum über Netanjahu - &quot;Sieg oder Gefängnis&quot;, wie es The Daily Telegraph am 27. Oktober formulierte - hin zu einer anhaltenden Fokussierung darauf, ob arabisch geführte Parteien zu strukturellen Königsmachern werden. Die frühen Beiträge (22.-26. Oktober) kreisten um Iran, Gaza und die Schuldfrage zum 7. Oktober, etwa im investigativen Porträt von The Observer am 26. Oktober; nach dem unentschiedenen Wahlausgang am 28./29. Oktober rückten Raam und die Vereinte Liste ins Zentrum. The Observer sprach am 1. November von einem möglichen &quot;neuen Morgen&quot;, während The Washington Post und Los Angeles Times weiter Netanjahus Überlebensversuche trotz verlorener Mehrheit verfolgten. Bis zum 3./4. November drehte sich die Debatte vor allem um Eisenkots Bedingungen für arabische Parteien und Israels wachsende internationale Isolation.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4639">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4782">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4847">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4848">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4936">25.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4939">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-4984">26.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-4986">26.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-4990">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5070">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5145">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5244">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5296">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5329">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5350">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5454">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5590">1.11</a><a class="daily-link" href="report_2026-11-01_de.html#section-5611">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5668">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5714">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5831">4.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5840">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Frankreichs Unruhen und Schuldenkrise: Vom Straßenchaos zur politischen Instrumentalisierung</h2>
+      <p class="biweekly-topic-byline">12 von 14 Tagen · 13 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer breiten, vielschichtigen nationalen Krise zu einer engeren Abfolge isolierter Einzelepisoden. In den Anfangstagen (22. bis 24. Oktober) verknüpften Dutzende Beiträge in The Guardian, der Frankfurter Allgemeine Zeitung und der Neuen Zürcher Zeitung Unruhen, Plünderungen, Anleiherenditen über 5 Prozent sowie gegenseitige Vorwürfe zwischen Macron, Le Pen und Mélenchon zu einer zusammenhängenden Erzählung, einschließlich Hinweisen auf russische Desinformation. Ende Oktober (27., 31.) verengte sich der Fokus auf konkrete Streitpunkte wie das Haftungsgesetz für Randalierer und Vergleiche der französischen mit der deutschen Protestkultur. Bis zum 2. und 4. November schrumpfte die Berichterstattung auf einzelne Quellen: Neue Zürcher Zeitung und The Washington Post behandelten jeweils isoliert einen rassistisch motivierten Anschlag und dessen politische Instrumentalisierung, losgelöst von der früheren Gesamtschau aus Schuldenkrise und Unruhen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4635">22.10</a><a class="daily-link" href="report_2026-10-22_de.html#section-4641">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4739">23.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4746">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4856">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4859">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4951">25.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4954">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5003">26.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5023">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5075">27.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5124">27.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5127">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5173">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5259">29.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5266">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5306">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5477">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5630">2.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5678">2.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5857">4.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5858">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Brasiliens Wahl, Lulas Sieg und der Zerfall der Bolsonaro-Familie</h2>
+      <p class="biweekly-topic-byline">12 von 14 Tagen · 13 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von ausgewogenen Vorwahl-Analysen der Wählergruppen zu einer dramatischen Erzählung vom institutionellen und familiären Zusammenbruch. Zwischen dem 22. und 25. Oktober fragten Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung und Los Angeles Times vor allem, wer die Wahl entscheiden werde - Evangelikale, Frauen, indigene Wähler, soziale Medien. Nach Lulas Sieg am 26. Oktober, zunächst als geopolitischer Rückschlag für Trump gedeutet, driftete die Lesart auseinander: The Guardian feierte einen Sieg der Demokratie, während Die Welt und die Neue Zürcher Zeitung zunehmend die Legitimität des Gerichts infrage stellten. Höhepunkt war Flávio Bolsonaros Flucht in die USA (28.-31. Oktober), die die Geschichte zu einer Erzählung über Justizmissbrauch, familiären Zerfall und schließlich, bis zum 4. November, eine Spaltung im rechten Lager machte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4667">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4786">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4861">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4946">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5016">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5076">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5147">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5150">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5248">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5314">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5422">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5493">31.10</a><a class="daily-link" href="report_2026-11-03_de.html#section-5777">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5873">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">US-Stimmungsbild zu Wirtschaft und Midterms unter Trump</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 13 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einer vorsichtigen, datengestützten Darstellung einer Meinungslücke hin zu einem zunehmend eindeutigen Urteil, dass Trump selbst den republikanischen Einbruch verursacht. Am 22. Oktober berichtete allein USA Today nüchtern über die Kluft zwischen Trumps Rhetorik vom &quot;goldenen Zeitalter&quot; und der Sorge der Wähler über steigende Preise. Bis zum 1. bis 4. November, mit Dutzenden Artikeln verschiedenster Zeitungen, verschärfte sich der Ton zu Formulierungen wie dem &quot;Todesröcheln des Trumpismus&quot; (The Observer), einem Vergleich mit Trumans Unbeliebtheit 1946 (Neue Zürcher Zeitung) und schließlich Berichten über eine demokratische Welle, getragen von Wut über Lebenshaltungskosten und den Iran-Krieg - begleitet von wiederkehrenden deutschsprachigen Warnungen, Trump könnte eine Niederlage nicht anerkennen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4698">22.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4974">25.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4982">25.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5272">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5356">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5417">30.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5577">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5670">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5702">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5706">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5811">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">US-Zwischenwahlen 2026: Vom demokratischen Optimismus zum Referendum über Trump</h2>
+      <p class="biweekly-topic-byline">11 von 14 Tagen · 13 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von einer strategischen Generalprobe der Demokraten hin zu einem Referendum über Trumps eigene Amtsführung. Am 23. Oktober beschrieb Der Spiegel Demokraten, die einen &quot;Erdrutschsieg&quot; erwarten und bereits auf 2028 schielen, während Republikaner finanziell klar überlegen blieben. Bis zum 30./31. Oktober rückten USA Today, Los Angeles Times, Süddeutsche Zeitung und Frankfurter Allgemeine Zeitung Trumps einbrechende Zustimmungswerte, den Iran-Krieg, die Lebenshaltungskosten und die Klage des Justizministeriums wegen eines &quot;Lockvogel-Kandidaten&quot; in Alaska in den Mittelpunkt - Los Angeles Times zog Parallelen zu Trumps Versuchen 2020, das Ergebnis anzufechten. Zugleich verschärften The Daily Telegraph und The Globe and Mail ihre Kritik an einer demokratischen Identitätskrise. Durchgängig besorgt die Berichterstattung die Milliardärsspenden, wobei der Fokus von der Angst vor &quot;gekauften&quot; Wahlen (Die Welt) zu taktischen Prognosedebatten (Neue Zürcher Zeitung, The Washington Post) wechselte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4750">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4870">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4974">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5014">26.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5027">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5102">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5229">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5285">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5333">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5443">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5480">31.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5492">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5662">2.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5862">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Europas Protestwelle der Generation Z: von Lebenshaltungskosten zum Streit über die Schuld an der Gewalt</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 12 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer abstrakten Debatte darüber, ob es überhaupt eine echte &quot;paneuropäische Protestbewegung&quot; gibt, hin zu einem scharfen Streit darüber, wer für die tatsächliche Straßengewalt verantwortlich ist. Am 24. Oktober waren sich drei Artikel in The Guardian bereits uneinig, ob die verstreuten Unruhen einen gemeinsamen gebrochenen Gesellschaftsvertrag widerspiegeln oder ein politisch bequemer Mythos sind. Bis zum 30./31. Oktober deuteten Der Spiegel, Süddeutsche Zeitung und Frankfurter Allgemeine Zeitung die Proteste strukturell als generationenbedingte Ungleichheit bei Renten, Wohnen und Bildung. Am 2./3. November, nach Ausschreitungen in Deutschland, verengte sich die Geschichte zu einem innenpolitischen Schuldstreit: Die Welt und ein Kolumnist der Frankfurter Allgemeine Zeitung betonten Täter mit Migrationshintergrund, während eine andere Kolumne derselben Zeitung sowie die Süddeutsche Zeitung stattdessen linksextreme Netzwerke verantwortlich machten.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-24_de.html#section-4852">24.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5189">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5394">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5471">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5566">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5616">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5732">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5770">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5857">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Von der Angriffsdrohung zum Dauerkonflikt: Iran, Öl und die Golf-Krise</h2>
+      <p class="biweekly-topic-byline">11 von 14 Tagen · 11 Quellen: Daily Telegraph, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von der Frage, ob ein neuer israelisch-amerikanischer Schlag gegen Iran bevorsteht, hin zur Darstellung eines andauernden, unentschiedenen Krieges als neuer Normalzustand. Ende Oktober (22.-23.10.) rückten The Daily Telegraph und The Washington Post Netanjahus politische Motive für einen Angriff in den Mittelpunkt, während The Guardian das Leid der Zivilbevölkerung rund um Hormus betonte. Bis zum 30./31.10. verlagerte sich der Fokus auf die wirtschaftliche Zermürbung - Rekordgewinne von Shell, BP und ExxonMobil, europäische Gasknappheit, gestrandete Kreuzfahrtpassagiere -, und am 4.11. beschrieben Süddeutsche Zeitung und Die Welt eine nicht haltbare &quot;Pattsituation&quot;, die keine Seite beenden könne, während The Washington Post neue chinesische Vermittlungsbemühungen vermeldete. Der rote Faden: von der Erwartung zum chronischen Krisenmanagement.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4642">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4732">23.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4780">23.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4783">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4849">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4888">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4953">25.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4981">25.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5071">27.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5341">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5358">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5415">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5464">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5552">1.11</a><a class="daily-link" href="report_2026-11-01_de.html#section-5573">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5643">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5709">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5776">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5796">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5812">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Serbiens Studentenbewegung: Vom Risiko für Vučić zur Bewältigung des Übergangs</h2>
+      <p class="biweekly-topic-byline">12 von 14 Tagen · 11 Quellen: Daily Telegraph, Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von der Frage, ob die Studentenbewegung Vučić überhaupt gefährden könne, hin zu einer nüchternen Bilanz dessen, was ihr Sieg tatsächlich leisten kann. Ende Oktober (22./23.10) zeichneten The Guardian und die Süddeutsche Zeitung noch ein Regime, das eine lediglich bedrohliche Bewegung unterdrückt. Nach Vučićs tatsächlicher Niederlage am 26./27.10 spaltete sich die Einordnung in geopolitische Lesarten - The Daily Telegraph sah einen Rückschlag für Putin - und zivilgesellschaftliche Erneuerungserzählungen bei The Washington Post und The Guardian. Anfang November überwog Skepsis: Die Neue Zürcher Zeitung (31.10., 2.11.) und die Süddeutsche Zeitung warnten, der Abbau der verfilzten Korruption werde Jahre dauern, während die Los Angeles Times (4.11.) stattdessen einen sich beschleunigenden &quot;Dominoeffekt&quot; beim Zusammenbruch des alten Machtgefüges beschrieb.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4693">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4749">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4844">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4853">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4944">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5000">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5074">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5162">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5185">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5283">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5311">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5508">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5677">2.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5842">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Spaniens Hochgeschwindigkeitszug-Unglück: Vom Unfallbericht zur Regierungskrise</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 11 Quellen: Daily Telegraph, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von sachlicher Unfallschilderung hin zu einem politischen Urteil über Ministerpräsident Sánchez. Am 29./30. Oktober verknüpften Süddeutsche Zeitung und Frankfurter Allgemeine Zeitung das Unglück bereits mit Systemversagen und Protesten, hielten aber noch die Infrastrukturdetails im Blick. Bis zum 3. November erklärte Hans-Christian Rössler in seiner Kolumne für die Frankfurter Allgemeine Zeitung das Vertrauen als &quot;zerstört&quot; und reihte das Unglück neben Überschwemmungen, den Stromausfall und die Ceuta-Krise ein, während The Globe and Mail am selben Tag rein faktisch berichtete, einschließlich des kanadischen Opfers. Der klarste Unterschied: deutschsprachige Medien nutzten die Katastrophe zunehmend als Linse für Sánchez&#x27; politischen Niedergang, kanadische und manche britische Berichte blieben hingegen bei den Fakten.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-29_de.html#section-5247">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5301">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5472">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5559">1.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5739">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5757">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Der Starlink/Starshield-Streit und die Debatte über europäische Abhängigkeit</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 10 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von gezielten persönlichen Vorwürfen gegen Musk hin zu einer breiteren strukturellen Warnung vor Europas Abhängigkeit von amerikanischer Satelliteninfrastruktur. Am 22. Oktober warf die Neue Zürcher Zeitung Musk moralische Mitverantwortung für Todesfälle in der Ukraine vor, während The Guardian und Los Angeles Times den Vorfall nur am Rande einer Wirtschaftsmeldung erwähnten. Bis zum 26./27. Oktober deuteten dieselben deutschsprachigen Blätter (Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung) den Streit als Beleg dafür, dass Europa dringend strategische Unabhängigkeit von amerikanischen Konzernen aufbauen müsse, und am 30. Oktober schloss die Frankfurter Allgemeine Zeitung, selbst IRIS2 werde diese Lücke so bald nicht schließen. US-Medien wie The Washington Post und USA Today blieben dagegen stärker bei der sachlichen Frage, ob die Beschränkungen tatsächlich aufgehoben wurden.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4676">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4744">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4838">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4972">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5010">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5072">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5239">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5367">30.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russlands hybrider Krieg gegen Europa weitet sich aus</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 10 Quellen: Daily Telegraph, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von vereinzelten, national verorteten Vorfällen - britische Unterseekabel, russische Immobiliennetzwerke bei nordischen Stützpunkten, Drohnensabotage in Deutschland, alle um den 22. bis 25. Oktober - hin zu einer systemischen Deutung eines andauernden, unterschätzten hybriden Krieges. Bis zum 30. Oktober argumentierte The Economist in einer fünfteiligen Serie, Europa rüste sich für eine hypothetische Invasion, während Russlands laufende Sabotagekampagne vernachlässigt werde, und kritisierte das neue 3,5-Prozent-Ausgabenziel als fehlgeleitet. The Daily Telegraph wandelte sich parallel von Kabel-Spionageberichten zu Debatten über gesellschaftliche Resilienz nach finnischem Vorbild.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4634">22.10</a><a class="daily-link" href="report_2026-10-22_de.html#section-4637">22.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4839">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4840">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4841">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4842">24.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4901">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4929">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5042">26.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5334">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5366">30.10</a><a class="daily-link" href="report_2026-11-03_de.html#section-5708">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5712">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5727">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Die Karibikreise von König Charles und der Streit um Sklaverei-Reparationen</h2>
+      <p class="biweekly-topic-byline">12 von 14 Tagen · 10 Quellen: Daily Telegraph, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verlagerte sich von den Worten des Königs selbst hin zu einem breiteren innenpolitischen Streit in Großbritannien. Zwischen dem 23. und 28. Oktober konzentrierten sich Berichte, vor allem in The Daily Telegraph, darauf, ob Charles sich persönlich entschuldigen würde, wobei er &quot;tiefes Bedauern&quot; äußerte, aber finanzielle Zusagen vermied. Ab Ende Oktober und bis in den November rückte Premierminister Andy Burnham ins Zentrum: Am 31. Oktober sowie vom 1. bis 4. November beschreiben The Guardian, The Daily Telegraph, Los Angeles Times und Neue Zürcher Zeitung Burnhams überraschende Offenheit für eine förmliche Entschuldigung als eigentlichen Streitpunkt, während der König zwischen karibischem Druck und Regierungspolitik gefangen erscheint. The Guardian betont die Kritik von Aktivisten an unzureichenden symbolischen Gesten, während The Daily Telegraph mehrere Kommentare, etwa von Robert Tombs, veröffentlicht, die jede Entschuldigung als Heuchelei zurückweisen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4725">23.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4952">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5001">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5081">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5161">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5246">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5312">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5353">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5460">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5558">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5620">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5705">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5810">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Venezuelas Übergang: Von Protesthoffnung zur kritischen Prüfung der US-Rolle</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 10 Quellen: Der Spiegel, Die Welt, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von vorsichtiger demokratischer Hoffnung zu kritischerer Prüfung der US-Beteiligung und der Kluft zwischen Versprechen und Realität. Am 23. Oktober berichtete allein USA Today über optimistische Proteste nach Maduros Festnahme. Bis zum 26./27. Oktober offenbarte Machados Rückkehr Bruchlinien: Frankfurter Allgemeine Zeitung und Neue Zürcher Zeitung deuteten sie als kalkulierten geopolitischen Schachzug mit Druck auf Washington, während The Guardian interne Rivalitäten betonte. Am 30. Oktober trat ein echter Widerspruch zutage: The Economist beschrieb Machados Drängen auf vorgezogene Wahlen, während USA Today sie mit Rubios weit späterem Zeitplan für 2027 zitierte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4807">23.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5018">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5100">27.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5258">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5313">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5315">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5473">31.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Der Rekord-Hack von Binance und Nordkoreas Rolle</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 10 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von technisch-finanziellen Details des 6,3-Milliarden-Dollar-Diebstahls hin zu einem diplomatischen Streit um die Urheberschaft. Anfang November betonten The Guardian und The Globe and Mail Auszahlungsstopps und Schwachstellen der Börsen, während Frankfurter Allgemeine Zeitung und Süddeutsche Zeitung bis 3./4. November die Gelder mit Nordkoreas Atomprogramm und der Kooperation mit Russland verknüpften; Die Welt und The Daily Telegraph hoben Pjöngjangs scharfes Dementi hervor. Die deutschen Zeitungen betonten die strategisch-militärische Dimension, The Guardian und Neue Zürcher Zeitung die technische Funktionsweise des Hacks.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-31_de.html#section-5465">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5562">1.11</a><a class="daily-link" href="report_2026-11-01_de.html#section-5597">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5634">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5733">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5751">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5815">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Fusionsgerüchte SpaceX-Tesla und Musks Machtkonzentration</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 9 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer echten Kontroverse - Geschäftsoptimismus gegen Warnungen vor Machtkonzentration - hin zu vereinzelten Einzelstimmen. Am 22. Oktober feierte die Los Angeles Times den Deal als Erfolgsgeschichte, während Süddeutsche Zeitung und Frankfurter Allgemeine Zeitung vor systemischem Risiko und unkontrollierter Macht warnten und dabei auf die Starlink-Einschränkungen in der Ukraine verwiesen. Am 26. Oktober standen sich Die Welt und The Observer mit strategischer bzw. kartellrechtlicher Sichtweise noch gegenüber, doch bis zum 29. Oktober schrumpfte das Thema auf eine einzelne Kolumne der Süddeutschen Zeitung über gleichgültige deutsche Tesla-Käufer.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4678">22.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4867">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4949">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5006">26.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5281">29.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russlands und Belarus&#x27; Rückkehr in den internationalen Sport</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 8 Quellen: Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von vereinzelter deutscher Kommentierung, die dem IOC eine Rehabilitierung Russlands vorwarf, zu einer breiten, länderübergreifenden Geschichte konkreter Boykotte. Am 22. und 28. Oktober übten Frankfurter Allgemeine Zeitung und Süddeutsche Zeitung noch isolierte, grundsätzliche Kritik an der IOC-Politik. Nachdem der Internationale Sportgerichtshof die IIHF zur Wiederaufnahme Russlands gezwungen hatte, dokumentierten Berichte vom 31. Oktober und 4. November (Globe and Mail, The Guardian, Die Welt) eine wachsende Welle nationaler Boykotte - Finnland, Lettland, Schweden, Kanada -, wodurch aus einer abstrakten moralischen Debatte eine konkrete sportpolitische Konfrontation wurde.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4675">22.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5227">28.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5487">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5660">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5762">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5819">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Sorgen über Trumps Annäherung an Russland und die Abkehr von der Ukraine</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 7 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von breiter, institutioneller Alarmstimmung mehrerer Zeitungen zu vereinzelten, zugespitzten Kolumnen. Am 22. Oktober diskutierten amerikanische und deutsche Blätter (Los Angeles Times, Washington Post, Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung) parteiübergreifende Empörung und strategische Symbolik. Ende Oktober und Anfang November verengte sich das Thema auf einzelne Stimmen - Steve Bloomfield im Guardian und Josef Joffe in Die Welt zeichneten unwidersprochen ein &quot;Yalta 2.0&quot;-Szenario mit der Ukraine als Opfer -, bevor Jim Geraghty am 4. November die USA als &quot;faktischen Verbündeten&quot; Russlands bezeichnete.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4640">22.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5114">27.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5390">30.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5625">2.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5638">2.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5863">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Der britische Haushalt: Von Vorab-Warnungen zum gespaltenen Urteil</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 7 Quellen: Daily Telegraph, Economist, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Neue Zürcher Zeitung, Observer</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von spekulativen Warnungen vor dem Haushalt zu einem scharf polarisierten Urteil nach dessen Vorstellung, das klar entlang der Zeitungslinien verlief. In der Vorlaufphase (22. bis 26. Oktober) warnten Kolumnisten der The Daily Telegraph wie Tim Wallace und Roger Bootle vor fiskalischer Zaghaftigkeit angesichts einer Staatsverschuldung von drei Billionen Pfund, während Jeremy Warner als einsame Gegenstimme Großbritanniens Schuldenentwicklung verteidigte. Nach der Vorstellung von Kanzler Healeys Haushalt am 28. Oktober verschärfte sich der Ton: Am 29. und 30. Oktober brandmarkte eine breite Kolumnistenriege der The Daily Telegraph ihn als unehrliches Verschleierungsmanöver, während The Guardian und The Economist ihn als vorsichtige Reaktion auf den iranbedingten Energiepreisschock deuteten. Bis zum 1. November verfestigte sich dieser Gegensatz zwischen der Telegraph-Kritik und der hoffnungsvolleren Lesart von The Observer.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4652">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4742">23.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4948">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5005">26.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5210">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5249">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5352">30.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5556">1.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Kanadas EU-Annäherung: Vom großen Wurf zum zerredeten Kompromiss</h2>
+      <p class="biweekly-topic-byline">9 von 14 Tagen · 7 Quellen: Daily Telegraph, Der Spiegel, Frankfurter Allgemeine Zeitung, Globe and Mail, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von der Darstellung der kanadisch-europäischen &quot;assoziierten Mitgliedschaft&quot; als strategischem Durchbruch hin zu wachsender Skepsis, ob dahinter überhaupt Substanz steckt. Am 22. und 23. Oktober feierten Globe and Mail und Der Spiegel das Projekt als &quot;Allianz für die Zukunft&quot;, ja als symbolische &quot;Scheidung&quot; Kanadas von den USA und &quot;Hochzeit&quot; mit Europa. Bis zum 29./30. Oktober hatten deutsche und französische Einwände die EU gezwungen, vom Begriff &quot;assoziiertes Mitglied&quot; selbst abzurücken; die Süddeutsche Zeitung bezeichnete ihn als rechtlich unbegründet. Am 31. Oktober beschrieben Frankfurter Allgemeine Zeitung und Süddeutsche Zeitung den Gipfel in Montreal als &quot;rhetorikschwer&quot;, aber inhaltsarm, während ein Kommentar im Daily Telegraph am 1. November das ganze Vorhaben als illusorisch verwarf. Kanadische Medien blieben Carneys Diversifizierungsstrategie gegenüber wohlwollender, während die deutschsprachige Presse die europäische Uneinigkeit durchweg kritischer sah.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4679">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4747">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4868">24.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5031">26.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5196">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5256">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5379">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5380">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5474">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5564">1.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Antisemitismus im britischen und deutschen Diskurs</h2>
+      <p class="biweekly-topic-byline">9 von 14 Tagen · 6 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verlagerte sich von einem eng gefassten, personenbezogenen britischen Skandal hin zu einer breiteren, strukturellen und historischen Auseinandersetzung mit Antisemitismus, vor allem in Deutschland. Ende Oktober dominierte The Daily Telegraph nahezu allein mit Berichten über die Ehefrau von Sicherheitsberater Jonathan Powell und dem Vorwurf selektiver Empörung über Rassismus in der britischen Politik. Anfang November vertiefte sich der Rahmen: Volker Weiß in der Süddeutsche Zeitung (2. November) verfolgt die Konstruktion der Juden als ewige &quot;Fremde&quot; bis zum Wiener Kongress zurück und kritisiert Kanzler Merz&#x27; Rhetorik, während am 3. November Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung und The Globe and Mail Antisemitismus als strukturelles politisches und sicherheitspolitisches Thema behandelten - Koalitionspolitik in Deutschland, Radikalisierungsprävention in Kanada - statt als Einzelskandal.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4649">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4734">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4889">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4931">25.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4937">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-4989">26.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5171">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5180">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5184">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5197">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5253">29.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5693">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5738">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5756">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">US-Politik: Islamfeindlichkeit und Israel-Fragen im Wahlkampf</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 6 Quellen: Globe and Mail, Guardian, Los Angeles Times, Neue Zürcher Zeitung, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von der Klage eines einzelnen Kandidaten über unfaire Angriffe hin zu einer breiteren Erzählung über Risse in der Demokratischen Partei und parteiübergreifende Vorurteile. Am 22. Oktober zeigte The Guardian El-Sayed, wie er Vorwürfe zu seiner muslimischen Identität und Israel-Haltung kämpferisch kontert. Bis zum 30./31. Oktober deuteten Los Angeles Times, Neue Zürcher Zeitung und Süddeutsche Zeitung das Rennen in Michigan als Testfall für den Richtungsstreit zwischen gemäßigten Demokraten und der progressiven Linken sowie als Bruchlinie zwischen arabisch- und jüdisch-amerikanischen Wählern, während The Washington Post den Rahmen auf Vivek Ramaswamy ausweitete.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4695">22.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5233">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5276">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5410">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5411">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5475">31.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Sudans Drohnenkrieg und seine humanitäre Eskalation</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 6 Quellen: Economist, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, Süddeutsche Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von einem einzelnen Schockereignis zu einem Bild eines sich verfestigenden, mehrseitigen Drohnenkriegs gegen Zivilisten und Infrastruktur. Am 24. Oktober meldete The Guardian einen Marktangriff mit 153 Toten, während die Süddeutsche Zeitung argumentierte, Sudans Generäle eskalierten bewusst, ohne internationale Konsequenzen. Bis zum 30. Oktober zeigten The Economist und The Guardian, dass sowohl Armee als auch RSF Drohnen zerstörerisch einsetzen - gegen einen Markt in Darfur beziehungsweise gegen Kraftwerke -, ein Befund, der sich bis zum 2. November in Berichten über landesweiten Infrastrukturkollaps bestätigte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-24_de.html#section-4883">24.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5099">27.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5297">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5521">31.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5529">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5667">2.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Russland-Ukraine-Krieg: Von militärischer Standhaftigkeit zum menschlichen Preis</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 6 Quellen: Die Welt, Frankfurter Allgemeine Zeitung, Los Angeles Times, Neue Zürcher Zeitung, Observer, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von militärischer Initiative und Standhaftigkeit der Ukraine hin zu den psychologischen, kulturellen und menschlichen Kosten des Krieges - bis hin zur russischen Gesellschaft selbst. Am 26. Oktober deutete die Neue Zürcher Zeitung eine Tunneloffensive bei Kupjansk als Beweis ukrainischer Initiative. Bis zum 3. November rückten dieselbe Zeitung sowie die Süddeutsche Zeitung Drohnenpiloten, exilierte Fußballer, Kriegslyrik und ein zensiertes russisches Dorf nach einem Drohnenangriff in den Blick. Deutschsprachige Medien betonten dabei ukrainische Resilienz und russische Erstarrung, während britische Quellen wie The Observer humanitäre und diplomatische Aspekte hervorhoben.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-26_de.html#section-4999">26.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5146">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5442">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5537">31.10</a><a class="daily-link" href="report_2026-11-03_de.html#section-5746">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5792">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5874">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Die Affäre um Audi-Chef Döllners Auftritt mit Trump</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 6 Quellen: Die Welt, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer nüchternen wirtschaftspolitischen Einordnung zu immer schärferer moralischer Verurteilung. Am 26. Oktober beschrieben The Guardian und Die Welt Audis Vier-Milliarden-Dollar-Investition in Georgia noch als pragmatische Reaktion auf Trumps Zölle, ohne CEO Gernot Döllner persönlich anzugreifen. Bis zum 31. Oktober, nach seinem öffentlichen Auftritt neben Trump, eskalierten Kommentare und Leserbriefe in der Süddeutschen Zeitung zu Vergleichen mit Wegbereitern von Autokraten wie Putin und Kim Jong-un, während ein Leserbrief in der Frankfurter Allgemeine Zeitung ihn bereits am 29. Oktober einen &quot;nützlichen Idioten&quot; nannte. Zwischen pragmatischer Rechtfertigung und moralischer Verurteilung bleibt die Berichterstattung gespalten.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-26_de.html#section-5007">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5073">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5190">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5267">29.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5514">31.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Sally Rooney, Palestine Action und Großbritanniens Debatte über Meinungsfreiheit</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 5 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Guardian, Observer</p>
+      <p class="biweekly-topic-text">Die Berichterstattung begann als enger, oft skeptischer Streit über Sally Rooneys persönliche Glaubwürdigkeit - Die Welt und die Frankfurter Allgemeine Zeitung warfen ihr vor, Zensur mit den rechtlichen Folgen der Finanzierung einer verbotenen Organisation zu verwechseln - und weitete sich zu einer viel größeren Geschichte über staatliche Repression gegen pro-palästinensische Meinungsäußerung aus. Ende Oktober und Anfang November berichteten The Guardian und The Observer über Tausende Festnahmen (bis zum 2. November rund 4.200) sowie Unmut in der Labour-Partei und bezeichneten das Verbot von Palestine Action als &quot;beispiellosen Angriff auf die Meinungsfreiheit&quot;, während The Daily Telegraph die Durchsetzung konsequent als rechtmäßiges Vorgehen gegen Terrorunterstützer verteidigte. Der Fokus verschob sich damit von Rooneys Motiven hin zu Ausmaß und Legitimität der Repression insgesamt.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4643">22.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4900">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4940">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5036">26.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5389">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5455">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5557">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5665">2.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Debatte um Großbritanniens Nordsee-Öl- und Gaspolitik</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 5 Quellen: Daily Telegraph, Frankfurter Allgemeine Zeitung, Globe and Mail, Guardian, Observer</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer breiten Debatte zu einer einzigen, zunehmend kritischen Stimme. Zwischen dem 22. und 26. Oktober deckte allein The Guardian ein Meinungsspektrum ab - von pragmatischer Verteidigung der Jackdaw-Genehmigung bis zu scharfer Kritik von Klimaaktivisten und Berichten über Streit innerhalb von Labour über Rosebank -, während The Daily Telegraph die Regierung aus entgegengesetzter Richtung angriff. Ab dem 31. Oktober berichtete nur noch The Daily Telegraph, der Norwegens Equinor als Vorbild anführte und am 1. November einen Energiemanager zitierte, der vor abwandernden Investitionen warnte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4660">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4737">23.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4943">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5004">26.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5461">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5567">1.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Rechtsstreit um Wahlintegrität und die Überprüfung migrantischer Wähler</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 5 Quellen: Globe and Mail, Los Angeles Times, Süddeutsche Zeitung, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von den Vorwürfen der Regierung gegen die Bundesstaaten hin zur Dokumentation wiederholter juristischer Niederlagen und wachsender öffentlicher Beunruhigung. Am 22. und 25. Oktober schilderte die Los Angeles Times Drohungen des Justizministeriums gegen Wahlbeamte in Kalifornien wegen angeblich &quot;schlampig erstellter Listen&quot; von Nichtstaatsbürgern. Bis zum 31. Oktober und 3. November berichteten Los Angeles Times und Globe and Mail, dass Gerichte, bis hinauf zum Supreme Court, wiederholt Versuche ablehnten, rund 20.000 Stimmzettel zu blockieren, während Umfragen zeigten, dass fast zwei Drittel der kalifornischen Wähler Eingriffe des Bundes fürchteten. USA Today behielt bei der parallelen Alaska-Affäre durchgehend einen sachlicheren, enger juristischen Ton bei.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4696">22.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4976">25.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5235">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5412">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5483">31.10</a><a class="daily-link" href="report_2026-11-03_de.html#section-5704">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Chinas Wirtschaft: Von Statistikzweifeln zur bestätigten Abkühlung</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 5 Quellen: Economist, Globe and Mail, Guardian, Los Angeles Times, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von allgemeiner institutioneller Skepsis gegenüber Pekings Zahlen hin zu konkreten, sich häufenden Belegen für eine echte Abkühlung. Am 22. Oktober argumentierte The Washington Post, offizielle Wachstumsdaten verdeckten eine tiefe Krise. Bis zum 30. Oktober baute The Economist in mehreren Beiträgen einen strukturellen Befund auf - verbotene Städterankings, Überkapazitäten bei Hochgeschwindigkeitsbahnen trotz schrumpfender Bevölkerung und ein vom Staat gestützter Aktienmarkt. Am 4. November lieferte Los Angeles Times mit sinkenden Exportaufträgen im PMI handfeste Bestätigung. Auffällig: Jeder Beitrag stammte von nur einer Zeitung, der Fokus verschob sich von allgemeiner Kritik zu konkreten Daten.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4699">22.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5113">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5211">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5322">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5324">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5338">30.10</a><a class="daily-link" href="report_2026-11-04_de.html#section-5845">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Britische Verteidigungsausgaben und die Glaubwürdigkeitsfrage bei den NATO-Zielen</h2>
+      <p class="biweekly-topic-byline">8 von 14 Tagen · 5 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung begann als enger, wiederholter Angriff der The Daily Telegraph auf Labour, die angeblich Zahlen &quot;fälsche&quot;, um Fortschritte bei den NATO-Zielen von 3 beziehungsweise 3,5 Prozent vorzutäuschen - vorgetragen von Ben Wallace (27. Oktober) und verstärkt durch eine Kolumne vom 28. Oktober, die warnte, Putin lasse sich von solchen &quot;Buchhaltungstricks&quot; nicht täuschen. Anfang November weitete sich der Rahmen deutlich aus: Am 2. November ordneten fünf Artikel aus drei deutschen Zeitungen die britische Debatte in eine breitere europäische Diskussion über Verteidigungsbereitschaft ein, und am 3./4. November rückten Frankfurter Allgemeine Zeitung sowie Süddeutsche Zeitung strukturelle Ineffizienz und mangelnde Koordination in der gesamten NATO-Aufrüstung in den Vordergrund, statt nur die britischen Zahlen zu hinterfragen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4724">23.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5077">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5153">28.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5456">31.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5553">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5617">2.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5644">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5752">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5880">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">US-Einwanderungsbehörden und Abschiebungen unter Trump</h2>
+      <p class="biweekly-topic-byline">10 von 14 Tagen · 5 Quellen: Frankfurter Allgemeine Zeitung, Globe and Mail, Los Angeles Times, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Im Laufe des Zeitraums verschob sich die Berichterstattung von einer institutionellen Politikanalyse hin zu einer Reihe konkreter Einzelfälle, die den menschlichen Preis der Politik zunehmend schärfer zeichnen. Am 23. und 25. Oktober rahmten Los Angeles Times und die Frankfurter Allgemeine Zeitung das Thema noch strukturell - mit Zweifeln an offiziellen Abschiebezahlen und einer Analyse des Streits zwischen Bund und Bundesstaaten über die Zusammenarbeit mit ICE. Anfang November konzentrierte sich die Berichterstattung, nun fast ausschließlich bei USA Today und The Washington Post, auf einzelne Schicksale: eine getrennte ukrainische Familie, eine salvadorianische Witwe, die nach öffentlichen Aussagen über den Tod ihres Mannes in Haft selbst ein Abschiebeverfahren erhält, sowie Hongkonger Aktivisten ohne Schutzstatus. Ein roter Faden ist die wachsende Betonung von Vergeltung und irreversiblem Schaden anstelle politischer Debatte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4793">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4865">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4964">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5062">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5120">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5224">28.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5237">28.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5603">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5675">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5795">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5865">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Volkswagens Krise: Chinesische Konkurrenz und US-Zölle</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 5 Quellen: Daily Telegraph, Die Welt, Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer engen China-Absatzanalyse hin zu einer breiteren Strukturkrise. Am 23. Oktober stellte die Süddeutsche Zeitung die Strategie &quot;In China, für China&quot; als enttäuschend, aber noch nicht gescheitert dar; nach dem Quartalsverlust von 6 Milliarden Euro beschrieben The Daily Telegraph, die Frankfurter Allgemeine Zeitung und die Süddeutsche Zeitung am 30. Oktober übereinstimmend eine doppelte Krise aus China und US-Zöllen, inklusive Kritik an politischer Unterwürfigkeit gegenüber Trump. Am 3. und 4. November weiteten die Frankfurter Allgemeine Zeitung und die Süddeutsche Zeitung den Blick auf Audi, Schaeffler und kleinere Zulieferer aus.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4804">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4894">24.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5354">30.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5642">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5747">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5821">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Schusswaffenangriff auf eine Kirche in Jordanien und seine Folgen</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 5 Quellen: Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verlagerte sich von der faktischen Schilderung des Anschlags selbst hin zur staatlichen Reaktion und deren Folgen. Ende Oktober 2026 berichteten Los Angeles Times, USA Today und The Washington Post über den Angriff bei einer griechisch-orthodoxen Trauerfeier, mit leichten Abweichungen bei den Opferzahlen und Betonung von König Abdullahs II. Ankündigung eines Vorgehens &quot;mit eiserner Faust&quot;. Bis zum 28./30. Oktober verlagerte sich der Fokus bei Frankfurter Allgemeine Zeitung und The Guardian auf jordanische Vergeltungsschläge in Syrien, wobei The Guardian ein widersprüchlicheres syrisches Bild zeichnet als die offizielle jordanische Darstellung bei Frankfurter Allgemeine Zeitung.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-24_de.html#section-4884">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4977">25.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5015">26.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5182">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5396">30.10</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Großbritanniens Einwanderungspolitik und Mahmoods Kurswechsel</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 4 Quellen: Daily Telegraph, Frankfurter Allgemeine Zeitung, Guardian, Los Angeles Times</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer einsamen institutionellen Warnung zu einem scharf polarisierten Schlagabtausch mehrerer Zeitungen. Am 23. Oktober befasste sich nur The Daily Telegraph mit dem Thema und warnte redaktionell vor einer Aufweichung der Reform. Bis zum 3./4. November, nachdem Mahmood die Regeln tatsächlich gelockert hatte, bezeichnete The Daily Telegraph (Hymas, Gutteridge, Jenrick) dies als teure &quot;Kapitulation&quot; von bis zu 52 Milliarden Pfund, während The Guardian darin ein Zugeständnis sah, das Migranten gegenüber weiterhin unfair bleibe. Frankfurter Allgemeine Zeitung und Los Angeles Times schilderten den Kompromiss hingegen neutraler und beschreibender.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4735">23.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5166">28.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5622">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5707">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5816">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">El Salvadors Militäreinsatz in Haitis Bandenkrise</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 4 Quellen: Daily Telegraph, Los Angeles Times, Neue Zürcher Zeitung, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer dramatischen Rettungsgeschichte hin zu wachsender Skepsis gegenüber Legitimität und Wirksamkeit des Einsatzes. Am 23. und 24. Oktober schilderten Los Angeles Times, The Daily Telegraph und die Neue Zürcher Zeitung El Salvadors Entsendung als Rettungsmission, verknüpft mit Präsident Bukeles Hardliner-Image. Bis zum 30. Oktober deutete die Los Angeles Times (Dánica Coto) die Entsendung von 2.000 Soldaten eher als Test für Rechtmäßigkeit und Koordination denn als Sicherheitserfolg, und am 4. November ließ dieselbe Zeitung einen Bandenchef zu Wort kommen, der UN-vermittelten Dialog statt Gewalt forderte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4785">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4846">24.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5234">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5406">30.10</a><a class="daily-link" href="report_2026-11-04_de.html#section-5844">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Debatte um Kaliforniens Vermögenssteuer (Proposition 40)</h2>
+      <p class="biweekly-topic-byline">7 von 14 Tagen · 4 Quellen: Daily Telegraph, Frankfurter Allgemeine Zeitung, Los Angeles Times, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung begann mit einem engeren Fokus auf Kampagnenausgaben und taktisches Manövrieren von Konzernen rund um Proposition 40 und weitete sich dann zu einer offenen ideologischen Auseinandersetzung über die Legitimität von Vermögenssteuern überhaupt aus. Während die Los Angeles Times am 23. und 24. Oktober noch überwiegend neutral über Taktiken der Milliardäre berichtete, positionierten sich die Quellen bis zum 1. und 2. November klar gegeneinander: The Daily Telegraph und The Washington Post warnen vor Kapitalflucht und wirtschaftlichem Schaden, während Kolumnisten der Los Angeles Times die Steuer je nach Autor als ökonomisch verfehlt oder als legitime populistische Korrektur verteidigen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-23_de.html#section-4792">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4918">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4973">25.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5195">28.10</a><a class="daily-link" href="report_2026-11-01_de.html#section-5568">1.11</a><a class="daily-link" href="report_2026-11-02_de.html#section-5683">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5737">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Erneute innerkoreanische Spannungen</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 4 Quellen: Daily Telegraph, Economist, Los Angeles Times, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von knappen Tatsachenschilderungen einzelner Grenzzwischenfälle hin zu einer breiteren strategischen Analyse des schwindenden amerikanischen Einflusses. Am 25. und 28. Oktober schilderten die Los Angeles Times und The Daily Telegraph nordkoreanische Propagandasendungen und Haubitzenverlegungen nach einer Minenexplosion rein faktisch. Bis zum 2. November argumentierte Cate Cadell in The Washington Post hingegen, Pjöngjangs wachsendes Nukleararsenal und seine engeren Bindungen zu Russland und China hätten Washingtons Position gegenüber 2018 strukturell geschwächt, nachdem ein Kommentar derselben Zeitung vom 29. Oktober die Spannungen bereits mit globalen Risiken für die Chip-Lieferkette verknüpft hatte.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-25_de.html#section-4970">25.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5156">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5274">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5305">30.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5695">2.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Gerichte gegen die Trump-Regierung: Rechtsstaatlichkeit und die Politisierung des Justizministeriums</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 4 Quellen: Frankfurter Allgemeine Zeitung, Los Angeles Times, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die Berichterstattung entwickelte sich von vereinzelten richterlichen Rügen der Regierung hin zu einem sich verdichtenden Bild, das fast ausschließlich von The Washington Post gezeichnet wurde: Justizministerium und FBI würden Strafverfolgung zunehmend politisch &quot;instrumentalisieren&quot;. Am 27. Oktober rahmte The Washington Post Gerichtsurteile gegen die Regierung noch als Erfolge, die durch &quot;legalistische Verweigerung&quot; untergraben würden. Bis zum 3. November zeigten zwei Beiträge derselben Zeitung - über die Vergeltungsklage eines FBI-Agenten aus Chicago und die richterliche Abweisung des Verfahrens zum Laptop Hunter Bidens als &quot;Waffeneinsatz&quot; - ein durchgängiges Muster politischen Drucks aus Behörde und Justiz zugleich. Los Angeles Times und USA Today lieferten dagegen nur punktuelle Einzelberichte ohne vergleichbar systematische Einordnung.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-27_de.html#section-5117">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5225">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5275">29.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5527">31.10</a><a class="daily-link" href="report_2026-11-03_de.html#section-5798">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Kanadas Zollstreit mit den USA: Von der Krisenreaktion zu vorsichtigen Verhandlungen</h2>
+      <p class="biweekly-topic-byline">9 von 14 Tagen · 3 Quellen: Globe and Mail, USA Today, Washington Post</p>
+      <p class="biweekly-topic-text">Die überwiegend von der Globe and Mail stammende Berichterstattung wandelte sich von einer akuten Industriekrisen-Darstellung zu vorsichtigem diplomatischem Optimismus. Ende Oktober standen ein fast neun Milliarden Dollar schweres Hilfspaket für Stahl- und Autoindustrie, Entlassungen bei Stelco und rechtliche Drohungen gegen Cleveland-Cliffs im Mittelpunkt. Nach einem Telefonat zwischen Carney und Trump verlagerte sich der Fokus Anfang November auf die Wiederaufnahme formeller Gespräche, wenngleich mit deutlicher Zurückhaltung: Experten warnten vor übertriebenem Optimismus, und ein Beitrag vom 3. November beschrieb die Gespräche als Rückkehr zum gescheiterten Ausgangspunkt vom August statt als Durchbruch. Ein klarer Unterschied in der Einordnung blieb bestehen: US-Zeitungen wie USA Today und The Washington Post deuteten Zollerleichterungen vor allem als Wahlkampftaktik vor den Zwischenwahlen, während kanadische Berichte die heimischen Wirtschaftsschäden und Ottawas Standhaftigkeit betonten.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4682">22.10</a><a class="daily-link" href="report_2026-10-23_de.html#section-4822">23.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4871">24.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5035">26.10</a><a class="daily-link" href="report_2026-10-26_de.html#section-5057">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5112">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5201">28.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5664">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5764">3.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5766">3.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5829">4.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Verhandlungen zur Biodiversitätsfinanzierung bei der COP17</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 3 Quellen: Frankfurter Allgemeine Zeitung, Guardian, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von frühen Warnungen vor festgefahrenen Verhandlungen zu einem enttäuschten, aber abgewogenen Fazit nach Abschluss der COP17. Am 26. Oktober machte die Frankfurter Allgemeine Zeitung Russland und Saudi-Arabien für blockierte Ziele von 2022 verantwortlich; bis zum 2. November beschrieben dieselbe Zeitung und die Süddeutsche Zeitung ein schwaches Abkommen zu schädlichen Subventionen mit ungelösten Finanzierungslücken. The Guardian lieferte am 31. Oktober die schärfste Deutung: Der Cop-Prozess sei selbst &quot;zum Scheitern konstruiert&quot; - eine strukturelle Kritik, die die deutschen Blätter nicht teilten.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-26_de.html#section-5020">26.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5378">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5539">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5658">2.11</a><a class="daily-link" href="report_2026-11-03_de.html#section-5793">3.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Europäische Energiesicherheit und Energiewende</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 3 Quellen: Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung verschob sich von der Diagnose eines globalen Versorgungsschocks hin zum Streit über innereuropäische Schuld und Ausnutzung. Am 26./27. Oktober deuteten Frankfurter Allgemeine Zeitung und Neue Zürcher Zeitung Diesel- und Gasknappheit als direkte Folge des Iran-Kriegs und der Hormuz-Blockade, mit Ausläufern bis in die Schweizer Treibstoffpolitik und den Medizintechnikhandel. Bis zum 31. Oktober debattierten Frankfurter Allgemeine Zeitung und Süddeutsche Zeitung stattdessen über deutsche Politik selbst: Kritik an Berlins Schwächung des EEG sowie eine Enthüllung über Leag, das Subventionsregeln mittels Braunkohle-zu-Gas-Umbau ausnutzen will.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-26_de.html#section-5021">26.10</a><a class="daily-link" href="report_2026-10-27_de.html#section-5090">27.10</a><a class="daily-link" href="report_2026-10-28_de.html#section-5193">28.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5377">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5509">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5682">2.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Merz&#x27; Asienreise und Deutschlands China-Kurswechsel</h2>
+      <p class="biweekly-topic-byline">5 von 14 Tagen · 3 Quellen: Die Welt, Frankfurter Allgemeine Zeitung, Süddeutsche Zeitung</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer ambitionierten Darstellung von Merz&#x27; Reise als Schmiede einer Allianz mittlerer Mächte gegen China und die USA hin zu einem nüchterneren Bild zersplitterter Umsetzung. Am 28. und 29. Oktober betonten Die Welt und Süddeutsche Zeitung Merz&#x27; Vision einer &quot;Superallianz&quot;; bis zum 31. Oktober enthüllte die Frankfurter Allgemeine Zeitung, dass Merz nach Kritik asiatischer Partner tatsächlich von EU-Protektionismus zurückgerudert war, während ein Beitrag zu Steinmeiers China-Besuch Pekings wachsendes Selbstbewusstsein hervorhob. Der klarste Bruch verlief innerhalb der Frankfurter Allgemeine Zeitung selbst, zwischen Härte fordernden Kommentaren und Berichten über nachgiebigen Rückzug.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-28_de.html#section-5177">28.10</a><a class="daily-link" href="report_2026-10-29_de.html#section-5261">29.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5362">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5444">30.10</a><a class="daily-link" href="report_2026-10-31_de.html#section-5468">31.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5656">2.11</a>
+      </div>
+    </article>
+    <article class="biweekly-topic">
+      <h2 class="biweekly-topic-title">Die Debatte um den britisch-europäischen &quot;Reset&quot;</h2>
+      <p class="biweekly-topic-byline">6 von 14 Tagen · 2 Quellen: Daily Telegraph, Guardian</p>
+      <p class="biweekly-topic-text">Die Berichterstattung wandelte sich von einer ideologischen Grundsatzdebatte über einen EU-Beitritt hin zur konkreten Darstellung eines &quot;Reset&quot;-Deals samt politischer Einordnung. Am 22. Oktober veröffentlichte The Daily Telegraph nur Leserbriefe gegen eine Annäherung, während The Guardian am 30. Oktober in einem Leitartikel aktiv zu einer Neubewertung des Brexits aufrief. Bis zum 4. November, als beide Zeitungen über den tatsächlichen Deal berichteten, verlagerte sich der Unterschied auf die Gewichtung: The Guardian betonte wirtschaftlichen Nutzen und Labours Beschwichtigungen, The Daily Telegraph, unter anderem mit einer Kolumne von Lord David Frost, betonte Souveränitätsverluste und Schäden für einzelne Branchen.</p>
+      <div class="biweekly-daily-links">
+        <span class="biweekly-daily-links-label">In den Tagesberichten ansehen:</span>
+        <a class="daily-link" href="report_2026-10-22_de.html#section-4656">22.10</a><a class="daily-link" href="report_2026-10-24_de.html#section-4877">24.10</a><a class="daily-link" href="report_2026-10-25_de.html#section-4933">25.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5359">30.10</a><a class="daily-link" href="report_2026-10-30_de.html#section-5404">30.10</a><a class="daily-link" href="report_2026-11-02_de.html#section-5619">2.11</a><a class="daily-link" href="report_2026-11-04_de.html#section-5814">4.11</a>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Barrierefreiheitserklärung</a>
+    <a class="footer-link" href="terms.html">Nutzungsbedingungen</a>
+    <a class="footer-link" href="privacy.html">Datenschutzerklärung</a>
+  </footer>
+</body>
+</html>
