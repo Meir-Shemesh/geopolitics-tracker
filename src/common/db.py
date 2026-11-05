@@ -135,6 +135,23 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "cache_read_tokens": "INTEGER NOT NULL DEFAULT 0",
         "ref": "TEXT",
     },
+    # One row per Message Batches API batch the pipeline submitted (screen.py with SCREEN_USE_BATCH on). Written the
+    # moment the batch is created, BEFORE the wait begins, so a run that dies mid-wait leaves a record: the next run
+    # finds the open batch, keeps following it and never submits (and pays for) the same pages twice.
+    # request_ids is the JSON list of custom_ids it holds; status is submitted | collected | abandoned.
+    "api_batches": {
+        "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
+        "batch_id": "TEXT NOT NULL",
+        "stage": "TEXT NOT NULL",
+        "model": "TEXT NOT NULL",
+        "created_at": "TEXT NOT NULL",
+        "run_date": "TEXT NOT NULL",
+        "n_requests": "INTEGER NOT NULL",
+        "request_ids": "TEXT NOT NULL",
+        "status": "TEXT NOT NULL DEFAULT 'submitted'",
+        "closed_at": "TEXT",
+        "note": "TEXT",
+    },
     # One row per biweekly reduce pass (the grouping step): what it was given, what it returned and whether it was
     # retried. The log tail and the checkpoints that the pipeline deletes after a success cannot answer "is the
     # missing/duplicated share drifting towards the retry threshold?" - this table can. Written by
@@ -210,6 +227,7 @@ TABLE_CONSTRAINTS: dict[str, list[str]] = {
     "article_countries": ["UNIQUE(article_id, country_code)"],
     "article_conflict_zones": ["UNIQUE(article_id, conflict_zone)"],
     "biweekly_periods": ["UNIQUE(end_date)"],
+    "api_batches": ["UNIQUE(batch_id)"],
     "biweekly_topic_sections": ["UNIQUE(topic_id, section_id)"],
 }
 
@@ -275,17 +293,31 @@ API_PRICES_PER_MTOK = {
 }
 
 
+# Message Batches API: "All usage is charged at 50 percent of the standard API prices"
+# (platform.claude.com/docs/en/build-with-claude/batch-processing, Pricing). Batch calls are logged under the stage
+# name + this suffix (e.g. "screen_batch"), so the cost code can tell them from regular calls without a new column.
+BATCH_STAGE_SUFFIX = "_batch"
+BATCH_PRICE_FACTOR = 0.5
+
+
+def is_batch_stage(stage: str) -> bool:
+    return stage.endswith(BATCH_STAGE_SUFFIX)
+
+
 def usage_marker() -> str:
     """The moment a stage starts, in the same format record_api_usage() writes to api_usage.called_at."""
     return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
-def estimate_cost_usd(model: str, input_tokens: int, output_tokens: int, cache_write: int, cache_read: int) -> float | None:
-    """None for a model without a known price (never guessed)."""
+def estimate_cost_usd(model: str, input_tokens: int, output_tokens: int, cache_write: int, cache_read: int,
+                      batch: bool = False) -> float | None:
+    """None for a model without a known price (never guessed). `batch` applies the 50% Batches API price (the
+    multipliers for cache writes/reads stack on top of it, per the pricing page)."""
     if model not in API_PRICES_PER_MTOK:
         return None
     price_in, price_out = API_PRICES_PER_MTOK[model]
-    return (input_tokens * price_in + cache_write * price_in * 1.25 + cache_read * price_in * 0.10 + output_tokens * price_out) / 1e6
+    cost = (input_tokens * price_in + cache_write * price_in * 1.25 + cache_read * price_in * 0.10 + output_tokens * price_out) / 1e6
+    return cost * BATCH_PRICE_FACTOR if batch else cost
 
 
 def summarize_api_usage(since: str, stage_prefix: str = "", db_path: Path | None = None) -> dict:
@@ -295,19 +327,21 @@ def summarize_api_usage(since: str, stage_prefix: str = "", db_path: Path | None
     conn = sqlite3.connect(db_path or DB_PATH, timeout=5)
     try:
         rows = conn.execute(
-            "SELECT model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens FROM api_usage "
+            "SELECT model, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, stage FROM api_usage "
             "WHERE called_at >= ? AND stage LIKE ?",
             (since, stage_prefix + "%"),
         ).fetchall()
     finally:
         conn.close()
-    total = {"calls": len(rows), "input": 0, "output": 0, "cache_write": 0, "cache_read": 0, "cost": 0.0, "unpriced": 0}
-    for model, tokens_in, tokens_out, cache_write, cache_read in rows:
+    total = {"calls": len(rows), "input": 0, "output": 0, "cache_write": 0, "cache_read": 0, "cost": 0.0, "unpriced": 0,
+             "batch_calls": 0}
+    for model, tokens_in, tokens_out, cache_write, cache_read, stage in rows:
+        total["batch_calls"] += int(is_batch_stage(stage))
         total["input"] += tokens_in
         total["output"] += tokens_out
         total["cache_write"] += cache_write
         total["cache_read"] += cache_read
-        cost = estimate_cost_usd(model, tokens_in, tokens_out, cache_write, cache_read)
+        cost = estimate_cost_usd(model, tokens_in, tokens_out, cache_write, cache_read, batch=is_batch_stage(stage))
         if cost is None:
             total["unpriced"] += 1
         else:
@@ -325,6 +359,7 @@ def format_usage_summary(label: str, total: dict) -> str:
         f"API usage ({label}): {total['calls']} calls | input {total['input']:,} | output {total['output']:,} | "
         f"cache write {total['cache_write']:,} | cache read {total['cache_read']:,} | "
         f"cache hit {total['cache_hit_rate']:.0%} of input tokens | est. {cost}"
+        + (f" | batch: {total['batch_calls']} of {total['calls']} calls at 50% price" if total.get("batch_calls") else "")
     )
 
 
@@ -542,6 +577,32 @@ def insert_extracted_page(
         VALUES (?, ?, ?, ?)
         """,
         (file_id, page_number, raw_text, extracted_at),
+    )
+    conn.commit()
+
+
+def insert_api_batch(conn: sqlite3.Connection, batch_id: str, stage: str, model: str, request_ids: list[str]) -> None:
+    """Commits immediately: this row is the crash-safety record of a batch that is now running (and billing)."""
+    import json
+    conn.execute(
+        "INSERT INTO api_batches (batch_id, stage, model, created_at, run_date, n_requests, request_ids) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (batch_id, stage, model, datetime.now(timezone.utc).isoformat(), date_cls.today().isoformat(),
+         len(request_ids), json.dumps(request_ids)),
+    )
+    conn.commit()
+
+
+def get_open_api_batches(conn: sqlite3.Connection, stage: str) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM api_batches WHERE stage = ? AND status = 'submitted' ORDER BY id", (stage,)
+    ).fetchall()
+
+
+def close_api_batch(conn: sqlite3.Connection, batch_id: str, status: str, note: str | None = None) -> None:
+    conn.execute(
+        "UPDATE api_batches SET status = ?, closed_at = ?, note = ? WHERE batch_id = ?",
+        (status, datetime.now(timezone.utc).isoformat(), note, batch_id),
     )
     conn.commit()
 

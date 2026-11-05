@@ -10,6 +10,8 @@ One-shot run - not a long-running daemon.
 
 import argparse
 import hashlib
+import json
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -17,11 +19,16 @@ from datetime import datetime, timezone
 import anthropic
 from dotenv import load_dotenv
 
+from src.common import batch_runner
 from src.common.db import (
+    BATCH_STAGE_SUFFIX,
     claim_report_date_on_first_scan,
+    close_api_batch,
     get_connection,
+    get_open_api_batches,
     get_unscreened_pages,
     init_db,
+    insert_api_batch,
     insert_page_screening,
     print_usage_summary,
     record_api_usage,
@@ -44,6 +51,14 @@ MODEL = "claude-haiku-4-5-20251001"
 # later than necessary for a call this small - max_tokens=300, one page of
 # text). 60s is generous for this call's normal size.
 API_CALL_TIMEOUT_SECONDS = 60.0
+
+# Message Batches API for the screening calls (50% price, asynchronous). OFF by default: with False nothing below the
+# switch changes - same calls, same output, same dates. To turn on, set True here (commit), or run once with --batch.
+# The wait is bounded: a batch still running after SCREEN_BATCH_TIMEOUT_SECONDS is canceled and its pages are screened
+# with regular calls. daily_autorun's screen step allows 90 minutes, so wait + fallback calls must fit in that.
+SCREEN_USE_BATCH = False
+SCREEN_BATCH_TIMEOUT_SECONDS = 15 * 60
+SCREEN_BATCH_POLL_SECONDS = 30.0
 
 SYSTEM_PROMPT = """You are a broad relevance filter for a geopolitical news-monitoring pipeline. You will be shown the raw text extracted from one page of a newspaper PDF. Some pages contain opinion or analysis articles about geopolitics (international relations, foreign policy, conflicts, diplomacy, sanctions, geopolitical economics, etc.) - possibly mixed with unrelated content from adjacent article boxes, because the source layout is a magazine/grid page, not simple columns.
 
@@ -69,6 +84,18 @@ SCREEN_TOOL = {
 }
 
 
+def build_screen_params(raw_text: str, model: str = MODEL) -> dict:
+    """The one definition of a screening request - used by screen_page() and, unchanged, by the batch path."""
+    return dict(
+        model=model,
+        max_tokens=300,
+        system=SYSTEM_PROMPT,
+        tools=[SCREEN_TOOL],
+        tool_choice={"type": "tool", "name": "record_screening"},
+        messages=[{"role": "user", "content": raw_text}],
+    )
+
+
 def screen_page(client: anthropic.Anthropic, raw_text: str, model: str = MODEL, ref: str | None = None) -> tuple[bool, str]:
     """`model` defaults to the production screening model (MODEL) - the parameter
     exists so a controlled experiment can swap this one call (e.g. comparing
@@ -82,14 +109,7 @@ def screen_page(client: anthropic.Anthropic, raw_text: str, model: str = MODEL, 
     to reject forced tool_choice with a 400 - if a future --screen-model turns
     out to need the same {"type": "auto"} + explicit-instruction workaround,
     that model-conditional branch belongs here, mirroring synthesize.py exactly."""
-    response = client.with_options(timeout=API_CALL_TIMEOUT_SECONDS).messages.create(
-        model=model,
-        max_tokens=300,
-        system=SYSTEM_PROMPT,
-        tools=[SCREEN_TOOL],
-        tool_choice={"type": "tool", "name": "record_screening"},
-        messages=[{"role": "user", "content": raw_text}],
-    )
+    response = client.with_options(timeout=API_CALL_TIMEOUT_SECONDS).messages.create(**build_screen_params(raw_text, model))
     record_api_usage("screen", model, response.usage, ref=ref)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return bool(tool_use.input["is_relevant"]), tool_use.input["reasoning"]
@@ -262,8 +282,165 @@ class ScreenTimings:
         return f"Timing: setup {setup_seconds:.1f}s | API: {api_part} | code per page: {self._stats(self.code, 3)}"
 
 
-def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> None:
+# --- Message Batches API (SCREEN_USE_BATCH) ---------------------------------------------------------------------
+# Same requests, same prompt, same model and parameters as screen_page() - sent as one batch (50% price) instead of one
+# call per page. The decision which pages need the API is pages_needing_api(); everything after the answer comes back
+# is the ordinary loop in run(), so there is ONE write path for verdicts. A page without a usable batch result (the
+# request errored/expired/was canceled, the batch timed out or failed) simply takes the regular screen_page() call.
+# Experiment 2026-11-05 (460 pages of 2026-11-01): finished in 145 s, 0 failures, 96.5% agreement with the stored verdicts.
+_CUSTOM_ID_RE = re.compile(r"^s-(\d+)-p(\d+)$")
+
+
+def batch_custom_id(file_id: int, page_number: int) -> str:
+    """Stable id of a page's request (<= 64 chars, [A-Za-z0-9_-] only, as the API requires)."""
+    return f"s-{file_id}-p{page_number}"
+
+
+def parse_custom_id(custom_id: str) -> tuple[int, int] | None:
+    match = _CUSTOM_ID_RE.match(custom_id)
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
+def pages_needing_api(conn, pages, duplicate_of: dict[int, int], newspaper_by_file: dict) -> list:
+    """The pages for which run() would call the API, decided with the same three rules the loop applies, in order:
+    (1) a page of a byte-identical duplicate file whose canonical page has a verdict copies it; (2) a page whose
+    normalized text equals an already-screened page of the same newspaper copies it; (3) a page with no text is
+    recorded as empty. Everything else needs the API. Pages earlier in this run count as screened (they will have a
+    verdict by the time a later page is reached); if one of them in fact fails, the later duplicate just takes a
+    regular call in the loop - an under-count here costs nothing but the discount."""
+    index = PageTextIndex(conn)
+    processed: set[tuple[int, int]] = set()
+    needed = []
+    for page in pages:
+        key = (page["file_id"], page["page_number"])
+        canonical_id = duplicate_of.get(page["file_id"])
+        copied = False
+        if canonical_id is not None:
+            canonical_key = (canonical_id, page["page_number"])
+            copied = canonical_key in processed or conn.execute(
+                "SELECT 1 FROM page_screening WHERE file_id = ? AND page_number = ?", canonical_key).fetchone() is not None
+        if not copied:
+            newspaper = newspaper_by_file.get(page["file_id"])
+            text_hash = page_text_hash(page["raw_text"])
+            copied = index.lookup(newspaper, text_hash) is not None
+            if not copied:
+                index.add(newspaper, text_hash, page["file_id"], page["page_number"])
+                if page["raw_text"].strip():
+                    needed.append(page)
+        processed.add(key)
+    return needed
+
+
+def _absorb_batch_results(results: dict, model: str, verdicts: dict) -> int:
+    """Logs every billed result to api_usage (stage 'screen_batch', priced at 50%) and keeps the usable verdicts.
+    Returns how many were usable."""
+    usable = 0
+    for custom_id, result in results.items():
+        key = parse_custom_id(custom_id)
+        if result.usage is not None:  # succeeded requests are billed even if their content is unusable
+            record_api_usage("screen" + BATCH_STAGE_SUFFIX, model, result.usage,
+                             ref=f"{key[0]}:{key[1]}" if key else custom_id)
+        if key is None or not result.usable:
+            continue
+        verdict = result.tool_input
+        if not isinstance(verdict.get("is_relevant"), bool) or not isinstance(verdict.get("reasoning"), str):
+            continue  # malformed answer: treated like a missing result, the loop asks again with a regular call
+        verdicts[key] = (verdict["is_relevant"], verdict["reasoning"])
+        usable += 1
+    return usable
+
+
+def _finish_batch(conn, client, batch_id: str, request_ids: list[str], model: str, elapsed: float, timeout_seconds: float,
+                  poll_seconds: float, sleep, monotonic, verdicts: dict, stats: dict) -> None:
+    """Waits for one batch (up to the shared timeout, counted from its creation), cancels it on timeout, collects what
+    it produced and closes its api_batches row. A batch that cannot be read at all is abandoned: its pages fall back."""
+    try:
+        outcome = batch_runner.wait_for_batch(client, batch_id, timeout_seconds, poll_seconds, already_elapsed=elapsed,
+                                              sleep=sleep, monotonic=monotonic)
+        note = "ended"
+        if outcome == "timeout":
+            print(f"  [batch] {batch_id}: not finished after {timeout_seconds / 60:.0f} min - canceling; pages without a "
+                  f"result take regular calls")
+            batch_runner.cancel_batch(client, batch_id, poll_seconds, sleep=sleep, monotonic=monotonic)
+            note = "timeout, canceled"
+        results = batch_runner.fetch_results(client, batch_id)
+    except Exception as exc:  # noqa: BLE001 - the pages of a lost batch must not be lost: they fall back to regular calls
+        print(f"  [batch] {batch_id}: could not be read ({type(exc).__name__}: {exc}) - abandoned, its pages fall back")
+        try:
+            batch_runner.cancel_batch(client, batch_id, poll_seconds, max_wait=0, sleep=sleep, monotonic=monotonic)
+        except Exception:  # noqa: BLE001
+            pass
+        close_api_batch(conn, batch_id, "abandoned", f"{type(exc).__name__}: {exc}"[:300])
+        stats["abandoned"] += 1
+        return
+    usable = _absorb_batch_results(results, model, verdicts)
+    stats["usable"] += usable
+    stats["returned"] += len(results)
+    kinds = {}
+    for result in results.values():
+        kinds[result.kind] = kinds.get(result.kind, 0) + 1
+    print(f"  [batch] {batch_id}: {note} - {len(results)} of {len(request_ids)} result(s) returned, {usable} usable "
+          f"({', '.join(f'{k} {v}' for k, v in sorted(kinds.items())) or 'none'})")
+    close_api_batch(conn, batch_id, "collected", note)
+
+
+def run_batch_phase(conn, client, pages, duplicate_of: dict[int, int], newspaper_by_file: dict, model: str,
+                    timeout_seconds: float, poll_seconds: float = batch_runner.DEFAULT_POLL_SECONDS,
+                    sleep=time.sleep, monotonic=time.monotonic, now=None) -> tuple[dict, dict]:
+    """Returns ({(file_id, page_number): (is_relevant, reasoning)}, stats). Never raises for an API/network problem:
+    whatever is missing from the result is screened by regular calls in run()'s loop.
+
+    1. Batches a previous run left open (api_batches, status 'submitted' - the process died during the wait) are
+       followed first and counted from THEIR creation time; their pages are not submitted again.
+    2. The pages still needing the API go out as one batch (split only if a documented limit requires it); its id is
+       stored the moment it is created."""
+    stats = {"batches": 0, "requests": 0, "returned": 0, "usable": 0, "abandoned": 0, "resumed": 0, "wait_seconds": 0.0}
+    verdicts: dict = {}
+    attempted: set[str] = set()
+    started = monotonic()
+    now_utc = now or datetime.now(timezone.utc)
+    try:
+        needed = pages_needing_api(conn, pages, duplicate_of, newspaper_by_file)
+        for row in get_open_api_batches(conn, "screen"):
+            ids = json.loads(row["request_ids"])
+            age = max(0.0, (now_utc - datetime.fromisoformat(row["created_at"])).total_seconds())
+            print(f"  [batch] following {row['batch_id']} left open by an earlier run ({len(ids)} request(s), "
+                  f"{age / 60:.0f} min old)")
+            stats["resumed"] += 1
+            attempted.update(ids)
+            _finish_batch(conn, client, row["batch_id"], ids, model, age, timeout_seconds, poll_seconds, sleep, monotonic,
+                          verdicts, stats)
+        to_send = [p for p in needed
+                   if (p["file_id"], p["page_number"]) not in verdicts
+                   and batch_custom_id(p["file_id"], p["page_number"]) not in attempted]
+        if to_send:
+            requests = [{"custom_id": batch_custom_id(p["file_id"], p["page_number"]),
+                         "params": build_screen_params(p["raw_text"], model)} for p in to_send]
+            submitted = []
+            for chunk in batch_runner.split_into_batches(requests):
+                batch_id = batch_runner.create_batch(client, chunk)
+                ids = [r["custom_id"] for r in chunk]
+                insert_api_batch(conn, batch_id, "screen", model, ids)  # committed before any waiting starts
+                print(f"  [batch] submitted {batch_id}: {len(chunk)} request(s)")
+                stats["batches"] += 1
+                stats["requests"] += len(chunk)
+                submitted.append((batch_id, ids, monotonic()))
+            for batch_id, ids, created in submitted:
+                _finish_batch(conn, client, batch_id, ids, model, monotonic() - created, timeout_seconds, poll_seconds,
+                              sleep, monotonic, verdicts, stats)
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        print(f"  [batch] batch phase failed ({type(exc).__name__}: {exc}) - remaining pages use regular calls")
+    stats["wait_seconds"] = monotonic() - started
+    return verdicts, stats
+
+
+def run(file_name_contains: str | None = None, screen_model: str = MODEL, use_batch: bool | None = None,
+        batch_timeout_seconds: float | None = None) -> None:
     load_dotenv()
+    # The processing day is fixed here, at the start of the run. In batch mode the verdicts are written after a wait of
+    # minutes to hours (possibly past midnight), and claim_report_date_on_first_scan() must not see that later moment.
+    run_started_iso = datetime.now(timezone.utc).isoformat()
+    batch_enabled = SCREEN_USE_BATCH if use_batch is None else use_batch
     setup_started = time.perf_counter()
     timings = ScreenTimings()
 
@@ -300,9 +477,21 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
     claim_checked: set[int] = set()  # files already offered to claim_report_date_on_first_scan() this run
     setup_seconds = time.perf_counter() - setup_started
 
+    batch_verdicts: dict = {}
+    batch_stats = None
+    if batch_enabled:
+        batch_verdicts, batch_stats = run_batch_phase(
+            conn, client, pages, duplicate_of, newspaper_by_file, screen_model,
+            SCREEN_BATCH_TIMEOUT_SECONDS if batch_timeout_seconds is None else batch_timeout_seconds,
+            SCREEN_BATCH_POLL_SECONDS,
+        )
+    batch_used = 0
+    batch_fallback = 0
+
     for page in pages:
         page_started = time.perf_counter()
         api_seconds = 0.0
+        from_batch = False
         canonical_id = duplicate_of.get(page["file_id"])
         newspaper = newspaper_by_file.get(page["file_id"])
         copied_verdict = None
@@ -346,9 +535,16 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
         else:
             api_started = time.perf_counter()
             try:
-                is_relevant, reasoning = screen_page(
-                    client, page["raw_text"], model=screen_model, ref=f"{page['file_id']}:{page['page_number']}"
-                )
+                batched = batch_verdicts.get((page["file_id"], page["page_number"]))
+                if batched is not None:
+                    is_relevant, reasoning = batched
+                    from_batch = True
+                    batch_used += 1
+                else:
+                    batch_fallback += int(batch_enabled)
+                    is_relevant, reasoning = screen_page(
+                        client, page["raw_text"], model=screen_model, ref=f"{page['file_id']}:{page['page_number']}"
+                    )
                 model_used = screen_model
             except Exception as exc:
                 api_seconds = time.perf_counter() - api_started
@@ -359,7 +555,8 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
 
         if page["file_id"] not in claim_checked:
             claim_checked.add(page["file_id"])
-            shift = claim_report_date_on_first_scan(conn, page["file_id"])
+            shift = claim_report_date_on_first_scan(
+                conn, page["file_id"], **({"now": run_started_iso} if batch_enabled else {}))
             if shift:
                 reason = shift["hold_reason"] or (
                     f"no reason recorded - not screened on its download day (downloaded "
@@ -389,13 +586,18 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL) -> Non
         timings.add(api_seconds, code_seconds)
         tag =f"DUPLICATE of {duplicate_label}, copied" if copied_verdict is not None else "relevant"
         print(f"  page {page['page_number']} (file {page['file_id']}): {tag}={is_relevant} "
-              f"[api {api_seconds:.2f}s, code {code_seconds:.3f}s] - {reasoning}")
+              f"[{'batch' if from_batch else f'api {api_seconds:.2f}s'}, code {code_seconds:.3f}s] - {reasoning}")
 
     conn.close()
 
     pct = (relevant / scanned * 100) if scanned else 0
     print(f"\nScreening: {scanned} page(s) scanned, {relevant} flagged relevant ({pct:.0f}%)")
-    print(timings.summary(setup_seconds))
+    batch_note = ""
+    if batch_stats is not None:
+        batch_note = (f" | batch: {batch_stats['batches']} submitted ({batch_stats['requests']} request(s)), "
+                      f"{batch_stats['resumed']} resumed, {batch_used} page(s) from batch, {batch_fallback} regular-call "
+                      f"fallback(s), waited {batch_stats['wait_seconds']:.0f}s")
+    print(timings.summary(setup_seconds) + batch_note)
     if duplicates:
         print(f"Duplicates: {duplicates} page(s) copied a verdict instead of being screened, "
               f"{duplicates_relevant} of them relevant - not queued for analysis again")
@@ -417,9 +619,25 @@ if __name__ == "__main__":
             "see PROJECT_LOG 2026-10-10."
         ),
     )
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        help="Screen with the Message Batches API for this run (same as SCREEN_USE_BATCH = True).",
+    )
+    parser.add_argument(
+        "--batch-timeout-minutes",
+        type=float,
+        default=None,
+        help=f"How long to wait for the batch before canceling it and falling back (default {SCREEN_BATCH_TIMEOUT_SECONDS / 60:.0f}).",
+    )
     args = parser.parse_args()
     started = usage_marker()
     try:
-        run(file_name_contains=args.file_name_contains, screen_model=args.screen_model)
+        run(
+            file_name_contains=args.file_name_contains,
+            screen_model=args.screen_model,
+            use_batch=True if args.batch else None,
+            batch_timeout_seconds=args.batch_timeout_minutes * 60 if args.batch_timeout_minutes else None,
+        )
     finally:
         print_usage_summary("screen", started, "screen")

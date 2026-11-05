@@ -28,11 +28,14 @@ PRICES = {
 }
 
 
-def cost_usd(model: str, input_tokens: int, output_tokens: int, cache_write: int, cache_read: int) -> float | None:
+def cost_usd(model: str, input_tokens: int, output_tokens: int, cache_write: int, cache_read: int,
+             stage: str = "") -> float | None:
+    """`stage` ending in "_batch" (src.common.db.BATCH_STAGE_SUFFIX) is a Message Batches API call: half price."""
     if model not in PRICES:
         return None
     p_in, p_out = PRICES[model]
-    return (input_tokens * p_in + cache_write * p_in * 1.25 + cache_read * p_in * 0.10 + output_tokens * p_out) / 1e6
+    cost = (input_tokens * p_in + cache_write * p_in * 1.25 + cache_read * p_in * 0.10 + output_tokens * p_out) / 1e6
+    return cost * 0.5 if stage.endswith("_batch") else cost
 
 
 def fetch_rows(conn: sqlite3.Connection, since: str, stage: str | None):
@@ -54,7 +57,7 @@ def summarize(rows, key) -> dict:
         agg["out"] += r[5]
         agg["cw"] += r[6]
         agg["cr"] += r[7]
-        c = cost_usd(r[2], r[4], r[5], r[6], r[7])
+        c = cost_usd(r[2], r[4], r[5], r[6], r[7], stage=r[1])
         if c is None:
             agg["unpriced"] += 1
         else:
