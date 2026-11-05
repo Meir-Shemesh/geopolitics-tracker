@@ -789,7 +789,7 @@ def compute_stage1_problem_ratio(topics, valid_ids: set, key: str = "article_ids
     return missing, duplicated, ratio
 
 
-# --- Stage-1 grouping audit (2026-11-05, PROJECT_LOG 4.114) -------------------------------------------------
+# --- Stage-1 grouping audit (2026-11-05, PROJECT_LOG 4.126) -------------------------------------------------
 # 5.11 left 14 of 224 articles without a topic and nothing on disk said why (stage-1 output is not persisted, the
 # log keeps only its tail, stop_reason was never stored). The audit below is RECORD-ONLY: it never changes a
 # grouping, a threshold, a prompt or a return value, and a failure to build or write it never stops a run.
@@ -829,6 +829,134 @@ def write_stage1_audit(report_date: str, audit: dict) -> None:
         )
     except Exception as exc:  # noqa: BLE001 - recording must never stop a run
         print(f"  warning: could not write the stage-1 audit ({exc}) - continuing.")
+
+
+# --- Stage-1 assignment pass (switch OFF by default; PROJECT_LOG 4.126) -----------------------------------------
+# Articles that stage 1 left without a topic become single-article "additional coverage" sections (5.11: 14 of 224,
+# 12 of them central US-midterm commentary, shown without any comparison). When STAGE1_ASSIGN_PASS is on, ONE small
+# extra call looks at just those articles next to the topic list stage 1 already produced and either places each in
+# an existing topic or leaves it alone. It never creates a topic, never moves an article that already has a topic,
+# and never changes the stage-1 prompt, model, ceiling or retry threshold. Off, or on with nothing unassigned, the
+# pipeline is byte-for-byte what it was.
+STAGE1_ASSIGN_PASS = False
+ASSIGN_MAX_TOKENS = 4000
+
+ASSIGN_SYSTEM_PROMPT = """You are completing a grouping of newspaper articles into topics.
+
+An earlier step grouped today's articles into numbered topics but left some articles without a topic. For each
+unassigned article below, decide whether it belongs in one of the EXISTING topics (listed by number and label).
+
+Place an article in a topic only when it is clearly about the same specific story or event as that topic, so that
+a reader comparing how different newspapers cover that topic would want this article in the comparison. If no
+existing topic fits well, answer 0 (none): that article stays on its own. Do NOT invent topics and do NOT pick
+the nearest topic just to place the article - 0 is a normal, correct answer. Call record_assignments exactly once
+with one entry per unassigned article."""
+
+ASSIGN_TOOL = {
+    "name": "record_assignments",
+    "description": "For each unassigned article, the number of the existing topic it belongs to, or 0 for none.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "assignments": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "article_id": {"type": "integer"},
+                        "topic_number": {"type": "integer"},
+                    },
+                    "required": ["article_id", "topic_number"],
+                    "additionalProperties": False,
+                },
+            },
+        },
+        "required": ["assignments"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
+
+def format_topics_compact(topics) -> str:
+    return "\n".join(
+        f"{n}. {t.get('topic_label_en', '')} ({len(t.get('article_ids', []))} articles)" for n, t in enumerate(topics, 1)
+    )
+
+
+def parse_assignments(raw, unassigned_ids: set, topic_count: int) -> dict[int, int]:
+    """{article_id: topic_number (1-based)} for valid entries only: the article must be one of the unassigned ones,
+    the topic number must exist (0 = none, anything else is dropped), and the first entry for an article wins."""
+    out: dict[int, int] = {}
+    if not isinstance(raw, list):
+        return out
+    for entry in raw:
+        try:
+            article_id, number = int(entry["article_id"]), int(entry["topic_number"])
+        except (TypeError, KeyError, ValueError):
+            continue
+        if article_id not in unassigned_ids or article_id in out:
+            continue
+        if 1 <= number <= topic_count:
+            out[article_id] = number
+    return out
+
+
+def assign_unassigned_to_topics(client: anthropic.Anthropic, unassigned_articles, topics, model: str = MODEL):
+    """One call. Returns ({article_id: 1-based topic number}, usage). Raises on API errors (the caller catches)."""
+    user_content = (
+        f"Existing topics ({len(topics)}):\n{format_topics_compact(topics)}\n\n"
+        f"Unassigned articles ({len(unassigned_articles)}):\n\n{format_articles_compact(unassigned_articles)}"
+    )
+    response = client.messages.create(
+        model=model,
+        max_tokens=ASSIGN_MAX_TOKENS,
+        thinking={"type": "adaptive"},
+        output_config={"effort": "medium"},
+        system=ASSIGN_SYSTEM_PROMPT,
+        tools=[ASSIGN_TOOL],
+        tool_choice={"type": "tool", "name": "record_assignments"},
+        messages=[{"role": "user", "content": user_content}],
+    )
+    record_api_usage("synthesize_stage1_assign", model, response.usage)
+    usage = {
+        "input_tokens": response.usage.input_tokens,
+        "output_tokens": response.usage.output_tokens,
+        "cache_creation_input_tokens": getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
+        "cache_read_input_tokens": getattr(response.usage, "cache_read_input_tokens", 0) or 0,
+        "stop_reason": getattr(response, "stop_reason", None),
+    }
+    tool_use = next((b for b in response.content if b.type == "tool_use"), None)
+    if tool_use is None:
+        return {}, usage
+    ids = {a["id"] for a in unassigned_articles}
+    return parse_assignments(tool_use.input.get("assignments"), ids, len(topics)), usage
+
+
+def run_assign_pass(client, articles_by_id: dict, topics: list[dict], valid_ids: set, usage_log: list, model: str = MODEL) -> dict:
+    """Applies the pass to `topics` in place (appends ids to existing topics only). Never raises; returns a report."""
+    report: dict = {"enabled": True, "ran": False}
+    try:
+        placed = {i for t in topics for i in t["article_ids"] if i in valid_ids}
+        unassigned = sorted(valid_ids - placed)
+        report["unassigned_before"] = unassigned
+        if not unassigned:
+            return report
+        mapping, usage = assign_unassigned_to_topics(client, [articles_by_id[i] for i in unassigned], topics, model=model)
+        usage_log.append({**usage, "stage": 1})
+        for article_id, number in mapping.items():
+            topics[number - 1]["article_ids"].append(article_id)
+        report.update({
+            "ran": True,
+            "assigned": {str(i): topics[n - 1].get("topic_label_en", "") for i, n in mapping.items()},
+            "left_unassigned": [i for i in unassigned if i not in mapping],
+            "output_tokens": usage.get("output_tokens"),
+        })
+        print(f"  stage 1 assignment pass: {len(mapping)} of {len(unassigned)} unassigned article(s) placed in existing topics.")
+    except Exception as exc:  # noqa: BLE001 - the pass is optional; a failure leaves today's behaviour
+        report["error"] = str(exc)[:200]
+        print(f"  warning: stage-1 assignment pass failed ({exc}) - those articles fall back individually as before.")
+    return report
 
 
 def synthesize_day_two_stage(
@@ -907,6 +1035,11 @@ def synthesize_day_two_stage(
         print(f"  stage 1: dropping {len(empty)} topic(s) with no valid article: "
               + "; ".join(repr(t["topic_label_en"]) for t in empty))
         topics = [t for t in topics if t not in empty]
+
+    if STAGE1_ASSIGN_PASS and topics:
+        assign_report = run_assign_pass(client, articles_by_id, topics, valid_ids, usage_log)
+        if audit_out is not None:
+            audit_out["assign_pass"] = assign_report
 
     if not topics:
         return [], usage_log
@@ -1006,7 +1139,8 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
             stage1_audit["report_date"] = report_date
             stage1_audit["final_fallback_ids"] = sorted(missing)
             # a fallback id that stage 1 did place in a topic = that topic failed stage 2 twice
-            stage1_audit["stage2_failed_ids"] = sorted(set(missing) - set(chosen["unassigned_ids"]))
+            placed_by_pass = {int(i) for i in (stage1_audit.get("assign_pass") or {}).get("assigned", {})}
+            stage1_audit["stage2_failed_ids"] = sorted(set(missing) - (set(chosen["unassigned_ids"]) - placed_by_pass))
         except Exception as exc:  # noqa: BLE001 - record-only
             print(f"  warning: stage-1 audit summary failed ({exc}) - writing what exists.")
         write_stage1_audit(report_date, stage1_audit)

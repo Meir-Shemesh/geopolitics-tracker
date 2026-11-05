@@ -1,4 +1,4 @@
-"""Stage-1 grouping audit in synthesize.py (PROJECT_LOG 4.114): record-only, never changes a result,
+"""Stage-1 grouping audit in synthesize.py (PROJECT_LOG 4.126): record-only, never changes a result,
 never stops a run. No API, no tracker.db."""
 import json
 import sys
