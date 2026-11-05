@@ -64,6 +64,33 @@ load_dotenv()
 MODEL = "claude-sonnet-5"
 CONCURRENCY = 6
 
+# The reduce call writes every final topic (label + section ids) in one tool_use block. Its output grows with the
+# number of day-span groups: 21,033 output tokens at 129K input (22.10) and 23,595 at 137K (29.10) against the old
+# ceiling of 24,000; on 5.11 (150K input, 878 groups) the ceiling was hit twice. The model allows far more (128K per
+# the models overview) and the call already streams, so only the ceiling moves - prompt, tool schema, effort and the
+# grouping are untouched. Billing is per token actually produced, so a higher ceiling costs nothing when unused.
+REDUCE_MAX_TOKENS = 64000
+REDUCE_NEAR_CEILING_RATIO = 0.75
+
+
+# Exit codes (2 = unpublished days, see main()). Anything non-zero means "no period row was written".
+EXIT_REDUCE_FAILED = 3
+EXIT_NO_TOPICS = 4
+
+
+def reduce_ceiling_warning(output_tokens: int, max_tokens: int = REDUCE_MAX_TOKENS) -> str | None:
+    """Same idea as synthesize.stage1_ceiling_warning(): a heads-up, never a change in behaviour."""
+    if output_tokens >= REDUCE_NEAR_CEILING_RATIO * max_tokens:
+        return (f"REDUCE OUTPUT NEAR CEILING: {output_tokens} of {max_tokens} tokens "
+                f"({output_tokens / max_tokens:.0%}) - one more heavy period may truncate the reduce")
+    return None
+
+
+class ReduceFailedError(RuntimeError):
+    """The reduce pass produced no usable grouping (truncated at the output ceiling, or no topics at all). Raised
+    instead of returning an empty list, so nothing downstream can mistake it for 'no sections' and nothing is
+    checkpointed or written."""
+
 # ---------------------------------------------------------------------------
 # Resilience (2026-10-15, PROJECT_LOG 4.100): the first live overnight run died
 # 9 minutes in, in the middle of the reduce call's streaming response, with a raw
@@ -149,7 +176,9 @@ def load_checkpoint(path: Path):
     """A missing, unreadable or half-written checkpoint is simply 'no checkpoint'."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) and "topics" in data else None
+        # An empty topic list is never a valid map/reduce result; the 5.11 run checkpointed one after a truncated
+        # reduce, which would make every later run "reuse" it and fail again without calling the API.
+        return data if isinstance(data, dict) and data.get("topics") else None
     except (OSError, ValueError):
         return None
 
@@ -530,7 +559,7 @@ def call_reduce_once(client, user_content):
     def _call():
         with client.messages.stream(
             model=MODEL,
-            max_tokens=24000,
+            max_tokens=REDUCE_MAX_TOKENS,
             thinking={"type": "adaptive"},
             output_config={"effort": "medium"},
             system=REDUCE_SYSTEM_PROMPT,
@@ -546,9 +575,16 @@ def call_reduce_once(client, user_content):
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
     if response.stop_reason != "tool_use":
-        print(f"    [reduce call] non-tool_use stop_reason: {response.stop_reason!r} "
-              f"({'got' if tool_use else 'no'} tool_use block, {len(topics)} topic(s) recovered)")
-    return topics, usage
+        blocks = ", ".join(
+            f"{b.type}:{len(getattr(b, 'thinking', None) or getattr(b, 'text', None) or json.dumps(getattr(b, 'input', ''), ensure_ascii=False))} chars"
+            for b in response.content)
+        print(f"    [reduce call] non-tool_use stop_reason: {response.stop_reason!r}, "
+              f"{response.usage.output_tokens} output tokens of {REDUCE_MAX_TOKENS} allowed "
+              f"({'got' if tool_use else 'no'} tool_use block, {len(topics)} topic(s) recovered; blocks: {blocks})")
+    warning = reduce_ceiling_warning(response.usage.output_tokens)
+    if warning and response.stop_reason != "max_tokens":
+        print(f"    *** {warning} ***")
+    return topics, usage, response.stop_reason
 
 
 def reduce_user_content(map_results, sections_by_id):
@@ -574,7 +610,12 @@ def run_reduce(client, map_results, sections_by_id):
     print(f"  [reduce] input: {n_lines} day-span topic group(s), {tokens} tokens")
 
     valid_ids = set(sections_by_id.keys())
-    topics, usage = call_reduce_once(client, user_content)
+    topics, usage, stop_reason = call_reduce_once(client, user_content)
+    if stop_reason == "max_tokens":
+        # A second identical request would be cut at the same place; fail now instead of paying for it.
+        raise ReduceFailedError(
+            f"reduce output was cut off at the {REDUCE_MAX_TOKENS}-token ceiling ({n_lines} groups, {tokens} input "
+            f"tokens) - raise REDUCE_MAX_TOKENS or split the reduce; nothing was checkpointed or written")
     missing, duplicated, ratio = compute_stage1_problem_ratio(topics, valid_ids, key="section_ids")
     usages = [usage]
     retries = 0
@@ -583,10 +624,10 @@ def run_reduce(client, map_results, sections_by_id):
         retries += 1
         print(f"  [reduce] {len(missing)} missing + {len(duplicated)} duplicated ({ratio:.1%}) exceeds "
               f"{BIWEEKLY_GROUPING_RATIO_THRESHOLD:.0%} - retrying once.")
-        retry_topics, retry_usage = call_reduce_once(client, user_content)
+        retry_topics, retry_usage, retry_stop = call_reduce_once(client, user_content)
         usages.append(retry_usage)
         retry_missing, retry_duplicated, retry_ratio = compute_stage1_problem_ratio(retry_topics, valid_ids, key="section_ids")
-        if retry_ratio < ratio:
+        if retry_stop != "max_tokens" and retry_ratio < ratio:
             topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
             print(f"    retry improved ({ratio:.1%}) - using the retry result.")
         else:
@@ -597,6 +638,8 @@ def run_reduce(client, map_results, sections_by_id):
         "output_tokens": sum(u["output_tokens"] for u in usages),
     }
     print(f"  [reduce] -> {len(topics)} final topic(s), final: {len(missing)} missing, {len(duplicated)} duplicated")
+    if not topics:
+        raise ReduceFailedError(f"reduce returned no topics for {n_lines} groups - nothing was checkpointed or written")
     return topics, total_usage, retries
 
 
@@ -986,11 +1029,16 @@ def main() -> int:
 
     client = anthropic.Anthropic()
 
-    stage1_topics = run_stage1(client, conn, start, end)
-    if not stage1_topics:
-        print("No sections found for this period - nothing to synthesize.")
+    try:
+        stage1_topics = run_stage1(client, conn, start, end)
+    except ReduceFailedError as exc:
+        print(f"REDUCE FAILED for {start}..{end}: {exc}", file=sys.stderr)
         conn.close()
-        return 0
+        return EXIT_REDUCE_FAILED
+    if not stage1_topics:
+        print("No sections found for this period - nothing to synthesize.", file=sys.stderr)
+        conn.close()
+        return 0 if args.stage1_only else EXIT_NO_TOPICS
 
     print(usage_summary("stage 1"))
     if args.stage1_only:
@@ -1001,9 +1049,9 @@ def main() -> int:
     topics = load_topics_for_stage2(conn, stage1_topics)
     print(f"{len(topics)} topic(s) cleared the >={MIN_DISTINCT_DAYS}-day inclusion threshold.")
     if not topics:
-        print("No topic cleared the inclusion threshold - no report for this period.")
+        print("No topic cleared the inclusion threshold - no report for this period.", file=sys.stderr)
         conn.close()
-        return 0
+        return EXIT_NO_TOPICS
 
     overview, kept_topics = run_stage2(client, conn, topics)
 

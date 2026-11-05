@@ -353,6 +353,8 @@ def main() -> int:
 
         results = []
         ok = True
+        wrote_period = False
+        git_note = "not attempted (an earlier step failed)"
         for name, step_args in (
             ("synthesize_biweekly", ["src.reporting.synthesize_biweekly", "--start", start, "--end", end]),
             ("publish", ["src.publishing.publish"]),
@@ -362,20 +364,22 @@ def main() -> int:
             if not r.ok:
                 ok = False
                 break
+            if name == "synthesize_biweekly":
+                # Only a row in the DB means a report actually exists. Checked BEFORE publish: without a report
+                # there is nothing to publish, and the 5.11 run showed what happens otherwise - publish rewrote
+                # generated_at in three data files and the git step committed them under a "Biweekly trends
+                # report" message.
+                conn = get_connection()
+                try:
+                    wrote_period = biweekly_period_exists(conn, end)
+                finally:
+                    conn.close()
+                if not wrote_period:
+                    log(f"synthesize_biweekly exited 0 but wrote no period row for {end} - skipping publish and git.")
+                    git_note = "not attempted (no period row was written)"
+                    ok = False
+                    break
 
-        # synthesize_biweekly exits 0 for "no topic cleared the threshold" too -
-        # only a row in the DB means a report actually exists.
-        wrote_period = False
-        if ok:
-            conn = get_connection()
-            try:
-                wrote_period = biweekly_period_exists(conn, end)
-            finally:
-                conn.close()
-            if not wrote_period:
-                log(f"synthesize_biweekly exited 0 but wrote no period row for {end} - see its output above.")
-
-        git_note = "not attempted (an earlier step failed)"
         if ok:
             ok, git_note = autorun.do_git_sequence(
                 log, today.isoformat(), paths=GIT_PATHS,
