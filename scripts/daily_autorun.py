@@ -94,7 +94,10 @@ TIMEOUTS = {
     # Raised 50 -> 90 min on 2026-10-31: 851 pages ran at 4.8 s/page (API slowdown, normally ~2 s)
     # and timed out at 624 pages; the same day's rerun finished the rest at the normal rate.
     "screen": 90 * 60,
-    "analyze": 60 * 60,
+    # Raised 60 -> 90 min on 2026-11-07 (PROJECT_LOG 4.129) with the analyze batch: the worst case is the whole
+    # 20 min batch wait (ANALYZE_BATCH_TIMEOUT_SECONDS) + up to 2 min to cancel it + every page again by regular calls
+    # (26 min for the 495 pages of 6.11, 36-40 min for the ~1,000-page days of 24.10/30.10) = 48-62 min.
+    "analyze": 90 * 60,
     # Raised 20 -> 30 min on 2026-11-06 (PROJECT_LOG 4.128): the 449-article day of 6.11 took 12.0 min (60% of the old
     # ceiling; ~136 stage-2 calls). A day near the stage-1 output ceiling (about 600-750 articles) would run past 20 min.
     "synthesize": 30 * 60,
@@ -342,8 +345,11 @@ def missing_biweekly_period_warning(today: date) -> str:
 
 
 # Daily synthesize input (articles of one report date) above which the run only WARNS. Stage 1 groups all of a
-# day's articles in one call; 380 was the largest success ever measured and the ceiling is estimated at
-# ~450-480 (CLAUDE.md, "השלכות ידועות" 1), so the threshold sits conservatively below. Never blocks.
+# day's articles in one call (STAGE1_MAX_TOKENS = 20,000 since 30.10). Days of 466 (30.10) and 449 (6.11) articles ran
+# without a problem (output 14.0k and 11.9k tokens); the output ceiling is estimated at about 600-750 articles
+# (PROJECT_LOG 4.128: 2,500 + ~23 tokens per article, measured over 17 days), and the 85% near-ceiling warning
+# (17,000 tokens) at about 630. The old estimate of 450-480 assumed the former 16,000 ceiling. The value 320 is kept:
+# it only decides when the note appears. Never blocks.
 SYNTHESIS_VOLUME_WARN_THRESHOLD = 320
 
 
@@ -395,7 +401,8 @@ def synthesis_volume_note(today: str) -> tuple[str, bool]:
         return f"check failed ({e!r})", False
     if n > SYNTHESIS_VOLUME_WARN_THRESHOLD:
         return (f"*** WARNING: unusual synthesize input volume ({n} articles, above the {SYNTHESIS_VOLUME_WARN_THRESHOLD} "
-                f"threshold; the largest day ever verified was 380, the estimated ceiling is ~450-480) - "
+                f"threshold; days of 449 and 466 articles ran fine, the estimated stage-1 ceiling is about 600-750 "
+                f"articles with STAGE1_MAX_TOKENS=20,000) - "
                 f"check the result by hand before approving ***"), True
     return f"{n} articles (threshold {SYNTHESIS_VOLUME_WARN_THRESHOLD})", False
 

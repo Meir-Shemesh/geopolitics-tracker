@@ -12,15 +12,21 @@ import argparse
 import json
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
 
+from src.common import batch_runner
 from src.common.db import (
+    BATCH_STAGE_SUFFIX,
+    close_api_batch,
     get_connection,
+    get_open_api_batches,
     get_pages_pending_analysis,
+    insert_api_batch,
     init_db,
     insert_article,
     insert_article_conflict_zones,
@@ -171,10 +177,11 @@ def filter_self_tagged_articles(articles: list[dict]) -> tuple[list[dict], list[
     return kept, excluded
 
 
-def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_letters_page_: bool = False,
-                 ref: str | None = None) -> list[dict]:
+def build_analyze_params(newspaper: str, raw_text: str, is_letters_page_: bool = False) -> dict:
+    """The one definition of an analysis request: analyze_page() sends it as a regular call and the batch path
+    (PROJECT_LOG 4.129) puts the very same dict into a batch request, so the only difference is the way it is run."""
     letters_note = _LETTERS_PAGE_NOTE if is_letters_page_ else ""
-    response = client.messages.create(
+    return dict(
         model=MODEL,
         max_tokens=8192,
         thinking={"type": "adaptive"},
@@ -188,6 +195,11 @@ def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_
         tool_choice={"type": "tool", "name": "record_articles"},
         messages=[{"role": "user", "content": f"Newspaper: {newspaper}\n{letters_note}Page text:\n\n{raw_text}"}],
     )
+
+
+def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_letters_page_: bool = False,
+                 ref: str | None = None) -> list[dict]:
+    response = client.messages.create(**build_analyze_params(newspaper, raw_text, is_letters_page_))
     record_api_usage("analyze", MODEL, response.usage, ref=ref)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return tool_use.input["articles"]
@@ -303,7 +315,153 @@ def write_failed_pages_record(failed: list[dict], flag_dir: Path | None = None, 
         return None
 
 
-def run(file_id: int | None = None) -> None:
+# --- Message Batches API (ANALYZE_USE_BATCH; PROJECT_LOG 4.129) ----------------------------------------------------
+# Same request, same prompt, same model and parameters as analyze_page() (build_analyze_params() is the ONE definition
+# of an analysis request) - sent as one batch (50% price) instead of one call per page. Everything after an answer
+# comes back is the ordinary loop in run(): the same validation, the same one-transaction-per-page write, so there is
+# ONE write path. A page without a usable batch result (the request errored/expired/was canceled/came back malformed,
+# the batch timed out or could not be read) simply takes the regular analyze_page() call.
+# Experiment 2026-11-06 (495 pages of 2026-11-06): 0 failures, 123 s for 395 pages, cache-hit rate 56.7% (production
+# 56.4%), $2.28 instead of $4.62. Known difference: about 4.5% fewer country tags per article (PROJECT_LOG 4.129).
+# Turn off: ANALYZE_USE_BATCH = False (commit), or run once with --no-batch.
+ANALYZE_USE_BATCH = True
+ANALYZE_BATCH_TIMEOUT_SECONDS = 20 * 60
+ANALYZE_BATCH_POLL_SECONDS = 30.0
+ANALYSIS_MODE_BATCH = "batch"
+ANALYSIS_MODE_SYNC = "sync"
+_CUSTOM_ID_RE = re.compile(r"^a-(\d+)-p(\d+)$")
+_REQUIRED_ARTICLE_KEYS = {
+    "headline", "author", "region_topic", "stance_summary",
+    "key_excerpt", "country_codes", "conflict_zones",
+}
+
+
+def batch_custom_id(file_id: int, page_number: int) -> str:
+    """Stable id of a page's request (<= 64 chars, [A-Za-z0-9_-] only, as the API requires)."""
+    return f"a-{file_id}-p{page_number}"
+
+
+def parse_custom_id(custom_id: str) -> tuple[int, int] | None:
+    match = _CUSTOM_ID_RE.match(custom_id)
+    return (int(match.group(1)), int(match.group(2))) if match else None
+
+
+def validate_articles(articles) -> None:
+    """The shape check applied to every page's answer, regular call or batch, before any DB write starts."""
+    if not isinstance(articles, list):
+        raise TypeError(f"expected a list of articles, got {type(articles).__name__}")
+    for article in articles:
+        if not isinstance(article, dict):
+            raise TypeError(f"expected an article dict, got {type(article).__name__}")
+        if not _REQUIRED_ARTICLE_KEYS.issubset(article):
+            raise ValueError(f"article missing required key(s): {_REQUIRED_ARTICLE_KEYS - article.keys()}")
+
+
+def _absorb_batch_results(results: dict, model: str, articles_by_page: dict) -> int:
+    """Logs every billed result to api_usage (stage 'analyze_batch', priced at 50%) and keeps the answers that carry
+    a list of articles (their contents are validated in run(), like a regular answer). Returns how many."""
+    usable = 0
+    for custom_id, result in results.items():
+        key = parse_custom_id(custom_id)
+        if result.usage is not None:  # succeeded requests are billed even if their content is unusable
+            record_api_usage("analyze" + BATCH_STAGE_SUFFIX, model, result.usage,
+                             ref=f"{key[0]}:{key[1]}" if key else custom_id)
+        if key is None or not result.usable:
+            continue
+        articles = result.tool_input.get("articles")
+        if not isinstance(articles, list):
+            continue
+        articles_by_page[key] = articles
+        usable += 1
+    return usable
+
+
+def _finish_batch(conn, client, batch_id: str, request_ids: list[str], model: str, elapsed: float, timeout_seconds: float,
+                  poll_seconds: float, sleep, monotonic, articles_by_page: dict, stats: dict) -> None:
+    """Waits for one batch (up to the shared timeout, counted from its creation), cancels it on timeout, collects what
+    it produced and closes its api_batches row. A batch that cannot be read at all is abandoned: its pages fall back."""
+    try:
+        outcome = batch_runner.wait_for_batch(client, batch_id, timeout_seconds, poll_seconds, already_elapsed=elapsed,
+                                              sleep=sleep, monotonic=monotonic)
+        note = "ended"
+        if outcome == "timeout":
+            print(f"  [batch] {batch_id}: not finished after {timeout_seconds / 60:.0f} min - canceling; pages without a "
+                  f"result take regular calls")
+            batch_runner.cancel_batch(client, batch_id, poll_seconds, sleep=sleep, monotonic=monotonic)
+            note = "timeout, canceled"
+        results = batch_runner.fetch_results(client, batch_id)
+    except Exception as exc:  # noqa: BLE001 - the pages of a lost batch must not be lost: they fall back to regular calls
+        print(f"  [batch] {batch_id}: could not be read ({type(exc).__name__}: {exc}) - abandoned, its pages fall back")
+        try:
+            batch_runner.cancel_batch(client, batch_id, poll_seconds, max_wait=0, sleep=sleep, monotonic=monotonic)
+        except Exception:  # noqa: BLE001
+            pass
+        close_api_batch(conn, batch_id, "abandoned", f"{type(exc).__name__}: {exc}"[:300])
+        stats["abandoned"] += 1
+        return
+    usable = _absorb_batch_results(results, model, articles_by_page)
+    stats["usable"] += usable
+    stats["returned"] += len(results)
+    kinds: dict[str, int] = {}
+    for result in results.values():
+        kinds[result.kind] = kinds.get(result.kind, 0) + 1
+    print(f"  [batch] {batch_id}: {note} - {len(results)} of {len(request_ids)} result(s) returned, {usable} usable "
+          f"({', '.join(f'{k} {v}' for k, v in sorted(kinds.items())) or 'none'})")
+    close_api_batch(conn, batch_id, "collected", note)
+
+
+def run_batch_phase(conn, client, pages, skip_ids: set, model: str, timeout_seconds: float,
+                    poll_seconds: float = batch_runner.DEFAULT_POLL_SECONDS,
+                    sleep=time.sleep, monotonic=time.monotonic, now=None) -> tuple[dict, dict]:
+    """Returns ({(file_id, page_number): [articles as returned]}, stats). Never raises for an API/network problem:
+    whatever is missing from the result is analyzed by regular calls in run()'s loop.
+
+    1. Batches a previous run left open (api_batches, status 'submitted' - the process died during the wait) are
+       followed first and counted from THEIR creation time; their pages are not submitted again.
+    2. The pages still needing the API go out as one batch (split only if a documented limit requires it); its id is
+       stored the moment it is created. Pages of a skip-listed file are not sent."""
+    stats = {"batches": 0, "requests": 0, "returned": 0, "usable": 0, "abandoned": 0, "resumed": 0, "wait_seconds": 0.0}
+    articles_by_page: dict = {}
+    attempted: set[str] = set()
+    started = monotonic()
+    now_utc = now or datetime.now(timezone.utc)
+    try:
+        for row in get_open_api_batches(conn, "analyze"):
+            ids = json.loads(row["request_ids"])
+            age = max(0.0, (now_utc - datetime.fromisoformat(row["created_at"])).total_seconds())
+            print(f"  [batch] following {row['batch_id']} left open by an earlier run ({len(ids)} request(s), "
+                  f"{age / 60:.0f} min old)")
+            stats["resumed"] += 1
+            attempted.update(ids)
+            _finish_batch(conn, client, row["batch_id"], ids, model, age, timeout_seconds, poll_seconds, sleep, monotonic,
+                          articles_by_page, stats)
+        to_send = [p for p in pages
+                   if p["file_id"] not in skip_ids
+                   and (p["file_id"], p["page_number"]) not in articles_by_page
+                   and batch_custom_id(p["file_id"], p["page_number"]) not in attempted]
+        if to_send:
+            requests = [{"custom_id": batch_custom_id(p["file_id"], p["page_number"]),
+                         "params": build_analyze_params(p["newspaper"], p["raw_text"], is_letters_page(p["raw_text"]))}
+                        for p in to_send]
+            submitted = []
+            for chunk in batch_runner.split_into_batches(requests):
+                batch_id = batch_runner.create_batch(client, chunk)
+                ids = [r["custom_id"] for r in chunk]
+                insert_api_batch(conn, batch_id, "analyze", model, ids)  # committed before any waiting starts
+                print(f"  [batch] submitted {batch_id}: {len(chunk)} request(s)")
+                stats["batches"] += 1
+                stats["requests"] += len(chunk)
+                submitted.append((batch_id, ids, monotonic()))
+            for batch_id, ids, created in submitted:
+                _finish_batch(conn, client, batch_id, ids, model, monotonic() - created, timeout_seconds, poll_seconds,
+                              sleep, monotonic, articles_by_page, stats)
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        print(f"  [batch] batch phase failed ({type(exc).__name__}: {exc}) - remaining pages use regular calls")
+    stats["wait_seconds"] = monotonic() - started
+    return articles_by_page, stats
+
+
+def run(file_id: int | None = None, use_batch: bool | None = None, batch_timeout_seconds: float | None = None) -> None:
     load_dotenv()
 
     conn = get_connection()
@@ -321,6 +479,18 @@ def run(file_id: int | None = None) -> None:
     skip_list = SkipList(SKIP_FILES_PATH)
     skipped_pages: dict[int, int] = {}
 
+    batch_enabled = ANALYZE_USE_BATCH if use_batch is None else use_batch
+    batch_articles: dict = {}
+    batch_stats = None
+    batch_pages = 0
+    batch_fallback = 0
+    if batch_enabled and pages:
+        batch_articles, batch_stats = run_batch_phase(
+            conn, client, pages, skip_list.ids(), MODEL,
+            ANALYZE_BATCH_TIMEOUT_SECONDS if batch_timeout_seconds is None else batch_timeout_seconds,
+            ANALYZE_BATCH_POLL_SECONDS,
+        )
+
     for page in pages:
         if page["file_id"] in skip_list.ids():
             skipped_pages[page["file_id"]] = skipped_pages.get(page["file_id"], 0) + 1
@@ -329,22 +499,24 @@ def run(file_id: int | None = None) -> None:
         language = NEWSPAPER_LANGUAGES.get(newspaper, "")
         letters_page = is_letters_page(page["raw_text"])
 
+        from_batch = False
         try:
-            articles = analyze_page(
-                client, newspaper, page["raw_text"], is_letters_page_=letters_page,
-                ref=f"{page['file_id']}:{page['page_number']}",
-            )
-            if not isinstance(articles, list):
-                raise TypeError(f"expected a list of articles, got {type(articles).__name__}")
-            required_keys = {
-                "headline", "author", "region_topic", "stance_summary",
-                "key_excerpt", "country_codes", "conflict_zones",
-            }
-            for article in articles:
-                if not isinstance(article, dict):
-                    raise TypeError(f"expected an article dict, got {type(article).__name__}")
-                if not required_keys.issubset(article):
-                    raise ValueError(f"article missing required key(s): {required_keys - article.keys()}")
+            articles = None
+            batched = batch_articles.get((page["file_id"], page["page_number"]))
+            if batched is not None:
+                try:
+                    validate_articles(batched)
+                    articles, from_batch = batched, True
+                except (TypeError, ValueError) as exc:
+                    print(f"  batch answer for file_id={page['file_id']} page={page['page_number']} unusable ({exc}) "
+                          f"- regular call")
+            if articles is None:
+                batch_fallback += int(batch_enabled)
+                articles = analyze_page(
+                    client, newspaper, page["raw_text"], is_letters_page_=letters_page,
+                    ref=f"{page['file_id']}:{page['page_number']}",
+                )
+                validate_articles(articles)
         except Exception as exc:
             # Validate the whole response shape before any DB write starts (below) -
             # a page-level failure here must leave zero rows written, so a retry via
@@ -388,14 +560,17 @@ def run(file_id: int | None = None) -> None:
                 insert_article_countries(conn, article_id, article["country_codes"], commit=False)
                 insert_article_conflict_zones(conn, article_id, article["conflict_zones"], commit=False)
 
-            set_analysis_status(conn, page["file_id"], page["page_number"], "completed", commit=False)
+            set_analysis_status(conn, page["file_id"], page["page_number"], "completed", commit=False,
+                                mode=ANALYSIS_MODE_BATCH if from_batch else ANALYSIS_MODE_SYNC, analyzed_at=now)
             conn.commit()
         except Exception:
             conn.rollback()
             raise
         pages_analyzed += 1
+        batch_pages += int(from_batch)
         total_articles += len(articles)
-        print(f"  page {page['page_number']} (file {page['file_id']}): {len(articles)} article(s)")
+        print(f"  page {page['page_number']} (file {page['file_id']}): {len(articles)} article(s)"
+              + (" [batch]" if from_batch else ""))
 
     conn.close()
 
@@ -404,6 +579,10 @@ def run(file_id: int | None = None) -> None:
         f"{total_articles} article(s) identified in total, "
         f"{total_self_excluded} article(s) auto-excluded (self-tagged non-geopolitical)"
     )
+    if batch_stats is not None:
+        print(f"Batch: {batch_stats['batches']} submitted ({batch_stats['requests']} request(s)), "
+              f"{batch_stats['resumed']} resumed, {batch_pages} page(s) from batch, {batch_fallback} regular-call "
+              f"fallback(s), waited {batch_stats['wait_seconds']:.0f}s")
     if skipped_pages:
         print(
             f"Skipped by the skip list ({SKIP_FILES_PATH.name}): {sum(skipped_pages.values())} page(s) "
@@ -425,9 +604,26 @@ if __name__ == "__main__":
         type=int,
         help="Limit to pages belonging to this downloaded_files.id (for testing on a sample).",
     )
+    parser.add_argument(
+        "--batch",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=f"Analyze with the Message Batches API (--batch) or with regular calls (--no-batch) for this run. "
+             f"Default: ANALYZE_USE_BATCH = {ANALYZE_USE_BATCH}.",
+    )
+    parser.add_argument(
+        "--batch-timeout-minutes",
+        type=float,
+        default=None,
+        help=f"How long to wait for the batch before canceling it and falling back (default {ANALYZE_BATCH_TIMEOUT_SECONDS / 60:.0f}).",
+    )
     args = parser.parse_args()
     started = usage_marker()
     try:
-        run(file_id=args.file_id)
+        run(
+            file_id=args.file_id,
+            use_batch=args.batch,
+            batch_timeout_seconds=args.batch_timeout_minutes * 60 if args.batch_timeout_minutes else None,
+        )
     finally:
         print_usage_summary("analyze", started, "analyze")

@@ -59,6 +59,9 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         "screened_at": "TEXT NOT NULL",
         "model_used": "TEXT NOT NULL",
         "analysis_status": "TEXT NOT NULL DEFAULT 'pending'",
+        # How a page was analyzed ('batch' | 'sync') and when; NULL for pages analyzed before these columns existed.
+        "analysis_mode": "TEXT",
+        "analyzed_at": "TEXT",
     },
     "articles": {
         "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -662,13 +665,64 @@ def get_pages_pending_analysis(conn: sqlite3.Connection, file_id: int | None = N
     return conn.execute(query, params).fetchall()
 
 
-def set_analysis_status(conn: sqlite3.Connection, file_id: int, page_number: int, status: str, commit: bool = True) -> None:
-    conn.execute(
-        "UPDATE page_screening SET analysis_status = ? WHERE file_id = ? AND page_number = ?",
-        (status, file_id, page_number),
-    )
+def set_analysis_status(conn: sqlite3.Connection, file_id: int, page_number: int, status: str, commit: bool = True,
+                        mode: str | None = None, analyzed_at: str | None = None) -> None:
+    """`mode` ('batch' | 'sync') and `analyzed_at` are written together with the status when given; a call without them
+    (the screen's 'skipped_duplicate') leaves both columns untouched."""
+    if mode is None and analyzed_at is None:
+        conn.execute(
+            "UPDATE page_screening SET analysis_status = ? WHERE file_id = ? AND page_number = ?",
+            (status, file_id, page_number),
+        )
+    else:
+        conn.execute(
+            "UPDATE page_screening SET analysis_status = ?, analysis_mode = ?, analyzed_at = ? "
+            "WHERE file_id = ? AND page_number = ?",
+            (status, mode, analyzed_at, file_id, page_number),
+        )
     if commit:
         conn.commit()
+
+
+def analysis_mode_summary(conn: sqlite3.Connection, since_date: str | None = None) -> list[dict]:
+    """Per report date and analysis mode ('batch' | 'sync' | None = analyzed before the column existed): completed
+    pages, articles, and country tags per article split into the FIRST tag of an article (primary: the model lists
+    its most central country first; stored in that order) and all the others (secondary). Read-only. Newest first."""
+    date_filter = f"AND {REPORT_DATE_SQL} >= ?" if since_date else ""
+    params = (since_date,) if since_date else ()
+    # A database that init_db() has not touched since the column was added reads every page as legacy (mode NULL).
+    has_mode = any(row[1] == "analysis_mode" for row in conn.execute("PRAGMA table_info(page_screening)"))
+    mode_col = "ps.analysis_mode" if has_mode else "NULL"
+    pages = conn.execute(
+        f"""SELECT {REPORT_DATE_SQL} AS report_date, {mode_col} AS mode, COUNT(*) AS pages
+            FROM page_screening ps JOIN downloaded_files df ON df.id = ps.file_id
+            WHERE ps.analysis_status = 'completed' {date_filter}
+            GROUP BY 1, 2""", params).fetchall()
+    articles = conn.execute(
+        f"""SELECT {REPORT_DATE_SQL} AS report_date, {mode_col} AS mode, COUNT(*) AS articles,
+                   SUM(CASE WHEN t.n >= 1 THEN 1 ELSE 0 END) AS primary_tags,
+                   SUM(CASE WHEN t.n >= 1 THEN t.n - 1 ELSE 0 END) AS secondary_tags
+            FROM articles a
+            JOIN downloaded_files df ON df.id = a.file_id
+            JOIN page_screening ps ON ps.file_id = a.file_id AND ps.page_number = a.page_number
+            LEFT JOIN (SELECT article_id, COUNT(*) AS n FROM article_countries GROUP BY article_id) t ON t.article_id = a.id
+            WHERE 1 = 1 {date_filter}
+            GROUP BY 1, 2""", params).fetchall()
+    merged: dict = {}
+    for r in pages:
+        merged[(r[0], r[1])] = {"report_date": r[0], "mode": r[1], "pages": r[2],
+                                "articles": 0, "primary_tags": 0, "secondary_tags": 0}
+    for r in articles:
+        row = merged.setdefault((r[0], r[1]), {"report_date": r[0], "mode": r[1], "pages": 0})
+        row.update(articles=r[2], primary_tags=r[3] or 0, secondary_tags=r[4] or 0)
+    out = []
+    for row in merged.values():
+        n = row["articles"]
+        row["primary_per_article"] = round(row["primary_tags"] / n, 3) if n else None
+        row["secondary_per_article"] = round(row["secondary_tags"] / n, 3) if n else None
+        row["tags_per_article"] = round((row["primary_tags"] + row["secondary_tags"]) / n, 3) if n else None
+        out.append(row)
+    return sorted(out, key=lambda r: (r["report_date"] or "", r["mode"] or ""), reverse=True)
 
 
 def insert_article(

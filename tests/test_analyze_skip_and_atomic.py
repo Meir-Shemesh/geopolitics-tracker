@@ -93,11 +93,11 @@ class AnalyzeRunTest(unittest.TestCase):
 
     def run_analyze(self) -> None:
         with mock.patch("builtins.print"):
-            analyze.run()
+            analyze.run(use_batch=False)
 
     def run_analyze_output(self) -> str:
         with mock.patch("builtins.print") as printed:
-            analyze.run()
+            analyze.run(use_batch=False)
         return "\n".join(" ".join(str(a) for a in call.args) for call in printed.call_args_list)
 
     def status(self, file_id: int) -> list[str]:
