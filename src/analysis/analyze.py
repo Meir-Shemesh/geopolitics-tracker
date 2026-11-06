@@ -9,6 +9,7 @@ output. One-shot run - not a long-running daemon.
 """
 
 import argparse
+import json
 import re
 import sys
 from datetime import datetime, timezone
@@ -245,6 +246,63 @@ class SkipList:
         return self._ids
 
 
+# --- Failed-page record (PROJECT_LOG 4.128) ----------------------------------------------------------------------
+# A page whose analysis fails stays 'pending' and is retried by the next run; before this record the only trace was a
+# "failed:" line in the middle of the stage's output, which the daily log's tail-only capture drops on a long run
+# (6.11: "3 page(s) failed" with no way to tell which). RECORD ONLY: nothing here changes what is analyzed, retried
+# or written to the database, and a failure to write the record never stops a run.
+FAILED_PAGES_DIR = PROJECT_ROOT / "data" / "processed" / "review_flags"
+FAILED_ERROR_MESSAGE_LIMIT = 160
+
+
+def describe_failure(page, exc: BaseException) -> dict:
+    """One failed page: where it is and what went wrong (exception class + a short message)."""
+    message = " ".join(str(exc).split())
+    return {
+        "file_id": page["file_id"],
+        "page_number": page["page_number"],
+        "newspaper": page["newspaper"],
+        "error_type": type(exc).__name__,
+        "error": message[:FAILED_ERROR_MESSAGE_LIMIT],
+    }
+
+
+def format_failed_pages(failed: list[dict]) -> list[str]:
+    """The lines printed under the stage summary - kept at the very end so the log's tail always carries them."""
+    return [
+        f"  failed page: file_id={f['file_id']} page={f['page_number']} ({f['newspaper']}) "
+        f"{f['error_type']}: {f['error']}"
+        for f in failed
+    ]
+
+
+def write_failed_pages_record(failed: list[dict], flag_dir: Path | None = None, now: datetime | None = None) -> Path | None:
+    """Appends this run's failures to data/processed/review_flags/<local date>.analyze_failed.json (several runs on
+    one day add entries; an unreadable earlier file is replaced). Nothing is written when no page failed.
+    Returns the path, or None. Never raises."""
+    if not failed:
+        return None
+    try:
+        now = now or datetime.now().astimezone()
+        flag_dir = flag_dir or FAILED_PAGES_DIR
+        flag_dir.mkdir(parents=True, exist_ok=True)
+        path = flag_dir / f"{now.date().isoformat()}.analyze_failed.json"
+        runs: list = []
+        if path.exists():
+            try:
+                previous = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(previous.get("runs"), list):
+                    runs = previous["runs"]
+            except (OSError, ValueError, AttributeError):
+                runs = []
+        runs.append({"at": now.isoformat(timespec="seconds"), "failed_pages": failed})
+        path.write_text(json.dumps({"runs": runs}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        return path
+    except Exception as exc:  # noqa: BLE001 - recording must never stop a run
+        print(f"  warning: could not write the failed-pages record ({exc}) - continuing.")
+        return None
+
+
 def run(file_id: int | None = None) -> None:
     load_dotenv()
 
@@ -256,6 +314,7 @@ def run(file_id: int | None = None) -> None:
 
     pages_analyzed = 0
     pages_failed = 0
+    failed_pages: list[dict] = []
     total_articles = 0
     total_self_excluded = 0
 
@@ -292,6 +351,10 @@ def run(file_id: int | None = None) -> None:
             # the pending-queue never risks inserting the same article twice.
             pages_failed += 1
             print(f"  failed: file_id={page['file_id']} page={page['page_number']} ({exc})")
+            try:
+                failed_pages.append(describe_failure(page, exc))
+            except Exception:  # noqa: BLE001 - record-only
+                pass
             continue
 
         articles, self_excluded = filter_self_tagged_articles(articles)
@@ -346,6 +409,13 @@ def run(file_id: int | None = None) -> None:
             f"Skipped by the skip list ({SKIP_FILES_PATH.name}): {sum(skipped_pages.values())} page(s) "
             f"of file_id(s) {sorted(skipped_pages)} - left 'pending'"
         )
+    if failed_pages:
+        print(f"Failed pages ({len(failed_pages)}) - left 'pending', retried by the next run:")
+        for line in format_failed_pages(failed_pages):
+            print(line)
+        record = write_failed_pages_record(failed_pages)
+        if record is not None:
+            print(f"  recorded in {record.parent.name}/{record.name}")
 
 
 if __name__ == "__main__":

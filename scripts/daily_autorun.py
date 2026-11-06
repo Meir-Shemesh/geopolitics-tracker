@@ -95,7 +95,9 @@ TIMEOUTS = {
     # and timed out at 624 pages; the same day's rerun finished the rest at the normal rate.
     "screen": 90 * 60,
     "analyze": 60 * 60,
-    "synthesize": 20 * 60,
+    # Raised 20 -> 30 min on 2026-11-06 (PROJECT_LOG 4.128): the 449-article day of 6.11 took 12.0 min (60% of the old
+    # ceiling; ~136 stage-2 calls). A day near the stage-1 output ceiling (about 600-750 articles) would run past 20 min.
+    "synthesize": 30 * 60,
     "orphan_review": 5 * 60,
     # Raised 15 -> 25 min on 2026-10-13 and 25 -> 60 min on 2026-10-16 (PROJECT_LOG
     # 4.101): render time scales with the number of sections (PDF generation is

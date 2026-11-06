@@ -1,11 +1,14 @@
-"""analyze.py: the operator skip list and the one-transaction-per-page write (PROJECT_LOG 4.113).
+"""analyze.py: the operator skip list, the one-transaction-per-page write (PROJECT_LOG 4.113) and the failed-page
+record (PROJECT_LOG 4.128).
 
 The skip list is a file with one file_id per line, re-read whenever it changes, checked at the top of every page
 iteration. The page write is a single transaction. Nothing here touches the real database or the API.
 """
 
+import json
 import sqlite3
 import tempfile
+from datetime import datetime, timezone
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -36,6 +39,7 @@ class AnalyzeRunTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.db_path = Path(self._tmp.name) / "test.db"
         self.skip_path = Path(self._tmp.name) / "skip_files.txt"
+        self.flag_dir = Path(self._tmp.name) / "review_flags"
         self._opened: list[sqlite3.Connection] = []
         self.conn = self.connect()
         db.init_db(self.conn)
@@ -54,6 +58,7 @@ class AnalyzeRunTest(unittest.TestCase):
             mock.patch.object(analyze.anthropic, "Anthropic", return_value=mock.Mock()),
             mock.patch.object(analyze, "load_dotenv"),
             mock.patch.object(analyze, "SKIP_FILES_PATH", self.skip_path),
+            mock.patch.object(analyze, "FAILED_PAGES_DIR", self.flag_dir),
         ]
         for p in patches:
             p.start()
@@ -89,6 +94,11 @@ class AnalyzeRunTest(unittest.TestCase):
     def run_analyze(self) -> None:
         with mock.patch("builtins.print"):
             analyze.run()
+
+    def run_analyze_output(self) -> str:
+        with mock.patch("builtins.print") as printed:
+            analyze.run()
+        return "\n".join(" ".join(str(a) for a in call.args) for call in printed.call_args_list)
 
     def status(self, file_id: int) -> list[str]:
         conn = self.connect()
@@ -184,6 +194,112 @@ class AnalyzeRunTest(unittest.TestCase):
         self.assertEqual(self.status(a), ["pending"])
         self.run_analyze()  # a clean retry inserts the page once
         self.assertEqual(self.count("articles"), 1)
+
+    # --- failed-page record (4.128) ------------------------------------------------------------------------
+
+    def fail_page(self, file_id: int, page: int, exc: Exception) -> None:
+        def raise_on(ref):
+            if ref == f"{file_id}:{page}":
+                raise exc
+        self.on_analyze = raise_on
+
+    def test_failed_pages_are_listed_in_the_summary_and_recorded(self):
+        a = self.add_file_with_pages(1, pages=3, newspaper="Der Spiegel")
+        self.fail_page(a, 2, TimeoutError("request timed out\nafter 60s"))
+        out = self.run_analyze_output()
+        self.assertEqual(self.status(a), ["completed", "pending", "completed"])  # behaviour unchanged
+        self.assertIn("Analysis: 2 page(s) analyzed, 1 page(s) failed", out)
+        tail = out.split("Analysis: ", 1)[1]  # the lines the daily log's tail keeps
+        self.assertIn("Failed pages (1)", tail)
+        self.assertIn(f"file_id={a} page=2 (Der Spiegel) TimeoutError: request timed out after 60s", tail)
+        files = list(self.flag_dir.glob("*.analyze_failed.json"))
+        self.assertEqual(len(files), 1)
+        self.assertIn(files[0].name, tail)
+        record = json.loads(files[0].read_text(encoding="utf-8"))
+        failed = record["runs"][0]["failed_pages"]
+        self.assertEqual(failed, [{
+            "file_id": a, "page_number": 2, "newspaper": "Der Spiegel",
+            "error_type": "TimeoutError", "error": "request timed out after 60s",
+        }])
+
+    def test_a_failed_page_is_retried_by_the_next_run_exactly_as_before(self):
+        a = self.add_file_with_pages(1, pages=2)
+        self.fail_page(a, 1, RuntimeError("boom"))
+        self.run_analyze_output()
+        self.on_analyze = None
+        out = self.run_analyze_output()
+        self.assertEqual(self.status(a), ["completed", "completed"])
+        self.assertEqual(self.count("articles"), 2)
+        self.assertNotIn("Failed pages", out)
+        self.assertEqual(len(list(self.flag_dir.glob("*.analyze_failed.json"))), 1)  # the earlier record stays
+
+    def test_no_failures_means_no_record_and_no_failed_section(self):
+        self.add_file_with_pages(1, pages=2)
+        out = self.run_analyze_output()
+        self.assertNotIn("Failed pages", out)
+        self.assertFalse(self.flag_dir.exists())
+
+    def test_a_record_that_cannot_be_written_never_stops_the_run(self):
+        a = self.add_file_with_pages(1, pages=3)
+        self.fail_page(a, 1, RuntimeError("boom"))
+        self.flag_dir.write_text("a file where the directory should be", encoding="utf-8")
+        out = self.run_analyze_output()
+        self.assertEqual(self.status(a), ["pending", "completed", "completed"])
+        self.assertIn("could not write the failed-pages record", out)
+        self.assertIn("Failed pages (1)", out)  # the summary still lists the page
+
+    def test_a_failure_while_describing_a_page_never_stops_the_run(self):
+        a = self.add_file_with_pages(1, pages=2)
+        self.fail_page(a, 1, RuntimeError("boom"))
+        with mock.patch.object(analyze, "describe_failure", side_effect=KeyError("x")):
+            out = self.run_analyze_output()
+        self.assertEqual(self.status(a), ["pending", "completed"])
+        self.assertIn("1 page(s) failed", out)
+
+
+class FailedPagesRecordTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        self.dir = Path(self._tmp.name) / "flags"
+        self.page = {"file_id": 7, "page_number": 3, "newspaper": "Economist"}
+
+    def test_describe_failure_collapses_whitespace_and_truncates(self):
+        entry = analyze.describe_failure(self.page, ValueError("line one\n\n  line two " + "x" * 500))
+        self.assertEqual(entry["error_type"], "ValueError")
+        self.assertTrue(entry["error"].startswith("line one line two xxx"))
+        self.assertEqual(len(entry["error"]), analyze.FAILED_ERROR_MESSAGE_LIMIT)
+        self.assertEqual((entry["file_id"], entry["page_number"], entry["newspaper"]), (7, 3, "Economist"))
+
+    def test_nothing_is_written_for_an_empty_list(self):
+        self.assertIsNone(analyze.write_failed_pages_record([], flag_dir=self.dir))
+        self.assertFalse(self.dir.exists())
+
+    def test_runs_on_the_same_day_append(self):
+        first = analyze.describe_failure(self.page, RuntimeError("one"))
+        second = analyze.describe_failure(self.page, RuntimeError("two"))
+        t1 = datetime(2026, 11, 6, 16, 0, tzinfo=timezone.utc)
+        t2 = datetime(2026, 11, 6, 20, 0, tzinfo=timezone.utc)
+        path = analyze.write_failed_pages_record([first], flag_dir=self.dir, now=t1)
+        self.assertEqual(path, analyze.write_failed_pages_record([second], flag_dir=self.dir, now=t2))
+        self.assertEqual(path.name, "2026-11-06.analyze_failed.json")
+        runs = json.loads(path.read_text(encoding="utf-8"))["runs"]
+        self.assertEqual([r["failed_pages"][0]["error"] for r in runs], ["one", "two"])
+
+    def test_an_unreadable_earlier_file_is_replaced_not_fatal(self):
+        self.dir.mkdir()
+        now = datetime(2026, 11, 6, 16, 0, tzinfo=timezone.utc)
+        (self.dir / "2026-11-06.analyze_failed.json").write_text("{not json", encoding="utf-8")
+        entry = analyze.describe_failure(self.page, RuntimeError("x"))
+        path = analyze.write_failed_pages_record([entry], flag_dir=self.dir, now=now)
+        self.assertEqual(len(json.loads(path.read_text(encoding="utf-8"))["runs"]), 1)
+
+    def test_format_lines(self):
+        entry = analyze.describe_failure(self.page, RuntimeError("bad json"))
+        self.assertEqual(
+            analyze.format_failed_pages([entry]),
+            ["  failed page: file_id=7 page=3 (Economist) RuntimeError: bad json"],
+        )
 
 
 if __name__ == "__main__":
