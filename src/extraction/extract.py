@@ -7,7 +7,11 @@ No article segmentation or classification happens here - that's Analysis.
 One-shot run - not a long-running daemon.
 """
 
+import argparse
+import json
+import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -28,6 +32,14 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 EXTRACTED_DIR = Path(__file__).resolve().parents[2] / "data" / "processed" / "extracted"
 FAILED_PAGE_MARKER = "[EXTRACTION FAILED]"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# Per-file ceiling (PROJECT_LOG 4.130). A guard against a stuck file only: a legitimately heavy file
+# (The Guardian UK, 87 MB / 212 pages) took 27 minutes on 2026-11-07, so this must stay well above that.
+# A file over the ceiling is skipped, stays 'pending', and is retried by the next run's extract.
+FILE_TIMEOUT_SECONDS = 2400
+RESULT_PREFIX = "RESULT "
+SKIP_LINE_PREFIX = "  SKIPPED (file timeout): "
 
 
 def extract_pdf_pages(pdf_path: Path) -> list[tuple[str, bool]]:
@@ -77,37 +89,84 @@ def process_file(conn, file_row) -> tuple[int, int]:
     return len(pages), pages_failed
 
 
-def run() -> None:
+def run_file_in_subprocess(file_id: int, timeout: float) -> dict:
+    """Extract one file in a child process so a stuck file can be killed without killing the run.
+
+    Returns {"status": "completed", "pages", "pages_failed"} | {"status": "failed", "error"} |
+    {"status": "timeout"}. The child commits only when the whole file is done, so a killed child leaves
+    the file 'pending' with no partial rows.
+    """
+    cmd = [sys.executable, "-m", "src.extraction.extract", "--file-id", str(file_id)]
+    try:
+        proc = subprocess.run(
+            cmd, cwd=str(PROJECT_ROOT), capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return {"status": "timeout"}
+    for line in reversed(proc.stdout.splitlines()):
+        if line.startswith(RESULT_PREFIX):
+            return json.loads(line[len(RESULT_PREFIX):])
+    return {"status": "failed", "error": f"child exit {proc.returncode}: {proc.stderr.strip()[-300:]}"}
+
+
+def run_single_file(file_id: int) -> int:
+    """Child entry point (--file-id): extract one file, print a RESULT line, never raise."""
+    conn = get_connection()
+    init_db(conn)
+    row = conn.execute(
+        "SELECT id, file_name, local_path FROM downloaded_files WHERE id = ?", (file_id,)
+    ).fetchone()
+    try:
+        pages, failed = process_file(conn, row)
+        result = {"status": "completed", "pages": pages, "pages_failed": failed}
+    except Exception as exc:
+        set_extraction_result(conn, file_id, "failed", str(exc))
+        result = {"status": "failed", "error": str(exc)}
+    conn.close()
+    print(RESULT_PREFIX + json.dumps(result), flush=True)
+    return 0
+
+
+def run(file_timeout: float = FILE_TIMEOUT_SECONDS, runner=run_file_in_subprocess) -> None:
     conn = get_connection()
     init_db(conn)
 
     pending = get_pending_extraction_files(conn)
+    conn.close()
 
     files_completed = 0
     files_failed = 0
+    files_skipped = 0
     total_pages = 0
     total_pages_failed = 0
 
     for file_row in pending:
-        try:
-            page_count, pages_failed = process_file(conn, file_row)
-        except Exception as exc:
-            set_extraction_result(conn, file_row["id"], "failed", str(exc))
+        started = time.monotonic()
+        result = runner(file_row["id"], file_timeout)
+        elapsed = time.monotonic() - started
+
+        if result["status"] == "timeout":
+            files_skipped += 1
+            print(
+                f"{SKIP_LINE_PREFIX}{file_row['file_name']} (id {file_row['id']}) exceeded "
+                f"{file_timeout:.0f}s - left 'pending', retried by the next run"
+            )
+            continue
+        if result["status"] != "completed":
             files_failed += 1
-            print(f"  failed: {file_row['file_name']} ({exc})")
+            print(f"  failed: {file_row['file_name']} ({result.get('error')}) [{elapsed:.0f}s]")
             continue
 
         files_completed += 1
-        total_pages += page_count
-        total_pages_failed += pages_failed
-        note = f", {pages_failed} page(s) failed" if pages_failed else ""
-        print(f"  completed: {file_row['file_name']} ({page_count} page(s){note})")
-
-    conn.close()
+        total_pages += result["pages"]
+        total_pages_failed += result["pages_failed"]
+        note = f", {result['pages_failed']} page(s) failed" if result["pages_failed"] else ""
+        print(f"  completed: {file_row['file_name']} ({result['pages']} page(s){note}, {elapsed:.0f}s)")
 
     summary = (
         f"\nExtraction: {files_completed} file(s) completed, {files_failed} file(s) failed, "
-        f"{total_pages} page(s) extracted in total"
+        f"{files_skipped} file(s) skipped (timeout), {total_pages} page(s) extracted in total"
     )
     if total_pages_failed:
         summary += f", {total_pages_failed} page(s) failed within completed files"
@@ -115,4 +174,10 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--file-id", type=int, help="child mode: extract this one file and print a RESULT line")
+    parser.add_argument("--file-timeout", type=float, default=FILE_TIMEOUT_SECONDS, help="seconds per file")
+    args = parser.parse_args()
+    if args.file_id is not None:
+        sys.exit(run_single_file(args.file_id))
+    run(file_timeout=args.file_timeout)

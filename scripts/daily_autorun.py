@@ -83,9 +83,13 @@ CONSECUTIVE_FAILURE_LIMIT = 2  # trips the kill-switch after this many failed da
 # it for the rest of the vacation).
 TIMEOUTS = {
     "unittest": 5 * 60,
-    "fetch": 90 * 60,
+    # Raised 90 -> 120 min on 2026-11-07 (PROJECT_LOG 4.130): fetch took 39-57 min on recent days; a heavy weekend
+    # day should not sit within a few minutes of the old ceiling.
+    "fetch": 120 * 60,
     "pdf_health_check": 10 * 60,
-    "extract": 45 * 60,
+    # Raised 45 -> 90 min on 2026-11-07 (PROJECT_LOG 4.130): The Guardian UK alone took 27 min and the Telegraph 8 min, the
+    # run hit 45 min with 2 of 10 files left. Each file also has its own 40 min ceiling inside extract.py.
+    "extract": 90 * 60,
     # Raised from 20 min to 50 min on 2026-10-10 (see PROJECT_LOG) after a real
     # timeout: measured steady throughput is ~1.7s/page with no stalls, so even
     # a single ordinary day's extraction (714 pages that day) already brushes
@@ -353,6 +357,12 @@ def missing_biweekly_period_warning(today: date) -> str:
 SYNTHESIS_VOLUME_WARN_THRESHOLD = 320
 
 
+def extract_skip_notes(stdout: str) -> list[str]:
+    """Lines extract.py printed for files it skipped on its per-file timeout (informational; the step itself exits 0)."""
+    marker = "SKIPPED (file timeout):"
+    return [line.split(marker, 1)[1].strip() for line in (stdout or "").splitlines() if marker in line]
+
+
 def record_screening_holds(log, entries: list[dict]) -> None:
     """Persist why each file was kept out of screening, so a later report_date shift can explain itself."""
     from src.common.db import get_connection, record_screening_hold
@@ -464,6 +474,7 @@ def main() -> int:
 
         state = load_json(STATE_FILE, {"consecutive_failures": 0, "last_run_date": None, "last_run_status": None})
         results: dict[str, StepResult] = {}
+        extract_skips: list[str] = []
         day_ok = True
 
         # --- sanity gate ---
@@ -503,6 +514,9 @@ def main() -> int:
             r = run_step(log, "extract", ["src.extraction.extract"])
             results["extract"] = r
             day_ok = r.ok
+            for note in extract_skip_notes(r.stdout):
+                extract_skips.append(note)
+                log(f"EXTRACT_SKIPPED: {note}")
 
         if day_ok:
             if suspects:
@@ -596,6 +610,10 @@ def main() -> int:
             else:
                 status = "?"
             lines.append(f"  {name}: {status}")
+        if extract_skips:
+            lines.append(f"  *** WARNING: {len(extract_skips)} file(s) skipped by extract (per-file timeout), left pending - "
+                         f"they will join the NEXT day's report (REPORT_DATE_SHIFT) unless handled by hand: ***")
+            lines += [f"    - {note}" for note in extract_skips]
         lines.append(f"  biweekly check: {biweekly_note}")
         lines.append(f"  synthesize input volume: {volume_note}")
         if shift_notes:
