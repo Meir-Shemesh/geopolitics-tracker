@@ -247,6 +247,14 @@ _GERMAN_STYLE_ANCHOR = CONTENT["de"]["sections"][0]["blocks"][0][1]
 # with Arabic characters in the middle (PROJECT_LOG 4.105).
 _NEWSPAPER_NAME_LIST = ", ".join(f'"{name}"' for name in NEWSPAPER_DISPLAY_NAMES.values())
 
+# Home country of every newspaper, injected into the stage-2 prompt (PROJECT_LOG 4.131): the model used to see only the
+# newspaper key and the articles' topic tags, so a story about the US filed by a British paper's US desk could be
+# written up as "the American papers ... The Guardian". Built from NEWSPAPER_COUNTRIES (the same mapping the framing
+# gate uses), so the prompt, the gate and the audit below can never disagree.
+_NEWSPAPER_COUNTRY_LIST = "; ".join(
+    f"{NEWSPAPER_DISPLAY_NAMES[key]} = {country}" for key, country in NEWSPAPER_COUNTRIES.items() if key in NEWSPAPER_DISPLAY_NAMES
+)
+
 STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor for a geopolitical news-monitoring report, writing the cross-source comparison for ONE already-identified topic (grouping already happened in an earlier pass). You will be given every article assigned to this topic - each with an id, source newspaper, headline, an original per-article topic tag, a stance summary, and a key excerpt - plus that topic's already-decided English and Hebrew labels, for reference only.
 
 Your task: write a comparative analysis (a few sentences to a short paragraph) of how the sources covering this topic frame it differently - their differing emphasis, stance, or angle - not a neutral summary of "what happened." If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), treat them as ONE voice for that newspaper in your narrative - do not present that newspaper's position on the same event twice, even though you were given both ids. If only one source covers the topic, describe that source's stance/angle on its own.
@@ -256,6 +264,8 @@ Attribution: some articles carry an "author (byline)" line - this marks a named 
 Reference sources by name only - never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en/de, in any language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report..." - never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one into the other (and not a translation of comparison_text_he or comparison_text_en into German either - compose comparison_text_de independently, from the same source articles).
 
 Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: {_NEWSPAPER_NAME_LIST}. This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name. The same rule covers ANY other newspaper, magazine or media outlet you mention by name - for example a regional paper that one of the sources quotes, such as "Lausitzer Rundschau" (never "הלאוזיצר רונדשאו"): keep its original Latin-script name.
+
+Newspaper nationality: the home country of each newspaper is fixed: {_NEWSPAPER_COUNTRY_LIST}. (The Economist is treated as an international outlet, belonging to no single country; The Globe and Mail is Canadian; Neue Zürcher Zeitung is Swiss, German-language but not German.) A newspaper's country is NOT the country its article is about, and NOT the desk or edition that filed it: The Guardian is a British newspaper even when the piece comes from its Guardian US desk and is about American politics. Never group or label newspapers by nationality or language ("the American papers", "both British outlets", "the German-language press", "die amerikanischen Zeitungen", "העיתונים הבריטיים") unless EVERY newspaper you place in that group has that country in the list above. If in doubt, name the newspapers and do not label them by country.
 
 Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify - for example "שתי זוויות" not "שני זוויות" (זווית is feminine), "שלוש כתבות" not "שלושה כתבות" (כתבה is feminine). When attributing a claim to a named columnist, use exactly the form "בטור ב-{{שם המקור}}" (for example "בטור ב-Süddeutsche Zeitung", "בטור ב-The Guardian") - never insert an extra word between "בטור ב" and the source name (for example "בטור בזמן Die Welt" is wrong - no such word belongs in this phrase, regardless of which source it precedes). Also watch for part-of-speech mismatches between an adjective and the noun it modifies - an adjective like "מושחת" (corrupt) correctly describes a concrete entity (a regime, an administration, officials, an economy - e.g. "מערכת מושחתת", "פקידים מושחתים") but not an abstract concept such as a fear or concern (never "חששות מושחתות" - if the intended meaning involves corruption as a concept, phrase it with "שחיתות" itself as the noun, e.g. "חששות מפני שחיתות"). Reread each Hebrew sentence you write for all of these kinds of errors before finalizing it.
 
@@ -575,6 +585,90 @@ def _suspicious_langs(comparison: dict) -> list[str]:
     return langs
 
 
+# --- Nationality-label audit (PROJECT_LOG 4.131) -------------------------------------------------------------------
+# 2026-11-07 section 6139 called "The Guardian, Los Angeles Times and The Washington Post" "all three major American
+# papers", in all three languages. The check below is deliberately narrow: it only reads a LIST of newspaper names that
+# directly follows a nationality label ("American papers - A, B and C", "..., especially A and B", "deutschen Zeitungen,
+# darunter A"), because a contrast ("where the German paper ... the Telegraph ...") is legitimate and a wider window
+# produced mostly false positives on the archive. Flag only - never blocks publication.
+_NATION_ADJ = {  # label -> countries that make the label true (German-language / "Germany" also covers Switzerland)
+    "en": [(r"american|u\.?s\.?", {"US"}), (r"british|uk", {"UK"}), (r"german(?:-language|-speaking)?", {"Germany", "Switzerland"}),
+           (r"swiss", {"Switzerland"}), (r"canadian", {"Canada"})],
+    "he": [("אמריק", {"US"}), ("בריט", {"UK"}), ("גרמנ", {"Germany", "Switzerland"}), ("שוויצר", {"Switzerland"}), ("קנד", {"Canada"})],
+    "de": [(r"amerikanisch\w*", {"US"}), (r"britisch\w*", {"UK"}), (r"(?<!Süd)deutsch\w*", {"Germany", "Switzerland"}),
+           (r"schweizer\w*", {"Switzerland"}), (r"kanadisch\w*", {"Canada"})],
+}
+_GROUP_NOUN = {
+    "en": r"(?:major |leading |main |mainstream |national )?(?:papers|newspapers|outlets|dailies|press|titles|publications)",
+    "he": r"(?:עיתונים|עיתונות|מקורות|עיתוני)",
+    "de": r"(?:Zeitungen|Tageszeitungen|Blätter|Medien|Presse|Titel)",
+}
+_FILLER = r"(?:,?\s+[^\s.;:()–—-]{2,}){0,6}?"  # up to six plain words ("covering this event", "המרכזיים") before the list
+_LIST_LEAD = {  # what may sit between the label and the list of names
+    "en": _FILLER + r"\s*(?:[-–—:(]\s*)(?:(?:such as|including|especially|namely|notably|particularly)\s+)?(?:the\s+)?"
+          r"|\s*,?\s*(?:such as|including|especially|namely|notably|particularly)\s+(?:the\s+)?",
+    "he": _FILLER + r"\s*(?:[-–—:(]\s*)(?:(?:כגון|ובהם|ביניהם|במיוחד)\s+)?"
+          r"|\s*,?\s*(?:כגון|ובהם|ביניהם|במיוחד)\s+",
+    "de": _FILLER + r"\s*(?:[-–—:(]\s*)(?:(?:wie|darunter|insbesondere|besonders)\s+(?:bei\s+)?)?(?:die |der |das )?"
+          r"|\s*,?\s*(?:wie|darunter|insbesondere|besonders)\s+(?:bei\s+)?(?:die |der |das )?",
+}
+_NAME_PATTERNS = None
+
+
+def _name_patterns():
+    """(name, country) for every display name and key, longest first; built lazily from the canonical mappings."""
+    global _NAME_PATTERNS
+    if _NAME_PATTERNS is None:
+        names = {}
+        for key, disp in NEWSPAPER_DISPLAY_NAMES.items():
+            country = NEWSPAPER_COUNTRIES.get(key)
+            if country:
+                names[disp] = country
+                names[key] = country
+                # German declension of the three names that change form after "der/die" ("der Süddeutschen Zeitung")
+                for plain, declined in (("Süddeutsche Zeitung", "Süddeutschen Zeitung"), ("Neue Zürcher Zeitung", "Neuen Zürcher Zeitung"),
+                                        ("Frankfurter Allgemeine Zeitung", "Frankfurter Allgemeinen Zeitung")):
+                    if key == plain:
+                        names[declined] = country
+        _NAME_PATTERNS = sorted(names.items(), key=lambda kv: -len(kv[0]))
+    return _NAME_PATTERNS
+
+
+def newspaper_nationality_conflicts(text: str, lang: str) -> list[dict]:
+    """Nationality labels directly followed by a list of newspapers where a listed paper's country is not covered by
+    the label. Returns [{label, wrong: [(name, country)]}]; empty when every listed paper matches."""
+    found = []
+    text = text or ""
+    for adj, countries in _NATION_ADJ[lang]:
+        if lang == "he":
+            label_re = re.compile(rf"{_GROUP_NOUN[lang]}\s+ה?(?:{adj})\w*")
+        else:
+            label_re = re.compile(rf"\b(?:{adj})\s+{_GROUP_NOUN[lang]}", re.IGNORECASE)
+        for m in label_re.finditer(text):
+            lead = re.match(_LIST_LEAD[lang], text[m.end():], re.IGNORECASE)
+            pos = m.end() + (lead.end() if lead else 0)
+            names = []
+            while True:  # consume "A, B and C" / "A, B ו-C" / "A, B und C"
+                prefix = re.match(r"(?:ו?ב-|ו-|ל-)", text[pos:])  # Hebrew attached prepositions: ב-Guardian, וב-Guardian
+                if prefix:
+                    pos += prefix.end()
+                for name, country in _name_patterns():
+                    if text.startswith(name, pos):
+                        names.append((name, country))
+                        pos += len(name)
+                        break
+                else:
+                    break
+                sep = re.match(r"\s*(?:,|ו-|ו|&|and|und)?\s*(?:and |und |the |die |der |das |bei )?", text[pos:], re.IGNORECASE)
+                if not sep or sep.end() == 0:
+                    break
+                pos += sep.end()
+            wrong = [(n, c) for n, c in names if c not in countries and c != "International"]
+            if wrong:
+                found.append({"label": m.group(0), "wrong": wrong})
+    return found
+
+
 def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
     """Read-only checks over the final model-written sections. Returns human-readable flags."""
     newspaper_by_id = {a["id"]: a["newspaper"] for a in articles}
@@ -601,6 +695,12 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
                 if real < claimed <= MAX_PLAUSIBLE_SOURCES:
                     flags.append(f"NEWSPAPER COUNT: comparison_text_{lang} of '{name}' says {claimed} newspapers, "
                                  f"but its articles come from {real}")
+        for lang in ("he", "en", "de"):
+            for hit in newspaper_nationality_conflicts(sec.get(f"comparison_text_{lang}"), lang):
+                flags.append(
+                    f"NEWSPAPER NATIONALITY in comparison_text_{lang} of '{name}': '{hit['label']}' is followed by "
+                    + ", ".join(f"{n} ({c})" for n, c in hit["wrong"])
+                )
         conflict = national_framing_conflict(
             sec, [newspaper_by_id[i] for i in sec.get("article_ids", []) if i in newspaper_by_id]
         )
