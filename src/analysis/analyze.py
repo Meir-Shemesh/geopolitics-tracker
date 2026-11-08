@@ -197,10 +197,33 @@ def build_analyze_params(newspaper: str, raw_text: str, is_letters_page_: bool =
     )
 
 
+# --- Refusals (PROJECT_LOG 4.132) ---------------------------------------------------------------------------------
+# stop_reason == "refusal" comes back with an empty tool_use input, which used to surface as KeyError: 'articles' and
+# leave the page 'pending' to fail again every day (pages 199/410/552). A refusal is a terminal answer about that page:
+# the page is marked 'refused' (analysis_mode 'refused', reason in analysis_note), no article is created, and neither a
+# later run nor the batch->regular-call fallback asks again.
+REFUSAL_REASON = "stop_reason=refusal"
+ANALYSIS_STATUS_REFUSED = "refused"
+ANALYSIS_MODE_REFUSED = "refused"
+
+
+class PageRefused(Exception):
+    """The model refused to analyze this page (stop_reason == 'refusal')."""
+
+
+class RefusedAnswer:
+    """Stored in the batch answers in place of a list of articles when a batch request ended in a refusal."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+
+
 def analyze_page(client: anthropic.Anthropic, newspaper: str, raw_text: str, is_letters_page_: bool = False,
                  ref: str | None = None) -> list[dict]:
     response = client.messages.create(**build_analyze_params(newspaper, raw_text, is_letters_page_))
     record_api_usage("analyze", MODEL, response.usage, ref=ref)
+    if getattr(response, "stop_reason", None) == "refusal":
+        raise PageRefused(REFUSAL_REASON)
     tool_use = next(b for b in response.content if b.type == "tool_use")
     return tool_use.input["articles"]
 
@@ -288,11 +311,12 @@ def format_failed_pages(failed: list[dict]) -> list[str]:
     ]
 
 
-def write_failed_pages_record(failed: list[dict], flag_dir: Path | None = None, now: datetime | None = None) -> Path | None:
+def write_failed_pages_record(failed: list[dict], flag_dir: Path | None = None, now: datetime | None = None,
+                              refused: list[dict] | None = None) -> Path | None:
     """Appends this run's failures to data/processed/review_flags/<local date>.analyze_failed.json (several runs on
     one day add entries; an unreadable earlier file is replaced). Nothing is written when no page failed.
     Returns the path, or None. Never raises."""
-    if not failed:
+    if not failed and not refused:
         return None
     try:
         now = now or datetime.now().astimezone()
@@ -307,7 +331,10 @@ def write_failed_pages_record(failed: list[dict], flag_dir: Path | None = None, 
                     runs = previous["runs"]
             except (OSError, ValueError, AttributeError):
                 runs = []
-        runs.append({"at": now.isoformat(timespec="seconds"), "failed_pages": failed})
+        entry = {"at": now.isoformat(timespec="seconds"), "failed_pages": failed}
+        if refused:
+            entry["refused_pages"] = refused
+        runs.append(entry)
         path.write_text(json.dumps({"runs": runs}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         return path
     except Exception as exc:  # noqa: BLE001 - recording must never stop a run
@@ -366,6 +393,9 @@ def _absorb_batch_results(results: dict, model: str, articles_by_page: dict) -> 
         if result.usage is not None:  # succeeded requests are billed even if their content is unusable
             record_api_usage("analyze" + BATCH_STAGE_SUFFIX, model, result.usage,
                              ref=f"{key[0]}:{key[1]}" if key else custom_id)
+        if key is not None and result.kind == "refused":
+            articles_by_page[key] = RefusedAnswer(result.error or REFUSAL_REASON)
+            continue
         if key is None or not result.usable:
             continue
         articles = result.tool_input.get("articles")
@@ -473,6 +503,7 @@ def run(file_id: int | None = None, use_batch: bool | None = None, batch_timeout
     pages_analyzed = 0
     pages_failed = 0
     failed_pages: list[dict] = []
+    refused_pages: list[dict] = []
     total_articles = 0
     total_self_excluded = 0
 
@@ -503,6 +534,8 @@ def run(file_id: int | None = None, use_batch: bool | None = None, batch_timeout
         try:
             articles = None
             batched = batch_articles.get((page["file_id"], page["page_number"]))
+            if isinstance(batched, RefusedAnswer):
+                raise PageRefused(batched.reason)
             if batched is not None:
                 try:
                     validate_articles(batched)
@@ -517,6 +550,18 @@ def run(file_id: int | None = None, use_batch: bool | None = None, batch_timeout
                     ref=f"{page['file_id']}:{page['page_number']}",
                 )
                 validate_articles(articles)
+        except PageRefused as exc:
+            try:
+                set_analysis_status(conn, page["file_id"], page["page_number"], ANALYSIS_STATUS_REFUSED,
+                                    mode=ANALYSIS_MODE_REFUSED, analyzed_at=datetime.now(timezone.utc).isoformat(),
+                                    note=str(exc)[:200])
+                refused_pages.append(describe_failure(page, exc))
+                print(f"  refused: file_id={page['file_id']} page={page['page_number']} ({exc}) - final, not retried")
+            except Exception as write_exc:  # noqa: BLE001 - if it cannot be recorded it stays pending like a failure
+                conn.rollback()
+                pages_failed += 1
+                failed_pages.append(describe_failure(page, write_exc))
+            continue
         except Exception as exc:
             # Validate the whole response shape before any DB write starts (below) -
             # a page-level failure here must leave zero rows written, so a retry via
@@ -588,6 +633,11 @@ def run(file_id: int | None = None, use_batch: bool | None = None, batch_timeout
             f"Skipped by the skip list ({SKIP_FILES_PATH.name}): {sum(skipped_pages.values())} page(s) "
             f"of file_id(s) {sorted(skipped_pages)} - left 'pending'"
         )
+    if refused_pages:
+        print(f"Refused pages ({len(refused_pages)}) - final (analysis_status 'refused'), not retried:")
+        for line in format_failed_pages(refused_pages):
+            print(line.replace("failed page:", "refused page:", 1))
+        write_failed_pages_record([], refused=refused_pages)
     if failed_pages:
         print(f"Failed pages ({len(failed_pages)}) - left 'pending', retried by the next run:")
         for line in format_failed_pages(failed_pages):

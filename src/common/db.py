@@ -62,6 +62,8 @@ TABLE_COLUMNS: dict[str, dict[str, str]] = {
         # How a page was analyzed ('batch' | 'sync') and when; NULL for pages analyzed before these columns existed.
         "analysis_mode": "TEXT",
         "analyzed_at": "TEXT",
+        # Why a page ended in a terminal state without articles ('refused': stop_reason=refusal), PROJECT_LOG 4.132.
+        "analysis_note": "TEXT",
     },
     "articles": {
         "id": "INTEGER PRIMARY KEY AUTOINCREMENT",
@@ -666,10 +668,16 @@ def get_pages_pending_analysis(conn: sqlite3.Connection, file_id: int | None = N
 
 
 def set_analysis_status(conn: sqlite3.Connection, file_id: int, page_number: int, status: str, commit: bool = True,
-                        mode: str | None = None, analyzed_at: str | None = None) -> None:
+                        mode: str | None = None, analyzed_at: str | None = None, note: str | None = None) -> None:
     """`mode` ('batch' | 'sync') and `analyzed_at` are written together with the status when given; a call without them
     (the screen's 'skipped_duplicate') leaves both columns untouched."""
-    if mode is None and analyzed_at is None:
+    if note is not None:
+        conn.execute(
+            "UPDATE page_screening SET analysis_status = ?, analysis_mode = ?, analyzed_at = ?, analysis_note = ? "
+            "WHERE file_id = ? AND page_number = ?",
+            (status, mode, analyzed_at, note, file_id, page_number),
+        )
+    elif mode is None and analyzed_at is None:
         conn.execute(
             "UPDATE page_screening SET analysis_status = ? WHERE file_id = ? AND page_number = ?",
             (status, file_id, page_number),

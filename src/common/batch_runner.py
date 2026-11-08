@@ -21,10 +21,11 @@ CANCEL_WAIT_SECONDS = 120.0
 @dataclass
 class BatchResult:
     custom_id: str
-    kind: str  # succeeded | errored | expired | canceled | no_tool_use
+    kind: str  # succeeded | errored | expired | canceled | no_tool_use | refused
     tool_input: dict | None = None
     usage: SimpleNamespace | None = None
     error: str | None = None
+    stop_reason: str | None = None  # the model's stop_reason for a succeeded request ("refusal" => kind "refused")
 
     @property
     def usable(self) -> bool:
@@ -120,7 +121,11 @@ def fetch_results(client, batch_id: str) -> dict[str, BatchResult]:
             cache_creation_input_tokens=getattr(message.usage, "cache_creation_input_tokens", 0) or 0,
             cache_read_input_tokens=getattr(message.usage, "cache_read_input_tokens", 0) or 0,
         )
-        if tool_use is None:
+        stop_reason = getattr(message, "stop_reason", None)
+        if stop_reason == "refusal":  # PROJECT_LOG 4.132: the model declined; its tool_use block (if any) is empty
+            out[entry.custom_id] = BatchResult(entry.custom_id, "refused", usage=usage, error="stop_reason=refusal",
+                                               stop_reason=stop_reason)
+        elif tool_use is None:
             out[entry.custom_id] = BatchResult(entry.custom_id, "no_tool_use", usage=usage,
                                                error=f"stop_reason={getattr(message, 'stop_reason', None)}")
         else:
