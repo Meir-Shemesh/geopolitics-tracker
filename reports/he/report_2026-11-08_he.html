@@ -1,0 +1,2813 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>דוח יומי - יום ראשון, 8 בנובמבר 2026</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+  --tok-security_conflict-color: #8a3324;
+  --tok-security_conflict-bg: #f7e6e2;
+  --tok-diplomacy_international-color: #2a5b8a;
+  --tok-diplomacy_international-bg: #e3edf5;
+  --tok-trade_economics-color: #8a6114;
+  --tok-trade_economics-bg: #faf1dd;
+  --tok-domestic_politics-color: #5c3d82;
+  --tok-domestic_politics-bg: #f0e9f6;
+  --tok-migration_society-color: #1f6f76;
+  --tok-migration_society-bg: #e6f3f2;
+  --tok-society_culture-color: #a5457a;
+  --tok-society_culture-bg: #f8e8f0;
+  --tok-technology_media-color: #3d6b3d;
+  --tok-technology_media-bg: #e9f2e6;
+  --tok-energy_environment-color: #7a6a1a;
+  --tok-energy_environment-bg: #f5f0dd;
+  --tok-additional_coverage-color: #6b6560;
+  --tok-additional_coverage-bg: #efece6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      --tok-security_conflict-color: #e0a08f;
+  --tok-security_conflict-bg: #3a2019;
+      --tok-diplomacy_international-color: #8fb8dd;
+  --tok-diplomacy_international-bg: #182a38;
+      --tok-trade_economics-color: #e0b859;
+  --tok-trade_economics-bg: #332a13;
+      --tok-domestic_politics-color: #c6a6ea;
+  --tok-domestic_politics-bg: #2c2138;
+      --tok-migration_society-color: #6fc9d0;
+  --tok-migration_society-bg: #12302f;
+      --tok-society_culture-color: #e2a0c6;
+  --tok-society_culture-bg: #381e2c;
+      --tok-technology_media-color: #8fc98f;
+  --tok-technology_media-bg: #1c2e1c;
+      --tok-energy_environment-color: #cdbb5c;
+  --tok-energy_environment-bg: #2e2913;
+      --tok-additional_coverage-color: #a89f91;
+  --tok-additional_coverage-bg: #2a2620;
+  }
+}
+:root[data-theme="dark"] {
+    --tok-security_conflict-color: #e0a08f;
+  --tok-security_conflict-bg: #3a2019;
+    --tok-diplomacy_international-color: #8fb8dd;
+  --tok-diplomacy_international-bg: #182a38;
+    --tok-trade_economics-color: #e0b859;
+  --tok-trade_economics-bg: #332a13;
+    --tok-domestic_politics-color: #c6a6ea;
+  --tok-domestic_politics-bg: #2c2138;
+    --tok-migration_society-color: #6fc9d0;
+  --tok-migration_society-bg: #12302f;
+    --tok-society_culture-color: #e2a0c6;
+  --tok-society_culture-bg: #381e2c;
+    --tok-technology_media-color: #8fc98f;
+  --tok-technology_media-bg: #1c2e1c;
+    --tok-energy_environment-color: #cdbb5c;
+  --tok-energy_environment-bg: #2e2913;
+    --tok-additional_coverage-color: #a89f91;
+  --tok-additional_coverage-bg: #2a2620;
+}
+[data-category="security_conflict"] { --cat-color: var(--tok-security_conflict-color); --cat-bg: var(--tok-security_conflict-bg); }
+[data-category="diplomacy_international"] { --cat-color: var(--tok-diplomacy_international-color); --cat-bg: var(--tok-diplomacy_international-bg); }
+[data-category="trade_economics"] { --cat-color: var(--tok-trade_economics-color); --cat-bg: var(--tok-trade_economics-bg); }
+[data-category="domestic_politics"] { --cat-color: var(--tok-domestic_politics-color); --cat-bg: var(--tok-domestic_politics-bg); }
+[data-category="migration_society"] { --cat-color: var(--tok-migration_society-color); --cat-bg: var(--tok-migration_society-bg); }
+[data-category="society_culture"] { --cat-color: var(--tok-society_culture-color); --cat-bg: var(--tok-society_culture-bg); }
+[data-category="technology_media"] { --cat-color: var(--tok-technology_media-color); --cat-bg: var(--tok-technology_media-bg); }
+[data-category="energy_environment"] { --cat-color: var(--tok-energy_environment-color); --cat-bg: var(--tok-energy_environment-bg); }
+[data-category="additional_coverage"] { --cat-color: var(--tok-additional_coverage-color); --cat-bg: var(--tok-additional_coverage-bg); }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .report-title { margin: 0 0 1.5rem; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }
+  .revision-note { margin: -1rem 0 1.5rem; font-size: .85rem; color: var(--text-muted); font-style: italic; }
+  .sources-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+  .sources-label { font-size: .85rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+  .sources-pills { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; }
+  .sources-pills li {
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
+    color: var(--pill-text);
+    padding: .35rem .85rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 500;
+  }
+
+  .report-body {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 2.25rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .topic-section {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.5rem 1.6rem 1.65rem;
+    border-inline-start: 5px solid var(--cat-color);
+  }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
+  .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+  .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
+  .category-label {
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--cat-color);
+    background: var(--cat-bg);
+    padding: .2rem .6rem;
+    border-radius: 999px;
+  }
+  .coverage-badge { font-size: .72rem; color: var(--text-muted); }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
+  .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
+  .section-sources {
+    margin: 0;
+    font-size: .82rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: .75rem;
+  }
+  .section-sources b { color: var(--text); font-weight: 600; }
+
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 2cm 1.8cm;
+      @bottom-center { content: counter(page) " / " counter(pages); font-size: 9px; color: #888; }
+    }
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+    body { background: #fff; }
+    .top-nav { display: none; }
+    .category-nav { display: none; }
+    /* .section-actions used to be display:none outright (it only ever held the
+       share-link button, meaningless on paper) - but it's also the citations
+       toggle+popup's containing element, so hiding it wholesale silently hid
+       the citations fix below too (caught via an actual PDF-text check, not
+       just reading the CSS - the popup's [hidden] override alone did nothing
+       while its ancestor stayed display:none). Now only the share button is
+       hidden; the container itself switches to a plain block flow so the
+       citations toggle-label and popup stack vertically under it. */
+    .section-actions { display: block; }
+    .share-link-btn { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
+    /* Same reasoning as .section-body above: the citations popup is only ever
+       un-hidden by the click-handler JS below, and WeasyPrint (which renders
+       the PDF from this same HTML string) never runs JS - so without this,
+       per-article citations would never appear in the PDF, only the plain
+       "Sources: X, Y, Z" line rendered elsewhere in the section. Forcing it
+       visible here does not touch the on-screen [hidden] toggle behavior,
+       since this rule only applies inside @media print. */
+    .citations-toggle { cursor: default; pointer-events: none; }
+    .citations-toggle .chevron-circle { display: none; }
+    .citations-popup[hidden] {
+      display: block !important;
+      position: static;
+      width: auto;
+      max-width: none;
+      max-height: none;
+      overflow: visible;
+      box-shadow: none;
+      border: none;
+      background: none;
+      margin: .3rem 0 0;
+      padding: 0;
+    }
+  }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="מעקב גאופוליטיקה יומי - דף הבית"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="archive.html">← לכל הדוחות</a>
+      <a class="top-nav-link" href="filter.html">סינון מתקדם</a>
+      <a class="top-nav-link" href="trends.html">מגמות</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/report_2026-11-08_en.html">English</a>
+      <a class="top-nav-link top-nav-lang-link" href="../de/report_2026-11-08_de.html">Deutsch</a>
+      <a class="top-nav-link" href="report_2026-11-08_he.pdf">⬇ הורד PDF</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">צור קשר</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">אימייל</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">אתר אישי</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">לינקדאין</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="מצב כהה" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-6242">ביטחון וסכסוכים</a><a class="category-nav-link" href="#section-6244">דיפלומטיה ויחסים בינלאומיים</a><a class="category-nav-link" href="#section-6256">כלכלה וסחר</a><a class="category-nav-link" href="#section-6262">פוליטיקה פנימית</a><a class="category-nav-link" href="#section-6282">הגירה וחברה</a><a class="category-nav-link" href="#section-6271">תרבות וזהות</a><a class="category-nav-link" href="#section-6252">טכנולוגיה ומדיה</a><a class="category-nav-link" href="#section-6261">אנרגיה וסביבה</a><a class="category-nav-link" href="#section-6299">כיסוי נוסף</a></div>
+    <button class="toggle-all-btn" type="button">הרחב הכל / כווץ הכל</button>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">מעקב גאופוליטיקה יומי</p>
+      <h1 class="report-title">דוח יומי - יום ראשון, 8 בנובמבר 2026</h1>
+      <div class="sources-row">
+        <span class="sources-label">עיתונים שנסקרו היום:</span>
+        <ul class="sources-pills"><li>The Daily Telegraph</li><li>Frankfurter Allgemeine Zeitung</li><li>Los Angeles Times</li><li>The Observer</li><li>The Washington Post</li></ul>
+      </div>
+    </div>
+  </header>
+  <main class="report-body">
+
+      <section class="topic-section topic-section--prominent" id="section-6262" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6262">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">5 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ניתוח התבוסה של טראמפ בבחירות האמצע</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6262">
+          <p class="comparison-text">כלי התקשורת מציעים זוויות שונות מאוד להסבר התבוסה הדמוקרטית הניצחת של נובמבר. ב-The Daily Telegraph, ג&#x27;נט דיילי טוענת בטורה כי הבוחרים לא רק כעסו על יוקר המחיה אלא חשו זעם מוסרי על כך שטראמפ פגע בעקרונות החוקתיים של ארצות הברית והתנהג כ&quot;רודן קטן&quot; שמסחר את הנשיאות. ב-The Observer מתפרסמות מספר זוויות: מארק אפדגרוב רואה בתוצאות דחייה נחרצת של נטיות עריצות ומזהיר מפני ניסיון הדחה חדש; מרגרט מקמילן מצביעה על מקבילה לבחירות 1932 ומדגישה את ההשלכות הגלובליות על אוקראינה, איראן ואמון בעלות הברית; אנדרו רונסלי מזהיר כי אף שהתבוסה משקפת כעס על שחיתות, אין להכריז על מות הפופוליזם לנוכח לה פן וה-AfD, וכי לטראמפ נותרו שנתיים מסוכנות של כוח כמעט בלתי מרוסן; ג&#x27;יילס וויטל מצביע דווקא על האכיפה האכזרית של ICE כגורם המרכזי לתבוסה; והכתבה &quot;Loser&quot; משלבת את כל אלה לתמונה של נשיאות הקורסת תחת משקל השקר והשחיתות שלה. לעומת זאת, ב-Frankfurter Allgemeine Zeitung הדגש זהיר ומוסדי יותר: מיידיד סאטר בודק כיצד ינצלו הדמוקרטים את הרוב החדש שלהם בקונגרס נוכח מגבלות הפיליבסטר והווטו, פראוקה שטפנס בוחנת שינויים פוליטיים ארוכי טווח בדרום, וטוביאס רית&#x27;ר מתאר בסגנון סרקסטי את טראמפ מתכחש לאחריות בשידור בפוקס ניוז, בעוד אלכסנדר וולפרס טוען כי המכסים הפכו ל&quot;נושא של מפסידים&quot;. ב-The Washington Post מגוון דעות: ג&#x27;ייסון ויליק מזהיר מפני &quot;עימותים חוקתיים&quot; קרבים סביב חקירות, פשרות ומינויים לבית המשפט העליון וחנינות אפשריות; ג&#x27;ורג&#x27; פ. וויל תוקף בטורו את ג&#x27;יי-די ואנס כהמשך מידרדר של הפוליטיקה; מייקל וויר דן ב&quot;פער האל&quot; הדתי שהדמוקרטים עשויים לסגור; כתבה נוספת מתארת כיצד בוחרי איווה דחו את הבטחות הפלדה המבוססות מכסים; ומכתב קורא מאת סים ג&#x27;יי סינג אטריוואלה טוען שהתוצאות מוכיחות כי הבוחרים מענישים הסתה גזענית. ב-Los Angeles Times רובין אבקריאן רואה בעליית הסוציאליסטים הדמוקרטיים תנופה בריאה שמאלה, מרק ז. ברבק תוקף את השריף צ&#x27;אד ביאנקו על ניצול תפקידו לטובת טענות שווא על הונאת בחירות, ורוניק דה רוז&#x27;י מזהירה דווקא כי כל הצדדים מתעלמים מהמשבר הפיסקלי הצפוי לסנאט החדש - בעוד כתבה נפרדת מתעדת את מועמדותו ההיסטורית האפשרית של סקוט קולום למיסיסיפי.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Frankfurter Allgemeine Zeitung, Los Angeles Times, The Observer, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6262" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6262">
+            מראי מקום (20)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6262" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 18</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 1 — “Amerikas Demokraten müssen sich gut überlegen,…”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 18 — “Zölle sind was für Verlierer”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 37 — “Der Süden hat etwas zu sagen”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 40 — “Trump im Studio von Fox”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 2 — “Chad Bianco must bear the cost…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 6 — “Mississippi Democrat on cusp of Senate…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 15 — “Don&#x27;t fear the rise of the…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 15 — “A new Senate&#x27;s biggest challenge”</li>
+            <li>The Observer, 8.11.2026, עמ' 3 — “Loser”</li>
+            <li>The Observer, 8.11.2026, עמ' 8 — “Republicans set their sights on 2028…”</li>
+            <li>The Observer, 8.11.2026, עמ' 9 — “The results reject tyranny so fervently…”</li>
+            <li>The Observer, 8.11.2026, עמ' 10 — “Republicans pay ‘price of ICE’ as…”</li>
+            <li>The Observer, 8.11.2026, עמ' 31 — “Trump’s humiliation should worry Farage, but…”</li>
+            <li>The Observer, 8.11.2026, עמ' 34 — “Has the cruelty of Maga finally…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 17 — “What the midterms revealed about the…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 18 — “Iowa voters saw through Trump&#x27;s steel…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 18 — “Letter: Voters are sick of politicians…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 19 — “Now come the constitutional showdowns”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 19 — “President Vance? More slogging through a…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6242" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6242">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">3 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מתקפת ירי המונית בכיכר קרקוב</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6242">
+          <p class="comparison-text">שלושת המקורות מדווחים על אותו אירוע - ירי המוני בכיכר הראשית של קרקוב שהותיר שישה הרוגים ועשרות פצועים - אך נבדלים בדגש שהם שמים על זהות היורה ומניעיו. The Daily Telegraph, בכתבתו של ג&#x27;יימס קריספ, מתמקד בתגובת הרשויות הפולניות ובהבטחת החקירה והענישה, ומצטט את הממשלה המבטיחה &quot;להבטיח שמבצע הפשע יישא באחריות מלאה ויענש בחומרה&quot;, מבלי להרחיב על הרקע האידיאולוגי של התוקף. לעומת זאת, Los Angeles Times מדגיש כי מדובר במתקפת טרור ממניע ימני קיצוני, ומצטט את שר ההגנה הפולני שהגדיר את האירוע ככזה, תוך ציון ש&quot;הכל מצביע על כך שהיה מוקסם מאידאולוגיות ימניות קיצוניות&quot;, ומוסיף התייחסות לתקופת האבל שהוכרזה בעיר. The Observer מאמץ גם הוא את המסגור של ירי ימני קיצוני, אך מוסיף פרטים מבצעיים ייחודיים - כגון תיאור הלבוש הצבאי של החשוד ואופן נטרולו בידי המשטרה - המבוססים על מידע מקציני אכיפת החוק בשטח.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Los Angeles Times, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6242" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6242">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6242" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 15</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 3</li>
+            <li>The Observer, 8.11.2026, עמ' 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6280" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6280">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">3 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">המלחמה באוקראינה ותמיכת ארה&quot;ב</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6280">
+          <p class="comparison-text">הכיסוי מחלק את עצמו בין דיווח שטח לבין ניתוח מדיני על עתיד התמיכה האמריקאית. Los Angeles Times, בכתבה של Derek Gatopoulos, Dmytro Zhyhinas ו-Dan Bashakov, וכן The Observer מתמקדים באירועים הקונקרטיים בשדה הקרב: מתקפות טילים ורחפנים רוסיות נרחבות על קייב ואזורים נוספים לקראת שיחות השלום באבו דאבי, ולאחר מכן תקיפה שהרגה לפחות חמישים בני אדם במרכז סיוע בזפוריז&#x27;יה. The Observer מצטט את זלנסקי הקובע כי התקיפה היא &quot;הוכחה לכך שרוסיה אינה רוצה בהפחתת הסלמה כלשהי&quot;, וכך ממסגר את רוסיה כצד שאינו כן בדרכו למשא ומתן, בעוד Los Angeles Times מדגיש את הסבל ההומניטרי - הפסקות חשמל וקריסת תשתיות - ואת הקריאה שלא להשאיר את אוקראינה לבדה מול הניסיון להחשיך את המדינה כולה.
+לעומת זאת, The Washington Post בוחן את הזירה האמריקאית הפנימית. בכתבתה, Francesca Ebel מתארת תקווה זהירה בקרב פקידים אוקראינים לכך שניצחון הדמוקרטים בבחירות הביניים יבלום את שחיקת התמיכה האמריקאית ויגביל את חופש הפעולה של טראמפ מול פוטין, במיוחד נוכח עסקת הדיזל ביניהם ודחיקת קייב הצידה מהמשא ומתן. לעומת הנימה הזהירה-אופטימית הזו, Greg Miller, גם הוא ב-The Washington Post, מציג תמונה פסימית הרבה יותר: בעלות הברית של ארצות הברית רואות בתבוסת הרפובליקנים נזיפה פנימית בסגנונו של טראמפ בלבד, לא דחייה של מדיניות &quot;אמריקה תחילה&quot; הבדלנית שלו, ולכן ממשיכות להתרחק מוושינגטון ולחפש בריתות חלופיות, מתוך תחושה שארצות הברית נוטשת את אירופה ורואה בה פריפריה של העולם.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times, The Observer, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6280" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6280">
+            מראי מקום (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6280" hidden>
+            <ul>
+            <li>Los Angeles Times, 8.11.2026, עמ' 4</li>
+            <li>The Observer, 8.11.2026, עמ' 4</li>
+            <li>The Washington Post, 8.11.2026, עמ' 14 — “Allies see U.S. turning further away…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 14 — “Midterms give Ukrainians cautious hope, even…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6282" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6282">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">הגירה וחברה</span>
+            <span class="coverage-badge">3 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">אכיפת הגירה אגרסיבית תחת טראמפ</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6282">
+          <p class="comparison-text">הסיקור של Washington Post מתמקד בסבל האנושי שגורמת האכיפה: כתבה אחת עוקבת אחר מדריכת טיולים בפסל החירות ומבקר חסר מעמד חוקי כדי להראות כיצד מעצרים וגירושים מוגברים - גם של מוטבי DACA ללא עבר פלילי - הופכים את מעמד ההגירה לשברירי, ואילו כתבתה של Emma Rose Brown מתעדת כיצד חוק פדרלי מ-2025 שמצמצם זכאות ל-SNAP ול-Medicaid פוגע קשות במשפחות פליטים, כמו אפגנים בווירג&#x27;יניה, חרף טענות הרשמים שהחוק נועד למנוע הונאות בלבד. The Observer מציג שתי זוויות ביקורתיות בוטות יותר כלפי הממשל: בטור ב-The Observer, Giles Whittell טוען שהברוטליזציה של אזרחים בידי ICE ומשמר הגבול עוררה זעם מוסרי שהוביל למפלת הרפובליקנים בבחירות האמצע, ואילו בביקורת ספר ב-The Observer, Chloe Hadjimatheou משבחת את זיכרונותיו של מחמוד ח&#x27;ליל ככתב אישום חריף נגד אמריקה של טראמפ, שבה בעל גרין קארד נעצר בשל אי-הסכמה עם מדיניות החוץ של הנשיא. Los Angeles Times, לעומת זאת, ממקד את תשומת הלב בדמותו של סטיבן מילר: כתבה אחת מזהירה שעלייתו לתפקיד ראש הסגל תחריף את האכיפה הנוקשה, בפרט נגד הקהילה האיראנית-אמריקאית, תוך שמחוקקים ופעילים מבטיחים להתנגד באמצעות פיקוח קונגרסי, וכתבתם של Will Weissert ו-Moriah Balingit מרכזת מבחר מהצהרותיו הבוטות של מילר בנושאי הגירה ומדיניות חוץ, המציגות את השקפת עולמו הקיצונית.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times, The Observer, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6282" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6282">
+            מראי מקום (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6282" hidden>
+            <ul>
+            <li>Los Angeles Times, 8.11.2026, עמ' 6 — “In his own words: Stephen Miller&#x27;s…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 7 — “Miller rises, but California hopes it…”</li>
+            <li>The Observer, 8.11.2026, עמ' 10 — “Republicans pay ‘price of ICE’ as…”</li>
+            <li>The Observer, 8.11.2026, עמ' 152 — “No Land to Stand On: Protest,…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 12 — “Tour Guide (continued from A11)”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 37 — “Food and health-care cuts are affecting…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6246" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6246">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">2 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מלנשון והקיצוניות השמאלית בצרפת לקראת 2027</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6246">
+          <p class="comparison-text">שני העיתונים בוחנים זוויות שונות לחלוטין של עלייתו המחודשת של ז&#x27;אן-לוק מלנשון לקראת 2027. The Daily Telegraph, בכתבתם של ג&#x27;יימס קריספ ואלכסנדרה סנואו, מתמקד במצע המדיני-ביטחוני שהציג מלנשון ומדגיש את הפן הגאופוליטי: הבטחה להוריד את גיל הפרישה ל-60, להעלות את שכר המינימום, למסות את העשירים, ובעיקר לקדם נסיגה הדרגתית של צרפת מנאט&quot;ו, החל מפרישה מהפיקוד הצבאי המשולב של הברית - סוגיה שמוצגת כחלק ממדיניות חוץ רדיקלית ומטרידה מנקודת מבט אירופית-אטלנטית. לעומת זאת, לואיז אוטרביין, בכתבתה ב-Frankfurter Allgemeine Zeitung, מציעה רפורטז&#x27;ה חברתית-פנימית מפריז עצמה, עוקבת אחרי פעילי LFI ותלמידים ומציגה את ההסבר לפופולריות של מלנשון בקרב הצעירים: תחושת משבר עמוק בצרפת - שינוי אקלים, בדידות, עוני, חרדות מהעתיד וגזענות - על רקע גל מחאות בבתי ספר ובאוניברסיטאות נגד מדיניות החינוך ואלימות משטרתית. בעוד The Daily Telegraph רואה במלנשון איום חיצוני על הסדר האטלנטי, הכתבה ב-Frankfurter Allgemeine Zeitung ממסגרת את תנועתו כתגובה פנימית-חברתית למצוקה צרפתית, כמעט בלי להתייחס לממד הבינלאומי של עמדותיו.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6246" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6246">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6246" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 15</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6256" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6256">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">2 מקורות · 2 שפות</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מלחמת הסחר של טראמפ והשלכותיה הגלובליות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6256">
+          <p class="comparison-text">שני המקורות עוסקים בהשלכות מלחמת הסחר האמריקנית, אך מזוויות שונות לחלוטין. כריסטופר ג&#x27;ספר, בכתבה ב-The Daily Telegraph, מתמקד בהיבט המעשי והמיידי: הוא מצטט את מנכ&quot;ל נמל Long Beach, הטוען כי אפילו ניצחון דמוקרטי באמצע הקדנציה לא יביא לסיום הכאוס בסחר העולמי, משום שסמכות הטלת המכסים נתונה בידי הנשיא ולא בידי הקונגרס, וכי שיבושים נוספים - ממלחמת איראן ועד גודש בתעלת פנמה - ימשיכו להזין את חוסר היציבות. לעומת זאת, דניס קרמר, בטור ב-Frankfurter Allgemeine Zeitung, מציג זווית מושגית ואינטלקטואלית יותר: באמצעות סקירת ספר על &quot;איך מנצחים מלחמת סחר&quot;, הוא דן בתפנית ההיסטורית שבה הגלובליזציה, שהייתה פעם מנוע להאצת הסחר, הפכה לכלי נשק גיאופוליטי, ומדגיש כי זיהוי נקודות התורפה הכלכליות וגיוון שרשראות האספקה הם ההגנה המרכזית מפני כפייה כלכלית. כך, בעוד The Daily Telegraph בוחן את המשבר דרך עדשת התעשייה והלוגיסטיקה בפועל, הטור ב-Frankfurter Allgemeine Zeitung מציע פרספקטיבה רחבה ואנליטית יותר על המשמעות ארוכת הטווח של נשק הסחר.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6256" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6256">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6256" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 25</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 78</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6241" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6241">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">סטיבן מילר כראש הסגל של טראמפ</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6241">
+          <p class="comparison-text">הסיקור של עלייתו של סטיבן מילר לתפקיד ראש הסגל של טראמפ מתחלק בין שתי זוויות שונות לחלוטין. The Daily Telegraph, בכתבתם של Dasha Burns ו-Will Steakin, מתמקד בסיפור הקוליסות הפוליטי - כיצד אשתו קייטי מילר גייסת בעלי השפעה סביב טראמפ כדי להבטיח את המינוי לאחר שסוזי ווילס נחלשה בעקבות כישלון הביניים, בלי לקחת עמדה על תוכן מדיניותו של מילר. לעומת זאת, Los Angeles Times מציג שתי כתבות המתמקדות במהות ולא בפוליטיקה הפנימית: הפרופיל של Will Weissert ו-Moriah Balingit אוסף מצד מילר עצמו ציטוטים בוטים על הגירה, ונצואלה וגרינלנד, כדי להציג את השקפת עולמו הקיצונית כעת כשהוא עומד בלב הבית הלבן. כתבה נוספת ב-Los Angeles Times מרחיבה את הדאגה הזו לכיוון מעשי יותר, ומתארת כיצד קליפורניה, פעילים וחברי קונגרס - בפרט בקרב הקהילה האיראנית-אמריקאית - מתכוננים להתנגד להחרפה צפויה באכיפת ההגירה ולהשתמש בפיקוח קונגרסי כדי לבלום את מילר, ומצטטת מבקרים המתארים אותו כמאמץ עמדות &quot;קיצוניות, אוטוריטריות וגזעניות&quot;. כך, בעוד The Daily Telegraph עוסק בדינמיקה האישית-ארגונית שהביאה למינוי, Los Angeles Times ממסגר את אותו מינוי כאיום מדיניות קונקרטי המחייב תגובה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6241" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6241">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6241" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 14</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 6 — “In his own words: Stephen Miller&#x27;s…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 7 — “Miller rises, but California hopes it…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6244" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6244">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">יחסי בריטניה-האיחוד האירופי אחרי ברקזיט</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6244">
+          <p class="comparison-text">הכיסוי מתחלק בבירור לפי קו העיתון. The Daily Telegraph מציג שלוש זוויות תקיפות נגד התקרבות מחודשת לאיחוד האירופי: בכתבה של Camilla Turner מוצגת הסערה סביב שרת התרבות ליסה נאנדי, שמואשמת על ידי שמרנים בניצול יום הזיכרון לקידום חברות בתוכנית Erasmus+ ובכך בזלזול בהקרבת הוותיקים; בכתבה של James Crisp, Nick Gutteridge ו-Joe Barnes נטען כי עסקת ה&#x27;איתחול&#x27; של אנדי ברנהם תהפוך את בריטניה ל&#x27;לוקחת חוקים&#x27; מהאיחוד, ותסכן את היתרון שבריטניה בנתה בתחום עריכת הגנים אחרי הברקזיט, תוך ציטוט סר איין דנקן סמית&#x27; המכנה את האיחוד &#x27;מים עומדים&#x27;; ובטור ב-The Daily Telegraph, דניאל האנן טוען כי ממשלת בריטניה נכנעת שלא לצורך בשיחות עם האיחוד, מוותרת על יתרונות בתחומי החקלאות, הניידות הצעירה והאנרגיה בלי תמורה הולמת, ואז מציגה את הכניעה הזאת כהצלחה. לעומת זאת, The Observer מציג זווית אוהדת הרבה יותר להתקרבות: בכתבתה של Isabel Coles מצוטט נשיא קפריסין ניקוס כריסטודולידס האומר כי כל 27 מדינות האיחוד יקבלו בברכה את חזרת בריטניה, אם כי בלי אפשרות לבחירה סלקטיבית של תנאים ותוך פתרון שאלת הבסיסים הבריטיים בקפריסין; בטור ב-The Observer, תום בולדווין טוען שההסדר הנוכחי אינו בר-קיימא ומצטט את קריאתו של ויליאם הייג לקשר הדוק יותר עם האיחוד בנושאי אקלים, בינה מלאכותית וביטחון; וכתבה נוספת ב-The Observer מדווחת כי אנדי ברנהם דוחף למהלך נועז יותר, אולי אף לחזרה מלאה לאיחוד, תוך ניצול עמדתם הקשוחה יותר של השמרנים ו-Reform UK, בעוד עמיתיו בממשלה מתנגדים וקיר סטארמר נדרש לנסח &#x27;טיעון פטריוטי&#x27; לטובת שיתוף פעולה הדוק יותר עם האיחוד.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6244" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6244">
+            מראי מקום (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6244" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 1 — “Nandy accused of insulting veterans”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 8 — “Gene-edited crops to fall under EU…”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 19 — “The Prime Minister’s EU reset is…”</li>
+            <li>The Observer, 8.11.2026, עמ' 26 — “Every EU nation would welcome UK&#x27;s…”</li>
+            <li>The Observer, 8.11.2026, עמ' 26 — “Commentary on Brexit settlement and William…”</li>
+            <li>The Observer, 8.11.2026, עמ' 27 — “Burnham&#x27;s EU re-entry push divides Labour”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6247" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6247">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">משבר הבנקים בפרגוואי והדחת הנשיא פנייה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6247">
+          <p class="comparison-text">שני העיתונים מספקים דיווח עובדתי דומה בעיקרו על המשבר, אך שמים דגשים שונים. The Daily Telegraph, בכתבתם של אמילי בלומנתל ונטשה ליק, מתמקד בהיקף האנושי של הקריסה - שלושה מיליון איש, למעלה מ-40 אחוז מאוכלוסיית פרגוואי, שאיבדו חסכונות, שכר ופנסיות עם קריסת בנק Ueno - ובגל המחאות וההתפטרויות שליווה את האישום נגד פנייה ואת מעצרו בביתו. Los Angeles Times, לעומת זאת, ממסגר את האירוע בעיקר כמשבר פוליטי-חוקתי, ומדגיש את ההדחה עצמה - הצבעת האימפיצ&#x27;מנט פה אחד בקונגרס וצו המעצר נגד פנייה - תוך הבלטת זווית בינלאומית: פנייה מוצג כבעל ברית של הנשיא טראמפ, וההדחה מתוארת כמשבר הפוליטי החמור ביותר בפרגוואי מזה למעלה מעשור. כך, בעוד The Daily Telegraph מרחיב על הסבל הכלכלי של האזרחים ועל המחאה העממית, Los Angeles Times שם את הזרקור על ההשלכות הפוליטיות והגיאופוליטיות של נפילת פנייה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6247" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6247">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6247" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 15</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 2</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6258" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6258">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מחירי נפט, אינפלציה וההשפעה הגיאופוליטית של מלחמת איראן</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6258">
+          <p class="comparison-text">שלוש הכתבות, כולן טורי דעה, מסכימות שמלחמת טראמפ באיראן מזינה עליית מחירי נפט ואינפלציה, אך כל אחת ממקדת את תשומת הלב במוקד שונה. בטור ב-Daily Telegraph, ליאם האליגן בוחן את התמונה האמריקאית הרחבה וטוען שהמכסים והעימותים הצבאיים של טראמפ עם איראן, לצד מלחמות רוסיה-אוקראינה וונצואלה, דחפו את מחירי הנפט והאינפלציה כלפי מעלה עד כדי כך שעלו לרפובליקנים בבחירות האמצע; הוא צופה שהמתיחות הגיאופוליטית תמשיך להעלות את מחירי הנפט ככל שטראמפ ינקוט שיטות כוח. ב-Observer מופיעות שתי זוויות בריטיות משלימות: בטור אחד, בן זרנקו מתמקד בהשלכות המוניטריות על בריטניה, בטענה שהעלאת הריבית של בנק אנגליה נובעת מהלחץ האינפלציוני שיוצרת מלחמת טראמפ-איראן על מחירי הנפט והגז, ומזהיר כי צפויות העלאות נוספות אלא אם הסכסוך ייפתר או שמדיניות ממשל טראמפ תשתנה. בטור נפרד, וויל האטון מרחיב את הדיון לשוק הדיור הבריטי, וטוען שהקיפאון בו נובע הן מהעלאות הריבית והן מהסיכון הגיאופוליטי - מלחמת איראן וסגירת מצר הורמוז, לצד הפוליטיקה הישראלית - וקורא לרפורמות מקומיות (בנק דיור לאומי, ביטול מס בולים, אג&quot;ח ביטחון, קיצוצים בהוצאות) יחד עם קריאה לבריטניה לתמוך במהפך פוליטי בישראל שישיב אותה לעקרונותיה הדמוקרטיים המייסדים כדי לייצב את האזור.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6258" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6258">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6258" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 24</li>
+            <li>The Observer, 8.11.2026, עמ' 33 — “How to melt our housing market&#x27;s…”</li>
+            <li>The Observer, 8.11.2026, עמ' 44 — “UK interest rate rise could be…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6275" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6275">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">הקמת ממשלה בישראל אחרי הבחירות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6275">
+          <p class="comparison-text">הסיקור של הנושא מתפתח מדיווח עובדתי תמציתי להתעמקות מעמיקה יותר באתגרים הפוליטיים. Los Angeles Times מדווח בתחילה בקצרה על כך שנשיא המדינה העניק ליריבו של נתניהו את ההזדמנות הראשונה להרכיב ממשלה, ולאחר מכן, בכתבה חתומה בידי Giovanna Dell&#x27;Orto, מוסיף פרטים על כך שהנשיא הרצוג הטיל את המשימה על גדי איזנקוט, תוך ציטוט קריאתו של איזנקוט להקים &quot;ממשלת חירום לאומית&quot; - דיווח שמתמקד בעובדות הבסיסיות ובפער העמוק סביב ברית אפשרית עם מפלגות ערביות. The Observer, בשתי כתבותיה, חותר עמוק יותר אל תוך הדרמה הפוליטית: בכתבה הראשונה, חתומה בידי Ruth Michaelson, מתואר הקרע בתוך מחנה האופוזיציה עצמו, עם ציטוט המבטא את חוסר ההתלהבות ממנהיגותו של איזנקוט (&quot;לא בוחרים בין טוב לטוב יותר, אלא בין רע לפחות רע&quot;). הכתבה השנייה מרחיבה את התמונה הפוליטית ומציגה את המאבק כקרב כוח ישיר בין איזנקוט לנתניהו, תוך הוספת שכבות דרמטיות נוספות - חשש מאובדן סיוע צבאי אמריקאי, האשמות בניסיון לחתור תחת תוצאות הבחירות, וניתוח לפיו נתניהו עשוי להרוויח דווקא מקריסת המגעים ומבחירות חדשות. כך, בעוד Los Angeles Times מספק מסגרת עובדתית נייטרלית יחסית, The Observer ממסגר את הסיפור כמשבר דמוקרטי עמוק ורב-שכבתי.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6275" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6275">
+            מראי מקום (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6275" hidden>
+            <ul>
+            <li>Los Angeles Times, 8.11.2026, עמ' 1 — “Israel&#x27;s president gives Netanyahu&#x27;s opponent the…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 3 — “Israeli president taps Eisenkot to form…”</li>
+            <li>The Observer, 8.11.2026, עמ' 28 — “Israeli opposition parties wrangle over power…”</li>
+            <li>The Observer, 8.11.2026, עמ' 29 — “Israel&#x27;s coalition talks: Eisenkot and Netanyahu…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6277" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6277">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">2 מקורות · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">המלחמה בין ארה&quot;ב לאיראן והשלכותיה הפוליטיות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6277">
+          <p class="comparison-text">הסיקור של ה-US-Iran conflict מגיע כמעט כולו מה-Los Angeles Times, שמלווה את המלחמה לאורך כמה שלבים: דיווח עובדתי על תקיפות חדשות נגד מערכות ההגנה האווירית האיראניות ועל המצור הימי המתמשך, לצד מאמצים דיפלומטיים בתיווך קטארי להגעה להסדר גרעיני ולסיום הלחימה; ציטוט של טראמפ המתאר את התקיפה כ&quot;מינורית&quot;; ולבסוף שני דיווחים - של מייקל וילנר ושל כתבה נוספת ללא שיוך אישי - המתמקדים בהשלכות הפוליטיות: הבחירות באמצע הקדנציה הגבילו את יכולתו של טראמפ לחדש את הלחימה, הרפובליקנים נחלקו בתוכם, ויש קריאה דו-מפלגתית להדחת שר ההגנה הגסת&#x27; על רקע ניהול המלחמה, לצד איומים דמוקרטיים לחסום את מימון המלחמה ואזהרות איראניות לאחר ההפסד הרפובליקני בבחירות. The Washington Post, בטור של דיוויד איגנטיוס, מציע זווית שונה ורחבה יותר: הוא בוחן את המלחמה באיראן לצד מלחמת אוקראינה כשני &quot;מוקדים בוערים&quot; בלתי פתורים שפוגעים בנשיאות המוחלשת של טראמפ לאחר תבוסת הרפובליקנים בבחירות, ומדגיש את הניסיון למצוא &quot;דרך יציאה&quot; מאיראן תוך מינוף ההשפעה הסינית על טהראן, במקביל לשיחות מולטילטרליות בנוגע לאוקראינה בהשתתפות קושנר וויטקוף. בעוד ה-Los Angeles Times מתמקד בפרטי השדה הצבאי ובדרמה הפוליטית הפנימית בוושינגטון, איגנטיוס מציג תמונה אסטרטגית גלובלית יותר, המדגישה את היחלשות מעמדה של ארצות הברית בזירה הבינלאומית.</p>
+          <p class="section-sources">מקורות: <b>Los Angeles Times, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6277" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6277">
+            מראי מקום (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6277" hidden>
+            <ul>
+            <li>Los Angeles Times, 8.11.2026, עמ' 1 — “Election sets up new hurdles for…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 1 — “U.S. carries out strikes on Iran”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 4 — “U.S. discloses limited strikes on Iran…”</li>
+            <li>Los Angeles Times, 8.11.2026, עמ' 7 — “Trump faces divided party, ticking clock…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 19</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6237" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6237">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ג&#x27;אן מרשאלק והאשמות חבלה רוסית בפוליטיקה האוסטרית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6237">
+          <p class="comparison-text">הנושא מכוסה אך ורק על ידי The Daily Telegraph, בשתי כתבות המתפקדות למעשה כקול אחד על אותו סיפור: הדלפת הודעות מהנמלט ג&#x27;אן מרשאלק, בכיר לשעבר בחברת Wirecard, המרמזות כי גורמים הקשורים לרוסיה סייעו להפיל את הקנצלר האוסטרי לשעבר סבסטיאן קורץ. הכתבה הראשונה, מאת Tim Röhn, Hayley Dixon ו-Camilla Turner, ממסגרת את הפרשה בהקשר אסטרטגי רחב - טענת מרשאלק משמשת כדוגמה למטרתו הכוללת של פוטין לפלג ולערער את היציבות של הדמוקרטיות האירופיות זו מול זו. הכתבה השנייה מתמקדת יותר בפרטים הקונקרטיים של ההדלפות עצמן: תוכן ההתכתבות בין מרשאלק לבין רוסב, התיאור של הפרשה כ&quot;סיפור מבולגן&quot; וההתרברבות בכך ש&quot;הם&quot; הצליחו &quot;להפיל&quot; את הקנצלר, תוך קישור הדברים לחקירה האוסטרית המתמשכת בנושא ההתערבות הרוסית בפוליטיקה הפנימית. כך, בעוד שתי הכתבות חולקות את אותו מקור ואותה עובדה בסיסית, הראשונה מדגישה את המשמעות הגיאופוליטית הרחבה והשנייה את הממד החקירתי-עיתונאי המפורט יותר.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6237" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6237">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6237" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 1 — “Russian spymaster claims to have toppled…”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 2 — “Ex-Wirecard boss says Russia helped bring…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6238" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6238">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">יחסי בריטניה-סין וביקור המלך האפשרי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6238">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד. The Daily Telegraph, בכתבה חתומה בידי Hannah Furness, מביא דיווח עובדתי המבוסס על דברי מקורבים לארמון, לפיהם המלך צ&#x27;ארלס לא היה שולל ביקור מדינה בסין אילו הממשלה הבריטית תבקש זאת, חרף עשרות שנות מתיחות סביב זכויות אדם וטיבט. הכתבה ממסגרת את המלך כ&quot;נשק סודי גדול&quot; של הדיפלומטיה הבריטית, תוך הדגשת התלות שלו בהנחיית הממשלה ולא ביוזמה עצמאית מצדו. מאחר שמדובר במקור יחיד, אין זווית נגדית או השוואתית להציג.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6238" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6238">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6238" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 9</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6239" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6239">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תמיכה בריטית וביקור מדינה לזלנסקי בצל המלחמה באוקראינה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6239">
+          <p class="comparison-text">הנושא מכוסה כאן במקור יחיד. The Daily Telegraph, בכתבתה של אלכסנדרה סנואו, מדווח כי בריטניה מתכננת להזמין את זלנסקי לביקור מדינה רשמי כדי להפגין תמיכה רב-מפלגתית מתמשכת באוקראינה, זאת על רקע המשך מתקפות הטילים והרחפנים הרוסיות על קייב הגורמות לנפגעים ולנזק. הכתבה ממסגרת את הביקור כמחווה סמלית ומדינית, תוך הדגשת הניסיון המיוחס לפוטין &quot;לשבור את העם האוקראיני&quot; באמצעות הפגזות מתמשכות - אך בהיעדר כיסוי מקביל ממקורות אחרים, אין אפשרות להצביע על זוויות או עמדות מתחרות בנושא זה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6239" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6239">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6239" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 14</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6240" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6240">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ויכוח על פיצויי עבדות ומורשת קולוניאלית בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6240">
+          <p class="comparison-text">שני הקולות בנושא זה מופיעים אך ורק ב-Daily Telegraph, ושניהם דוחים תשלום פיצויים כספיים, אך מציעים נימוקים שונים לחלוטין. בטור ב-Daily Telegraph, Sapphire Hope מצטטת את טענתו של נייג׳ל פאראז&#x27;, שלפיה בריטניה היא &quot;המדינה היחידה עם ידיים נקיות&quot; בכל הנוגע לעבדות, משום שלטענתו היא הוציאה יותר משאבים על דיכוי סחר העבדים מכפי שהרוויחה ממנו, ולכן אין לה מה להתנצל עליו - אדרבה, לטענתו דווקא סוחרי עבדים אפריקאים הם שצריכים להתנצל, והוא מתנגד נחרצות ל&quot;הישברות&quot; מול ממשלות שמאלניות בג&#x27;מייקה או בברבדוס. לעומת זאת, בטור ב-Daily Telegraph, ד&quot;ר Patrick Tan נוקט גישה פייסנית יותר: הוא אינו מכחיש את הצורך לכפר על עוולות העבר, אך טוען שהדרך הנכונה אינה תשלום פיצויים אלא מתן גישה לחינוך ולהזדמנויות כלכליות לאזרחי חבר העמים, צעד שלדבריו יתקן את &quot;הסטיגמה של עליונות לבנה&quot; בצורה משמעותית יותר מהתנצלות או תשלום כספי. כך, בעוד פאראז&#x27; שולל כל אחריות היסטורית של בריטניה, Tan מכיר בחובה מוסרית אך מבקש להפנותה לאפיקים מעשיים חלופיים.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6240" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6240">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6240" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 9 — “Only the UK has clean hands…”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 17 — “Meaningful actions Andy Burnham can take…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6243" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6243">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">הגירה וחברה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">האשמות אנטישמיות ופעילות פרו-פלסטינית בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6243">
+          <p class="comparison-text">כל ארבע הכתבות בנושא זה מתפרסמות ב-The Daily Telegraph, ויחד הן בונות תמונה רחבה של מה שהעיתון מציג כהתגברות אנטישמיות וכישלון מוסדי להתמודד עמה ברחבי בריטניה. קמרון הנדרסון מתמקד בזירה המקומית: הוא מדווח כי חברי מועצה בטאואר המלטס נקראים לנתק קשרים עם רשת פעילים פרו-פלסטינית שהואשמה בהפצת תוכן המשווה את ישראל לגרמניה הנאצית ומדבר על &quot;אדונים ציוניים&quot; השולטים בתקשורת, תוך קריאה ברורה לסנקציות מצד ועדת הסטנדרטים של המועצה. פטריק סוייר תורם שתי כתבות בנושא: הראשונה חושפת ממצאי ביקורת עצמאית חמורה על Save the Children, שלפיה הארגון נכשל בטיפול באנטישמיות פנימית והפלה את ישראל לרעה בהשוואה לקונפליקטים אחרים כמו תימן ואוקראינה, עד כדי כך שעובדים יהודים חשו חוסר ביטחון; השנייה עוסקת בהפצת עלונים פרו-פלסטיניים המאשימים את ישראל בג&#x27;נוסייד בבתי חולים הנמצאים בשירות אוכלוסיות יהודיות, מה שמתואר כמפחיד ומטריד חולים יהודים וישראלים במצב פגיע. גורדון ריינר, בכתבה רביעית, מסיט את הזרקור אל ה-BBC, ומדווח כי הארגון נכשל בפתיחת הביקורת העצמאית שהבטיח על סיקור עזה כבר לפני שמונה עשר חודשים, מה שמוביל מנהיגים יהודים ופעילים לדרוש התערבות ישירה של שר התרבות. למרות השוני בזירות - פוליטיקה מקומית, מגזר הצדקה, מערכת הבריאות והתקשורת הציבורית - כל ארבע הכתבות של The Daily Telegraph חוזרות על אותו קו טיעון: מוסדות בריטיים שונים מתקשים או נמנעים מלהתמודד באופן רציני עם ביטויי אנטישמיות הקשורים לפעילות פרו-פלסטינית, והעיתון מציג את עצמו כחושף כשל זה ברשתות, בצדקה, בבריאות הציבורית ובתקשורת הציבורית כאחד.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6243" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6243">
+            מראי מקום (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6243" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 4 — “Councillors told to cut ties with…”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 4 — “Save the Children Jewish staff feel…”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 4 — “BBC&#x27;s Gaza coverage review not begun,…”</li>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 4 — “Palestine activists leave leaflets attacking Israel…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6245" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6245">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תוצאות הבחירות בניו זילנד</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6245">
+          <p class="comparison-text">הסיקור של נושא זה מוגבל למקור אחד בלבד. בכתבה ב-The Daily Telegraph, אלכסנדרה סנואו מתארת את תוצאות הבחירות בניו זילנד כתיקו דרמטי כמעט מוחלט בין המפלגה הלאומית לבין מפלגת העבודה, תוך הדגשת טענתו של מנהיג הלאומית, לוקסון, כי קיים &quot;מסלול&quot; להרכבת הממשלה הבאה באמצעות משא ומתן קואליציוני, אף שהתוצאה הסופית עדיין אינה ודאית. מאחר שאין מקורות נוספים המכסים את האירוע, לא ניתן לזהות זוויות מתחרות או הבדלי דגש בין עיתונים.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6245" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6245">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6245" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 15</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6248" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6248">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מלחמת כנופיות ופיגועי פצצות ברומא</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6248">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: The Daily Telegraph, בכתבה מאת Nick Squires, מדווח על גל של כשלושים פיגועי פצצה מסתוריים בפרברים המזרחיים של רומא, המיוחסים למאבק כוח בין כנופיות מאפיה יריבות לאחר היחלשות סמכותו של בוס כלוא. הכתבה ממסגרת את הסיפור כאיום ביטחוני הולך וגובר, תוך ציטוט פקידי ממשל הקוראים להכרזת &quot;אזור אדום&quot; ולתגובה מוגברת של כוחות הביטחון, ומדגישה את תחושת הפחד בקרב התושבים. מאחר שאין מקורות נוספים המכסים את האירוע, לא ניתן לזהות זוויות מתחרות או הדגשים שונים בין עיתונים.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6248" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6248">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6248" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 16</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6249" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6249">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">הגירה וחברה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מדיניות הגירה ושיתוף פעולה בריטניה-צרפת בתעלה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6249">
+          <p class="comparison-text">בנושא זה מופיע מקור יחיד: מכתב של טרבור ג&#x27;ויס ל-The Daily Telegraph. ג&#x27;ויס אינו מייצג עמדה מוסדית של העיתון אלא טוען באופן אישי כי על בריטניה להפסיק לממן את מאמצי המשטרה הצרפתית נגד חציות התעלה, אלא אם תקבל בתמורה שליטה מלאה על שיטור החופים, לרבות סמכות ליירט ולהשמיד סירות מבריחים לפני שיוטענו. מאחר שמדובר במקור בודד, אין אפשרות להשוות בין זוויות סיקור שונות בנושא.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6249" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6249">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6249" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 17</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6250" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6250">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">הגירה וחברה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">רצח נשים בקוסובו וכישלון המשטרה להגן על קורבנות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6250">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי The Daily Telegraph, בכתבה חתומה בידי אמילי סמית&#x27;. הכתבה מתעדת כיצד המשטרה ובתי המשפט בקוסובו התעלמו שוב ושוב מפניותיה הנואשות של ארלינדה זקאי, שגם קיבלה צו הגנה רשמי נגד הגבר שרצח אותה בסופו של דבר. סמית&#x27; ממסגרת את המקרה לא רק כטרגדיה פרטית אלא ככשל מוסדי שיטתי, ומציינת כי הרצח עורר מחאות המוניות ברחבי קוסובו ודרישות ציבוריות להתפטרויות ולרפורמה במשרדי המשטרה והמשפטים. מאחר שאין מקור נוסף המתייחס לאירוע, אין אפשרות להצביע כאן על זוויות מנוגדות או דגשים שונים בין עיתונים - הדיווח עומד לבדו, ומביא את קולה המצוטט של הקורבן כראיה מרכזית לכישלון הרשויות.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6250" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6250">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6250" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 16</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6251" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6251">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ויכוח על חוק טיפולי ההמרה בבריטניה וביטחון לאומי ביום הזיכרון</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6251">
+          <p class="comparison-text">הנושא מכוסה במקור בודד בלבד. The Daily Telegraph, בכתבתו, מעלה שתי טענות נפרדות: ראשית, כי חוק טיפולי ההמרה המוצע על ידי הלייבור מנוסח בעמימות מסוכנת ועלול להפליל הורות רגילה, ולכן יש להקשיב למבקריו; שנית, לרגל יום הזיכרון הבריטי, הוא קורא להגדלת ההוצאה הביטחונית וחיזוק החוסן הלאומי, בטענה שרוסיה בראשות פוטין ממשיכה לאיים על תשתיות קריטיות כמו כבלי התקשורת התת-ימיים, ושמלחמת טראמפ מול איראן חשפה פערים מדאיגים ביכולות הצבאיות הבריטיות. מאחר שאין מקור נוסף המתייחס לנושא, לא ניתן להצביע על זוויות מתחרות, אך ניכר כי הכתבה משלבת ביקורת על המדיניות הפנימית של הממשלה עם קריאה לערנות ביטחונית חיצונית, בטון המזהיר מפני היחלשות בריטית הן מבית והן מחוץ.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6251" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6251">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6251" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 17</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6252" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6252">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">הביטקוין, פריצת בינאנס והעתיד הכספי הגלובלי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6252">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: בטור ב-The Daily Telegraph, איזבלה קמינסקה מנתחת את פריצת בינאנס כאירוע שחושף עד כמה המערכת הפיננסית הבינלאומית המסורתית פגיעה ומיושנת מול התקפות סייבר מגובות מדינה. לטענתה, התגובה לפריצה מראה שדווקא תשתיות הקריפטו מפתחות יכולות אכיפה וצנזורה שחסרות למערכת הקונבנציונלית, ומכאן היא קוראת לבנות ולבחון בפומבי מערכת כספית גלובלית חדשה, מעין &quot;פרוטוקול אינטרנט&quot; כספי. מאחר שאין מקור נוסף שדן בנושא, לא ניתן להצביע על זוויות מתחרות - הכתבה מציגה פרשנות יחידה ומובהקת.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6252" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6252">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6252" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 24</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6253" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6253">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ביקורת על ריבוי רשויות רגולציה בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6253">
+          <p class="comparison-text">בנושא זה מופיע מקור יחיד. בטור ב-The Daily Telegraph, מתיו לין טוען כי ממשלת הלייבור מרבה להקים רגולטורים וגופים ציבוריים חדשים (quangos) בקצב שמחניק את הצמיחה הכלכלית ומבזבז משאבים ציבוריים בלי לשפר את השירותים, ומציע לפרק ולבטל גופים כאלה במקום להוסיף עוד ועוד. מדובר בעמדה אישית, ביקורתית ונחרצת, של הכותב ולא בדיווח מוסדי ניטרלי.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6253" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6253">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6253" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 24</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6254" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6254">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">משבר חוב ופיטורים ב-Virgin Media O2</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6254">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: The Daily Telegraph, בכתבתם של ג&#x27;יימס וורינגטון ובן מארלו, מסביר כיצד חוב כבד, הסיכוי לחסימת רכישת Netomnia בידי רגולטור התחרות הבריטי, ותחרות גוברת בשוק התקשורת הביאו את Virgin Media O2 לקצץ כ-4,000 משרות ולחסוך כ-300 מיליון ליש&quot;ט. הכתבה ממסגרת את סיפור הפיטורים לא כצעד מבודד אלא כתוצאה ישירה של כישלון עסקת הרכישה ושל חששות מפני הצורך בארגון מחדש פיננסי רחב יותר של החברה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6254" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6254">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6254" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 27</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6255" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6255">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">קופת הבחירות הענקית של רפורם בריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6255">
+          <p class="comparison-text">מאחר שרק The Daily Telegraph עוסק בנושא, אין כאן עימות בין מקורות אלא זווית יחידה: בטור ב-The Daily Telegraph, מייקל מוסבאכר מרגיע את מי שחושש מקופת הבחירות בת 72 מיליון הליש&quot;ט של Reform UK, בטענה שההיסטוריה מלמדת שכסף אינו מבטיח הצלחה פוליטית - תוך הפניה לכישלונות מיליארדרים אמריקאים וגם למפלגת המשאל הבריטית (Referendum Party) בעבר. הטור מציג אפוא עמדה סקפטית במובן זה שהוא מצנן את החשש מעוצמתה הפיננסית של Reform UK, בלי שמקור נוסף מספק נקודת מבט חלופית.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6255" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6255">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6255" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 29</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6257" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6257">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מס היציאה של מלוני באיטליה והעשירים הזרים</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6257">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי The Daily Telegraph, בכתבתו של Hans van Leeuwen, המתאר כיצד הצעת מס היציאה של ג&#x27;ורג&#x27;ה מלוני מטילה אימה על העשירים הזרים שעברו למילאנו בעקבות משטר מס אחיד נדיב. הכתבה מצטטת יועצי מס ואנשי עסקים הרואים בצעד פגיעה באמינות יציבות המס האיטלקית, גם אם בפועל הוא צפוי לחול על מעגל מצומצם יחסית של תושבים. מכיוון שאין מקור נוסף המתייחס לנושא, לא ניתן להצביע כאן על זוויות מתחרות - רק על עמדתו הביקורתית-מודאגת של Hans van Leeuwen כפי שהיא משתקפת, למשל, בציטוט חריף המכנה את הצעד &quot;טירוף&quot; ו&quot;רגולציה פופוליסטית&quot; ההורסת מאמץ רב-שנים למשוך השקעות לאיטליה.</p>
+          <p class="section-sources">מקורות: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6257" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6257">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6257" hidden>
+            <ul>
+            <li>The Daily Telegraph, 8.11.2026, עמ' 27</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6259" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6259">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ויכוח קואליציוני ב-SPD סביב שיתוף פעולה עם &#x27;די לינקה&#x27; בברלין</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6259">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: בכתבה ב-Frankfurter Allgemeine Zeitung מאת יוכן בוכשטיינר, המתאר התנגדות גוברת בתוך ה-SPD לקואליציה עם &#x27;די לינקה&#x27; בברלין, על רקע חששות מאנטישמיות וזיקות לגורמים המוגדרים קיצוניים על ידי שירותי הביטחון. בוכשטיינר מצטט חתומים על מכתב התנגדות הקוראים &quot;בתוקף נגד קואליציה עם הלינקה הברלינאית&quot;, אך מציין גם כי הנהגת המפלגה שוקלת שהיתרונות הפוליטיים של קואליציה כזו עולים על הסיכונים. מאחר שאין מקור נוסף המתייחס לנושא, אין אפשרות להצביע על זוויות או עמדות מתחרות בכיסוי התקשורתי.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6259" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6259">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6259" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 2</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6260" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6260">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">משבר הרכבת המהירה בספרד</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6260">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי מקור אחד. בכתבתו ב-Frankfurter Allgemeine Zeitung מתאר הנס-כריסטיאן רסלר את התדרדרותה של רשת הרכבות המהירות AVE בספרד, שהייתה פעם מושא לקנאת העולם, לסמל של תפקוד לקוי. הוא תולה את המשבר בהזנחה כרונית בהשקעות, במעורבות פוליטית ומינויים פוליטיים, בבעיות שנבעו מהפרטה וליברליזציה של השוק, ובשחיתות, ומצביע על שתי תאונות קטלניות כנקודת שבר שהובילה לשביתה כללית ולעלייה בתמיכה בכוחות פופוליסטיים מהימין. מאחר שמדובר במאמר יחיד, אין כאן זוויות מתחרות להשוואה, אלא ניתוח ביקורתי אחד המציג את משבר הרכבת כראי למחלות עמוקות יותר של המערכת הפוליטית הספרדית.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6260" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6260">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6260" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 5</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6261" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6261">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מדיניות הסביבה של לולה בברזיל</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6261">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי Frankfurter Allgemeine Zeitung, בטור מאת Tjerk Brühwiller. הכותב מציג זווית מורכבת: מצד אחד הוא מדגיש שהיבחרותו מחדש של לולה מבטיחה המשכיות של מדיניות סביבתית שהצליחה לצמצם את כריתת היערות לשפל שיא ולשקם אמון בינלאומי בברזיל; מצד שני הוא מצביע על סתירה מובנית במדיניות הנשיא, שכן לולה ממשיך לקדם חיפושי נפט ופרויקטי תשתית הנוגדים את הבטחותיו הסביבתיות. בכך הטור נמנע מהצגה חד-משמעית של לולה כגיבור אקלימי, ומשאיר פתוחה את השאלה כיצד תיושב ההתנגשות בין האינטרסים הכלכליים לבין הגנת היערות בעתיד. בהיעדר מקורות נוספים המתייחסים לנושא, לא ניתן להצביע על מחלוקת בין עיתונים, אלא רק על הניתוח הביקורתי-מאוזן המוצג בטור עצמו.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6261" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6261">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6261" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 6</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6263" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6263">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מעמדו המתערער של מרץ במפלגת ה-CDU</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6263">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי Frankfurter Allgemeine Zeitung, בטור של אקרט לוזה. לוזה טוען שמעמדו של פרידריך מרץ כמנהיג נשא פרי רק כל עוד שהה באופוזיציה, וכעת, כשהוא נושא באחריות שלטונית, הוא חושף שורת טעויות בניהול מפלגתו. עם זאת, הכותב מכיר לו גם זכות: כנותו ונכונותו להודות בפומבי בפשרות שהוא נאלץ לעשות, בניגוד לנטייה הרווחת בפוליטיקה להסתיר אותן. מכיוון שמדובר במקור יחיד, אין כאן ניגוד בין זוויות סיקור שונות, אלא ניתוח ביקורתי אחד המבוסס על עמדתו האישית של הכותב.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6263" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6263">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6263" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6264" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6264">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">עוצמתו הפוליטית הנותרת של נתניהו וליכוד בדימונה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6264">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד - כתבה חתומה בידי כריסטיאן מאייר ב-Frankfurter Allgemeine Zeitung. מאייר יוצא מהבירה אל העיירה דימונה כדי להסביר תופעה שלדבריו קשה להבין מירושלים או מברלין: גם אחרי שהליכוד ובעלות בריתו איבדו את הרוב הפרלמנטרי ברמה הארצית, התמיכה בנתניהו בדימונה נותרה כמעט בלתי מעורערת. הכתבה אינה מסתפקת בנתוני בחירות אלא מנסה לפענח את השורשים הסוציולוגיים של התופעה - זהות מזרחית, תחושת קיפוח היסטורי מצד האליטות האשכנזיות, פיתוח כלכלי שמיוחס לליכוד, וקשר רגשי כמעט אישי לנתניהו, המתואר דרך תושבים המגדירים עצמם &quot;ביביסטים עד השורש&quot;. מאחר שמדובר במקור יחיד, אין כאן ניגוד סיקור בין עיתונים, אלא זווית תחקירית-אנתרופולוגית המנסה להסביר לקוראים גרמנים מדוע הכוח הפוליטי של נתניהו שריד ועומד דווקא בפריפריה, חרף התדמית הבינלאומית הנפגעת שלו.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6264" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6264">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6264" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 7</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6265" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6265">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">המאבק על שלטון החוק בבית המשפט החוקתי בפולין</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6265">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי מקור אחד. בטור ב-Frankfurter Allgemeine Zeitung, שטפן לוקה (Stefan Locke) טוען שהמאבק סביב בית המשפט החוקתי בפולין הוא במהותו עימות פוליטי על כוח ולא סכסוך משפטי טהור, ומזהיר כי ברגע שפופוליסטים משתלטים על מוסדות המדינה, החזרה לסדר חוקי הופכת לדרך ארוכה ומכאיבה. מאחר שאין כתבות נוספות על נושא זה ממקורות אחרים, לא ניתן להציג כאן זוויות השוואה או מחלוקת בין עיתונים.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6265" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6265">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6265" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6266" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6266">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">הפרס לרזא פהלווי והוויכוח על עתיד הדמוקרטיה באיראן</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6266">
+          <p class="comparison-text">הדיון סביב הענקת &quot;פרס החירות&quot; לרזא פהלווי מתנהל כולו בפורום הקוראים של Frankfurter Allgemeine Zeitung, אך משקף שלוש עמדות שונות באופן מובהק. בטור ב-Frankfurter Allgemeine Zeitung, מנצור קונגרה מזהיר מפני מה שהוא מתאר כניסיון של שירותי הביון של המשטר האיראני להשפיע על הענקת הפרס, ומדגיש שפהלווי אינו נבחר דמוקרטי ואינו יכול לדבר בשם העם האיראני - לדבריו, עתיד איראן חייב להיקבע על ידי האיראנים עצמם באמצעות בחירות דמוקרטיות חופשיות. בטור נוסף ב-Frankfurter Allgemeine Zeitung, בהנאם מהריזאדה מרחיב את הביקורת בכיוון דומה אך בדגש היסטורי-מוסרי: הוא מזכיר כי העם האיראני שילם מחיר כבד על חירותו - למעלה מ-120,000 הרוגים ו-300,000 אסירים תחת הדיכוי בן 47 השנים - וטוען שפהלווי לא שילם מחיר דומה ולכן אין להעביר לידיו את השלטון, מתוך חשש מהקמת רודנות חדשה. לעומת שני הטורים הביקורתיים הללו, הכתבה החתומה בידי שילה בהג&#x27;את ב-Frankfurter Allgemeine Zeitung נוקטת גישה אנליטית ופחות פולמוסית: היא מתארת את הקיטוב העוין בשיח על איראן, מטילה ספק בשאלה האם פהלווי אכן מתאים לשמש דמות סמל עבור האופוזיציה האיראנית, ובה בעת מזכירה את הדיכוי המתמשך של הרפובליקה האיסלאמית ואת הסיכונים הכרוכים בכתיבה על איראן, תוך שהיא קובעת כי &quot;הרפובליקה האיסלאמית רחוקה מלהיות בסופה&quot;.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6266" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6266">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6266" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 6 — “Leserbrief: Kein neuer Schah / Demokratie…”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 6 — “Leserbrief: Demokratie in Iran”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 33 — “Reza Pahlavi und der Preis der…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6267" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6267">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ההתמודדות הגרמנית עם פרשת ה-NSU</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6267">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי מקור אחד. בטור ב-Frankfurter Allgemeine Zeitung, מרקוס וורנר טוען שהכישלון של הרשויות הגרמניות לחקור כראוי ולהנציח את רציחות ה-NSU היה שערורייה היסטורית שהזינה תיאוריות קונספירציה, אך מדגיש כי בשנים האחרונות ערים גרמניות אימצו בהדרגה גישה של הנצחה פומבית וכנה של הקורבנות, ולטענתו מהלך כזה מועיל לערים הללו ולחברה הגרמנית בכללותה ואינו פוגע בהן.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6267" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6267">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6267" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6268" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6268">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מתקפות סייבר על תשתיות חכמות באירופה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6268">
+          <p class="comparison-text">הנושא מכוסה כאן על ידי מקור יחיד. בטור ב-Frankfurter Allgemeine Zeitung, מינה מרשל מתייחסת לגל מתקפות סייבר שפגעו במערכות קירור של רשתות סופרמרקטים במדינות אירופיות אחדות, ומנצלת את המקרה כדי לשאול שאלה רחבה יותר על תלותה של החברה בטכנולוגיה &quot;חכמה&quot; שאבטחתה לקויה. היא דוחה את טיעון הנוחות כתירוץ להמשך חיבור כל מכשיר לרשת האינטרנט, בטענה שהסיכון הביטחוני גובר כיום על היתרון שבנוחות. מאחר שאין כאן מקור נוסף המתייחס לאותו אירוע, לא ניתן להצביע על זוויות מנוגדות - הכיסוי מוגבל לעמדתה הביקורתית של מרשל בלבד.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6268" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6268">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6268" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6269" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6269">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מדיניות האקלים והאנרגיה בגרמניה ובאיחוד האירופי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6269">
+          <p class="comparison-text">בנושא זה מופיע מקור יחיד: ראיון של Frankfurter Allgemeine Zeitung, מאת רלף בולמן ומרקוס טוירר, עם שר הסביבה קרסטן שניידר. הכתבה משקפת את עמדת השר עצמו, המגן על מדיניות האקלים של הממשלה ועל הסבסוד למעבר לרכב חשמלי, ומצדד בהמשך מסלול תמחור הפחמן הדו-חמצני תוך הקלה נקודתית במקרים שבהם העלויות חורגות מהצפוי. שניידר, שמציין כי הוא עצמו עדיין נוהג ברכב דיזל בן 13 שנה, טוען שהמעבר לחשמול התחבורה הוא בלתי נמנע, זאת גם לנוכח קיפאון במדיניות האקלים הפדרלית בארצות הברית בעידן טראמפ, בשעה שמדינות אמריקאיות בודדות ממשיכות לקדם את הנושא בעצמן. מאחר שמדובר במקור בודד המכסה את הנושא, אין כאן זוויות מתחרות להשוות ביניהן, אלא הצגה ישירה של עמדת השר כפי שתועדה בראיון.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6269" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6269">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6269" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 19</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6270" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6270">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תלות הגז הגרמנית והסיכון הגיאופוליטי</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6270">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי Frankfurter Allgemeine Zeitung, בכתבה של Marcus Theurer ו-Ralph Bollmann, כך שאין נקודת השוואה בין מקורות. השניים טוענים כי הממשלה הגרמנית, ובפרט השרה קתרינה רייכה, חזרה על טעויות עבר בכך שסמכה יתר על המידה על השוק למילוי מאגרי הגז, ומותירה את גרמניה חשופה לסיכונים גיאופוליטיים חדשים - מלחמת איראן, חשש מחבלה רוסית בצינורות, ותלות גוברת בגז טבעי נוזלי אמריקאי. הכתבה נוקטת עמדה ביקורתית ברורה כלפי המדיניות הממשלתית ותובעת רפורמות, כמו רזרבת גז אסטרטגית וחובת אחסון על הספקים, ומצטטת את רייכה עצמה מודה כי ההסתמכות על השוק &quot;הייתה מכשול&quot;.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6270" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6270">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6270" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 20</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6271" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6271">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מהפכת התחבורה העירונית בפריז בהנהגת הידלגו</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6271">
+          <p class="comparison-text">בנושא זה מופיעה כתבה יחידה. Frankfurter Allgemeine Zeitung, בכתבה חתומה בידי מכטילד הרטינג (Mechthild Harting), מביאה את הגנתה של ראש עיריית פריז אן הידלגו (Anne Hidalgo) על מהפכת התחבורה שהנהיגה בעיר - מעבר מתשתית מוטת מכוניות לרכיבה על אופניים, הליכה ותחבורה ציבורית. הכתבה משקפת את עמדת הידלגו עצמה, המנמקת את הצעדים בדאגה לבריאות הציבור נוכח זיהום האוויר ומדגישה את הלגיטימציה הדמוקרטית של המדיניות, חרף התנגדות עזה מצד לובי המכוניות וגורמי תעשיית הדלק המאובנים. מאחר שאין מקור נוסף הדן בנושא, לא ניתן להצביע על זוויות מתחרות או דגשים שונים בין כלי תקשורת.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6271" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6271">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6271" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 58</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6272" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6272">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">הוויכוח על בריאות נפשית ורשתות חברתיות אצל בני נוער</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6272">
+          <p class="comparison-text">שני המאמרים, שניהם מ-Frankfurter Allgemeine Zeitung, בוחנים את הקשר בין רשתות חברתיות לבריאות הנפשית של בני נוער מזוויות שונות לגמרי - ושניהם מטילים ספק בפתרונות הנפוצים, אך מכיוונים שונים. בטור ב-Frankfurter Allgemeine Zeitung, אלכסנדר וולפרס מציג את עמדת הכלכלנית ג&#x27;נט קארי, הטוענת שאין כלל &quot;משבר חדש&quot; של בריאות נפשית בקרב בני נוער - הנתונים לדורות מראים יציבות, והאיסורים על סמארטפונים הם &quot;תגובת מדיניות עצלה&quot; שמתעלמת מהגורמים האמיתיים כמו לחץ לימודים, בריונות ושינויים באופן האבחון. לעומת זאת, בכתבתו ב-Frankfurter Allgemeine Zeitung על החוק האוסטרלי, יורג שמילבסקי בוחן את התוצאות בפועל של איסור רשתות חברתיות על בני נוער מתחת לגיל 16, ומגלה שהאכיפה פועלת בעיקר בשעות הלימודים אך כמעט ואינה חלה מחוץ לבית הספר או על חברות הטכנולוגיה עצמן - ומסכם כי &quot;ההתמכרות לאינטרנט חזקה מכל איסור&quot;. כך, בעוד וולפרס מערער על עצם קיומו של המשבר הנטען ומבקר את עצם הרעיון של איסורים, שמילבסקי מניח שהמשבר קיים ובוחן באופן מעשי מדוע ניסיון קונקרטי לאסור נכשל ביישום.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6272" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6272">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6272" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 21 — “„Es gibt keine neue Krise der…”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 39 — “Social-Media-Verbot in Australien: Hat es sich…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6273" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6273">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">תרבות וזהות</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">התפרצות האבולה בקונגו והמאמץ הבינלאומי לבלימתה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6273">
+          <p class="comparison-text">שני המאמרים מגיעים מ-Frankfurter Allgemeine Zeitung ונכתבו שניהם בידי Pia Heinemann, אך הם מציעים שתי זוויות שונות על אותה התפרצות. בכתבה הראשונה מתארת היינמן בגוף הטקסט את ההיקף הגאוגרפי החסר תקדים של ההתפרצות במזרח קונגו, המתפשטת מעבר לגבולות המדינה, ומציגה את מבצע החיסון הניסיוני בתכשיר Ervebo כ&quot;הימור על העתיד&quot; - שכן התכשיר פותח כנגד הזן זאיר ואילו בהתפרצות הנוכחית מעורב הזן בונדיבוגיו, כך שיעילותו אינה ודאית. לעומת זאת, בראיון שערכה היינמן עם המומחה פיטר פיוט, הדגש עובר מהממד הרפואי-מדעי לממד הפוליטי-תרבותי: פיוט טוען כי התפרצויות אבולה הן גם תוצר של כשלים פוליטיים, היעדר אמון מקומי והיעדר שיתוף עם מנהיגים ומשפיעים מקומיים, וכי קיצוצים בסיוע הבינלאומי החמירו את המצב - אם כי לדבריו ההבדל המרכזי מול אוגנדה נעוץ בעיקר במצב הפוליטי והקונפליקט האזורי, ולא רק בתקציב. כך הכתבה הראשונה ממסגרת את האתגר כבעיה מדעית-לוגיסטית, ואילו הראיון ממסגר אותו כבעיה פוליטית וחברתית.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6273" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6273">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6273" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 48 — “Wette auf die Zukunft / In…”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 48 — “„Wir müssen mit Influencern arbeiten“ –…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6274" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6274">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">משבר הליברליזם והעלייה הפוסט-ליברלית במערב</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6274">
+          <p class="comparison-text">שתי הכתבות, שתיהן מאת Frankfurter Allgemeine Zeitung, בוחנות מזוויות שונות מדוע הליברליזם המערבי נמצא במשבר, אך כל אחת מאתרת את שורש הבעיה במקום אחר. בטור ב-Frankfurter Allgemeine Zeitung, יוסטוס בנדר, בסוקרו ספר על &quot;פוסט-ליברליזם&quot;, טוען כי הליברליזם אינו קורס תחת לחץ חיצוני אלא בשל סתירותיו הפנימיות - הצלחותיו עצמן, כמו האוטונומיה האישית והשווקים הפתוחים, מתהפכות והופכות לדלק עבור ריאקציה אוטוריטרית ופרוטקציוניסטית. לעומתו, בטור נפרד ב-Frankfurter Allgemeine Zeitung, אלכסנדר וולפרס מביא את עמדתו של חתן פרס נובל דארון אג&#x27;מוגלו, המטיל את האשמה בעיקר על כישלון כלכלי-חברתי קונקרטי: הדמוקרטיה הליברלית נטשה את העובדים בעידן הפוסט-תעשייתי, בעוד המפלגות השמאליות עברו מהתמקדות באיגודים מקצועיים ובשכר לפוליטיקת זהויות, ובכך טיפחו את הפופוליזם. בעוד בנדר מציע ניתוח פילוסופי-היסטורי רחב על הליברליזם כמנצח את עצמו למוות, אג&#x27;מוגלו מציע אבחנה כלכלית-פוליטית ממוקדת יותר, הקוראת להחזיר את העובדים למרכז הפוליטיקה הליברלית ולהשתמש ברגולציה - ולא בהפרטה וביטחון בשוק - כדי לכוון בינה מלאכותית לטובת העובדים.</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6274" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6274">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6274" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 69 — “Wenn die Freiheit immer mehr bröckelt.…”</li>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 79 — “„Wir rasen mit Volldampf in die…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6276" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6276">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ברית המערב וההשלכות החיצוניות של בחירות האמצע האמריקאיות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6276">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי Washington Post, בכתבתו של גרג מילר, המציג את נקודת המבט של בעלות ברית אמריקאיות באירופה ומעבר לה. מילר טוען כי אף שהמפלגה הרפובליקנית ספגה מפלה בבחירות האמצע, בירות זרות אינן רואות בכך סימן לחזרה קרובה של וושינגטון לתפקיד המנהיג המסורתי של העולם החופשי. לדבריו, הממשלות הזרות מפרשות את תוצאות הבחירות בעיקר כמחאה פנימית נגד הסגנון האישי של טראמפ, ולא כדחייה של האג&#x27;נדה הבדלנית מסוג &quot;אמריקה תחילה&quot; שהוא קידם. בשל כך, לטענת הכתבה, בעלות ברית מתחילות לנקוט אסטרטגיית גידור בפועל - מעמיקות קשרים עם מעצמות אחרות ומצמצמות את תלותן בארצות הברית, מתוך תחושה שאמריקה נסוגה אל עבר ראיית אירופה כפריפריה של העולם ולא כמוקדו.</p>
+          <p class="section-sources">מקורות: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6276" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6276">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6276" hidden>
+            <ul>
+            <li>The Washington Post, 8.11.2026, עמ' 14</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6278" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6278">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">גירושו של בולסונרו וחייו בגלות בארה&quot;ב</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6278">
+          <p class="comparison-text">שני הטקסטים על נושא זה מקורם ב-Washington Post, ולמעשה משלימים זה את זה בסיפור אחד. בכתבה החתומה בידי Terrence McCoy, המתמקדת בעדותו של פלאביו בולסונרו, מצטיירת תמונה אינטימית ואישית: בן המשפחה מתואר כמבולבל וחסר ודאות לגבי עתידו, וארצות הברית מוצגת כמקלט שניתן למשפחת בולסונרו משום שטראמפ &quot;משוכנע&quot; שברזיל חדלה להיות דמוקרטיה - כלומר, ההצדקה להגנה האמריקאית מוצגת מפיו של בן המשפחה עצמו, ללא אימות עצמאי. הכתבה השנייה, ללא שם כותב, נוקטת זווית מוסדית יותר ומרחיבה את התמונה: Washington Post מתאר כיצד ג&#x27;איר בולסונרו ברח מברזיל לאחר הפסדו ללולה, תוך שהעיתון שם דגש על החקירות הנוגעות לשאלה האם סוכנים אמריקאים, ארגנטינאים וישראלים סייעו לבריחה, וכן על טענות המרמה בבחירות השנויות במחלוקת. כך, בעוד הכתבה הראשונה מעניקה קול למשפחה ולחוויה האישית של הגלות, הכתבה השנייה ממסגרת את הפרשה כסוגיה בין-לאומית רחבה יותר של מעורבות ממשלתית אפשרית ושל מאבק על לגיטימיות הבחירות.</p>
+          <p class="section-sources">מקורות: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6278" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6278">
+            מראי מקום (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6278" hidden>
+            <ul>
+            <li>The Washington Post, 8.11.2026, עמ' 1 — “Bolsonaro opens up about escape to…”</li>
+            <li>The Washington Post, 8.11.2026, עמ' 15 — “From cusp of presidency in Brazil…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6279" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6279">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">פיתוח כלכלי מקומי בוושינגטון הבירה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6279">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: The Washington Post, בעריכתו, קורא לראשת העיר הנבחרת של וושינגטון הבירה, ג&#x27;נייס לואיס ג&#x27;ורג&#x27;, לשתף פעולה עם גורמים פדרליים בפיתוח קרקעות פדרליות שאינן מנוצלות דיין, באמצעות הקמת תאגיד פיתוח ייעודי בהשראת המודל שיושם בסינסינטי - זאת כחלופה להעלאת מסים. מאחר שאין מקור נוסף המתייחס לנושא, לא ניתן להצביע על נקודות מבט מתחרות.</p>
+          <p class="section-sources">מקורות: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6279" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6279">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6279" hidden>
+            <ul>
+            <li>The Washington Post, 8.11.2026, עמ' 18</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6281" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6281">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">כישלון הבטחת הפלדה של טראמפ באייווה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6281">
+          <p class="comparison-text">הנושא מכוסה במקור בודד. The Washington Post טוען כי עסקת מפעל הפלדה שטראמפ שיווק כהישג - שנשענה על מכסים ועל סבסוד תאגידי - נכשלה בסופו של דבר בלשכנע את בוחרי אייווה, ומשווה אותה לכישלונות עבר של תכנון כלכלי פדרלי-מדינתי, כמו פרויקט Foxconn בוויסקונסין. המאמר נוקט עמדה ביקורתית כלפי פרוטקציוניזם וסבסודים תאגידיים, בטענה שהם פוגעים בשוק החופשי, ומוסיף שאם אפילו אינם מצליחים להניב קולות בבחירות, אין להם כל תועלת של ממש.</p>
+          <p class="section-sources">מקורות: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6281" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6281">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6281" hidden>
+            <ul>
+            <li>The Washington Post, 8.11.2026, עמ' 18</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6283" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6283">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">הבטחות אקלים נבובות של ענקיות הטכנולוגיה מול צריכת האנרגיה של הבינה המלאכותית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6283">
+          <p class="comparison-text">בכתבה ב-Washington Post, איוון האלפר מתאר כיצד חברות הטכנולוגיה הגדולות נסוגות בפועל מהבטחות האקלים השאפתניות שהצהירו עליהן בעבר, ובמקום זאת מניעות עלייה חדה בפליטות באמצעות הקמת תחנות כוח הפועלות בגז טבעי כדי להזין את ההתרחבות המואצת של תשתיות הבינה המלאכותית והענן. מאחר שזהו המקור היחיד המסקר את הנושא, אין נקודת מבט מתחרה להצגה - הכתבה עצמה נוקטת עמדה ביקורתית ברורה כלפי הפער בין ההצהרות הציבוריות של התעשייה לבין התנהלותה בפועל.</p>
+          <p class="section-sources">מקורות: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6283" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6283">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6283" hidden>
+            <ul>
+            <li>The Washington Post, 8.11.2026, עמ' 28</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6284" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6284">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">פרטיות נתוני בריאות ומתווכי מידע</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6284">
+          <p class="comparison-text">בכתבה ב-Washington Post, מייקל סקטורו חוקר כיצד מתווכי מידע אוספים ומוכרים נתוני מיקום הנאספים מהטלפונים של מטופלים, כולל ביקורים במרפאות ומתקני בריאות רגישים, ומצביע על פערים בחוק הפרטיות האמריקאי שמאפשרים מסחר כזה כמעט ללא פיקוח. הכתבה מצטטת מקורות שמתארים את התחושה מגילוי המעקב הזה כ&quot;מעוררת בחילה&quot;, ומשתמשת בכך כדי לקרוא לרגולציה מחמירה יותר. מאחר שזהו המקור היחיד שעוסק בנושא במסגרת זו, אין נקודת השוואה נוספת ממקור אחר, אך הטון הבולט הוא של עיתונאות חקירתית המבקשת לעורר מודעות ציבורית ולחץ חקיקתי.</p>
+          <p class="section-sources">מקורות: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6284" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6284">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6284" hidden>
+            <ul>
+            <li>The Washington Post, 8.11.2026, עמ' 28</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6285" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6285">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">גל איומי פצצות שבשו את התעופה באירופה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6285">
+          <p class="comparison-text">הנושא מכוסה כאן רק בידי The Observer, המדווח כי גל איומי פצצות כוזבים שנמשך ארבעה ימים גרם לקרקוע ולהטיית מסלול של טיסות רבות ברחבי אירופה, ואף הוביל להזנקת מטוסי קרב ללוויית טיסות בשבע מדינות. הכתבה מציינת כי גוף קיצוני-ימני בעל זיקה רוסית נטל על עצמו אחריות לאיומים, וכי אלה הוגדרו בסופו של דבר כ&quot;תעלול זדוני&quot;. מאחר שמדובר במקור יחיד המכסה את הנושא, אין כאן זוויות מתחרות להשוואה, אלא רק את מסגור הדיווח של Observer עצמו, המתמקד בהיקף השיבושים התפעוליים ובזיהוי החשוד שעומד מאחורי הגל.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6285" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6285">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6285" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6286" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6286">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">חשד לריגול סיני דרך מנכ&quot;ל Nvidia</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6286">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי The Observer, המדווח כי גורמי מודיעין אמריקאים מאמינים שבת זוגו הרומנטית של מנכ&quot;ל Nvidia, ג&#x27;נסן הואנג, גויסה כנכס מודיעיני סיני עוד לפני ביקורו של דונלד טראמפ בסין במאי, וכי היא קשורה לחברה החשודה בהברחת שבבי Nvidia לסין. מאחר שאין כאן מקור נוסף המציע זווית משלימה או מנוגדת, אי אפשר להצביע על מחלוקת בין כלי תקשורת - הסיפור מוצג כחשיפה בלעדית המבוססת על מידע מודיעיני, ללא אימות או פרשנות חיצונית מעיתון אחר.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6286" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6286">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6286" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6287" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6287">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">אנרגיה וסביבה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ועידת האקלים COP31 ומדיניות הקידוחים הבריטית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6287">
+          <p class="comparison-text">הסיקור בנושא זה מגיע ממקור יחיד. The Observer, בכתבתם של Jeevan Vasagar ו-Karl Mathiesen, מדווח כי החלטת ממשלת בריטניה להרחיב את הקידוחים בים הצפוני לנפט וגז פוגעת באמינותה כמובילה בנושא האקלים בוועידת COP31, וכי דיפלומטים זרים ובינם מדינות אחרות מאשימים את לונדון בצביעות - &quot;אי אפשר להטיף נגד דלקים מאובנים ואז להתחיל לקדוח&quot;. הכתבה מציינת גם כי ארגוני זכויות אדם מפעילים לחץ נוסף על הנציג הבריטי לוועידה להעלות את סוגיית האסירים הפוליטיים בטורקיה, ובכך ממסגרת את המדיניות הבריטית כסותרת בין שאיפות גלובליות מוצהרות לצעדים מעשיים בבית.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6287" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6287">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6287" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 5</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6288" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6288">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">ביטחון וסכסוכים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">גזר דינו של ג&#x27;ושוע וונג והדיכוי בהונג קונג</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6288">
+          <p class="comparison-text">בנושא זה מופיע מקור יחיד - The Observer - המדווח באופן עובדתי על גזר דינו הנוסף של פעיל הדמוקרטיה ג&#x27;ושוע וונג, שהורשע לפי חוק ביטחון המדינה בהונג קונג בעבירה של עידוד סנקציות זרות נגד סין ונגזרו עליו עשר שנות מאסר נוספות, בנוסף לעונש קודם של 21 שנה. הכתבה מצטטת את נימוקי בית המשפט, לפיהם אין לבלבל בין חופש הביטוי לבין שיתוף פעולה עם מדינה זרה, אך אינה מציגה זווית נגדית משל עצמה או ניתוח ביקורתי מורחב - מדובר בדיווח תמציתי המתעד את האירוע ואת עמדת הרשויות ללא השוואה לעמדות עיתונים אחרים, שכן אף מקור נוסף לא סיקר את הנושא.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6288" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6288">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6288" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6289" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6289">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">אחריות תאגידית של TotalEnergies לאסון מוזמביק</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6289">
+          <p class="comparison-text">כל שלוש הכתבות בנושא זה פורסמו ב-Observer, ויחד הן בונות קו טיעון עקבי ומצטבר סביב מותו של הקבלן הבריטי פיליפ מאוור בפיגוע איסלאמיסטי בפאלמה שבמוזמביק. כתבת מערכת ראשונה פותחת בביקורת על כך ש-TotalEnergies לא עשתה די כדי לחלץ את מאוור, וטוענת שפסק הדין הבלתי מתלהם של חקירת המוות שהתקיימה בבריטניה מחמיץ את התמונה הרחבה יותר של אחריות תאגידית. בטור ב-Observer, בסיאה קאמינגס (Basia Cummings) מעמיקה את ההאשמה ושואלת במפורש אילו חובות הגנה חבה החברה הצרפתית-רב-לאומית לעובדים ולקבלנים שריכזה בפאלמה כדי לחלץ גז טבעי, ומציגה את מאבקה המשפטי המתמשך של משפחת מאוור בפריז, כניסיון להעמיד לדין פלילי על רצח בשגגה כחלק ממערכה רחבה יותר למען אחריות תאגידית. כתבה שלישית ב-Observer מרחיבה את הזווית העובדתית וטוענת כי TotalEnergies השתמשה בחברת-בת מקומית (TEPMA1) כדי להתגונן מפני ביקורת משפטית, וכי החברה סירבה לחלוק דלק תעופה עם מחלצים בעיצומו של הפיגוע הג&#x27;יהאדיסטי - מהלך שלטענת הכתבה תרם למותו של מאוור. כך, בעוד שאין בנושא זה זוויות מתחרות ממקורות שונים, שלוש הכתבות של Observer יחד מצטרפות לתמונה הולכת ומחמירה: מאכזבה כללית על התנהלות החברה, דרך פנייה אישית ורגשית בטורה של קאמינגס, ועד לטענה פרטנית ומבוססת מסמכים לפיה החברה בנתה מבנה תאגידי שנועד לטשטש אחריות.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6289" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6289">
+            מראי מקום (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6289" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 3 — “A question of responsibility”</li>
+            <li>The Observer, 8.11.2026, עמ' 14 — “Total oil wants to wash its…”</li>
+            <li>The Observer, 8.11.2026, עמ' 15 — “The fight for accountability over Total&#x27;s…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6290" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6290">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">איום הפרוסקריפציה על Palestine Action וחופש הביטוי בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6290">
+          <p class="comparison-text">כל חמש הכתבות בנושא זה מתפרסמות ב-Observer, אך כל אחת מציעה זווית שונה על אותו סיפור - איסור ארגון Palestine Action כ&quot;ארגון טרור&quot; בבריטניה. בטור ב-Observer נטען כי שרת הפנים קופר קבעה את האיזון הלא נכון בין בטחון לזכויות, וכי אם בתי המשפט אינם מתקנים זאת, על הפוליטיקאים לעשות כן - עמדה מוסדית המתמקדת בכשל ממשלתי. במדור תרבות, טום גאטי מתעד כיצד הסופר בן אוקרי כתב שיר לתמיכה בסאלי רוני לאחר שספריה הוסרו ממדפים בעקבות ההחרמה, ומסגר זאת כצנזורה חדשה בחסות המדינה המאיימת על סופרים ועל הדמוקרטיה עצמה - זווית תרבותית-סמלית יותר מאשר משפטית. כתבה נוספת, מאת קרל מתיסן וקתרין נילן, מתמקדת בפוליטיקה הפנימית של מפלגת הלייבור: חברי פרלמנט רבים מודים כי הם מתחרטים על הצבעתם בעד האיסור, תוך שהממשלה ממשיכה להצדיק את הצעד בטענה למעשי אלימות מצד הארגון - כאן הדגש הוא על הלחץ הפוליטי והפער בין ההצבעה לתחושות בדיעבד. לבסוף, שתי כתבות פרופיל - מאת ג&#x27;יילס וויטל והשנייה ללא שיוך מחבר מפורש - מביאות את קולה של הודא אמורי, ממייסדות Palestine Action, המספרת את סיפור משפחתה בעזה ומגדירה את פעילות הארגון נגד Elbit Systems כניסיון להציל חיים ולא כטרור, ורואה בפרוסקריפציה מתקפה מכוונת על החירויות האזרחיות ועל חופש הביטוי בבריטניה. כך, בעוד הטור והכתבה הפוליטית בוחנים את ההחלטה מבעד לעדשה של הממשל והפרלמנט, פרופילי אמורי והשיר של אוקרי מעניקים לסיפור פנים אנושיות ותרבותיות, ומציבים את הפעילים והסופרים כקורבנות ישירים של המדיניות.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6290" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6290">
+            מראי מקום (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6290" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 3 — “Speak up for free speech”</li>
+            <li>The Observer, 8.11.2026, עמ' 19 — “Ben Okri backs Sally Rooney with…”</li>
+            <li>The Observer, 8.11.2026, עמ' 19 — “Labour MPs &#x27;regret voting&#x27; for Palestine…”</li>
+            <li>The Observer, 8.11.2026, עמ' 20 — “&#x27;When my father was six, the…”</li>
+            <li>The Observer, 8.11.2026, עמ' 21 — “Profile: Huda Amorri on Palestine Action&#x27;s…”</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6291" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6291">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">דיפלומטיה ויחסים בינלאומיים</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">המרוץ למזכיר הכללי של האו&quot;ם וסודן</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6291">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי The Observer, בכתבה חתומה בידי איזבל קולס, כך שאין נקודת השוואה מול מקור אחר. הכתבה ממסגרת את מועמדותה של לאנה נוסייבה, שגרירת איחוד האמירויות הערביות ל-UN, כמוקד מחלוקת במרוץ הדחוק למזכירות הכללית, בשל חשדות שמילאה תפקיד בהסתרת תמיכת אמירויות ב-RSF, הכוח הצבאי המואשם בזוועות בסודן. קולס מדגישה את התחושה הרווחת במסדרונות האו&quot;ם שמועמדותה של נוסייבה אינה מקרית אלא נתמכת באותות ממדינות בעלות זכות וטו, ובכך מציבה את הסוגיה כשאלה של פוליטיקה בין-מעצמתית לא פחות מאשר שאלה מוסרית על אחריות לזוועות בסודן.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6291" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6291">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6291" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 25</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6292" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6292">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">פוליטיקה פנימית</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">זכויות עובדים ואיגודים מקצועיים בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6292">
+          <p class="comparison-text">בטור ב-The Observer, קנן מליק טוען כי זכויות העובדים בבריטניה נשחקו באופן שיטתי מאז שנות ה-80 במסגרת מה שהוא מכנה &quot;דה-ארגון&quot; מכוון של האיגודים המקצועיים, וכי הניסיונות הנוכחיים המתונים להשיב חלק מהזכויות הללו אינם מהווים איום על העסקים אלא תיקון של עשורים של מלחמת מעמדות שנוהלה מלמעלה. מכיוון שזהו המקור היחיד שעוסק בנושא, אין נקודת מבט מתחרה להשוואה - מליק מבקר במפורש את ההנחה הרווחת בשיח הציבורי לפיה יש להקריב את זכויות העובדים בשם היותה של המדינה &quot;ידידותית לעסקים&quot;.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6292" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6292">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6292" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 32</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6293" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6293">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">תביעת דיבה של אוליגרך רוסי נגד עיתונאים נורווגים</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6293">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: בכתבה ב-The Observer מאת קרל מתיסן, המתארת כיצד האוליגרך הרוסי-קשור ויטלי אורלוב תובע את כלי התקשורת הקטן Barents Observer בבית המשפט העליון בלונדון. הכתבה מאמצת את עמדת פעילי חופש העיתונות ושל העיתונאים עצמם, ומציגה את התביעה כ-SLAPP שמטרתה להחריב כלכלית ולהשתיק סיקור של פעילות רוסית לאורך הגבול נורווגיה-רוסיה, תוך ציטוט ישיר של עיתונאי Barents Observer הטוען שאורלוב מנסה להפחיד אותם ואת כלי תקשורת אחרים, אך &quot;פגש בעיתונאים הלא נכונים&quot;. מאחר שמדובר במקור יחיד, אין כאן ניגוד סיקור בין עיתונים שונים, אלא זווית אחת, אמפתית כלפי העיתונאים, המדגישה את השימוש בבתי המשפט הבריטיים ככלי נגד עיתונות קטנה וחשופה.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6293" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6293">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6293" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 30</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6294" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6294">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">שאיפת בריטניה להובלה עולמית ברגולציית בינה מלאכותית</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6294">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי מקור אחד. בטור ב-The Observer, אורסולה שפרד טוענת כי בריטניה אינה יכולה להתחרות כמעצמת-על בתחום הבינה המלאכותית מול ארצות הברית וסין, אך במקום זאת עליה לשאוף למנהיגות בינלאומית כרגולטור אמין - לבנות מוסדות הערכה מקצועיים, להשקיע בחינוך ולטפח מוניטין של הגינות ומצוינות בתחום. מדובר בעמדת דעה אישית שלה, המציעה כיוון אסטרטגי חלופי לבריטניה ולא דיווח על מדיניות ממשלתית קיימת.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6294" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6294">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6294" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 34</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6295" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6295">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">קיפאון שוק הדיור בבריטניה</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6295">
+          <p class="comparison-text">מקור יחיד עוסק בנושא זה: בטור ב-The Observer, וויל האטון מציג את קיפאון שוק הדיור הבריטי כתוצר של שילוב בין עליית הריבית המקומית לבין סיכון גיאופוליטי רחב יותר, ובראשו המלחמה באיראן וסגירת מצר הורמוז. מזווית זו הוא קורא למהלכים מבניים בבית - הקמת בנק דיור לאומי, ביטול מס הבולים, אגרות חוב להגנה וקיצוצים בתקציב - ובמקביל תובע מבריטניה לפעול למען שינוי פוליטי בישראל שיחזיר אותה, לטענתו, לעקרונות הדמוקרטיים המייסדים שלה, כצעד שיש בו כדי לייצב את האזור ובכך להקל גם על שוק הדיור הבריטי. מאחר שזהו המקור היחיד המסקר את הנושא, אין לנתח כאן הבדלים בין כלי תקשורת, אלא רק את זווית הראייה המיוחדת של הטור, המקשרת קיפאון כלכלי מקומי לזעזועים גיאופוליטיים גלובליים.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6295" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6295">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6295" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 33</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6296" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6296">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מכירת פאונדלנד וסיכון למשרות</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6296">
+          <p class="comparison-text">הנושא מכוסה במקור יחיד: בטור ב-The Observer, אמה הסלט מדווחת על מהלכי הבעלים האמריקאי של פאונדלנד, Gordon Brothers, לאתר קונים לרשת או להעבירה להליכי כינוס נכסים, מהלך שעלול לסכן כ-10,000 משרות. הכתבה נוקטת זווית ביקורתית כלפי הבעלים, ומציינת כי חברי פרלמנט עתידים לחקור אותו בטענה שהוא פועל למיצוי מרבי של הערך הכלכלי מהרשת על חשבון העובדים, תוך הטלת ספק בטענה שהחברה רווחית חרף חובותיה הכבדים.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6296" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6296">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6296" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 39</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6297" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6297">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כלכלה וסחר</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">מפולת שוק המניות הטכנולוגי בעקבות בחירות האמצע</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6297">
+          <p class="comparison-text">הנושא מכוסה כאן רק על ידי The Observer, בכתבה חתומה בידי בן זרנקו. הכתבה ממסגרת את המפולת בשוק המניות הטכנולוגי כתוצאה ישירה מתוצאות בחירות האמצע בארצות הברית, ומסבירה כי המשקיעים חוששים שהמחוקקים הדמוקרטים שנבחרו לאחרונה יחמירו את הרגולציה על בינה מלאכותית ויאטו את קצב בניית מרכזי הנתונים. זרנקו מדגיש את עוצמת התגובה בשווקים, תוך ציטוט כלכלן בכיר שמתאר את היום כ&quot;אכזרי&quot; עבור השווקים, ומצביע על כך שההדבקה התפשטה גם לשווקים האסייתיים. מאחר שמדובר במקור יחיד, אין כאן זוויות מתחרות להשוואה - אך ניכר שהמוקד של הכתבה הוא הקשר הסיבתי בין התוצאה הפוליטית לבין חששות הרגולציה כמניע המרכזי למפולת.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6297" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6297">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6297" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 39</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6298" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6298">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">טכנולוגיה ומדיה</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">ההימור של גוגל על בינה מלאכותית וההשפעה על מונופול החיפוש</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6298">
+          <p class="comparison-text">בנושא זה מופיע מקור יחיד. בטור ב-The Observer, בארני מקינטייר טוען שגוגל נוקטת במהלך מכוון ומסוכן: היא &quot;אוכלת&quot; בעצמה את עסקי החיפוש והפרסום הרווחיים ביותר שלה כדי לדחוף משתמשים לכיוון מוצרי בינה מלאכותית, הימור שעלול להתברר כקיומי לנוכח הדרישות ההוניות העצומות של תשתיות הבינה המלאכותית. מקינטייר מדגיש גם את חוסר האונים של הרגולטורים מול כוחה של החברה, וכותב בציניות שאין שום תרחיש שבו ייעשה משהו רציני נגד גוגל או פלטפורמות דומות, מעבר להמשך הטלת קנסות שהם בגדר &quot;תקציב העוגיות&quot; השנתי שלהן. מאחר שאין מקורות נוספים המתייחסים לנושא, לא ניתן להצביע על זוויות מתחרות.</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6298" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6298">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6298" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 41</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6299" data-category="additional_coverage">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6299">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כיסוי נוסף</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">German debate on militarization and European security policy amid Russia-Ukraine war</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6299">
+          <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): The author critiques Mithu Sanyal&#x27;s book &#x27;Nein. Gegen die Militarisierung der Gesellschaft&#x27; as an exaggerated, simplifying polemic that dismisses legitimate concerns about deterrence and European security, arguing it avoids the realistic question of how to deter further violations of the European peace order and underestimates Ukraine&#x27;s fight for survival. ציטוט מרכזי: &quot;Die deutsche Friedenssehnsucht, zu deren Sprachrohr sich nun auch Mithu Sanyal mit ihrem bewusst vereinfachenden Buchtitel macht, ist aber eben eine, die sich über das Überleben der alles andere als nur „seelisch“ kolonisierten Ukraine keine ausreichenden Gedanken macht.&quot;</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6299" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6299">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6299" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 35</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6300" data-category="additional_coverage">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6300">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כיסוי נוסף</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Private equity investment in US youth sports</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6300">
+          <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): The article argues that private-equity investors have turned American youth sports into a profit-driven business, pricing out lower-income families and prioritizing commercial gain over development; Democratic lawmakers are pushing legislation to curb these &#x27;predatory practices&#x27;. ציטוט מרכזי: &quot;Es geht denen nur ums Geld. Um die Kinder macht man sich keine Gedanken.&quot;</p>
+          <p class="section-sources">מקורות: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6300" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6300">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6300" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, 8.11.2026, עמ' 42</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6301" data-category="additional_coverage">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6301">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">כיסוי נוסף</span>
+            <span class="coverage-badge">1 מקור · 1 שפה</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK far-right youth activism</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6301">
+          <p class="comparison-text">כיסוי נוסף (לא שובץ להשוואה בין מקורות): Reports on two British far-right provocateurs who imitate assassinated US activist Charlie Kirk&#x27;s confrontational campus debate tactics, detailing their inflammatory rhetoric, funding networks, and links to international far-right figures. ציטוט מרכזי: &quot;the best course of action is to simply ignore them – by doing so you starve them of content&quot;</p>
+          <p class="section-sources">מקורות: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6301" data-copied-label="הועתק!">🔗 העתק קישור</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6301">
+            מראי מקום (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6301" hidden>
+            <ul>
+            <li>The Observer, 8.11.2026, עמ' 23</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">הצהרת נגישות</a>
+    <a class="footer-link" href="terms.html">תנאי שימוש</a>
+    <a class="footer-link" href="privacy.html">מדיניות פרטיות</a>
+  </footer>
+  <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
+    document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,2814 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>Daily Geopolitics Report - Sunday, November 08, 2026</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+  --tok-security_conflict-color: #8a3324;
+  --tok-security_conflict-bg: #f7e6e2;
+  --tok-diplomacy_international-color: #2a5b8a;
+  --tok-diplomacy_international-bg: #e3edf5;
+  --tok-trade_economics-color: #8a6114;
+  --tok-trade_economics-bg: #faf1dd;
+  --tok-domestic_politics-color: #5c3d82;
+  --tok-domestic_politics-bg: #f0e9f6;
+  --tok-migration_society-color: #1f6f76;
+  --tok-migration_society-bg: #e6f3f2;
+  --tok-society_culture-color: #a5457a;
+  --tok-society_culture-bg: #f8e8f0;
+  --tok-technology_media-color: #3d6b3d;
+  --tok-technology_media-bg: #e9f2e6;
+  --tok-energy_environment-color: #7a6a1a;
+  --tok-energy_environment-bg: #f5f0dd;
+  --tok-additional_coverage-color: #6b6560;
+  --tok-additional_coverage-bg: #efece6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      --tok-security_conflict-color: #e0a08f;
+  --tok-security_conflict-bg: #3a2019;
+      --tok-diplomacy_international-color: #8fb8dd;
+  --tok-diplomacy_international-bg: #182a38;
+      --tok-trade_economics-color: #e0b859;
+  --tok-trade_economics-bg: #332a13;
+      --tok-domestic_politics-color: #c6a6ea;
+  --tok-domestic_politics-bg: #2c2138;
+      --tok-migration_society-color: #6fc9d0;
+  --tok-migration_society-bg: #12302f;
+      --tok-society_culture-color: #e2a0c6;
+  --tok-society_culture-bg: #381e2c;
+      --tok-technology_media-color: #8fc98f;
+  --tok-technology_media-bg: #1c2e1c;
+      --tok-energy_environment-color: #cdbb5c;
+  --tok-energy_environment-bg: #2e2913;
+      --tok-additional_coverage-color: #a89f91;
+  --tok-additional_coverage-bg: #2a2620;
+  }
+}
+:root[data-theme="dark"] {
+    --tok-security_conflict-color: #e0a08f;
+  --tok-security_conflict-bg: #3a2019;
+    --tok-diplomacy_international-color: #8fb8dd;
+  --tok-diplomacy_international-bg: #182a38;
+    --tok-trade_economics-color: #e0b859;
+  --tok-trade_economics-bg: #332a13;
+    --tok-domestic_politics-color: #c6a6ea;
+  --tok-domestic_politics-bg: #2c2138;
+    --tok-migration_society-color: #6fc9d0;
+  --tok-migration_society-bg: #12302f;
+    --tok-society_culture-color: #e2a0c6;
+  --tok-society_culture-bg: #381e2c;
+    --tok-technology_media-color: #8fc98f;
+  --tok-technology_media-bg: #1c2e1c;
+    --tok-energy_environment-color: #cdbb5c;
+  --tok-energy_environment-bg: #2e2913;
+    --tok-additional_coverage-color: #a89f91;
+  --tok-additional_coverage-bg: #2a2620;
+}
+[data-category="security_conflict"] { --cat-color: var(--tok-security_conflict-color); --cat-bg: var(--tok-security_conflict-bg); }
+[data-category="diplomacy_international"] { --cat-color: var(--tok-diplomacy_international-color); --cat-bg: var(--tok-diplomacy_international-bg); }
+[data-category="trade_economics"] { --cat-color: var(--tok-trade_economics-color); --cat-bg: var(--tok-trade_economics-bg); }
+[data-category="domestic_politics"] { --cat-color: var(--tok-domestic_politics-color); --cat-bg: var(--tok-domestic_politics-bg); }
+[data-category="migration_society"] { --cat-color: var(--tok-migration_society-color); --cat-bg: var(--tok-migration_society-bg); }
+[data-category="society_culture"] { --cat-color: var(--tok-society_culture-color); --cat-bg: var(--tok-society_culture-bg); }
+[data-category="technology_media"] { --cat-color: var(--tok-technology_media-color); --cat-bg: var(--tok-technology_media-bg); }
+[data-category="energy_environment"] { --cat-color: var(--tok-energy_environment-color); --cat-bg: var(--tok-energy_environment-bg); }
+[data-category="additional_coverage"] { --cat-color: var(--tok-additional_coverage-color); --cat-bg: var(--tok-additional_coverage-bg); }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .report-title { margin: 0 0 1.5rem; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }
+  .revision-note { margin: -1rem 0 1.5rem; font-size: .85rem; color: var(--text-muted); font-style: italic; }
+  .sources-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+  .sources-label { font-size: .85rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+  .sources-pills { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; }
+  .sources-pills li {
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
+    color: var(--pill-text);
+    padding: .35rem .85rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 500;
+  }
+
+  .report-body {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 2.25rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .topic-section {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.5rem 1.6rem 1.65rem;
+    border-inline-start: 5px solid var(--cat-color);
+  }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
+  .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+  .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
+  .category-label {
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--cat-color);
+    background: var(--cat-bg);
+    padding: .2rem .6rem;
+    border-radius: 999px;
+  }
+  .coverage-badge { font-size: .72rem; color: var(--text-muted); }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
+  .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
+  .section-sources {
+    margin: 0;
+    font-size: .82rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: .75rem;
+  }
+  .section-sources b { color: var(--text); font-weight: 600; }
+
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 2cm 1.8cm;
+      @bottom-center { content: counter(page) " / " counter(pages); font-size: 9px; color: #888; }
+    }
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+    body { background: #fff; }
+    .top-nav { display: none; }
+    .category-nav { display: none; }
+    /* .section-actions used to be display:none outright (it only ever held the
+       share-link button, meaningless on paper) - but it's also the citations
+       toggle+popup's containing element, so hiding it wholesale silently hid
+       the citations fix below too (caught via an actual PDF-text check, not
+       just reading the CSS - the popup's [hidden] override alone did nothing
+       while its ancestor stayed display:none). Now only the share button is
+       hidden; the container itself switches to a plain block flow so the
+       citations toggle-label and popup stack vertically under it. */
+    .section-actions { display: block; }
+    .share-link-btn { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
+    /* Same reasoning as .section-body above: the citations popup is only ever
+       un-hidden by the click-handler JS below, and WeasyPrint (which renders
+       the PDF from this same HTML string) never runs JS - so without this,
+       per-article citations would never appear in the PDF, only the plain
+       "Sources: X, Y, Z" line rendered elsewhere in the section. Forcing it
+       visible here does not touch the on-screen [hidden] toggle behavior,
+       since this rule only applies inside @media print. */
+    .citations-toggle { cursor: default; pointer-events: none; }
+    .citations-toggle .chevron-circle { display: none; }
+    .citations-popup[hidden] {
+      display: block !important;
+      position: static;
+      width: auto;
+      max-width: none;
+      max-height: none;
+      overflow: visible;
+      box-shadow: none;
+      border: none;
+      background: none;
+      margin: .3rem 0 0;
+      padding: 0;
+    }
+  }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Daily Geopolitics - home"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="archive.html">← All reports</a>
+      <a class="top-nav-link" href="filter.html">Advanced filter</a>
+      <a class="top-nav-link" href="trends.html">Trends</a>
+      <a class="top-nav-link top-nav-lang-link" href="../he/report_2026-11-08_he.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../de/report_2026-11-08_de.html">Deutsch</a>
+      <a class="top-nav-link" href="report_2026-11-08_en.pdf">⬇ Download PDF</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">Contact</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">Email</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">Website</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dark mode" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-6242">Security &amp; Conflict</a><a class="category-nav-link" href="#section-6244">Diplomacy &amp; International Relations</a><a class="category-nav-link" href="#section-6256">Trade &amp; Economics</a><a class="category-nav-link" href="#section-6262">Domestic Politics</a><a class="category-nav-link" href="#section-6282">Migration &amp; Society</a><a class="category-nav-link" href="#section-6271">Society &amp; Culture</a><a class="category-nav-link" href="#section-6252">Technology &amp; Media</a><a class="category-nav-link" href="#section-6261">Energy &amp; Environment</a><a class="category-nav-link" href="#section-6299">Additional Coverage</a></div>
+    <button class="toggle-all-btn" type="button">Expand all / Collapse all</button>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">Daily Geopolitics</p>
+      <h1 class="report-title">Daily Geopolitics Report - Sunday, November 08, 2026</h1>
+      <div class="sources-row">
+        <span class="sources-label">Sources covering today:</span>
+        <ul class="sources-pills"><li>The Daily Telegraph</li><li>Frankfurter Allgemeine Zeitung</li><li>Los Angeles Times</li><li>The Observer</li><li>The Washington Post</li></ul>
+      </div>
+    </div>
+  </header>
+  <main class="report-body">
+
+      <section class="topic-section topic-section--prominent" id="section-6262" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6262">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">5 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Analysis of Trump&#x27;s midterm defeat and constitutional norms</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6262">
+          <p class="comparison-text">Coverage of Trump&#x27;s midterm rout splits along distinct institutional and ideological lines. At The Daily Telegraph, Janet Daley argues in her column that voters punished Trump not merely over cost-of-living but out of moral outrage at his violation of constitutional norms, branding him a &quot;tinpot dictator&quot; who monetised the presidency. The Observer runs a particularly wide range of takes: Mark Updegrove frames the results as a decisive rejection of authoritarian tendencies and urges Democrats to avoid impeachment; Margaret MacMillan draws a parallel to 1932 and stresses the global stakes for Ukraine, Iran and alliance trust; Andrew Rawnsley cautions that while the defeat reflects anger over corruption, it is premature to declare populism dead given Le Pen and the AfD, and warns Trump still holds two dangerous years of power; Giles Whittell instead credits ICE&#x27;s brutal immigration tactics as the decisive driver of the backlash; and an unsigned piece, &quot;Loser,&quot; synthesizes these threads into a portrait of a presidency collapsing under its own deceit and corruption. By contrast, the Frankfurter Allgemeine Zeitung takes a more institutional, procedural tone: Majid Sattar examines how Democrats might wield their new congressional majority given filibuster and veto constraints, Frauke Steffens explores longer-term political shifts in the South, Tobias Rüther wryly describes Trump denying responsibility on Fox News, and Alexander Wulfers argues tariffs have become a &quot;loser&#x27;s issue.&quot; The Washington Post offers several distinct angles: Jason Willick warns of looming constitutional stress tests over investigations, Supreme Court fights and possible mass pardons; George F. Will, in his column, attacks JD Vance&#x27;s political style as a degraded continuation of Trumpism; Michael Wear discusses Democrats potentially closing the religious &quot;God gap&quot;; an unsigned piece reports Iowa voters rejecting Trump&#x27;s tariff-based steel promises; and a reader&#x27;s letter from Sim J. Singh Attariwala argues the results show voters punishing hateful rhetoric. At the Los Angeles Times, Robin Abcarian welcomes the rise of democratic socialists as a healthy leftward swing, Mark Z. Barabak condemns Sheriff Chad Bianco for pandering to false fraud claims, Veronique de Rugy warns both parties are ignoring a looming fiscal crisis, and a separate report covers Scott Colom&#x27;s potentially historic Senate bid in Mississippi.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Frankfurter Allgemeine Zeitung, Los Angeles Times, The Observer, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6262" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6262">
+            Citations (20)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6262" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 18</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 1 — "Amerikas Demokraten müssen sich gut überlegen,…"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 18 — "Zölle sind was für Verlierer"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 37 — "Der Süden hat etwas zu sagen"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 40 — "Trump im Studio von Fox"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 2 — "Chad Bianco must bear the cost…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 6 — "Mississippi Democrat on cusp of Senate…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 15 — "Don&#x27;t fear the rise of the…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 15 — "A new Senate&#x27;s biggest challenge"</li>
+            <li>The Observer, Nov 8, 2026, p. 3 — "Loser"</li>
+            <li>The Observer, Nov 8, 2026, p. 8 — "Republicans set their sights on 2028…"</li>
+            <li>The Observer, Nov 8, 2026, p. 9 — "The results reject tyranny so fervently…"</li>
+            <li>The Observer, Nov 8, 2026, p. 10 — "Republicans pay ‘price of ICE’ as…"</li>
+            <li>The Observer, Nov 8, 2026, p. 31 — "Trump’s humiliation should worry Farage, but…"</li>
+            <li>The Observer, Nov 8, 2026, p. 34 — "Has the cruelty of Maga finally…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 17 — "What the midterms revealed about the…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 18 — "Iowa voters saw through Trump&#x27;s steel…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 18 — "Letter: Voters are sick of politicians…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 19 — "Now come the constitutional showdowns"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 19 — "President Vance? More slogging through a…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6242" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6242">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">3 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Krakow mass shooting</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6242">
+          <p class="comparison-text">All three sources cover the same mass shooting in Kraków&#x27;s main square, which left six dead and dozens wounded, but differ in emphasis. The Daily Telegraph, in James Crisp&#x27;s report, focuses on the Polish authorities&#x27; response, quoting the government&#x27;s pledge to &quot;ensure that the perpetrator of this crime is held fully accountable and severely punished,&quot; without dwelling on the attacker&#x27;s ideological background. The Los Angeles Times, by contrast, frames the attack explicitly as far-right terrorism, citing Poland&#x27;s defense minister&#x27;s characterization of the incident and noting that &quot;everything indicates that he was fascinated by far-right ideologies,&quot; while also describing the citywide mourning period declared afterward. The Observer similarly adopts the far-right framing but adds distinct operational detail drawn from police sources, describing the suspect&#x27;s military-style attire and the circumstances of his being shot and hospitalized by officers.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6242" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6242">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6242" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 15</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 3</li>
+            <li>The Observer, Nov 8, 2026, p. 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6280" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6280">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">3 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russia-Ukraine war and US support</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6280">
+          <p class="comparison-text">Coverage splits between on-the-ground reporting and analysis of the shifting politics behind U.S. support. Los Angeles Times, in a piece by Derek Gatopoulos, Dmytro Zhyhinas and Dan Bashakov, and The Observer both focus on concrete battlefield events: heavy Russian missile and drone strikes on Kyiv and other regions ahead of peace talks in Abu Dhabi, followed by a strike that killed at least fifty people at an aid distribution centre in Zaporizhzhia. The Observer quotes Zelensky calling that strike &quot;proof that Russia does not want any de-escalation,&quot; framing Moscow as negotiating in bad faith, while the Los Angeles Times report emphasizes the humanitarian toll - blackouts and crumbling infrastructure - and the appeal not to leave Ukraine to face a nationwide blackout alone.
+
+The Washington Post, by contrast, turns to the American political backdrop. In her report, Francesca Ebel describes cautious hope among Ukrainian officials that a Democratic-controlled Congress could curb the erosion of U.S. support and constrain Trump&#x27;s dealings with Putin, especially given his diesel deal with Moscow and the sidelining of Kyiv from negotiations. Against that guardedly hopeful tone, Greg Miller, also writing in The Washington Post, offers a far bleaker reading: U.S. allies see the Republican midterm losses as a domestic rebuke of Trump&#x27;s style rather than a repudiation of his isolationist &quot;America First&quot; agenda, and are consequently hedging by deepening ties elsewhere, sensing that Washington increasingly treats Europe as a periphery of the world rather than a core ally.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times, The Observer, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6280" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6280">
+            Citations (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6280" hidden>
+            <ul>
+            <li>Los Angeles Times, Nov 8, 2026, p. 4</li>
+            <li>The Observer, Nov 8, 2026, p. 4</li>
+            <li>The Washington Post, Nov 8, 2026, p. 14 — "Allies see U.S. turning further away…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 14 — "Midterms give Ukrainians cautious hope, even…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6282" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6282">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">3 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Aggressive US immigration enforcement under Trump</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6282">
+          <p class="comparison-text">The Washington Post foregrounds human cost: one piece follows a Statue of Liberty tour guide and an undocumented visitor to show how intensified ICE arrests and deportations - even of DACA recipients with no criminal record - have made immigration status newly precarious, while a separate article by Emma Rose Brown documents how a 2025 federal law narrowing SNAP and Medicaid eligibility is devastating refugee families, such as Afghans in Virginia, despite officials&#x27; claims that it only targets fraud. The Observer takes a sharper, more overtly critical stance in two different registers: in a column, Giles Whittell argues that the brutalization of civilians by ICE and Border Patrol agents became the defining moral outrage of Trump&#x27;s second term and drove a Democratic sweep in the midterms, while in a book review, Chloe Hadjimatheou praises Mahmoud Khalil&#x27;s memoir as a searing indictment of an America where a green card holder can be detained merely for disagreeing with the president&#x27;s foreign policy. The Los Angeles Times instead channels its coverage through the figure of Stephen Miller: one article warns that his elevation to chief of staff threatens to intensify crackdowns, particularly against Iranian Americans, with advocates and lawmakers vowing congressional pushback, while a profile by Will Weissert and Moriah Balingit compiles Miller&#x27;s own inflammatory statements on immigration and foreign policy to illustrate his hardline worldview.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times, The Observer, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6282" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6282">
+            Citations (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6282" hidden>
+            <ul>
+            <li>Los Angeles Times, Nov 8, 2026, p. 6 — "In his own words: Stephen Miller&#x27;s…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 7 — "Miller rises, but California hopes it…"</li>
+            <li>The Observer, Nov 8, 2026, p. 10 — "Republicans pay ‘price of ICE’ as…"</li>
+            <li>The Observer, Nov 8, 2026, p. 152 — "No Land to Stand On: Protest,…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 12 — "Tour Guide (continued from A11)"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 37 — "Food and health-care cuts are affecting…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6246" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6246">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">2 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Mélenchon and the French hard left ahead of 2027</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6246">
+          <p class="comparison-text">The two sources approach Mélenchon&#x27;s resurgence ahead of 2027 from almost entirely different angles. The Daily Telegraph, in a piece by James Crisp and Alexandra Snow, focuses squarely on the geopolitical stakes of his manifesto, framing his pledges - lowering the pension age to 60, raising the minimum wage, taxing the wealthy, and above all pursuing France&#x27;s gradual withdrawal from Nato&#x27;s integrated military command - as a radical foreign-policy platform that would unsettle the Atlantic alliance. By contrast, Louise Otterbein&#x27;s reportage in Frankfurter Allgemeine Zeitung offers a domestic, on-the-ground portrait from Paris, following LFI activists and student protesters to explain why Mélenchon resonates with young people amid a wave of school and university protests over education policy and police violence, rooting his appeal in a broader sense of crisis - climate change, loneliness, poverty, fear of the future and racism. Where The Daily Telegraph treats Mélenchon primarily as a potential disruptor of Nato and European security arrangements, the Frankfurter Allgemeine Zeitung piece largely sets aside international implications to explore the social discontent driving his youth support at home.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6246" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6246">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6246" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 15</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section topic-section--prominent" id="section-6256" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6256">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">2 sources · 2 languages</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Trump&#x27;s trade war and tariff fallout</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6256">
+          <p class="comparison-text">The two sources approach the fallout from Trump&#x27;s trade war from quite different vantage points. In The Daily Telegraph, Christopher Jasper reports the view of the Port of Long Beach&#x27;s chief executive, who warns that even Democratic gains in the midterms will not end the turmoil, since tariff authority rests with the executive branch rather than Congress, and because other disruptions - the Iran war, Red Sea attacks, Panama canal congestion - will keep compounding the chaos regardless of domestic politics. By contrast, in a column in Frankfurter Allgemeine Zeitung, Dennis Kremer takes a more conceptual and historical angle, reviewing a book on &quot;how to win a trade war&quot; to trace how globalization has shifted from a force accelerating trade into a weapon of geopolitical coercion, stressing that identifying economic vulnerabilities and diversifying supply chains are the key defenses against such tactics. Where The Daily Telegraph grounds the story in logistics and immediate industry concerns, the Frankfurter Allgemeine Zeitung column offers a broader, more analytical reflection on trade as a long-term instrument of power.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6256" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6256">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6256" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 25</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 78</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6241" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6241">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Stephen Miller&#x27;s rise to White House chief of staff</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6241">
+          <p class="comparison-text">Coverage of Stephen Miller&#x27;s elevation to chief of staff splits along clearly different lines. The Daily Telegraph, in a report by Dasha Burns and Will Steakin, focuses on the behind-the-scenes mechanics of the appointment - how his wife Katie Miller lobbied Trump allies to secure him the job once Susie Wiles&#x27; standing weakened after the midterms - without engaging with the substance of his politics. Los Angeles Times, by contrast, runs two pieces centered on the implications of his worldview and power. A profile by Will Weissert and Moriah Balingit compiles Miller&#x27;s own inflammatory statements on immigration, Venezuela and Greenland to portray the hardline ideology now sitting at the center of the White House, while a second Los Angeles Times report extends this concern into concrete political stakes, detailing how California officials, advocates and lawmakers - including voices from the Iranian American community - are bracing to resist an anticipated crackdown and vowing to use congressional oversight to constrain him, quoting critics who describe him as espousing &quot;extreme authoritarian and racist&quot; views. Where The Daily Telegraph treats the appointment as a story of personal and institutional maneuvering, Los Angeles Times frames the same event as a substantive policy threat demanding organized pushback.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6241" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6241">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6241" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 14</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 6 — "In his own words: Stephen Miller&#x27;s…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 7 — "Miller rises, but California hopes it…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6244" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6244">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK-EU relations post-Brexit</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6244">
+          <p class="comparison-text">Coverage splits sharply along newspaper lines. The Daily Telegraph runs three hostile angles on any renewed closeness with the EU: Camilla Turner&#x27;s report covers the row over Culture Secretary Lisa Nandy, accused by Conservatives of exploiting Remembrance Sunday to push Erasmus+ membership and thereby insulting veterans&#x27; sacrifice; a report by James Crisp, Nick Gutteridge and Joe Barnes warns that Andy Burnham&#x27;s Brexit &quot;reset&quot; deal would make Britain a rule-taker from Brussels, jeopardising the gene-editing advantage Britain built post-Brexit, quoting Sir Iain Duncan Smith&#x27;s dismissal of the EU as a technological &quot;backwater&quot;; and in a column for the paper, Daniel Hannan argues the government is capitulating needlessly in reset talks, surrendering ground on farming, youth mobility and energy without reciprocal gains, then dressing up the surrender as a win. The Observer, by contrast, takes a far more receptive line: Isabel Coles reports Cypriot president Nikos Christodoulides&#x27;s claim that all 27 EU states would welcome a British return, though without cherry-picking terms and only once the legacy of British bases in Cyprus is resolved; in a column for the paper, Tom Baldwin argues the current settlement is unsustainable, citing William Hague&#x27;s call for much closer UK-EU ties on climate, AI and defence; and a separate Observer report says Andy Burnham is pushing for a bolder, potentially full re-entry relationship, capitalising on the Conservatives&#x27; and Reform UK&#x27;s harder Brexit stance even as cabinet colleagues resist and Keir Starmer is urged to make a &quot;patriotic case&quot; for closer cooperation.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6244" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6244">
+            Citations (6)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6244" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 1 — "Nandy accused of insulting veterans"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 8 — "Gene-edited crops to fall under EU…"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 19 — "The Prime Minister’s EU reset is…"</li>
+            <li>The Observer, Nov 8, 2026, p. 26 — "Every EU nation would welcome UK&#x27;s…"</li>
+            <li>The Observer, Nov 8, 2026, p. 26 — "Commentary on Brexit settlement and William…"</li>
+            <li>The Observer, Nov 8, 2026, p. 27 — "Burnham&#x27;s EU re-entry push divides Labour"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6247" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6247">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Paraguay bank collapse and ouster of President Peña</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6247">
+          <p class="comparison-text">Both newspapers offer largely factual coverage of the same crisis but differ in emphasis. The Daily Telegraph, in a report by Emily Blumenthal and Natasha Leake, foregrounds the human scale of the collapse - three million people, more than 40 percent of Paraguay&#x27;s population, losing savings, wages and pensions when Ueno bank failed - and details the resulting protests and resignations alongside Peña&#x27;s criminal charges and house arrest. The Los Angeles Times instead frames the episode primarily as a constitutional and political crisis, highlighting the unanimous congressional impeachment vote and the arrest order against Peña, while adding a geopolitical angle by noting his status as an ally of President Trump and describing his ouster as Paraguay&#x27;s most serious political crisis in over a decade. Where The Daily Telegraph dwells on the economic hardship driving public anger, the Los Angeles Times centers on the political fallout and its international resonance.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6247" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6247">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6247" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 15</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 2</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6258" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6258">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Oil prices, inflation and geopolitical conflicts</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6258">
+          <p class="comparison-text">All three pieces are opinion columns that agree Trump&#x27;s confrontation with Iran is pushing up oil prices and inflation, but each applies that premise to a different arena. Writing in the Daily Telegraph, Liam Halligan takes the broadest view, arguing that Trump&#x27;s tariffs and military clashes with Iran, compounded by the Russia-Ukraine and Venezuela conflicts, have driven oil prices and inflation higher - costly enough to have cost Republicans the midterms - and predicts continued geopolitical tension will keep pushing prices up as Trump resorts to strong-arm tactics. The Observer carries two complementary, UK-focused columns: Ben Zaranko links the Bank of England&#x27;s interest rate rise directly to inflationary pressure from the Trump-Iran war on oil and gas prices, warning that further hikes are likely unless the conflict is resolved or US policy shifts. Will Hutton, in a separate column, extends the analysis to Britain&#x27;s housing market, arguing its freeze stems both from rising interest rates and from geopolitical risk - the Iran war and the closure of the Strait of Hormuz, alongside Israeli politics - and calls for domestic reforms such as a national housing bank, abolishing stamp duty, defence bonds and spending cuts, while also urging Britain to support a political shift in Israel back toward its founding democratic principles as a way to stabilize the region.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6258" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6258">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6258" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 24</li>
+            <li>The Observer, Nov 8, 2026, p. 33 — "How to melt our housing market&#x27;s…"</li>
+            <li>The Observer, Nov 8, 2026, p. 44 — "UK interest rate rise could be…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6275" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6275">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Israeli coalition formation after elections</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6275">
+          <p class="comparison-text">Coverage of this topic ranges from spare factual reporting to a more dramatic framing of political crisis. Los Angeles Times first reports briefly that Israel&#x27;s president has given Netanyahu&#x27;s opponent the first chance to form a government, then, in a piece bylined by Giovanna Dell&#x27;Orto, adds that President Herzog has formally tasked Gadi Eisenkot with the job, quoting his call to form a &quot;national emergency government&quot; - a treatment that sticks close to the basic facts and the deep divide over a possible alliance with Arab-led parties. The Observer, across its two pieces, digs further into the political drama: one, bylined by Ruth Michaelson, highlights fractures within the opposition camp itself, quoting a skeptical voice describing the choice as being &quot;not between good and better, but between bad and less bad.&quot; The other Observer piece widens the lens into a head-to-head power struggle between Eisenkot and Netanyahu, layering in the threat to US military aid, accusations that Netanyahu is trying to undermine the election results, and analysis suggesting he could actually benefit if the coalition talks collapse and new elections are triggered. Where Los Angeles Times offers a relatively neutral factual frame, The Observer casts the story as a deeper, multi-layered democratic crisis.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times, The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6275" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6275">
+            Citations (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6275" hidden>
+            <ul>
+            <li>Los Angeles Times, Nov 8, 2026, p. 1 — "Israel&#x27;s president gives Netanyahu&#x27;s opponent the…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 3 — "Israeli president taps Eisenkot to form…"</li>
+            <li>The Observer, Nov 8, 2026, p. 28 — "Israeli opposition parties wrangle over power…"</li>
+            <li>The Observer, Nov 8, 2026, p. 29 — "Israel&#x27;s coalition talks: Eisenkot and Netanyahu…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6277" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6277">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">2 sources · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-Iran conflict and its political fallout</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6277">
+          <p class="comparison-text">Coverage of the fallout from the US-Iran war comes almost entirely from the Los Angeles Times, which tracks the conflict through several angles: straightforward reporting on renewed US strikes against Iranian air defenses and the ongoing naval blockade, alongside Qatari-mediated diplomatic proposals aimed at a nuclear settlement and an end to the war; a dispatch quoting Trump&#x27;s characterization of one strike as &quot;minor&quot;; and, most prominently, two articles - one bylined by Michael Wilner, one unsigned - that zero in on the domestic political fallout, describing how the midterm election results have constrained Trump&#x27;s ability to resume fighting, exposed deep Republican divisions, fueled a bipartisan push to oust Defense Secretary Pete Hegseth over his handling of the war, and emboldened Democrats to threaten withholding war funding, even as Iran itself issued fresh warnings after the Republicans&#x27; electoral losses. The Washington Post offers a distinctly different, more strategic lens: in his column, David Ignatius frames Iran alongside Ukraine as twin unresolved wars battering a &quot;wounded&quot; Trump presidency after the midterm defeat, emphasizing the search for a diplomatic &quot;off-ramp&quot; from Iran that leverages Chinese influence over Tehran, in parallel with multilateral talks on Ukraine involving Kushner and Witkoff. Where the Los Angeles Times concentrates on battlefield specifics and Washington&#x27;s internal political drama, Ignatius situates the war within a broader narrative of American strategic weakening abroad.</p>
+          <p class="section-sources">Sources: <b>Los Angeles Times, The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6277" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6277">
+            Citations (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6277" hidden>
+            <ul>
+            <li>Los Angeles Times, Nov 8, 2026, p. 1 — "Election sets up new hurdles for…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 1 — "U.S. carries out strikes on Iran"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 4 — "U.S. discloses limited strikes on Iran…"</li>
+            <li>Los Angeles Times, Nov 8, 2026, p. 7 — "Trump faces divided party, ticking clock…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 19</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6237" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6237">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Jan Marsalek and Russian interference in Austrian politics</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6237">
+          <p class="comparison-text">Coverage of this topic comes exclusively from The Daily Telegraph, in two articles that function as a single voice reporting the same underlying story: leaked messages from fugitive former Wirecard executive Jan Marsalek suggesting Russian-linked operatives helped engineer the downfall of former Austrian chancellor Sebastian Kurz. The first piece, bylined by Tim Röhn, Hayley Dixon and Camilla Turner, sets the episode within a broader strategic frame, treating Marsalek&#x27;s claim as emblematic of Vladimir Putin&#x27;s wider goal of dividing and destabilising European democracies against one another. The second article stays closer to the mechanics of the leak itself, quoting Marsalek&#x27;s own words describing the affair as &quot;quite a messy story&quot; and relaying the boast that &quot;they&quot; had &quot;toppled&quot; the chancellor, while situating this within Austria&#x27;s ongoing investigation into Russian interference in domestic politics. Although both pieces draw on the same leaked material and reach the same basic conclusion, the first emphasises the wider geopolitical stakes while the second leans into the granular, investigative detail of the correspondence.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6237" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6237">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6237" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 1 — "Russian spymaster claims to have toppled…"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 2 — "Ex-Wirecard boss says Russia helped bring…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6238" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6238">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK-China relations and possible royal visit</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6238">
+          <p class="comparison-text">This topic is covered by a single source. The Daily Telegraph, in a piece by Hannah Furness, offers a factual report based on palace aides suggesting that King Charles would not rule out a state visit to China if asked by the Government, despite decades of tension over human rights and Tibet. The article frames the King as a potential diplomatic asset - a &quot;great secret weapon&quot; - while emphasizing that any such visit would depend entirely on government direction rather than royal initiative. As no other source addresses this story, there is no competing or comparative framing to note.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6238" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6238">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6238" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 9</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6239" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6239">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK support for Ukraine and Zelensky state visit</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6239">
+          <p class="comparison-text">This topic is covered here by a single source. The Daily Telegraph, in a piece by Alexandra Snow, reports that Britain plans to grant Zelensky a formal state visit to demonstrate enduring cross-party support for Ukraine, against the backdrop of continuing Russian missile and drone assaults on Kyiv that have caused injuries and damage. The article frames the visit as a symbolic and political gesture, emphasizing the characterization of Putin as trying &quot;to break the Ukrainian people&quot; through relentless bombardment. With no other outlet covering this specific development, there is no competing angle or stance to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6239" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6239">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6239" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 14</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6240" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6240">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK slavery reparations debate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6240">
+          <p class="comparison-text">Both pieces on this topic appear in the Daily Telegraph and both reject direct financial reparations, but they reach that conclusion from different starting points. In her Daily Telegraph column, Sapphire Hope relays Nigel Farage&#x27;s argument that Britain is &quot;the only country on Earth with clean hands&quot; on slavery, since it supposedly spent more suppressing the slave trade than it ever gained from it - he insists Britain owes no apology and should &quot;not bow down&quot; to left-wing Caribbean governments, suggesting instead that African slave traders are the ones who should apologise. By contrast, in his Daily Telegraph column, Dr Patrick Tan takes a more conciliatory line: he accepts that Britain bears some obligation to atone for historical wrongs, but argues the meaningful response is not an apology or a payout but expanded access to education and economic opportunity for Commonwealth citizens, which he says would do more to dispel the &quot;stigma of perceived white superiority&quot; than cash compensation. So while Farage denies any British responsibility at all, Tan acknowledges a moral debt but redirects it toward practical, forward-looking measures rather than reparations.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6240" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6240">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6240" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 9 — "Only the UK has clean hands…"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 17 — "Meaningful actions Andy Burnham can take…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6243" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6243">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Antisemitism allegations and pro-Palestinian activism in the UK</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6243">
+          <p class="comparison-text">All four articles on this topic come from The Daily Telegraph, which together build a cumulative picture of what it portrays as rising antisemitism and institutional failure to confront it across British public life. Cameron Henderson focuses on local politics, reporting that Tower Hamlets councillors are being urged to sever ties with a pro-Palestinian network accused of circulating content comparing Israel to Nazi Germany and invoking &quot;Zionist masters&quot; controlling the media, with calls for referral to the council&#x27;s standards committee. Patrick Sawer contributes two separate pieces: one exposing a damning independent review of Save the Children, which found the charity failed to tackle internal antisemitism and disproportionately singled out Israel for blame compared with conflicts like Yemen and Ukraine, leaving Jewish staff feeling unsafe; the other reporting on pro-Palestinian activists leaving leaflets accusing Israel of genocide in NHS hospitals serving Jewish communities, which critics say intimidates vulnerable Jewish and Israeli patients. Gordon Rayner shifts the focus to broadcasting, reporting that the BBC has still not launched the independent review of its Gaza coverage it promised eighteen months ago, prompting Jewish leaders to demand the Culture Secretary intervene directly. Though spanning different institutions - local councils, the charity sector, the health service and public broadcasting - all four Daily Telegraph reports share a consistent framing: British institutions are repeatedly failing, or actively declining, to seriously address antisemitism tied to pro-Palestinian activism, with the paper positioning itself as the one surfacing these institutional failures across sector after sector.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6243" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6243">
+            Citations (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6243" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 4 — "Councillors told to cut ties with…"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 4 — "Save the Children Jewish staff feel…"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 4 — "BBC&#x27;s Gaza coverage review not begun,…"</li>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 4 — "Palestine activists leave leaflets attacking Israel…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6245" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6245">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">New Zealand election outcome</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6245">
+          <p class="comparison-text">Coverage of this topic comes from a single source. In The Daily Telegraph, Alexandra Snow reports on New Zealand&#x27;s razor-thin election result, framing it as a near dead-heat between National and Labour, while highlighting National leader Luxon&#x27;s claim of having a &quot;pathway&quot; to forming the next government through coalition negotiations, even as the outcome remains too close to call. With no other outlets covering the story, there is no competing angle or differing emphasis to compare.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6245" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6245">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6245" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 15</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6248" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6248">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Mafia bombing wave in Rome</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6248">
+          <p class="comparison-text">This topic is covered by a single source. In his Daily Telegraph report, Nick Squires describes a wave of roughly thirty mysterious bomb attacks in Rome&#x27;s eastern suburbs, attributing them to a power struggle between rival mafia clans following the weakening authority of a jailed boss. The piece frames the story primarily around official alarm, quoting government figures calling for a &quot;red zone&quot; security crackdown, and emphasizes the climate of fear spreading among residents. With no other newspaper reporting on this wave of bombings, there is no competing angle or differing emphasis to compare.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6248" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6248">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6248" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 16</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6249" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6249">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK-France migration cooperation across the Channel</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6249">
+          <p class="comparison-text">Coverage of this topic rests on a single source: a letter to The Daily Telegraph from Trevor Joyce. This is a personal opinion rather than an institutional Telegraph position - Joyce argues that Britain should stop funding French policing efforts against Channel crossings unless it is granted full control of beach policing in return, including the power to intercept and destroy smugglers&#x27; dinghies before they can be launched. With only one source addressing the topic, there is no cross-source contrast to draw.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6249" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6249">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6249" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 17</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6250" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6250">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Society</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Kosovo femicide and police accountability</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6250">
+          <p class="comparison-text">This topic is covered only by The Daily Telegraph, in a report by Emily Smith. She documents how Kosovo&#x27;s police and courts repeatedly ignored Arlinda Zekaj&#x27;s desperate pleas for help, despite her having secured a formal protection order against the man who ultimately killed her. Smith frames the killing not merely as an individual tragedy but as evidence of systemic institutional failure, noting that it sparked nationwide protests in Kosovo and public demands for resignations and reform within the police and justice ministries. With no other outlet addressing this case, there is no competing angle or emphasis to compare - the report stands alone, foregrounding the victim&#x27;s own quoted warning to her killer as the central indictment of the authorities&#x27; inaction.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6250" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6250">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6250" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 16</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6251" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6251">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK Conversion Practices Bill and defence policy debate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6251">
+          <p class="comparison-text">This topic is covered by a single source. The Daily Telegraph combines two distinct arguments in one piece: it warns that Labour&#x27;s proposed Conversion Practices Bill is dangerously vague and risks criminalising ordinary parenting, urging the government to heed its critics; and, marking Remembrance Sunday, it separately argues that Britain must boost defence spending and national resilience, pointing to Vladimir Putin&#x27;s continued threats to critical infrastructure such as undersea cables and to the gaps in British military capability exposed by Donald Trump&#x27;s conflict with Iran. With no other outlet addressing either strand, there is no competing framing to compare, but the piece notably pairs domestic policy criticism of the Labour government with a call for heightened external vigilance, casting both as signs of a Britain at risk of weakening from within and without.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6251" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6251">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6251" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 17</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6252" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6252">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Binance hack and the future of global monetary system</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6252">
+          <p class="comparison-text">This topic is covered by a single source. In her column in The Daily Telegraph, Izabella Kaminska treats the Binance hack as a window into the fragility of the conventional international monetary system, arguing that the crypto world&#x27;s response to the breach reveals enforcement and censorship capabilities that traditional finance lacks. She uses this as the basis for a broader argument that a new, internet-protocol-like global monetary system needs to be built and stress-tested openly, in light of how exposed existing structures are to state-backed cyberattacks and geopolitical exploitation. With no other outlet addressing this story, there is no competing framing to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6252" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6252">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6252" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 24</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6253" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6253">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK quango proliferation debate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6253">
+          <p class="comparison-text">Only one source addresses this topic. In a column for The Daily Telegraph, Matthew Lynn argues that Labour&#x27;s rapid creation of new regulators and quangos is choking economic growth and wasting public money rather than improving services, and he calls for abolishing such bodies instead of adding more. This is a pointed personal opinion rather than an institutional or neutral report.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6253" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6253">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6253" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 24</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6254" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6254">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Virgin Media O2 debt crisis and job cuts</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6254">
+          <p class="comparison-text">This topic is covered by a single source. The Daily Telegraph, in a piece by James Warrington and Ben Marlow, traces the roughly 4,000 job cuts at Virgin Media O2 directly to the company&#x27;s heavy debt load, the likely blocking of its Netomnia takeover by the UK competition regulator, and intensifying competition in the telecoms market. The article frames the layoffs not as an isolated cost-saving measure but as a symptom of a deeper financial squeeze, raising the prospect of broader restructuring ahead.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6254" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6254">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6254" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 27</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6255" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6255">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Reform UK&#x27;s large campaign war chest</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6255">
+          <p class="comparison-text">This topic is covered only by The Daily Telegraph, so there is no cross-source disagreement to trace, only a single columnist&#x27;s angle. In his column, Michael Mosbacher seeks to defuse alarm over Reform UK&#x27;s £72 million campaign war chest, arguing that the link between money and electoral success is far weaker than commonly assumed, pointing to failed big-spending American billionaires and Britain&#x27;s own Referendum Party as cautionary precedents. His framing is deliberately reassuring and contrarian, pushing back against an implicit narrative - found elsewhere in political commentary - that Reform UK&#x27;s financial advantage makes it unstoppable.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6255" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6255">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6255" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 29</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6257" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6257">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Meloni&#x27;s exit tax on wealthy foreign residents in Italy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6257">
+          <p class="comparison-text">Coverage of this topic comes solely from The Daily Telegraph, in an article by Hans van Leeuwen, which describes how Giorgia Meloni&#x27;s proposed exit tax on wealthy foreign residents has rattled the international elite who had flocked to Milan under Italy&#x27;s attractive flat-tax regime. The piece cites advisers and wealthy expatriates warning that the move damages confidence in Italy&#x27;s tax stability, even while noting it would in practice apply only narrowly. With no other source weighing in, there is no competing framing to compare - only van Leeuwen&#x27;s critical, alarmed tone, captured in a quoted reaction branding the policy &quot;madness&quot; and a &quot;populist regulation&quot; that undoes a decade of effort to attract investment.</p>
+          <p class="section-sources">Sources: <b>The Daily Telegraph</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6257" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6257">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6257" hidden>
+            <ul>
+            <li>The Daily Telegraph, Nov 8, 2026, p. 27</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6259" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6259">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">SPD debate over coalition with Die Linke in Berlin</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6259">
+          <p class="comparison-text">This topic is covered by a single source: an article in Frankfurter Allgemeine Zeitung by Jochen Buchsteiner, who describes growing resistance within the SPD to a coalition with Die Linke in Berlin, driven by concerns over antisemitism and ties to groups monitored as extremist. Buchsteiner quotes signatories of a letter who declare themselves &quot;emphatically against a coalition with the Berlin Linke,&quot; while also noting that the party leadership calculates that the political benefits of such a coalition outweigh the risks. With no other outlet addressing the story, there is no competing framing or angle to compare it against.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6259" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6259">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6259" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 2</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6260" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6260">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Spain&#x27;s high-speed rail crisis</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6260">
+          <p class="comparison-text">This topic is covered by a single source. In his article for Frankfurter Allgemeine Zeitung, Hans-Christian Rößler traces how Spain&#x27;s once internationally envied AVE high-speed rail network has become a symbol of dysfunction. He attributes the crisis to chronic underinvestment, recurring political interference and patronage appointments, problems stemming from privatization and market liberalization, and corruption, pointing to two deadly accidents as the breaking point that triggered a general strike and boosted support for right-wing populist forces. With no other outlet covering the story, there is no competing framing to compare - just this one critical account that treats the rail crisis as a mirror of deeper dysfunction in Spain&#x27;s political system.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6260" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6260">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6260" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 5</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6261" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6261">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Brazil&#x27;s environmental policy under Lula</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6261">
+          <p class="comparison-text">Coverage of this topic comes solely from Frankfurter Allgemeine Zeitung, in a column by Tjerk Brühwiller. Rather than offering a simple verdict, Brühwiller frames Lula&#x27;s re-election as securing continuity for an environmental policy that has driven deforestation to record lows and restored international trust in Brazil, while simultaneously stressing that this trust is &quot;not blind&quot;: he points to an unresolved contradiction between Lula&#x27;s environmental rhetoric and his government&#x27;s pursuit of oil exploration and infrastructure projects that cut against those same commitments. With no other outlet addressing the subject, there is no cross-source debate to report - only this single, deliberately two-sided analysis of Lula&#x27;s environmental record.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6261" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6261">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6261" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 6</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6263" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6263">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Merz&#x27;s shaky authority within the CDU</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6263">
+          <p class="comparison-text">This topic is covered only by Frankfurter Allgemeine Zeitung, in a column by Eckart Lohse. Lohse argues that Friedrich Merz&#x27;s standing as a hoped-for leader only functioned while he was in opposition, and that now, holding government responsibility, he has made a series of missteps in managing his own party. At the same time, Lohse credits Merz with a degree of honesty rarely seen in politics - openly acknowledging the compromises he has had to make rather than concealing them. With no other source weighing in, there is no cross-source contrast here, only this one columnist&#x27;s critical but partly sympathetic assessment.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6263" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6263">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6263" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6264" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6264">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Netanyahu&#x27;s enduring popularity in Likud stronghold Dimona</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6264">
+          <p class="comparison-text">This topic is covered by a single source: a signed article by Christian Meier in Frankfurter Allgemeine Zeitung. Meier travels to the development town of Dimona to explain a phenomenon he suggests is easy to miss from Jerusalem or Berlin - that even as Likud and its allies lost their national parliamentary majority, support for Netanyahu in Dimona remains almost unshaken. Rather than simply reporting vote counts, the piece digs into the sociological roots of this loyalty: Mizrahi identity, a lingering sense of historical marginalization by Ashkenazi elites, economic development credited to Likud, and an almost personal emotional bond to Netanyahu, illustrated through residents who describe themselves as &quot;Bibiists through and through.&quot; Since no other outlet treats this angle, there is no cross-source contrast to draw - instead, Meier offers German readers an ethnographic explanation for why Netanyahu&#x27;s political power endures in the periphery even as his international standing has suffered.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6264" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6264">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6264" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 7</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6265" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6265">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Poland&#x27;s constitutional court power struggle</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6265">
+          <p class="comparison-text">This topic is covered here by only a single source. In his column in Frankfurter Allgemeine Zeitung, Stefan Locke argues that Poland&#x27;s fight over the Constitutional Court is fundamentally a political power struggle rather than a purely legal dispute, warning that once populists begin capturing state institutions, restoring legal order becomes a long and difficult road. With no other outlets addressing this story, there is no cross-source contrast to draw here.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6265" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6265">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6265" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6266" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6266">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Reza Pahlavi &#x27;Freedom Prize&#x27; debate and Iranian opposition</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6266">
+          <p class="comparison-text">All three pieces on this topic appear as reader contributions or commentary in Frankfurter Allgemeine Zeitung, yet they stake out distinct positions. In a letter to Frankfurter Allgemeine Zeitung, Mansour Kongereh warns against letting the Iranian regime&#x27;s secret service influence the awarding of the Freedom Prize to Reza Pahlavi, insisting that Pahlavi is not democratically elected and cannot speak for the Iranian people - Iran&#x27;s future, he argues, must be decided by Iranians themselves through free elections. In a separate letter to Frankfurter Allgemeine Zeitung, Behnam Mehrizadeh presses a related but more historically grounded argument, invoking the heavy price Iranians have paid - over 120,000 killed and 300,000 imprisoned under 47 years of repression - to contend that Pahlavi, who has not borne such costs, should not be handed power, lest it produce a new dictatorship. By contrast, the article bylined by Shila Behjat in Frankfurter Allgemeine Zeitung takes a more analytical, less polemical tone: it depicts the hostile polarization surrounding discourse on Iran, questions whether Pahlavi is really fit to serve as a symbolic figurehead for the opposition, and simultaneously stresses the ongoing repression under the Islamic Republic and the personal risks of writing about Iran, noting pointedly that &quot;the Islamic Republic is anything but finished.&quot;</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6266" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6266">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6266" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 6 — "Leserbrief: Kein neuer Schah / Demokratie…"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 6 — "Leserbrief: Demokratie in Iran"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 33 — "Reza Pahlavi und der Preis der…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6267" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6267">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Germany&#x27;s reckoning with the NSU terror group</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6267">
+          <p class="comparison-text">Coverage of this topic comes from a single source. In a column in the Frankfurter Allgemeine Zeitung, Markus Wehner argues that the authorities&#x27; failure to properly investigate and commemorate the NSU murders was a historic scandal that fed conspiracy theories, but he stresses that German cities have increasingly, and rightly, embraced open public remembrance of the victims - a shift he presents as beneficial rather than damaging to the cities and to German society&#x27;s reckoning with the case.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6267" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6267">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6267" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6268" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6268">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Cyberattacks on smart infrastructure across Europe</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6268">
+          <p class="comparison-text">This topic is covered by a single source. In her column in Frankfurter Allgemeine Zeitung, Mina Marschall uses a wave of cyberattacks that disrupted refrigeration systems at supermarket chains across several European countries as a starting point for a broader argument about society&#x27;s dangerous dependence on poorly secured &quot;smart&quot; technology. She explicitly rejects convenience as a justification for connecting ever more devices to the internet, arguing that the security risk now outweighs any practical benefit. With no other outlet addressing the same incident, there is no competing framing to compare against - the coverage here consists solely of Marschall&#x27;s critical perspective.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6268" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6268">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6268" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6269" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6269">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Germany/EU climate and energy policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6269">
+          <p class="comparison-text">Coverage of this topic rests on a single source: an interview published in Frankfurter Allgemeine Zeitung, conducted by Ralph Bollmann and Marcus Theurer, with German Environment Minister Carsten Schneider. The piece conveys the minister&#x27;s own position rather than an institutional editorial stance - Schneider, who notes he personally still drives a 13-year-old diesel car, defends the government&#x27;s climate investments and EV subsidies, argues for staying the course on CO2 pricing while offering targeted relief where costs overshoot expectations, and insists the shift to electromobility is unstoppable even as federal climate policy in the United States stalls under Trump, with individual US states pressing ahead on their own. With no other outlet covering this story, there is no competing framing to contrast - only the minister&#x27;s stated rationale as presented in the interview.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6269" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6269">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6269" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 19</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6270" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6270">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Germany&#x27;s risky dependence on gas supply</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6270">
+          <p class="comparison-text">This topic is covered only by Frankfurter Allgemeine Zeitung, in a piece by Marcus Theurer and Ralph Bollmann, so there is no cross-source comparison to draw. The authors take a critical stance toward the German government, arguing that minister Katherina Reiche and her predecessors repeated past mistakes by trusting the market for too long to fill gas storage, leaving Germany exposed to new geopolitical risks such as the Iran war, possible Russian sabotage of pipelines, and growing dependence on American LNG. They call explicitly for policy reform, including a strategic gas reserve and storage obligations for suppliers, and quote Reiche herself conceding that relying on the market &quot;was an obstacle.&quot;</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6270" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6270">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6270" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 20</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6271" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6271">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Anne Hidalgo&#x27;s urban transport transformation in Paris</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6271">
+          <p class="comparison-text">Coverage of this topic comes from a single source. In her article for Frankfurter Allgemeine Zeitung, Mechthild Harting presents Paris mayor Anne Hidalgo&#x27;s own defense of her transformation of the city&#x27;s transport system, shifting infrastructure away from cars toward cycling, walking and public transit. The piece conveys Hidalgo&#x27;s framing of the policy as a public-health response to air pollution and as democratically legitimate, despite fierce resistance from the car lobby and fossil-fuel interests. With no other newspaper covering the story, there is no competing emphasis or stance to compare it against.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6271" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6271">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6271" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 58</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6272" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6272">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Youth mental health and social media regulation debate</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6272">
+          <p class="comparison-text">Both pieces appear in Frankfurter Allgemeine Zeitung, yet they approach the youth-mental-health-and-social-media debate from markedly different angles. In a column in Frankfurter Allgemeine Zeitung, Alexander Wulfers presents economist Janet Currie&#x27;s argument that there is no new mental health crisis among young people at all - she points to decades of stable data and dismisses smartphone and social media bans as a &quot;lazy policy response&quot; that ignores the real drivers, such as school stress, bullying, and shifting diagnostic criteria. By contrast, in his report in Frankfurter Allgemeine Zeitung on Australia&#x27;s law, Jörg Schmilewski examines the practical rollout of the country&#x27;s ban on social media for under-16s one year in, finding that enforcement works mainly during school hours but barely reaches outside school or the tech companies themselves, concluding that &quot;internet addiction is stronger than any ban.&quot; While Wulfers challenges whether the underlying crisis is even real and questions the premise of bans altogether, Schmilewski takes the crisis as given and instead focuses on why a concrete attempt at a ban has struggled in implementation.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6272" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6272">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6272" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 21 — "„Es gibt keine neue Krise der…"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 39 — "Social-Media-Verbot in Australien: Hat es sich…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6273" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6273">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Society &amp; Culture</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Ebola outbreak in Congo and international response</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6273">
+          <p class="comparison-text">Both pieces come from Frankfurter Allgemeine Zeitung and are written by the same journalist, Pia Heinemann, but they frame the outbreak from different angles. In her reported article, Heinemann describes the unprecedented geographic spread of the Ebola outbreak in eastern Congo, which has crossed into neighboring countries, and presents the first ring-vaccination campaign with the Ervebo vaccine as a &quot;bet on the future&quot; - since the vaccine was developed against the Zaire strain while the current outbreak involves the Bundibugyo strain, leaving its effectiveness uncertain. In her interview with public health expert Peter Piot, by contrast, Heinemann shifts the focus from medical uncertainty to political and cultural failure: Piot argues that Ebola outbreaks are also a political and cultural problem, requiring more public education and engagement with local leaders and influencers, and that cuts to international aid funding have worsened the current outbreak - though he stresses that the real difference from Uganda&#x27;s experience lies mainly in the region&#x27;s political instability and conflict, not just resources. Together, the reported piece frames the crisis as a scientific-logistical challenge, while the interview reframes it as a political and social one.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6273" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6273">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6273" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 48 — "Wette auf die Zukunft / In…"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 48 — "„Wir müssen mit Influencern arbeiten“ –…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6274" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6274">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Crisis of liberalism and rise of postliberalism</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6274">
+          <p class="comparison-text">Both articles come from Frankfurter Allgemeine Zeitung and diagnose the Western crisis of liberalism, but they locate its cause differently. In his column, Justus Bender, reviewing a book on &quot;postliberalism,&quot; argues that liberal democracy is not collapsing under external pressure but because of its own internal contradictions - its very successes, such as individual autonomy and open markets, curdle into their opposites and fuel authoritarian, protectionist backlash from within. In a separate piece for Frankfurter Allgemeine Zeitung, Alexander Wulfers presents Nobel laureate Daron Acemoğlu&#x27;s more concrete socioeconomic diagnosis: liberal democracy failed to adapt to post-industrial economic change and abandoned workers, while left-wing parties shifted from championing unions and wages toward identity politics, feeding populist backlash. Where Bender offers a broad philosophical-historical account of liberalism &quot;winning itself to death,&quot; Acemoğlu&#x27;s prescription is more targeted - putting workers back at the center of liberal politics and actively regulating AI for workers&#x27; benefit rather than trusting deregulation and markets alone.</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6274" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6274">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6274" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 69 — "Wenn die Freiheit immer mehr bröckelt.…"</li>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 79 — "„Wir rasen mit Volldampf in die…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6276" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6276">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US allies&#x27; reassessment after midterm elections</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6276">
+          <p class="comparison-text">This topic is covered solely by The Washington Post, in a piece by Greg Miller presenting the perspective of U.S. allies abroad, particularly in Europe. Miller argues that despite the Republican Party&#x27;s losses in the midterm elections, foreign capitals see little prospect of a near-term return to America&#x27;s traditional role as leader of the free world. He contends that allied governments read the results mainly as a domestic rebuke of Trump&#x27;s personal style rather than a repudiation of his America First, isolationist agenda. As a result, according to the piece, allies are already hedging - deepening ties with other powers and reducing their reliance on Washington - amid a growing sense that the United States now regards Europe as a periphery of the world rather than its center.</p>
+          <p class="section-sources">Sources: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6276" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6276">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6276" hidden>
+            <ul>
+            <li>The Washington Post, Nov 8, 2026, p. 14</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6278" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6278">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Bolsonaro&#x27;s flight into exile in the US</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6278">
+          <p class="comparison-text">Both pieces on this topic appear in The Washington Post and together form a single, complementary narrative rather than competing accounts. In the article bylined by Terrence McCoy, which centers on Flávio Bolsonaro&#x27;s own account, the emphasis is personal and intimate: the family is portrayed as disoriented and uncertain about its future, and the United States is presented as a refuge granted because Trump is &quot;convinced&quot; Brazil is no longer a democracy - a justification voiced through the family&#x27;s own perspective rather than independently verified by the paper. The second, unsigned article takes a more institutional angle and widens the lens: The Washington Post traces how Jair Bolsonaro fled Brazil after losing to Lula, emphasizing ongoing investigations into whether American, Argentine and Israeli agents helped orchestrate the escape, as well as the disputed fraud claims surrounding the election. Where the first piece gives voice to the family&#x27;s personal experience of exile, the second frames the episode as a broader international story about possible state involvement and the contested legitimacy of the election.</p>
+          <p class="section-sources">Sources: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6278" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6278">
+            Citations (2)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6278" hidden>
+            <ul>
+            <li>The Washington Post, Nov 8, 2026, p. 1 — "Bolsonaro opens up about escape to…"</li>
+            <li>The Washington Post, Nov 8, 2026, p. 15 — "From cusp of presidency in Brazil…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6279" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6279">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">D.C. local economic development</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6279">
+          <p class="comparison-text">Coverage of this topic comes from a single source: The Washington Post, in an editorial, urges D.C. mayor-elect Janeese Lewis George to partner with federal officials on redeveloping underused federal land through a dedicated development corporation, modeled on Cincinnati&#x27;s approach, rather than turning to tax increases. With no other outlet weighing in, there is no competing framing to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6279" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6279">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6279" hidden>
+            <ul>
+            <li>The Washington Post, Nov 8, 2026, p. 18</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6281" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6281">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Trump&#x27;s failed steel promise in Iowa</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6281">
+          <p class="comparison-text">This topic is covered by a single source. The Washington Post argues that the steel-plant deal Trump touted - built on tariffs and corporate subsidies - ultimately failed to win over Iowa voters, drawing a parallel to past failures of federal-state economic planning such as Wisconsin&#x27;s Foxconn project. The piece takes a critical stance toward protectionism and corporate welfare, contending that such measures undermine the free market, and adds that if they cannot even deliver votes, they serve no real purpose.</p>
+          <p class="section-sources">Sources: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6281" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6281">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6281" hidden>
+            <ul>
+            <li>The Washington Post, Nov 8, 2026, p. 18</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6283" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6283">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Big Tech&#x27;s climate pledges versus AI energy demand</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6283">
+          <p class="comparison-text">In the Washington Post, Evan Halper reports that major technology companies are quietly retreating from the ambitious climate pledges they once made, instead driving a sharp rise in emissions by building gas-fired power plants to fuel the rapid expansion of AI and cloud computing. As the only source covering this topic, there is no competing framing to weigh against it - the piece itself takes a clearly critical stance toward the gap between the industry&#x27;s public commitments and its actual behavior.</p>
+          <p class="section-sources">Sources: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6283" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6283">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6283" hidden>
+            <ul>
+            <li>The Washington Post, Nov 8, 2026, p. 28</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6284" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6284">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Health data privacy and data brokers</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6284">
+          <p class="comparison-text">In his piece for The Washington Post, Michael Scaturro investigates how data brokers harvest and sell location data pulled from patients&#x27; phones, including records of visits to clinics and other health facilities, highlighting the legal loopholes that leave this kind of tracking largely unregulated in the United States. He frames the issue through the visceral reaction of people who discover the extent of this surveillance - one source describes it as making them feel &quot;sick to my stomach&quot; - using that emotional register to build a case for stronger privacy regulation. As this topic is covered by only a single source, there is no cross-source contrast to draw; the notable feature here is Scaturro&#x27;s investigative, advocacy-leaning framing rather than neutral institutional reporting.</p>
+          <p class="section-sources">Sources: <b>The Washington Post</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6284" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6284">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6284" hidden>
+            <ul>
+            <li>The Washington Post, Nov 8, 2026, p. 28</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6285" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6285">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Wave of hoax bomb threats disrupting European aviation</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6285">
+          <p class="comparison-text">This topic is covered only by The Observer, which reports that a four-day wave of hoax bomb threats grounded and diverted numerous flights across Europe, prompting fighter jets to escort aircraft in seven countries. The article attributes the threats to a Russian-linked far-right group and notes they were ultimately dismissed as a &quot;malicious hoax.&quot; With no other source covering the story, there is no competing framing to compare - only The Observer&#x27;s own emphasis on the scale of the disruption and the suspected actor behind it.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6285" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6285">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6285" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6286" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6286">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Chinese espionage concerns involving Nvidia CEO</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6286">
+          <p class="comparison-text">This topic is covered solely by The Observer, which reports that US intelligence officials believe the romantic partner of Nvidia CEO Jensen Huang was recruited as a Chinese intelligence asset before Donald Trump&#x27;s May visit to China, and that she is linked to a firm accused of smuggling Nvidia chips into China. With no other outlet addressing the story, there is no comparative framing to draw out - The Observer presents it as an exclusive, intelligence-driven revelation without corroboration or counter-framing from elsewhere.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6286" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6286">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6286" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6287" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6287">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energy &amp; Environment</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">COP31 climate talks and UK drilling policy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6287">
+          <p class="comparison-text">Coverage of this topic comes from a single source. The Observer, in an article by Jeevan Vasagar and Karl Mathiesen, reports that the UK government&#x27;s decision to expand North Sea oil and gas drilling has damaged its claimed leadership role on climate at COP31, with other countries&#x27; diplomats accusing London of hypocrisy - &quot;You cannot preach about fossil fuels and then start drilling.&quot; The piece also notes that human rights groups are simultaneously pressing the UK&#x27;s representative to raise Turkey&#x27;s treatment of political prisoners at the summit, framing British policy as caught between its stated global ambitions and its domestic actions.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6287" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6287">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6287" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 5</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6288" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6288">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Security &amp; Conflict</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Joshua Wong&#x27;s sentencing and Hong Kong crackdown</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6288">
+          <p class="comparison-text">Coverage of this topic comes from a single source, The Observer, which reports straightforwardly on the additional ten-year sentence handed to pro-democracy activist Joshua Wong under Hong Kong&#x27;s national security law, for allegedly inviting foreign sanctions against China, on top of an existing 21-year term. The article quotes the court&#x27;s reasoning that free speech &quot;must not be conflated with colluding with a foreign country,&quot; presenting the authorities&#x27; justification largely at face value rather than offering an independent critical framing. With no other newspaper covering the story, there is no cross-source contrast to draw - only The Observer&#x27;s factual account of the sentencing and the official rationale behind it.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6288" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6288">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6288" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6289" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6289">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">TotalEnergies&#x27; accountability for the Mozambique attack death</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6289">
+          <p class="comparison-text">All three pieces on this topic come from The Observer, and together they build a cumulative, intensifying case rather than offering competing angles. An unsigned Observer piece opens by criticising TotalEnergies for making little effort to rescue British contractor Philip Mawer during the Islamist attack on Palma, arguing that the bland inquest verdict understates how far corporate accountability needs to reach. In a column for The Observer, Basia Cummings sharpens the charge, asking directly what duty of protection the French multinational owed the workers and contractors it had gathered in Palma to extract natural gas, and frames the Mawer family&#x27;s pursuit of a criminal manslaughter case in Paris as part of a wider campaign for corporate accountability. A further unsigned Observer article adds factual specifics, reporting that TotalEnergies used a local subsidiary, TEPMA1, to shield itself from legal scrutiny and refused to share aviation fuel with rescuers during the attack, a decision it says contributed directly to Mawer&#x27;s death. Rather than disagreeing, the three pieces escalate together - from general institutional criticism, to Cummings&#x27;s personal and emotionally charged appeal, to a documented claim about a specific corporate strategy of evasion.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6289" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6289">
+            Citations (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6289" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 3 — "A question of responsibility"</li>
+            <li>The Observer, Nov 8, 2026, p. 14 — "Total oil wants to wash its…"</li>
+            <li>The Observer, Nov 8, 2026, p. 15 — "The fight for accountability over Total&#x27;s…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6290" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6290">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK proscription of Palestine Action and free speech</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6290">
+          <p class="comparison-text">All five pieces on this topic come from the Observer, yet each approaches the proscription of Palestine Action as a &quot;terrorist organisation&quot; from a different angle. An Observer opinion piece argues institutionally that the Home Secretary struck the wrong balance between rights and safety, and that if courts will not correct it, politicians must - framing the ban primarily as a policy failure. In the culture pages, Tom Gatti reports on Ben Okri&#x27;s poem supporting Sally Rooney after her books were pulled from shelves amid the crackdown, casting the episode as a new, state-sanctioned form of censorship that endangers writers and democracy itself - a symbolic, literary framing rather than a legal one. A separate report by Karl Mathiesen and Catherine Neilan shifts focus to internal Labour politics, detailing MPs who now say they regret voting for or abstaining on the ban under political pressure, against a government that continues to defend it by citing violent acts attributed to the group - here the emphasis is on party discipline and buyer&#x27;s remorse rather than principle. Finally, two profile pieces - one by Giles Whittell and another unsigned - foreground Palestine Action co-founder Huda Amorri, who recounts her family&#x27;s history in Gaza and insists the group&#x27;s actions against Elbit Systems were aimed at saving lives, not terrorism, portraying the proscription as a deliberate assault on civil liberties and free speech. Where the opinion column and the political report assess the ban through the lens of government and Parliament, the profiles of Amorri and Okri&#x27;s poem give the story a human and cultural face, positioning activists and writers as the direct casualties of the policy.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6290" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6290">
+            Citations (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6290" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 3 — "Speak up for free speech"</li>
+            <li>The Observer, Nov 8, 2026, p. 19 — "Ben Okri backs Sally Rooney with…"</li>
+            <li>The Observer, Nov 8, 2026, p. 19 — "Labour MPs &#x27;regret voting&#x27; for Palestine…"</li>
+            <li>The Observer, Nov 8, 2026, p. 20 — "&#x27;When my father was six, the…"</li>
+            <li>The Observer, Nov 8, 2026, p. 21 — "Profile: Huda Amorri on Palestine Action&#x27;s…"</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6291" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6291">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomacy &amp; International Relations</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UN secretary-general race and Sudan controversy</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6291">
+          <p class="comparison-text">This topic is covered only by The Observer, in a piece by Isabel Coles, so there is no cross-source comparison to draw. Coles frames the UN secretary-general race around the candidacy of the United Arab Emirates&#x27; envoy Lana Nusseibeh, whose bid is clouded by allegations that she helped cover up Emirati support for the RSF paramilitary group accused of atrocities in Sudan. The article emphasizes a widespread suspicion inside the UN that her candidacy would not exist without backing from veto-wielding powers, casting the contest as being shaped as much by great-power maneuvering as by the substance of the Sudan allegations.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6291" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6291">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6291" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 25</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6292" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6292">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Domestic Politics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK workers&#x27; rights and trade unions</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6292">
+          <p class="comparison-text">This topic is covered by a single source: in a column in The Observer, Kenan Malik argues that UK workers&#x27; rights have been systematically eroded since the 1980s through a deliberate &quot;de-organisation&quot; of trade unions, and that current modest efforts to restore some of those protections do not threaten business but rather correct decades of top-down class warfare. With no other outlet weighing in, there is no cross-source contrast to draw - Malik&#x27;s piece stands alone in explicitly challenging the unstated assumption, which he says pervades much of the debate, that workers&#x27; rights must be sacrificed to keep Britain &quot;business friendly&quot;.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6292" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6292">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6292" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 32</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6293" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6293">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russian oligarch&#x27;s SLAPP suit against Norwegian journalists</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6293">
+          <p class="comparison-text">This topic is covered by a single source. In The Observer, Karl Mathiesen reports on Russian-linked billionaire Vitaly Orlov&#x27;s lawsuit against the small outlet Barents Observer in London&#x27;s High Court, framing the case through the lens of press-freedom campaigners who label it a SLAPP intended to financially ruin and silence reporting on Russian activity near the Norway-Russia border. The article gives voice directly to the Barents Observer&#x27;s own journalists, who say Orlov is trying to scare them and other media but has &quot;met the wrong journalists.&quot; With no other outlet covering the story, there is no cross-source contrast to draw - only a single sympathetic framing that foregrounds the vulnerability of a small independent newsroom against a wealthy litigant using the UK courts.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6293" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6293">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6293" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 30</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6294" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6294">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK aspirations to lead global AI regulation</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6294">
+          <p class="comparison-text">This topic is covered by a single source. In a column for The Observer, Ursula Shepherd argues that the UK cannot compete as an AI superpower alongside the United States and China, but should instead aspire to international leadership as a trusted regulator - building rigorous evaluation institutions, investing in education, and drawing on its reputation for fairness and excellence. This is a personal opinion piece proposing an alternative strategic direction for the UK, rather than a report on existing government policy.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6294" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6294">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6294" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 34</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6295" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6295">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK housing market freeze</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6295">
+          <p class="comparison-text">This topic is covered by a single source. In a column in The Observer, Will Hutton frames the freeze in Britain&#x27;s housing market as a product of both rising domestic interest rates and wider geopolitical risk, pointing specifically to the war involving Iran and the closure of the Strait of Hormuz. From that vantage point he calls for structural domestic fixes - a national housing bank, abolishing stamp duty, defence bonds and spending cuts - while also urging Britain to push for a political shift in Israel back toward what he describes as its founding democratic principles, arguing this would help stabilize the region and, by extension, ease pressure on Britain&#x27;s housing market. Since no other outlet addresses this topic, there is no cross-source contrast to draw beyond noting the distinctiveness of Hutton&#x27;s move to link a domestic economic freeze to global geopolitical shocks.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6295" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6295">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6295" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 33</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6296" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6296">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Poundland sale and jobs at risk</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6296">
+          <p class="comparison-text">This topic is covered by a single source. In a column for The Observer, Emma Haslett reports on moves by Poundland&#x27;s US owner, Gordon Brothers, to find buyers for the chain or push it into administration, a move that could put around 10,000 jobs at risk. The piece takes a critical angle toward the owner, noting that MPs are set to question it over claims that it is extracting maximum value from the retailer at workers&#x27; expense, while casting doubt on assertions that the company remains solvent despite its heavy debts.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6296" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6296">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6296" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 39</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6297" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6297">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Trade &amp; Economics</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Tech stock sell-off after US midterm elections</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6297">
+          <p class="comparison-text">This topic is covered only by The Observer, in a piece by Ben Zaranko. Zaranko frames the tech stock sell-off as a direct market reaction to the US midterm election results, attributing the rout to investor fears that newly elected Democratic lawmakers will tighten regulation of artificial intelligence and slow the pace of data centre construction. He underscores the severity of the drop by quoting a senior economist who called it &quot;a brutal day for markets,&quot; and notes that the turmoil spread to Asian markets as well. With no other source covering this story, there is no competing framing to compare, but the piece&#x27;s clear emphasis is on the causal link between the political outcome and regulatory anxiety as the driver of the sell-off.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6297" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6297">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6297" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 39</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6298" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6298">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technology &amp; Media</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Google&#x27;s AI gamble and search monopoly</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6298">
+          <p class="comparison-text">Coverage of this topic comes from a single source. In a column in The Observer, Barney Macintyre argues that Google is deliberately cannibalising its hugely profitable search-and-advertising business to push users toward its AI products, a gamble he suggests could prove existential given the enormous capital demands of AI infrastructure. He is sharply skeptical of regulators&#x27; ability to rein in the company, writing that fines imposed on Google and similar platforms amount to little more than &quot;the equivalent of their annual biscuit budget.&quot; No other source addresses this topic, so there is no competing framing to compare it against.</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6298" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6298">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6298" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 41</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6299" data-category="additional_coverage">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6299">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">German debate on militarization and European security policy amid Russia-Ukraine war</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6299">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The author critiques Mithu Sanyal&#x27;s book &#x27;Nein. Gegen die Militarisierung der Gesellschaft&#x27; as an exaggerated, simplifying polemic that dismisses legitimate concerns about deterrence and European security, arguing it avoids the realistic question of how to deter further violations of the European peace order and underestimates Ukraine&#x27;s fight for survival. Key excerpt: &quot;Die deutsche Friedenssehnsucht, zu deren Sprachrohr sich nun auch Mithu Sanyal mit ihrem bewusst vereinfachenden Buchtitel macht, ist aber eben eine, die sich über das Überleben der alles andere als nur „seelisch“ kolonisierten Ukraine keine ausreichenden Gedanken macht.&quot;</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6299" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6299">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6299" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 35</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6300" data-category="additional_coverage">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6300">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Private equity investment in US youth sports</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6300">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): The article argues that private-equity investors have turned American youth sports into a profit-driven business, pricing out lower-income families and prioritizing commercial gain over development; Democratic lawmakers are pushing legislation to curb these &#x27;predatory practices&#x27;. Key excerpt: &quot;Es geht denen nur ums Geld. Um die Kinder macht man sich keine Gedanken.&quot;</p>
+          <p class="section-sources">Sources: <b>Frankfurter Allgemeine Zeitung</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6300" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6300">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6300" hidden>
+            <ul>
+            <li>Frankfurter Allgemeine Zeitung, Nov 8, 2026, p. 42</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-6301" data-category="additional_coverage">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-6301">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Additional Coverage</span>
+            <span class="coverage-badge">1 source · 1 language</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">UK far-right youth activism</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-6301">
+          <p class="comparison-text">Additional coverage (not merged into a cross-source comparison): Reports on two British far-right provocateurs who imitate assassinated US activist Charlie Kirk&#x27;s confrontational campus debate tactics, detailing their inflammatory rhetoric, funding networks, and links to international far-right figures. Key excerpt: &quot;the best course of action is to simply ignore them – by doing so you starve them of content&quot;</p>
+          <p class="section-sources">Sources: <b>The Observer</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-6301" data-copied-label="Copied!">🔗 Copy link</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-6301">
+            Citations (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-6301" hidden>
+            <ul>
+            <li>The Observer, Nov 8, 2026, p. 23</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Accessibility statement</a>
+    <a class="footer-link" href="terms.html">Terms of use</a>
+    <a class="footer-link" href="privacy.html">Privacy policy</a>
+  </footer>
+  <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
+    document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
+      }
+    });
+  </script>
+</body>
+</html>
