@@ -187,6 +187,31 @@ def normalize_page_text(text: str | None) -> str:
     return " ".join((text or "").casefold().split())
 
 
+# Pages whose font glyphs were never mapped to characters come out of the extractor as "(cid:123)" tokens. A page with
+# fewer than MIN_REAL_CHARS_AFTER_CID real characters once those tokens are removed has nothing the model could screen.
+# Measured on a 58-page sample of the archive (PROJECT_LOG 4.132): every such page was an advertisement, a fashion/photo
+# page, a TV listing or a section cover - none was an article. Marked not relevant without an API call, in the batch
+# and the regular path alike, the same way an empty page is.
+MIN_REAL_CHARS_AFTER_CID = 100
+UNREADABLE_CID_REASONING = (
+    f"unreadable (cid): fewer than {MIN_REAL_CHARS_AFTER_CID} real characters once (cid:N) glyph codes are removed "
+    "- not screened by the model."
+)
+UNREADABLE_CID_MODEL = "none (unreadable cid, skipped)"
+_CID_TOKEN_RE = re.compile(r"\(cid:\d+\)")
+
+
+def real_char_count(text: str | None) -> int:
+    """Characters left after removing (cid:N) tokens and collapsing whitespace."""
+    return len(" ".join(_CID_TOKEN_RE.sub(" ", text or "").split()))
+
+
+def is_unreadable_cid(text: str | None) -> bool:
+    """True only when the page does contain (cid:N) tokens AND under MIN_REAL_CHARS_AFTER_CID real characters remain.
+    A short page without any (cid:N) is not this case and still goes to the model."""
+    return bool(text) and _CID_TOKEN_RE.search(text) is not None and real_char_count(text) < MIN_REAL_CHARS_AFTER_CID
+
+
 def page_text_hash(text: str | None) -> str:
     """SHA-256 of the normalized page text, or '' when the page is too short to compare."""
     normalized = normalize_page_text(text)
@@ -325,7 +350,7 @@ def pages_needing_api(conn, pages, duplicate_of: dict[int, int], newspaper_by_fi
             copied = index.lookup(newspaper, text_hash) is not None
             if not copied:
                 index.add(newspaper, text_hash, page["file_id"], page["page_number"])
-                if page["raw_text"].strip():
+                if page["raw_text"].strip() and not is_unreadable_cid(page["raw_text"]):
                     needed.append(page)
         processed.add(key)
     return needed
@@ -532,6 +557,8 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL, use_ba
                 "Page has no extractable text (blank or image-only page).",
                 "none (empty page, skipped)",
             )
+        elif is_unreadable_cid(page["raw_text"]):
+            is_relevant, reasoning, model_used = False, UNREADABLE_CID_REASONING, UNREADABLE_CID_MODEL
         else:
             api_started = time.perf_counter()
             try:

@@ -66,6 +66,15 @@ class ExtractFileTimeoutTest(unittest.TestCase):
             out = _run_extract(path, lambda fid, t: {"status": "completed", "pages": 76, "pages_failed": 2})
         self.assertRegex(out, r"completed: a\.pdf \(76 page\(s\), 2 page\(s\) failed, \d+s\)")
 
+    def test_completed_line_carries_cpu_seconds_and_ratio_when_the_child_reports_them(self):
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            path = _make_db(tmp, ["a.pdf", "b.pdf"])
+            results = {1: {"status": "completed", "pages": 5, "pages_failed": 0, "cpu_seconds": 12.4},
+                       2: {"status": "completed", "pages": 5, "pages_failed": 0}}
+            out = _run_extract(path, lambda fid, t: results[fid])
+        self.assertRegex(out, r"completed: a\.pdf \(5 page\(s\), \d+s\) \[cpu 12s, cpu/wall \d+\.\d\d\]")
+        self.assertRegex(out, r"completed: b\.pdf \(5 page\(s\), \d+s\)\n")  # old child output: no suffix, still valid
+
     def test_failed_file_gets_a_line_with_its_time(self):
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             path = _make_db(tmp, ["a.pdf"])

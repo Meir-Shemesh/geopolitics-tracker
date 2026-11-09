@@ -119,7 +119,11 @@ def run_single_file(file_id: int) -> int:
     ).fetchone()
     try:
         pages, failed = process_file(conn, row)
-        result = {"status": "completed", "pages": pages, "pages_failed": failed}
+        # CPU seconds of this child process (user+kernel). Compared with the parent's wall time it separates a
+        # machine that is slow because it is throttled/asleep (low CPU/wall) from a file that is simply heavy
+        # (CPU/wall near 1). PROJECT_LOG 4.132 (Modern Standby investigation).
+        result = {"status": "completed", "pages": pages, "pages_failed": failed,
+                  "cpu_seconds": round(time.process_time(), 2)}
     except Exception as exc:
         set_extraction_result(conn, file_id, "failed", str(exc))
         result = {"status": "failed", "error": str(exc)}
@@ -162,7 +166,9 @@ def run(file_timeout: float = FILE_TIMEOUT_SECONDS, runner=run_file_in_subproces
         total_pages += result["pages"]
         total_pages_failed += result["pages_failed"]
         note = f", {result['pages_failed']} page(s) failed" if result["pages_failed"] else ""
-        print(f"  completed: {file_row['file_name']} ({result['pages']} page(s){note}, {elapsed:.0f}s)")
+        cpu = result.get("cpu_seconds")
+        cpu_note = f" [cpu {cpu:.0f}s, cpu/wall {cpu / max(elapsed, 0.001):.2f}]" if cpu is not None else ""
+        print(f"  completed: {file_row['file_name']} ({result['pages']} page(s){note}, {elapsed:.0f}s){cpu_note}")
 
     summary = (
         f"\nExtraction: {files_completed} file(s) completed, {files_failed} file(s) failed, "
