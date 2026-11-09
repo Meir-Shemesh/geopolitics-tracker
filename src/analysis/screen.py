@@ -499,6 +499,8 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL, use_ba
     relevant = 0
     duplicates = 0
     duplicates_relevant = 0
+    unreadable_cid = 0
+    empty_pages = 0
     claim_checked: set[int] = set()  # files already offered to claim_report_date_on_first_scan() this run
     setup_seconds = time.perf_counter() - setup_started
 
@@ -552,12 +554,14 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL, use_ba
         if copied_verdict is not None:
             is_relevant = bool(copied_verdict["is_relevant"])
         elif not page["raw_text"].strip():
+            empty_pages += 1
             is_relevant, reasoning, model_used = (
                 False,
                 "Page has no extractable text (blank or image-only page).",
                 "none (empty page, skipped)",
             )
         elif is_unreadable_cid(page["raw_text"]):
+            unreadable_cid += 1
             is_relevant, reasoning, model_used = False, UNREADABLE_CID_REASONING, UNREADABLE_CID_MODEL
         else:
             api_started = time.perf_counter()
@@ -625,6 +629,9 @@ def run(file_name_contains: str | None = None, screen_model: str = MODEL, use_ba
                       f"{batch_stats['resumed']} resumed, {batch_used} page(s) from batch, {batch_fallback} regular-call "
                       f"fallback(s), waited {batch_stats['wait_seconds']:.0f}s")
     print(timings.summary(setup_seconds) + batch_note)
+    # explicit counters for the pages that never reached the model: scanned = model + duplicates + empty + unreadable (cid)
+    print(f"Unreadable (cid): {unreadable_cid} page(s) marked not relevant without a model call "
+          f"(under {MIN_REAL_CHARS_AFTER_CID} real characters); empty pages: {empty_pages}; duplicates: {duplicates}")
     if duplicates:
         print(f"Duplicates: {duplicates} page(s) copied a verdict instead of being screened, "
               f"{duplicates_relevant} of them relevant - not queued for analysis again")

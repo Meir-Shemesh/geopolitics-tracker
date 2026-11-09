@@ -53,9 +53,18 @@ class PathsTest(ScreenBatchTestBase):
 
     def test_regular_path_does_not_call_the_model_for_the_cid_page(self):
         fid = self.seed()
-        self.run_screen(use_batch=False)
+        out = self.run_screen(use_batch=False)
         self.assertEqual(self.api_calls, [f"{fid}:1", f"{fid}:3"])
         self.check_rows()
+        self.assertIn("Unreadable (cid): 1 page(s) marked not relevant without a model call", out)
+        self.assertIn("empty pages: 0; duplicates: 0", out)
+
+    def test_the_counter_line_is_present_in_the_batch_path_and_counts_empty_pages(self):
+        fid = self.seed()
+        self.add_page(fid, 4, "   ")
+        out = self.run_screen(use_batch=True)
+        self.assertIn("Unreadable (cid): 1 page(s)", out)
+        self.assertIn("empty pages: 1", out)
 
     def test_batch_path_does_not_send_the_cid_page(self):
         self.seed()
