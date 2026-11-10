@@ -1538,7 +1538,8 @@ def _write_report(conn, report_date, sources, sections, articles, valid_ids, now
     )
 
 
-if __name__ == "__main__":
+def build_parser() -> argparse.ArgumentParser:
+    """The CLI parser, separate from main so a test can build it (a bad help string fails at add_argument time)."""
     parser = argparse.ArgumentParser(
         description="Reporting stage 1: synthesize cross-source topic sections for one report date."
     )
@@ -1570,7 +1571,11 @@ if __name__ == "__main__":
         "--batch-timeout", type=float, default=None, metavar="MINUTES",
         help=f"How long to wait for the batch before canceling it and falling back (default {SYNTH_BATCH_TIMEOUT_SECONDS / 60:.0f}).",
     )
-    args = parser.parse_args()
+    return parser
+
+
+if __name__ == "__main__":
+    args = build_parser().parse_args()
     started = usage_marker()
     try:
         run(report_date=args.date, force=args.force, dry_run=args.dry_run, stage1_model=args.stage1_model,

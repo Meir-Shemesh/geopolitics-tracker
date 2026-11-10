@@ -197,6 +197,10 @@ def run_step(log, name: str, args: list[str], timeout_key: str | None = None) ->
         log(f"  --- {name} stdout (tail) ---\n" + "\n".join(proc.stdout.splitlines()[-40:]))
     if not ok and proc.stderr:
         log(f"  --- {name} stderr (tail) ---\n" + "\n".join(proc.stderr.splitlines()[-40:]))
+    if ok and name == "unittest":
+        # unittest runs with -b (passing tests' prints are dropped); keep only the result lines ("Ran N tests", "OK").
+        summary = [line for line in proc.stderr.splitlines() if line.startswith(("Ran ", "OK", "FAILED"))]
+        log("  unittest: " + " | ".join(summary))
     return StepResult(name, ok, proc.returncode, proc.stdout, proc.stderr)
 
 
@@ -480,7 +484,7 @@ def main() -> int:
         day_ok = True
 
         # --- sanity gate ---
-        r = run_step(log, "unittest", ["unittest", "discover", "-s", "tests"], timeout_key="unittest")
+        r = run_step(log, "unittest", ["unittest", "discover", "-b", "-s", "tests"], timeout_key="unittest")
         results["unittest"] = r
         day_ok = r.ok
 
