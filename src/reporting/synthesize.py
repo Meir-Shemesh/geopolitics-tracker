@@ -102,8 +102,10 @@ STAGE2_CONCURRENCY = 6
 # or a nationality-framed opening takes the regular synchronous retry, and a topic without a usable batch result
 # (errored/expired/canceled/refused/malformed, batch timed out or unreadable) takes the regular synchronous path.
 # Experiment 2026-11-10 (replay of 9.11 and 6.11 stored groupings, 214 topics): 0 failures, 3.1 min wait, 0.48 of the
-# synchronous cost, cache hit 80-85%. OFF by default: turned on only with explicit approval (set True and commit).
-SYNTH_USE_BATCH = False
+# synchronous cost, cache hit 80-85%. End to end on a DB copy (9.11, 73 topics): all answered by the batch, 4.4 min
+# for the whole stage, 50% price in the stage summary. ON since 2026-11-10 (Meir's approval). Turn off: False + commit,
+# or run once with --no-batch.
+SYNTH_USE_BATCH = True
 SYNTH_BATCH_TIMEOUT_SECONDS = 12 * 60  # 3.1 min observed for 215 requests; the worst case adds a full synchronous pass
 SYNTH_BATCH_POLL_SECONDS = 20.0
 SYNTH_BATCH_STAGE = "synthesize"

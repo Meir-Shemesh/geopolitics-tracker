@@ -104,7 +104,9 @@ TIMEOUTS = {
     "analyze": 90 * 60,
     # Raised 20 -> 30 min on 2026-11-06 (PROJECT_LOG 4.128): the 449-article day of 6.11 took 12.0 min (60% of the old
     # ceiling; ~136 stage-2 calls). A day near the stage-1 output ceiling (about 600-750 articles) would run past 20 min.
-    "synthesize": 30 * 60,
+    # Raised 30 -> 45 min on 2026-11-10 (PROJECT_LOG 4.136) with SYNTH_USE_BATCH: the worst case is stage 1 (up to 5 min) +
+    # a batch wait of 12 min + cancel (up to 2) + a full regular stage 2 (7-15 min) = about 34 min.
+    "synthesize": 45 * 60,
     "orphan_review": 5 * 60,
     # Raised 15 -> 25 min on 2026-10-13 and 25 -> 60 min on 2026-10-16 (PROJECT_LOG
     # 4.101): render time scales with the number of sections (PDF generation is

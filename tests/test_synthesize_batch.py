@@ -248,8 +248,14 @@ class StageTwoBatchTest(unittest.TestCase):
         self.assertEqual(batches.created, [])
         self.assertEqual(len(self.regular_calls), 2)
 
-    def test_flag_is_off_by_default(self):
-        self.assertFalse(synthesize.SYNTH_USE_BATCH)
+    def test_defaults_are_locked(self):
+        """Batch on by default (2026-11-10), and the wrapper's ceiling must cover the worst case: stage 1 (5) + batch wait +
+        cancel (2) + a full regular stage 2 (15) minutes."""
+        from scripts import daily_autorun
+        self.assertTrue(synthesize.SYNTH_USE_BATCH)
+        worst_case_minutes = 5 + synthesize.SYNTH_BATCH_TIMEOUT_SECONDS / 60 + 2 + 15
+        self.assertGreaterEqual(daily_autorun.TIMEOUTS["synthesize"] / 60, worst_case_minutes)
+        self.assertEqual(daily_autorun.TIMEOUTS["synthesize"], 45 * 60)
 
 
 if __name__ == "__main__":
