@@ -103,9 +103,9 @@ STAGE2_CONCURRENCY = 6
 # (errored/expired/canceled/refused/malformed, batch timed out or unreadable) takes the regular synchronous path.
 # Experiment 2026-11-10 (replay of 9.11 and 6.11 stored groupings, 214 topics): 0 failures, 3.1 min wait, 0.48 of the
 # synchronous cost, cache hit 80-85%. End to end on a DB copy (9.11, 73 topics): all answered by the batch, 4.4 min
-# for the whole stage, 50% price in the stage summary. ON since 2026-11-10 (Meir's approval). Turn off: False + commit,
-# or run once with --no-batch.
-SYNTH_USE_BATCH = True
+# for the whole stage, 50% price in the stage summary. ON from 13:52 on 2026-11-10, OFF again the same day: the first daily run crashed on a '%' in the --batch help text
+# (argparse), which no test exercised. Re-enable only with Meir's explicit approval. Run once with --batch / --no-batch.
+SYNTH_USE_BATCH = False
 SYNTH_BATCH_TIMEOUT_SECONDS = 12 * 60  # 3.1 min observed for 215 requests; the worst case adds a full synchronous pass
 SYNTH_BATCH_POLL_SECONDS = 20.0
 SYNTH_BATCH_STAGE = "synthesize"
@@ -1564,7 +1564,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--batch", action=argparse.BooleanOptionalAction, default=None,
-        help=f"Send the stage-2 topic requests as one Message Batch (50% price) instead of regular calls. Default: SYNTH_USE_BATCH = {SYNTH_USE_BATCH}.",
+        help=f"Send the stage-2 topic requests as one Message Batch (50%% price) instead of regular calls. Default: SYNTH_USE_BATCH = {SYNTH_USE_BATCH}.",
     )
     parser.add_argument(
         "--batch-timeout", type=float, default=None, metavar="MINUTES",

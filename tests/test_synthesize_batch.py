@@ -248,11 +248,20 @@ class StageTwoBatchTest(unittest.TestCase):
         self.assertEqual(batches.created, [])
         self.assertEqual(len(self.regular_calls), 2)
 
+    def test_cli_help_builds(self):
+        """The 2026-11-10 daily run crashed on `python -m src.reporting.synthesize` because a '%' in a help string breaks
+        argparse; no test ran the real parser. --help builds every argument, so it fails the same way."""
+        import subprocess, sys
+        result = subprocess.run([sys.executable, "-m", "src.reporting.synthesize", "--help"], cwd=str(Path(__file__).resolve().parents[1]),
+                                capture_output=True, text=True, encoding="utf-8")
+        self.assertEqual(result.returncode, 0, result.stderr[-500:])
+        self.assertIn("--batch", result.stdout)
+
     def test_defaults_are_locked(self):
-        """Batch on by default (2026-11-10), and the wrapper's ceiling must cover the worst case: stage 1 (5) + batch wait +
-        cancel (2) + a full regular stage 2 (15) minutes."""
+        """Batch is OFF by default again (2026-11-10, after the CLI crash) until Meir approves, and the wrapper's ceiling
+        must cover the worst case: stage 1 (5) + batch wait + cancel (2) + a full regular stage 2 (15) minutes."""
         from scripts import daily_autorun
-        self.assertTrue(synthesize.SYNTH_USE_BATCH)
+        self.assertFalse(synthesize.SYNTH_USE_BATCH)
         worst_case_minutes = 5 + synthesize.SYNTH_BATCH_TIMEOUT_SECONDS / 60 + 2 + 15
         self.assertGreaterEqual(daily_autorun.TIMEOUTS["synthesize"] / 60, worst_case_minutes)
         self.assertEqual(daily_autorun.TIMEOUTS["synthesize"], 45 * 60)
