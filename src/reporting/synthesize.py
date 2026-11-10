@@ -21,6 +21,7 @@ import argparse
 import json
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,15 +29,20 @@ from pathlib import Path
 import anthropic
 from dotenv import load_dotenv
 
+from src.common import batch_runner
 from src.common.about_content import CONTENT
 from src.reporting.render import NEWSPAPER_COUNTRIES, NEWSPAPER_DISPLAY_NAMES
 from src.common.db import (
+    BATCH_STAGE_SUFFIX,
+    close_api_batch,
     delete_report,
     get_articles_for_date,
     get_connection,
+    get_open_api_batches,
     get_report,
     get_sources_for_date,
     init_db,
+    insert_api_batch,
     insert_report,
     insert_report_section,
     link_section_article,
@@ -88,6 +94,19 @@ def stage1_ceiling_warning(output_tokens: int, stop_reason: str | None, max_toke
 # input tok/min, 400K output tok/min, vs. the ~25-30 calls a typical day needs) -
 # a plain engineering choice for manageable error-handling/progress-reporting.
 STAGE2_CONCURRENCY = 6
+
+# --- Message Batches API for stage 2 (SYNTH_USE_BATCH; PROJECT_LOG 4.136) ---------------------------------------------
+# Stage 1 (grouping) stays a regular call. Each topic's first-attempt comparison goes out in ONE batch (50% price;
+# build_stage2_params() is the single definition of the request, shared with write_topic_comparison()). Everything
+# after an answer comes back is the same per-topic logic as before: a suspicious answer, a Hebrew-letter newspaper name
+# or a nationality-framed opening takes the regular synchronous retry, and a topic without a usable batch result
+# (errored/expired/canceled/refused/malformed, batch timed out or unreadable) takes the regular synchronous path.
+# Experiment 2026-11-10 (replay of 9.11 and 6.11 stored groupings, 214 topics): 0 failures, 3.1 min wait, 0.48 of the
+# synchronous cost, cache hit 80-85%. OFF by default: turned on only with explicit approval (set True and commit).
+SYNTH_USE_BATCH = False
+SYNTH_BATCH_TIMEOUT_SECONDS = 12 * 60  # 3.1 min observed for 215 requests; the worst case adds a full synchronous pass
+SYNTH_BATCH_POLL_SECONDS = 20.0
+SYNTH_BATCH_STAGE = "synthesize"
 
 CATEGORIES = [
     "security_conflict",
@@ -316,10 +335,10 @@ def format_articles_for_prompt(articles) -> str:
     return "\n\n".join(blocks)
 
 
-def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_articles, feedback: str | None = None) -> tuple[dict, dict]:
-    """Returns (usage, comparison). Raises on failure - caller handles retry/fallback."""
+def build_stage2_params(topic: dict, topic_articles, feedback: str | None = None) -> dict:
+    """The one definition of a stage-2 request - used by write_topic_comparison() and, unchanged, by the batch path."""
     articles_text = format_articles_for_prompt(topic_articles)
-    response = client.messages.create(
+    return dict(
         model=MODEL,
         max_tokens=6000,  # was 4096 for he/en; headroom raised for the added de fields (2026-09-22)
         system=[
@@ -342,6 +361,11 @@ def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_artic
             }
         ],
     )
+
+
+def write_topic_comparison(client: anthropic.Anthropic, topic: dict, topic_articles, feedback: str | None = None) -> tuple[dict, dict]:
+    """Returns (usage, comparison). Raises on failure - caller handles retry/fallback."""
+    response = client.messages.create(**build_stage2_params(topic, topic_articles, feedback))
     record_api_usage("synthesize_stage2", MODEL, response.usage, ref=topic["topic_label_en"][:60])
     tool_use = next(b for b in response.content if b.type == "tool_use")
     comparison = {
@@ -713,7 +737,7 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
     return flags
 
 
-def write_topic_comparison_with_retry(client, topic, topic_articles):
+def write_topic_comparison_with_retry(client, topic, topic_articles, first=None):
     """One quick retry on failure; returns None (not an exception) if both attempts fail -
     the caller treats that topic's articles as needing individual fallback, exactly like
     any article stage 1 never assigned. A single topic's failure must never block the rest.
@@ -724,10 +748,15 @@ def write_topic_comparison_with_retry(client, topic, topic_articles):
     given for this guard. If the retry is ALSO suspicious (or throws), this
     still returns None rather than accepting known-bad content into a real
     section - falling through to the same existing per-article fallback any
-    other kind of stage-2 failure already uses, not a new failure path."""
+    other kind of stage-2 failure already uses, not a new failure path.
+
+    `first` ((usage, comparison) from the Batches API, SYNTH_USE_BATCH) replaces only the first regular call."""
     for attempt in range(2):
         try:
-            usage, comparison = write_topic_comparison(client, topic, topic_articles)
+            if attempt == 0 and first is not None:
+                usage, comparison = first  # the batch answer stands in for the first regular call; the rest is unchanged
+            else:
+                usage, comparison = write_topic_comparison(client, topic, topic_articles)
         except Exception as exc:
             print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} failed: {exc}")
             continue
@@ -1059,8 +1088,107 @@ def run_assign_pass(client, articles_by_id: dict, topics: list[dict], valid_ids:
     return report
 
 
+_COMPARISON_KEYS = ("topic_label_de", "comparison_text_he", "comparison_text_en", "comparison_text_de")
+
+
+def stage2_custom_id(index: int) -> str:
+    return f"s2-{index}"
+
+
+def _batch_answer(result) -> tuple[dict, dict] | None:
+    """(usage, comparison) of a usable batch result, else None (that topic then takes the regular call)."""
+    if not result.usable or not all(isinstance(result.tool_input.get(k), str) for k in _COMPARISON_KEYS):
+        return None
+    u = result.usage
+    usage = {
+        "input_tokens": u.input_tokens,
+        "output_tokens": u.output_tokens,
+        "cache_creation_input_tokens": u.cache_creation_input_tokens,
+        "cache_read_input_tokens": u.cache_read_input_tokens,
+    }
+    return usage, {k: result.tool_input[k] for k in _COMPARISON_KEYS}
+
+
+def _finish_stage2_batch(conn, client, batch_id, ids, topics, elapsed, timeout_seconds, poll_seconds, sleep, monotonic, answers, stats):
+    """Waits for the batch (timeout counted from its creation), cancels it on timeout, collects what it returned and
+    closes its api_batches row. A batch that cannot be read is abandoned: all its topics take regular calls."""
+    try:
+        outcome = batch_runner.wait_for_batch(client, batch_id, timeout_seconds, poll_seconds, already_elapsed=elapsed,
+                                              sleep=sleep, monotonic=monotonic)
+        note = "ended"
+        if outcome == "timeout":
+            print(f"  [batch] {batch_id}: not finished after {timeout_seconds / 60:.0f} min - canceling; topics without a "
+                  f"result take regular calls")
+            batch_runner.cancel_batch(client, batch_id, poll_seconds, sleep=sleep, monotonic=monotonic)
+            note = "timeout, canceled"
+        results = batch_runner.fetch_results(client, batch_id)
+    except Exception as exc:  # noqa: BLE001 - never lose a topic because the batch could not be read
+        print(f"  [batch] {batch_id}: could not be read ({type(exc).__name__}: {exc}) - abandoned, its topics fall back")
+        try:
+            batch_runner.cancel_batch(client, batch_id, poll_seconds, max_wait=0, sleep=sleep, monotonic=monotonic)
+        except Exception:  # noqa: BLE001
+            pass
+        close_api_batch(conn, batch_id, "abandoned", f"{type(exc).__name__}: {exc}"[:300])
+        stats["abandoned"] += 1
+        return
+    kinds: dict[str, int] = {}
+    for custom_id, result in results.items():
+        kinds[result.kind] = kinds.get(result.kind, 0) + 1
+        index = int(custom_id[3:]) if custom_id.startswith("s2-") and custom_id[3:].isdigit() else None
+        in_range = index is not None and index < len(topics)
+        if result.usage is not None:  # succeeded requests are billed even if their content is unusable
+            record_api_usage(SYNTH_BATCH_STAGE + "_stage2" + BATCH_STAGE_SUFFIX, MODEL, result.usage,
+                             ref=topics[index]["topic_label_en"][:60] if in_range else custom_id)
+        answer = _batch_answer(result)
+        if in_range and answer is not None:
+            answers[index] = answer
+    stats["returned"] += len(results)
+    usable = sum(1 for i in ids if int(i[3:]) in answers)
+    print(f"  [batch] {batch_id}: {note} - {len(results)} of {len(ids)} result(s) returned, {usable} usable "
+          f"({', '.join(f'{k} {v}' for k, v in sorted(kinds.items())) or 'none'})")
+    close_api_batch(conn, batch_id, "collected", note)
+
+
+def run_stage2_batch_phase(conn, client, topics, topic_articles_for, timeout_seconds: float = SYNTH_BATCH_TIMEOUT_SECONDS,
+                           poll_seconds: float | None = None, sleep=time.sleep, monotonic=time.monotonic):
+    """Returns ({topic index: (usage, comparison)}, stats). Never raises for an API/network problem: a topic missing
+    from the result takes the regular path. A batch left open by a run that died is canceled and closed first: stage 1's
+    grouping is not stored, so its answers cannot be attached to this run's topics (they would only keep billing)."""
+    poll_seconds = SYNTH_BATCH_POLL_SECONDS if poll_seconds is None else poll_seconds
+    stats = {"batches": 0, "requests": 0, "returned": 0, "abandoned": 0, "wait_seconds": 0.0}
+    answers: dict[int, tuple[dict, dict]] = {}
+    started = monotonic()
+    try:
+        for row in get_open_api_batches(conn, SYNTH_BATCH_STAGE):
+            print(f"  [batch] canceling {row['batch_id']} left open by an earlier run (its grouping was not stored)")
+            try:
+                batch_runner.cancel_batch(client, row["batch_id"], poll_seconds, sleep=sleep, monotonic=monotonic)
+            except Exception:  # noqa: BLE001
+                pass
+            close_api_batch(conn, row["batch_id"], "abandoned", "left open by an earlier run; stage-1 grouping not stored")
+        requests = [{"custom_id": stage2_custom_id(i), "params": build_stage2_params(t, topic_articles_for(t))}
+                    for i, t in enumerate(topics)]
+        submitted = []
+        for chunk in batch_runner.split_into_batches(requests):
+            batch_id = batch_runner.create_batch(client, chunk)
+            ids = [r["custom_id"] for r in chunk]
+            insert_api_batch(conn, batch_id, SYNTH_BATCH_STAGE, MODEL, ids)  # committed before any waiting starts
+            print(f"  [batch] submitted {batch_id}: {len(chunk)} stage-2 request(s)")
+            stats["batches"] += 1
+            stats["requests"] += len(chunk)
+            submitted.append((batch_id, ids, monotonic()))
+        for batch_id, ids, created in submitted:
+            _finish_stage2_batch(conn, client, batch_id, ids, topics, monotonic() - created, timeout_seconds, poll_seconds,
+                                 sleep, monotonic, answers, stats)
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        print(f"  [batch] batch phase failed ({type(exc).__name__}: {exc}) - remaining topics use regular calls")
+    stats["wait_seconds"] = monotonic() - started
+    return answers, stats
+
+
 def synthesize_day_two_stage(
-    client: anthropic.Anthropic, articles, stage1_model: str = MODEL, audit_out: dict | None = None
+    client: anthropic.Anthropic, articles, stage1_model: str = MODEL, audit_out: dict | None = None,
+    batch_conn=None, batch_timeout_seconds: float = SYNTH_BATCH_TIMEOUT_SECONDS,
 ) -> tuple[list[dict], list[dict]]:
     """Returns (sections, usage_log). sections omits any article stage 1 didn't assign,
     or whose topic failed stage 2 twice - run()'s existing fallback loop covers those,
@@ -1149,6 +1277,32 @@ def synthesize_day_two_stage(
 
     sections: list[dict] = []
 
+    # Batch path (SYNTH_USE_BATCH, batch_conn given): first attempts come back from one batch; the per-topic checks and
+    # retries below are the same code as the regular path. Topics without a usable answer continue as before.
+    if batch_conn is not None:
+        answers, batch_stats = run_stage2_batch_phase(batch_conn, client, topics, topic_articles_for, batch_timeout_seconds)
+        print(f"  stage 2 batch: {len(answers)} of {len(topics)} topic(s) answered by the batch in {batch_stats['wait_seconds']:.0f}s; "
+              f"{len(topics) - len(answers)} take regular calls")
+        if audit_out is not None:
+            audit_out["stage2_batch"] = {**batch_stats, "answered": len(answers), "topics": len(topics)}
+        batched = [(t, answers[i]) for i, t in enumerate(topics) if i in answers]
+        topics = [t for i, t in enumerate(topics) if i not in answers]
+        if batched:
+            with ThreadPoolExecutor(max_workers=STAGE2_CONCURRENCY) as executor:
+                futures = {executor.submit(write_topic_comparison_with_retry, client, t, topic_articles_for(t), first): t
+                           for t, first in batched}
+                for future in as_completed(futures):
+                    topic = futures[future]
+                    result = future.result()
+                    if result is not None:
+                        usage, comparison = result
+                        usage_log.append({**usage, "stage": 2})
+                        sections.append({**topic, **comparison})
+                    else:
+                        print(f"  topic '{topic['topic_label_en']}' failed after retry - its articles will fall back individually.")
+        if not topics:
+            return sections, usage_log
+
     # Cache-warming: fire the first topic alone and let it fully complete before
     # fanning out the rest - concurrent identical-prefix requests can't read a
     # cache still being written by another in-flight request.
@@ -1181,7 +1335,8 @@ def synthesize_day_two_stage(
     return sections, usage_log
 
 
-def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_model: str = MODEL) -> None:
+def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_model: str = MODEL,
+        use_batch: bool | None = None, batch_timeout_seconds: float | None = None) -> None:
     load_dotenv()
 
     conn = get_connection()
@@ -1231,7 +1386,15 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
     valid_ids = {a["id"] for a in articles}
 
     stage1_audit: dict = {}
-    sections, usage_log = synthesize_day_two_stage(client, articles, stage1_model=stage1_model, audit_out=stage1_audit)
+    batch_enabled = SYNTH_USE_BATCH if use_batch is None else use_batch
+    if batch_enabled and dry_run:
+        print("  stage 2 batch: skipped in a dry run (a batch row would be a DB write).")
+        batch_enabled = False
+    sections, usage_log = synthesize_day_two_stage(
+        client, articles, stage1_model=stage1_model, audit_out=stage1_audit,
+        batch_conn=conn if batch_enabled else None,
+        batch_timeout_seconds=SYNTH_BATCH_TIMEOUT_SECONDS if batch_timeout_seconds is None else batch_timeout_seconds,
+    )
     missing = compute_missing_ids(sections, valid_ids)
     if stage1_audit and not dry_run:
         try:
@@ -1397,9 +1560,18 @@ if __name__ == "__main__":
             "flag changes nothing. For controlled experiments only - see PROJECT_LOG 2026-09-23."
         ),
     )
+    parser.add_argument(
+        "--batch", action=argparse.BooleanOptionalAction, default=None,
+        help=f"Send the stage-2 topic requests as one Message Batch (50% price) instead of regular calls. Default: SYNTH_USE_BATCH = {SYNTH_USE_BATCH}.",
+    )
+    parser.add_argument(
+        "--batch-timeout", type=float, default=None, metavar="MINUTES",
+        help=f"How long to wait for the batch before canceling it and falling back (default {SYNTH_BATCH_TIMEOUT_SECONDS / 60:.0f}).",
+    )
     args = parser.parse_args()
     started = usage_marker()
     try:
-        run(report_date=args.date, force=args.force, dry_run=args.dry_run, stage1_model=args.stage1_model)
+        run(report_date=args.date, force=args.force, dry_run=args.dry_run, stage1_model=args.stage1_model,
+            use_batch=args.batch, batch_timeout_seconds=args.batch_timeout * 60 if args.batch_timeout else None)
     finally:
         print_usage_summary("synthesize", started, "synthesize_stage")
