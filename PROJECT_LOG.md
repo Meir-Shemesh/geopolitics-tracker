@@ -2107,6 +2107,12 @@ Commit: ראו היסטוריית-git (הודעת-commit מפנה ל-action item
 
 **משך render.** 10.11: 17.7 דקות. חמשת הימים הקודמים (מהלוגים): 5.11 21.8, 6.11 58.4, 7.11 31.4, 8.11 12.8, 9.11 22.5 דקות; 10.11 הוא בטווח התחתון, ו-6.11 החריג. **דגימת המשאבים של 14:55 רצה** (`C:\geopolitics-experiments\resource_sampler\`: `system_2026-11-10.csv`, `top5_2026-11-10.csv`), אך נעצרה ב-15:47:35 כשהסוכן סימן `finished` אחרי הכשל, ולכן **אינה מכסה** את ריצת 15:50 ואת ה-render של 17.7 דקות.
 
+### 4.139 שורת סיכום שלב 2 בסוף synthesize, ובדיקות היום-שלפני ההפעלה מחדש (10.11)
+
+בסוף `synthesize.py` מודפסת שורה אחת: `Stage 2 summary: topics=N | batch=A | fell_to_regular=B | batch_wait=Xs | retries: error=.. suspicious=.. framing=.. hebrew_names=.. | failed_topics=.. | stage2_cost=$..`. כשהדגל כבוי: `batch=off` במקום נתוני ה-batch. הרי-ניסיון נספרים במקום שבו הם מתרחשים (`STAGE2_EVENTS`, עם נעילה כי שלב 2 רץ בתהליכונים), נתוני ה-batch נקבעים ב-`synthesize_day_two_stage`, והעלות נגזרת מ-`api_usage` של הריצה (שלב `synthesize_stage2*`). השורה נכשלת בשקט ולא משפיעה על הריצה. נבדקה גם במסלול ללא batch (ריצה על עותק DB עם mocks: `batch=off`, ללא קריסה) וגם ב-`--dry-run`. שלוש בדיקות חדשות. הדגל נשאר כבוי; ההפעלה מחדש מתוכננת ל-11.11 באישור מאיר.
+
+**משימת האימות של שלב 2 (`GeopoliticsBatchDay2Verification`) לא נמחקה:** היא הייתה חד-פעמית ל-9.11 18:00 (WakeToRun, Interactive, תקרה 4 שעות), רצה ב-18:00 והסתיימה ב-18:01:25 (יומן Task Scheduler: אירועים 200/201). אין אירועי מחיקה. כך גם `GeopoliticsResourceSampler` (14:55 עד 15:47:36 ב-10.11).
+
 ## 5. סטטוס נוכחי מפורט לפי שלב
 
 ### ✅ שלב 1 — Ingestion (`src/ingestion/fetch.py`)

@@ -248,6 +248,36 @@ class StageTwoBatchTest(unittest.TestCase):
         self.assertEqual(batches.created, [])
         self.assertEqual(len(self.regular_calls), 2)
 
+    def test_summary_line_with_batch_counts_fallbacks_and_retries(self):
+        topics = [make_topic(n) for n in (1, 2, 3, 4)]
+        kinds = {"s2-1": "errored", "s2-2": "expired"}
+        plan = lambda cid: other_entry(cid, kinds[cid]) if cid in kinds else ok_entry(cid)
+        self.run_stage(topics, FakeBatches(plan))
+        line = synthesize.format_stage2_summary(synthesize.STAGE2_RUN_INFO, synthesize.STAGE2_EVENTS, 0.85)
+        for part in ("topics=4", "batch=2", "fell_to_regular=2", "failed_topics=0", "stage2_cost=$0.85"):
+            self.assertIn(part, line)
+
+    def test_summary_line_counts_retry_kinds_and_failed_topics(self):
+        bad = dict(GOOD, comparison_text_he="0")
+        self.regular_plan = lambda topic: dict(bad)
+        self.run_stage([make_topic(1)], FakeBatches(lambda cid: ok_entry(cid, bad)))
+        self.assertEqual(synthesize.STAGE2_EVENTS["suspicious"], 1)
+        self.assertEqual(synthesize.STAGE2_EVENTS["failed_topic"], 1)
+        line = synthesize.format_stage2_summary(synthesize.STAGE2_RUN_INFO, synthesize.STAGE2_EVENTS, None)
+        self.assertIn("suspicious=1", line)
+        self.assertIn("stage2_cost=n/a", line)
+
+    def test_summary_line_with_batch_off_does_not_crash(self):
+        topics = [make_topic(1), make_topic(2)]
+        client = SimpleNamespace(messages=SimpleNamespace(batches=FakeBatches()))
+        with mock.patch.object(synthesize, "group_articles_into_topics",
+                               return_value=([dict(t) for t in topics], dict(USAGE, stage=1))):
+            synthesize.synthesize_day_two_stage(client, list(self.articles_by_id.values()))
+        line = synthesize.format_stage2_summary(synthesize.STAGE2_RUN_INFO, synthesize.STAGE2_EVENTS, 0.0)
+        self.assertIn("topics=2", line)
+        self.assertIn("batch=off", line)
+        self.assertNotIn("fell_to_regular", line)
+
     def test_cli_help_builds(self):
         """The 2026-11-10 daily run crashed on `python -m src.reporting.synthesize` because a '%' in a help string breaks
         argparse; no test ran the real parser. --help builds every argument, so it fails the same way."""

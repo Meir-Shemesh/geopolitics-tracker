@@ -21,7 +21,9 @@ import argparse
 import json
 import re
 import sys
+import threading
 import time
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,6 +50,7 @@ from src.common.db import (
     link_section_article,
     print_usage_summary,
     record_api_usage,
+    summarize_api_usage,
     usage_marker,
     report_exists,
     report_row_exists,
@@ -739,6 +742,33 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
     return flags
 
 
+# One-line stage-2 summary at the end of a run (PROJECT_LOG 4.139): retries by kind are counted where they happen
+# (stage 2 runs in threads, hence the lock); the batch figures are set by synthesize_day_two_stage.
+STAGE2_EVENTS: Counter = Counter()
+STAGE2_RUN_INFO: dict = {}
+_STAGE2_LOCK = threading.Lock()
+
+
+def _count_stage2_event(kind: str) -> None:
+    with _STAGE2_LOCK:
+        STAGE2_EVENTS[kind] += 1
+
+
+def format_stage2_summary(info: dict, events: Counter, cost: float | None) -> str:
+    """One line: topics, how many the batch answered, how many fell to regular calls, retries by kind, failed topics,
+    batch wait, stage-2 cost. With the batch off it says so instead of showing batch figures."""
+    topics = info.get("topics", 0)
+    if info.get("batch_enabled"):
+        answered = info.get("answered", 0)
+        batch_part = (f"batch={answered} | fell_to_regular={topics - answered} | batch_wait={info.get('wait_seconds', 0):.0f}s")
+    else:
+        batch_part = "batch=off"
+    retries = " ".join(f"{k}={events.get(k, 0)}" for k in ("error", "suspicious", "framing", "hebrew_names"))
+    cost_part = f"${cost:.2f}" if cost is not None else "n/a"
+    return (f"Stage 2 summary: topics={topics} | {batch_part} | retries: {retries} | "
+            f"failed_topics={events.get('failed_topic', 0)} | stage2_cost={cost_part}")
+
+
 def write_topic_comparison_with_retry(client, topic, topic_articles, first=None):
     """One quick retry on failure; returns None (not an exception) if both attempts fail -
     the caller treats that topic's articles as needing individual fallback, exactly like
@@ -761,9 +791,12 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
                 usage, comparison = write_topic_comparison(client, topic, topic_articles)
         except Exception as exc:
             print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} failed: {exc}")
+            if attempt == 0:
+                _count_stage2_event("error")
             continue
         suspicious_langs = _suspicious_langs(comparison)
         if suspicious_langs and attempt == 0:
+            _count_stage2_event("suspicious")
             print(
                 f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} produced suspicious "
                 f"output in: {', '.join(suspicious_langs)} - retrying once."
@@ -774,9 +807,11 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
                 f"  topic '{topic['topic_label_en']}' still suspicious after retry "
                 f"({', '.join(suspicious_langs)}) - treating as failed, falling back per-article."
             )
+            _count_stage2_event("failed_topic")
             return None
         usage, comparison = _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
         return _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison)
+    _count_stage2_event("failed_topic")
     return None
 
 
@@ -791,6 +826,7 @@ def _retry_for_national_framing(client, topic, topic_articles, usage, comparison
         return usage, comparison
     print(f"  topic '{topic['topic_label_en']}': opening divides by country/language ({', '.join(conflict['languages'])}) "
           f"but same-country sources are present - rewriting once with feedback.")
+    _count_stage2_event("framing")
     try:
         retry_usage, retry_comparison = write_topic_comparison(
             client, topic, topic_articles, feedback=framing_retry_feedback(conflict)
@@ -834,6 +870,7 @@ def _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comp
     if not tells:
         return usage, comparison
     print(f"  topic '{topic['topic_label_en']}': newspaper name in Hebrew letters ({', '.join(tells)}) - rewriting once with feedback.")
+    _count_stage2_event("hebrew_names")
     try:
         retry_usage, retry_comparison = write_topic_comparison(
             client, topic, topic_articles, feedback=hebrew_name_retry_feedback(tells)
@@ -1202,6 +1239,10 @@ def synthesize_day_two_stage(
     valid_ids = {a["id"] for a in articles}
     articles_by_id = {a["id"]: a for a in articles}
     usage_log: list[dict] = []
+    with _STAGE2_LOCK:
+        STAGE2_EVENTS.clear()
+        STAGE2_RUN_INFO.clear()
+        STAGE2_RUN_INFO.update(topics=0, batch_enabled=batch_conn is not None, answered=0, wait_seconds=0.0)
 
     topics, stage1_usage = group_articles_into_topics(client, articles, model=stage1_model)
     usage_log.append({**stage1_usage, "stage": 1})
@@ -1271,6 +1312,7 @@ def synthesize_day_two_stage(
         if audit_out is not None:
             audit_out["assign_pass"] = assign_report
 
+    STAGE2_RUN_INFO["topics"] = len(topics)
     if not topics:
         return [], usage_log
 
@@ -1285,6 +1327,7 @@ def synthesize_day_two_stage(
         answers, batch_stats = run_stage2_batch_phase(batch_conn, client, topics, topic_articles_for, batch_timeout_seconds)
         print(f"  stage 2 batch: {len(answers)} of {len(topics)} topic(s) answered by the batch in {batch_stats['wait_seconds']:.0f}s; "
               f"{len(topics) - len(answers)} take regular calls")
+        STAGE2_RUN_INFO.update(answered=len(answers), wait_seconds=batch_stats["wait_seconds"])
         if audit_out is not None:
             audit_out["stage2_batch"] = {**batch_stats, "answered": len(answers), "topics": len(topics)}
         batched = [(t, answers[i]) for i, t in enumerate(topics) if i in answers]
@@ -1340,6 +1383,7 @@ def synthesize_day_two_stage(
 def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_model: str = MODEL,
         use_batch: bool | None = None, batch_timeout_seconds: float | None = None) -> None:
     load_dotenv()
+    stage2_since = usage_marker()
 
     conn = get_connection()
     init_db(conn)
@@ -1456,6 +1500,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
             f"\nDry run complete for {report_date}: {len(sections)} section(s) would be written, "
             f"{len(missing)} article(s) would fall back individually. No DB writes performed."
         )
+        print_stage2_summary(stage2_since)
         conn.close()
         return
 
@@ -1472,6 +1517,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
         conn.rollback()
         raise
 
+    print_stage2_summary(stage2_since)
     conn.close()
 
 
@@ -1536,6 +1582,15 @@ def _write_report(conn, report_date, sources, sections, articles, valid_ids, now
         f"\nSynthesis complete: {len(sections)} model section(s) + {len(missing)} fallback section(s) "
         f"= {len(sections) + len(missing)} total for {report_date}."
     )
+
+
+def print_stage2_summary(since: str) -> None:
+    """One summary line for the log and the verification script; never affects the run."""
+    try:
+        cost = summarize_api_usage(since, "synthesize_stage2")["cost"]
+        print(format_stage2_summary(STAGE2_RUN_INFO, STAGE2_EVENTS, cost))
+    except Exception as exc:  # noqa: BLE001
+        print(f"  (stage 2 summary skipped: {exc!r})", file=sys.stderr)
 
 
 def build_parser() -> argparse.ArgumentParser:
