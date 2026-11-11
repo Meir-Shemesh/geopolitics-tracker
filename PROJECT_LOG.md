@@ -2113,6 +2113,12 @@ Commit: ראו היסטוריית-git (הודעת-commit מפנה ל-action item
 
 **משימת האימות של שלב 2 (`GeopoliticsBatchDay2Verification`) לא נמחקה:** היא הייתה חד-פעמית ל-9.11 18:00 (WakeToRun, Interactive, תקרה 4 שעות), רצה ב-18:00 והסתיימה ב-18:01:25 (יומן Task Scheduler: אירועים 200/201). אין אירועי מחיקה. כך גם `GeopoliticsResourceSampler` (14:55 עד 15:47:36 ב-10.11).
 
+### 4.140 הפעלה מחדש של SYNTH_USE_BATCH (11.11)
+
+באישור מאיר ב-11.11 הדגל הופעל: `SYNTH_USE_BATCH = True` (קומיט `d5da990`, שורה אחת) יחד עם `test_defaults_are_locked` שנועל את ברירת המחדל ואת תקרת 45 הדקות. לפני כן, בקומיט נפרד (`dd774e8`), נכנס `scripts/resource_sampler.ps1` הכתוב מחדש (כלי בלבד, לא חלק מהצנרת). לפני ההפעלה: `git pull` נקי, 433 בדיקות עברו, `synthesize --help` יצא ב-0. מחזיר לכבוי: שינוי הקבוע ל-`False` או `--no-batch`, ואז commit.
+
+**סקריפט האימות (מחוץ לריפו):** היעדר שורת `Stage 2 summary` בלוג של היום הוא עכשיו ATTENTION ולא הערה (השורה מודפסת בכל ריצה מאז `a459de9`). נבדק על ארבעה מקרים סינתטיים: ריצה תקינה OK; נפילות 34% ATTENTION; `batch=off` עם שורת batch שנשארה OK עם הערה; בלי שורת סיכום ATTENTION (גם עם `api_batches` תקין, וגם עם batch שבוטל).
+
 ## 5. סטטוס נוכחי מפורט לפי שלב
 
 ### ✅ שלב 1 — Ingestion (`src/ingestion/fetch.py`)
