@@ -288,10 +288,10 @@ class StageTwoBatchTest(unittest.TestCase):
         self.assertIn("--batch", result.stdout)
 
     def test_defaults_are_locked(self):
-        """Batch is OFF by default again (2026-11-10, after the CLI crash) until Meir approves, and the wrapper's ceiling
+        """Batch is ON by default (re-enabled 2026-11-11 with Meir's approval, after the 10.11 CLI crash fix), and the wrapper's ceiling
         must cover the worst case: stage 1 (5) + batch wait + cancel (2) + a full regular stage 2 (15) minutes."""
         from scripts import daily_autorun
-        self.assertFalse(synthesize.SYNTH_USE_BATCH)
+        self.assertTrue(synthesize.SYNTH_USE_BATCH)
         worst_case_minutes = 5 + synthesize.SYNTH_BATCH_TIMEOUT_SECONDS / 60 + 2 + 15
         self.assertGreaterEqual(daily_autorun.TIMEOUTS["synthesize"] / 60, worst_case_minutes)
         self.assertEqual(daily_autorun.TIMEOUTS["synthesize"], 45 * 60)

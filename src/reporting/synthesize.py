@@ -108,7 +108,7 @@ STAGE2_CONCURRENCY = 6
 # synchronous cost, cache hit 80-85%. End to end on a DB copy (9.11, 73 topics): all answered by the batch, 4.4 min
 # for the whole stage, 50% price in the stage summary. ON from 13:52 on 2026-11-10, OFF again the same day: the first daily run crashed on a '%' in the --batch help text
 # (argparse), which no test exercised. Re-enable only with Meir's explicit approval. Run once with --batch / --no-batch.
-SYNTH_USE_BATCH = False
+SYNTH_USE_BATCH = True
 SYNTH_BATCH_TIMEOUT_SECONDS = 12 * 60  # 3.1 min observed for 215 requests; the worst case adds a full synchronous pass
 SYNTH_BATCH_POLL_SECONDS = 20.0
 SYNTH_BATCH_STAGE = "synthesize"
