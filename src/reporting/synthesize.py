@@ -747,7 +747,9 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
 # (stage 2 runs in threads, hence the lock); the batch figures are set by synthesize_day_two_stage.
 STAGE2_EVENTS: Counter = Counter()
 STAGE2_RUN_INFO: dict = {}
+STAGE2_EVENT_LOG: list[dict] = []  # one dict per stage-2 problem, with its outcome (PROJECT_LOG 4.143)
 _STAGE2_LOCK = threading.Lock()
+STAGE2_EVENTS_BLOCK_MAX_LINES = 10  # keeps the block inside the 40-line stdout tail the daily log keeps
 
 
 def _count_stage2_event(kind: str) -> None:
@@ -800,12 +802,65 @@ def format_stage2_failure_line(topic: dict, reason: str, attempt: int | None = N
     return " | ".join(parts)
 
 
-def _log_stage2_failure(*args, **kwargs) -> None:
-    """Logging only - never raises, never changes retry/fallback handling."""
+def _log_stage2_failure(topic, reason, attempt=None, detail="", comparison=None, final=False) -> None:
+    """Logging only - never raises, never changes retry/fallback handling. Also records the event for the end-of-run
+    block and the <date>.stage2_events.json file (the daily log keeps only the last 40 stdout lines, so a line printed
+    mid-run is cut; PROJECT_LOG 4.143)."""
     try:
-        print("  " + format_stage2_failure_line(*args, **kwargs), flush=True)
+        print("  " + format_stage2_failure_line(topic, reason, attempt, detail, comparison, final), flush=True)
     except Exception:
         pass
+    try:
+        event = {"topic": topic.get("topic_label_en", "?"), "article_ids": list(topic.get("article_ids") or []),
+                 "kind": reason, "attempt": attempt, "detail": detail,
+                 "foreign_chars": {f: "".join(cs) for f, cs in _foreign_chars_by_field(comparison).items()},
+                 "final": final, "outcome": "fell_to_fallback" if final else None}
+        with _STAGE2_LOCK:
+            STAGE2_EVENT_LOG.append(event)
+    except Exception:
+        pass
+
+
+def _close_stage2_events(topic, outcome, kinds=None) -> None:
+    """Set the outcome of this topic's still-open events (optionally only the given kinds). Never raises."""
+    try:
+        ids = list(topic.get("article_ids") or [])
+        with _STAGE2_LOCK:
+            for e in STAGE2_EVENT_LOG:
+                if (e["outcome"] is None and e["topic"] == topic.get("topic_label_en", "?") and e["article_ids"] == ids
+                        and (kinds is None or e["kind"] in kinds)):
+                    e["outcome"] = outcome
+    except Exception:
+        pass
+
+
+def format_stage2_events_block(events: list[dict], max_lines: int = STAGE2_EVENTS_BLOCK_MAX_LINES) -> list[str]:
+    """Compact block of all stage-2 events, printed just before the summary line so it survives the log tail cut."""
+    if not events:
+        return []
+    ordered = sorted(events, key=lambda e: (e["topic"], e["attempt"] or 0))
+    lines = [f"Stage 2 events ({len(ordered)}):"]
+    for e in ordered[:max_lines]:
+        chars = "; ".join(f"{f}:{c}" for f, c in e["foreign_chars"].items())
+        lines.append(f"  - topic='{e['topic']}' | article_ids={e['article_ids']} | {e['kind']}"
+                     + (f" attempt={e['attempt']}" if e["attempt"] else "")
+                     + (f" | foreign_chars={chars}" if chars else "")
+                     + f" | outcome={e['outcome'] or 'unknown'}")
+    if len(ordered) > max_lines:
+        lines.append(f"  ... and {len(ordered) - max_lines} more (see data/processed/review_flags/<date>.stage2_events.json)")
+    return lines
+
+
+def write_stage2_events(report_date: str, events: list[dict]) -> None:
+    """data/processed/review_flags/<date>.stage2_events.json. Never raises."""
+    try:
+        flag_dir = PROJECT_ROOT / "data" / "processed" / "review_flags"
+        flag_dir.mkdir(parents=True, exist_ok=True)
+        (flag_dir / f"{report_date}.stage2_events.json").write_text(
+            json.dumps({"report_date": report_date, "events": events}, ensure_ascii=False, indent=1) + "\n",
+            encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001 - recording must never stop a run
+        print(f"  warning: could not write the stage-2 events file ({exc}) - continuing.")
 
 
 def write_topic_comparison_with_retry(client, topic, topic_articles, first=None):
@@ -850,13 +905,16 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
                 f"({', '.join(suspicious_langs)}) - treating as failed, falling back per-article."
             )
             _count_stage2_event("failed_topic")
+            _close_stage2_events(topic, "fell_to_fallback")
             _log_stage2_failure(topic, "foreign_script_chars" if _foreign_chars_by_field(comparison) else "suspicious",
                                 detail="langs=" + ",".join(suspicious_langs) + " (still bad after retry)",
                                 comparison=comparison, final=True)
             return None
+        _close_stage2_events(topic, "resolved_by_retry")  # open events here are the failed first attempt only
         usage, comparison = _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
         return _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison)
     _count_stage2_event("failed_topic")
+    _close_stage2_events(topic, "fell_to_fallback")
     _log_stage2_failure(topic, "error", detail="no usable answer from either attempt", final=True)
     return None
 
@@ -880,12 +938,17 @@ def _retry_for_national_framing(client, topic, topic_articles, usage, comparison
         )
     except Exception as exc:
         print(f"  framing retry for '{topic['topic_label_en']}' failed ({exc}) - keeping the original; audit will flag it.")
+        _close_stage2_events(topic, "kept_original_flagged", {"framing"})
         return usage, comparison
     if _suspicious_langs(retry_comparison):
         print(f"  framing retry for '{topic['topic_label_en']}' came back suspicious - keeping the original; audit will flag it.")
+        _close_stage2_events(topic, "kept_original_flagged", {"framing"})
         return usage, comparison
     if national_framing_conflict(retry_comparison, newspapers):
         print(f"  framing retry for '{topic['topic_label_en']}' still divides by country/language - kept, flagged by audit.")
+        _close_stage2_events(topic, "kept_retry_still_flagged", {"framing"})
+    else:
+        _close_stage2_events(topic, "resolved_by_retry", {"framing"})
     return retry_usage, retry_comparison
 
 
@@ -925,20 +988,27 @@ def _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comp
         )
     except Exception as exc:
         print(f"  name retry for '{topic['topic_label_en']}' failed ({exc}) - keeping the original; audit will flag it.")
+        _close_stage2_events(topic, "kept_original_flagged", {"hebrew_names"})
         return usage, comparison
     if _suspicious_langs(retry_comparison):
         print(f"  name retry for '{topic['topic_label_en']}' came back suspicious - keeping the original; audit will flag it.")
+        _close_stage2_events(topic, "kept_original_flagged", {"hebrew_names"})
         return usage, comparison
     remaining = _hebrew_name_tells_in(retry_comparison)
     if len(remaining) >= len(tells):
         print(f"  name retry for '{topic['topic_label_en']}' did not remove the Hebrew-letter name(s) - keeping the original; audit will flag it.")
+        _close_stage2_events(topic, "kept_original_flagged", {"hebrew_names"})
         return usage, comparison
     newspapers = [a["newspaper"] for a in topic_articles]
     if national_framing_conflict(retry_comparison, newspapers) and not national_framing_conflict(comparison, newspapers):
         print(f"  name retry for '{topic['topic_label_en']}' reintroduced a country-based opening - keeping the original; audit will flag it.")
+        _close_stage2_events(topic, "kept_original_flagged", {"hebrew_names"})
         return usage, comparison
     if remaining:
         print(f"  name retry for '{topic['topic_label_en']}' removed some but not all ({', '.join(remaining)}) - kept, flagged by audit.")
+        _close_stage2_events(topic, "kept_retry_still_flagged", {"hebrew_names"})
+    else:
+        _close_stage2_events(topic, "resolved_by_retry", {"hebrew_names"})
     return retry_usage, retry_comparison
 
 
@@ -1289,6 +1359,7 @@ def synthesize_day_two_stage(
     usage_log: list[dict] = []
     with _STAGE2_LOCK:
         STAGE2_EVENTS.clear()
+        STAGE2_EVENT_LOG.clear()
         STAGE2_RUN_INFO.clear()
         STAGE2_RUN_INFO.update(topics=0, batch_enabled=batch_conn is not None, answered=0, wait_seconds=0.0)
 
@@ -1548,7 +1619,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
             f"\nDry run complete for {report_date}: {len(sections)} section(s) would be written, "
             f"{len(missing)} article(s) would fall back individually. No DB writes performed."
         )
-        print_stage2_summary(stage2_since)
+        print_stage2_summary(stage2_since)  # dry run: block only, no file
         conn.close()
         return
 
@@ -1565,7 +1636,7 @@ def run(report_date: str, force: bool = False, dry_run: bool = False, stage1_mod
         conn.rollback()
         raise
 
-    print_stage2_summary(stage2_since)
+    print_stage2_summary(stage2_since, report_date)
     conn.close()
 
 
@@ -1632,8 +1703,18 @@ def _write_report(conn, report_date, sources, sections, articles, valid_ids, now
     )
 
 
-def print_stage2_summary(since: str) -> None:
-    """One summary line for the log and the verification script; never affects the run."""
+def print_stage2_summary(since: str, report_date: str | None = None) -> None:
+    """The stage-2 events block (also saved to <date>.stage2_events.json when report_date is given) and one summary
+    line for the log and the verification script; never affects the run."""
+    try:
+        with _STAGE2_LOCK:
+            events = [dict(e) for e in STAGE2_EVENT_LOG]
+        for line in format_stage2_events_block(events):
+            print(line)
+        if report_date:
+            write_stage2_events(report_date, events)
+    except Exception as exc:  # noqa: BLE001
+        print(f"  (stage 2 events block skipped: {exc!r})", file=sys.stderr)
     try:
         cost = summarize_api_usage(since, "synthesize_stage2")["cost"]
         print(format_stage2_summary(STAGE2_RUN_INFO, STAGE2_EVENTS, cost))
