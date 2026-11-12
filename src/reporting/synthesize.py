@@ -769,6 +769,44 @@ def format_stage2_summary(info: dict, events: Counter, cost: float | None) -> st
             f"failed_topics={events.get('failed_topic', 0)} | stage2_cost={cost_part}")
 
 
+def _foreign_chars_by_field(comparison: dict | None) -> dict[str, list[str]]:
+    """Which output field carried which out-of-alphabet characters (logging only; same test as _suspicious_langs)."""
+    found: dict[str, list[str]] = {}
+    for key in ("comparison_text_he", "comparison_text_en", "comparison_text_de", "topic_label_de"):
+        chars = foreign_script_chars((comparison or {}).get(key, ""))
+        if chars:
+            found[key] = chars
+    return found
+
+
+def format_stage2_failure_line(topic: dict, reason: str, attempt: int | None = None, detail: str = "",
+                               comparison: dict | None = None, final: bool = False) -> str:
+    """One greppable line per stage-2 problem (PROJECT_LOG 4.141): topic, article ids, reason, foreign characters.
+    Reasons: error, suspicious, framing, hebrew_names, foreign_script_chars, failed_topic (final: falls back)."""
+    ids = list(topic.get("article_ids") or [])
+    parts = [f"STAGE2 {'FAILED_TOPIC' if final else 'PROBLEM'}", f"topic='{topic.get('topic_label_en', '?')}'",
+             f"article_ids={ids}", f"reason={reason}"]
+    if attempt is not None:
+        parts.append(f"attempt={attempt}")
+    if detail:
+        parts.append(f"detail={detail}")
+    chars = _foreign_chars_by_field(comparison)
+    if chars:
+        parts.append("foreign_chars=" + "; ".join(
+            f"{field}:{''.join(cs)} ({' '.join('U+%04X' % ord(c) for c in cs)})" for field, cs in chars.items()))
+    if final:
+        parts.append("-> per-article fallback")
+    return " | ".join(parts)
+
+
+def _log_stage2_failure(*args, **kwargs) -> None:
+    """Logging only - never raises, never changes retry/fallback handling."""
+    try:
+        print("  " + format_stage2_failure_line(*args, **kwargs), flush=True)
+    except Exception:
+        pass
+
+
 def write_topic_comparison_with_retry(client, topic, topic_articles, first=None):
     """One quick retry on failure; returns None (not an exception) if both attempts fail -
     the caller treats that topic's articles as needing individual fallback, exactly like
@@ -793,6 +831,7 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
             print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} failed: {exc}")
             if attempt == 0:
                 _count_stage2_event("error")
+            _log_stage2_failure(topic, "error", attempt + 1, detail=f"{type(exc).__name__}: {str(exc)[:200]}")
             continue
         suspicious_langs = _suspicious_langs(comparison)
         if suspicious_langs and attempt == 0:
@@ -801,6 +840,8 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
                 f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} produced suspicious "
                 f"output in: {', '.join(suspicious_langs)} - retrying once."
             )
+            _log_stage2_failure(topic, "foreign_script_chars" if _foreign_chars_by_field(comparison) else "suspicious",
+                                attempt + 1, detail="langs=" + ",".join(suspicious_langs), comparison=comparison)
             continue
         if suspicious_langs:
             print(
@@ -808,10 +849,14 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
                 f"({', '.join(suspicious_langs)}) - treating as failed, falling back per-article."
             )
             _count_stage2_event("failed_topic")
+            _log_stage2_failure(topic, "foreign_script_chars" if _foreign_chars_by_field(comparison) else "suspicious",
+                                detail="langs=" + ",".join(suspicious_langs) + " (still bad after retry)",
+                                comparison=comparison, final=True)
             return None
         usage, comparison = _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
         return _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison)
     _count_stage2_event("failed_topic")
+    _log_stage2_failure(topic, "error", detail="no usable answer from either attempt", final=True)
     return None
 
 
@@ -827,6 +872,7 @@ def _retry_for_national_framing(client, topic, topic_articles, usage, comparison
     print(f"  topic '{topic['topic_label_en']}': opening divides by country/language ({', '.join(conflict['languages'])}) "
           f"but same-country sources are present - rewriting once with feedback.")
     _count_stage2_event("framing")
+    _log_stage2_failure(topic, "framing", detail="opening divides by " + "/".join(conflict["languages"]))
     try:
         retry_usage, retry_comparison = write_topic_comparison(
             client, topic, topic_articles, feedback=framing_retry_feedback(conflict)
@@ -871,6 +917,7 @@ def _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comp
         return usage, comparison
     print(f"  topic '{topic['topic_label_en']}': newspaper name in Hebrew letters ({', '.join(tells)}) - rewriting once with feedback.")
     _count_stage2_event("hebrew_names")
+    _log_stage2_failure(topic, "hebrew_names", detail="tells=" + ",".join(tells))
     try:
         retry_usage, retry_comparison = write_topic_comparison(
             client, topic, topic_articles, feedback=hebrew_name_retry_feedback(tells)
