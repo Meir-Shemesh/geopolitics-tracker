@@ -106,8 +106,9 @@ STAGE2_CONCURRENCY = 6
 # (errored/expired/canceled/refused/malformed, batch timed out or unreadable) takes the regular synchronous path.
 # Experiment 2026-11-10 (replay of 9.11 and 6.11 stored groupings, 214 topics): 0 failures, 3.1 min wait, 0.48 of the
 # synchronous cost, cache hit 80-85%. End to end on a DB copy (9.11, 73 topics): all answered by the batch, 4.4 min
-# for the whole stage, 50% price in the stage summary. ON from 13:52 on 2026-11-10, OFF again the same day: the first daily run crashed on a '%' in the --batch help text
-# (argparse), which no test exercised. Re-enable only with Meir's explicit approval. Run once with --batch / --no-batch.
+# for the whole stage, 50% price in the stage summary. ON from 13:52 on 2026-11-10, turned OFF the same day after the first daily run crashed on a '%' in the --batch help
+# text (argparse), which no test exercised. ON again since 2026-11-11 with Meir's explicit approval (first daily run in batch:
+# 102/102 topics, stage 2 cost 0.54 of baseline, 0 fallbacks to regular calls; PROJECT_LOG 4.140/4.141). Run once with --batch / --no-batch.
 SYNTH_USE_BATCH = True
 SYNTH_BATCH_TIMEOUT_SECONDS = 12 * 60  # 3.1 min observed for 215 requests; the worst case adds a full synchronous pass
 SYNTH_BATCH_POLL_SECONDS = 20.0

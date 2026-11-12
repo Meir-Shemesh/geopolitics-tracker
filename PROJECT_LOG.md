@@ -2119,6 +2119,12 @@ Commit: ראו היסטוריית-git (הודעת-commit מפנה ל-action item
 
 **סקריפט האימות (מחוץ לריפו):** היעדר שורת `Stage 2 summary` בלוג של היום הוא עכשיו ATTENTION ולא הערה (השורה מודפסת בכל ריצה מאז `a459de9`). נבדק על ארבעה מקרים סינתטיים: ריצה תקינה OK; נפילות 34% ATTENTION; `batch=off` עם שורת batch שנשארה OK עם הערה; בלי שורת סיכום ATTENTION (גם עם `api_batches` תקין, וגם עם batch שבוטל).
 
+### 4.141 תוצאות הריצה היומית הראשונה עם batch בשלב 2 (11.11) ולוג כשלי נושאים
+
+**תוצאות 11.11:** שלב 2 רץ במלואו ב-batch, 102 מתוך 102 נושאים נענו מה-batch ו-0 נפלו לקריאה רגילה. עלות שלב 2 $0.92, כלומר 0.54 מהבסיס, המתנה של 166 שניות. `failed_topics=1`: נושא "Water scarcity and conservation in Jordan" (מאמר 14617, טקסס הוضوء במסגד) נכשל פעמיים כי המודל כתב באותיות ערביות (ء ض و) בטקסט העברי, `foreign_script_chars` סימן אותו חשוד בשתי הפעמים, והוא נפל לסעיף fallback דטרמיניסטי כמתוכנן. שני ה-fallback האחרים (14667, 14674) הגיעו מ-`unassigned_ids` של שלב 1, לא מכשל בשלב 2. אפס `review_flags`. הלוג לא שמר איזה נושא נכשל ולמה, ולכן הסיבה שוחזרה בדיעבד בהרצה ידנית של הנושא.
+
+**שינוי (12.11, לוג בלבד, ללא שינוי בהתנהגות):** `format_stage2_failure_line()` ב-`synthesize.py` כותבת שורת `STAGE2 PROBLEM`/`STAGE2 FAILED_TOPIC` לכל אירוע בשלב 2: שם נושא, `article_ids`, סיבה (`error`, `suspicious`, `foreign_script_chars`, `framing`, `hebrew_names`) והתווים הזרים עם קודי Unicode. הלוג לעולם לא זורק חריגה. טיפול ה-retry וה-fallback לא השתנה. `tests/test_stage2_failure_log.py`. חל על ריצות מ-12.11 ואילך.
+
 ## 5. סטטוס נוכחי מפורט לפי שלב
 
 ### ✅ שלב 1 — Ingestion (`src/ingestion/fetch.py`)
