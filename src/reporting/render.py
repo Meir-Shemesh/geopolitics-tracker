@@ -13,6 +13,7 @@ import html
 import json
 import shutil
 import sys
+import time
 from datetime import date as date_cls
 from pathlib import Path
 
@@ -1228,6 +1229,13 @@ def build_report_html(
     body {{ background: #fff; }}
     .top-nav {{ display: none; }}
     .category-nav {{ display: none; }}
+    /* The on-screen column of sections is a flex container (gap between cards). WeasyPrint lays a flex container
+       out again for every page it spans, so PDF time grew with the square of the number of sections (measured
+       2026-11-16: 50 sections took 209 s per language, 5 s with this rule). In print the sections are ordinary
+       blocks and the gap becomes a bottom margin. The screen layout is untouched. */
+    .report-body {{ display: block; }}
+    .report-body > .topic-section {{ margin-bottom: 1.5rem; }}
+    .report-body > .topic-section:last-child {{ margin-bottom: 0; }}
     /* .section-actions used to be display:none outright (it only ever held the
        share-link button, meaningless on paper) - but it's also the citations
        toggle+popup's containing element, so hiding it wholesale silently hid
@@ -1441,12 +1449,15 @@ def render_report(conn, report_date: str) -> None:
         (cat, first_id_for_category[cat]) for cat in CATEGORY_LABELS if cat in first_id_for_category
     ]
 
+    timings = []  # (lang, html seconds, pdf seconds or None, pdf pages or None) - printed once at the end
     for lang in render_langs:
+        t_html = time.perf_counter()
         html_str = build_report_html(
             report_date, sources, sections, lang, category_nav,
             created_at=report_row["created_at"], updated_at=report_row["updated_at"],
         )
 
+        t_html = time.perf_counter() - t_html
         out_dir = REPORTS_DIR / lang
         out_dir.mkdir(parents=True, exist_ok=True)
         html_path = out_dir / f"report_{report_date}_{lang}.html"
@@ -1455,11 +1466,16 @@ def render_report(conn, report_date: str) -> None:
 
         if WEASYPRINT_AVAILABLE:
             pdf_path = out_dir / f"report_{report_date}_{lang}.pdf"
-            WeasyHTML(string=html_str, base_url=str(html_path)).write_pdf(str(pdf_path))
+            t_pdf = time.perf_counter()
+            document = WeasyHTML(string=html_str, base_url=str(html_path)).render()  # same work as write_pdf(), page count included
+            document.write_pdf(str(pdf_path))
+            timings.append((lang, t_html, time.perf_counter() - t_pdf, len(document.pages)))
             print(f"  wrote {pdf_path}")
         else:
             print("  PDF skipped: WeasyPrint/GTK runtime not available on this machine.")
 
+    if timings:  # one line, so it survives the 40-line stdout tail the daily log keeps
+        print("Render timing: " + " | ".join(f"{l}: html {h:.1f}s, pdf {p:.1f}s, {n} pages" for l, h, p, n in timings))
     print(
         f"\nRender complete for {report_date}: {len(sections)} section(s) "
         f"({main_count} main + {fallback_count} additional-coverage)."
