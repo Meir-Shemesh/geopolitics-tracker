@@ -574,6 +574,24 @@ def national_framing_conflict(comparison: dict, newspapers) -> dict | None:
     return {"languages": langs, "groups": groups} if langs else None
 
 
+# Appended to EVERY retry feedback of the daily writer. A retry that names only the rule that failed let the model break a
+# different one in the rewrite (biweekly period 10, 12.11: attempt 1 over the word ceiling, attempt 2 a newspaper name in
+# Hebrew letters, topic dropped), so each retry restates all the rules, including the text checks of PROJECT_LOG 4.144.
+DAILY_RULES_REMINDER = (
+    " FULL REMINDER OF ALL RULES (every rule applies to the rewrite, not only the one that failed): "
+    "(1) newspaper names: only these exact Latin-script forms, verbatim, never in Hebrew letters or transliterated, also when the "
+    f"newspaper is itself the subject of the story: {_NEWSPAPER_NAME_LIST}; any other outlet keeps its original Latin name too; "
+    "(2) characters: Hebrew text only in Hebrew letters, other text in Latin letters; never a letter of any other writing system; "
+    "never a Latin letter inside a Hebrew word or a Hebrew letter inside a Latin word (a Hebrew prefix goes before a Latin name "
+    "with a hyphen, for example ב-The Guardian); "
+    "(3) fields: each field holds only its own plain text in its own language, with no markup, tags or field names; "
+    "(4) punctuation: no spaced hyphen, en dash or em dash as a separator in the Hebrew text; "
+    "(5) framing: the opening sentence must not divide the sources by country or language when newspapers of the same country "
+    "are in the topic; "
+    "(6) natural Hebrew, English and German, absolute dates only, newspaper names take masculine agreement in Hebrew."
+)
+
+
 def framing_retry_feedback(conflict: dict) -> str:
     pairs = "; ".join(f"{country}: {' and '.join(names)}" for country, names in conflict["groups"].items())
     return (
@@ -584,6 +602,7 @@ def framing_retry_feedback(conflict: dict) -> str:
         "not by country or language of the press. Mention a country or language as the dividing line only if every "
         "newspaper of each named country takes the same position and the countries' positions differ. Keep the rest of "
         "the analysis as it was."
+        + DAILY_RULES_REMINDER
     )
 
 
@@ -617,7 +636,8 @@ def _suspicious_kind(comparison: dict | None) -> str:
 def _suspicious_retry_feedback(comparison: dict | None) -> str:
     """Feedback for the one retry of a suspicious answer: names exactly what was found, or empty (blind retry as before)."""
     found = problems_feedback(_writer_problems(comparison))
-    return ("FEEDBACK ON YOUR PREVIOUS ANSWER: " + found + ". Rewrite all the fields and keep everything else as it was.") if found else ""
+    return ("FEEDBACK ON YOUR PREVIOUS ANSWER: " + found + ". Rewrite all the fields and keep everything else as it was."
+            + DAILY_RULES_REMINDER) if found else ""
 
 
 # --- Nationality-label audit (PROJECT_LOG 4.131) -------------------------------------------------------------------
@@ -763,6 +783,7 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
 # (stage 2 runs in threads, hence the lock); the batch figures are set by synthesize_day_two_stage.
 STAGE2_EVENTS: Counter = Counter()
 STAGE2_RUN_INFO: dict = {}
+STAGE2_REJECTED_LOG: list[dict] = []  # rejected texts, written to <date>.stage2_rejected.json (git-ignored; layer 2)
 STAGE2_EVENT_LOG: list[dict] = []  # one dict per stage-2 problem, with its outcome (PROJECT_LOG 4.143)
 _STAGE2_LOCK = threading.Lock()
 STAGE2_EVENTS_BLOCK_MAX_LINES = 10  # keeps the block inside the 40-line stdout tail the daily log keeps
@@ -833,6 +854,9 @@ def _log_stage2_failure(topic, reason, attempt=None, detail="", comparison=None,
                  "final": final, "outcome": "fell_to_fallback" if final else None}
         with _STAGE2_LOCK:
             STAGE2_EVENT_LOG.append(event)
+            if comparison:  # the rejected text goes to its own git-ignored file, never into stage2_events.json (tracked, pushed)
+                STAGE2_REJECTED_LOG.append({"topic": event["topic"], "article_ids": event["article_ids"], "kind": reason,
+                                            "attempt": attempt, "rejected": {f: comparison.get(f) for f in _WRITER_FIELDS}})
     except Exception:
         pass
 
@@ -877,6 +901,15 @@ def write_stage2_events(report_date: str, events: list[dict]) -> None:
             encoding="utf-8")
     except Exception as exc:  # noqa: BLE001 - recording must never stop a run
         print(f"  warning: could not write the stage-2 events file ({exc}) - continuing.")
+    try:
+        with _STAGE2_LOCK:
+            rejected = list(STAGE2_REJECTED_LOG)
+        if rejected:
+            (flag_dir / f"{report_date}.stage2_rejected.json").write_text(
+                json.dumps({"report_date": report_date, "rejected": rejected}, ensure_ascii=False, indent=1) + "\n",
+                encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001
+        print(f"  warning: could not write the stage-2 rejected-text file ({exc}) - continuing.")
 
 
 def _problem_summary(comparison: dict | None) -> str:
@@ -990,7 +1023,7 @@ def _retry_for_national_framing(client, topic, topic_articles, usage, comparison
     print(f"  topic '{topic['topic_label_en']}': opening divides by country/language ({', '.join(conflict['languages'])}) "
           f"but same-country sources are present - rewriting once with feedback.")
     _count_stage2_event("framing")
-    _log_stage2_failure(topic, "framing", detail="opening divides by " + "/".join(conflict["languages"]))
+    _log_stage2_failure(topic, "framing", detail="opening divides by " + "/".join(conflict["languages"]), comparison=comparison)
     try:
         retry_usage, retry_comparison = write_topic_comparison(
             client, topic, topic_articles, feedback=framing_retry_feedback(conflict)
@@ -1026,6 +1059,7 @@ def hebrew_name_retry_feedback(tells: dict[str, str]) -> str:
         f"{found}. A newspaper name must always stay in its exact Latin spelling, even inside Hebrew text. "
         f"Use only these forms: {_NEWSPAPER_NAME_LIST}. Rewrite all the fields, replacing every Hebrew-letter "
         "rendering of a newspaper name with its exact Latin name, and keep everything else as it was."
+        + DAILY_RULES_REMINDER
     )
 
 
@@ -1040,7 +1074,7 @@ def _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comp
         return usage, comparison
     print(f"  topic '{topic['topic_label_en']}': newspaper name in Hebrew letters ({', '.join(tells)}) - rewriting once with feedback.")
     _count_stage2_event("hebrew_names")
-    _log_stage2_failure(topic, "hebrew_names", detail="tells=" + ",".join(tells))
+    _log_stage2_failure(topic, "hebrew_names", detail="tells=" + ",".join(tells), comparison=comparison)
     try:
         retry_usage, retry_comparison = write_topic_comparison(
             client, topic, topic_articles, feedback=hebrew_name_retry_feedback(tells)

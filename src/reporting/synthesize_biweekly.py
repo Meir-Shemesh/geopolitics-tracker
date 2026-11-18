@@ -267,14 +267,29 @@ def word_count(text: str) -> int:
     return len((text or "").split())
 
 
-def over_ceiling_langs(result: dict, tier: str) -> dict[str, int]:
-    ceiling = WORD_CEILINGS[tier]
+# A text 1-10% over its ceiling is accepted without a retry (logged). On 12.11 the first attempts of the Iran/Hormuz topic
+# (de=141 words against 140) and of the Venezuela topic (en=101 against 100) were rejected for that alone, and the rewrite
+# then failed another guard and the topics were dropped. The ceiling in the prompt is unchanged: the model is still told the
+# hard limit, and a text more than 10% over (or still over after the retry) is handled exactly as before.
+WORD_CEILING_TOLERANCE = 0.10
+
+
+def over_ceiling_langs(result: dict, tier: str, tolerance: float = 0.0) -> dict[str, int]:
+    """Languages whose comparison text has more words than the tier ceiling (times 1+tolerance)."""
+    limit = int(WORD_CEILINGS[tier] * (1 + tolerance))
     over = {}
     for lang in ("he", "en", "de"):
         n = word_count(result[f"comparison_text_{lang}"])
-        if n > ceiling:
+        if n > limit:
             over[lang] = n
     return over
+
+
+def within_tolerance_langs(result: dict, tier: str) -> dict[str, int]:
+    """Languages over the ceiling but inside the tolerance: accepted, only logged."""
+    strict = over_ceiling_langs(result, tier)
+    beyond = over_ceiling_langs(result, tier, WORD_CEILING_TOLERANCE)
+    return {lang: n for lang, n in strict.items() if lang not in beyond}
 
 
 # Exact Latin-script forms the rule requires - taken directly from render.py's
@@ -797,6 +812,88 @@ def write_biweekly_topic(client, topic: dict, days: list[dict], feedback: str = 
     return result, usage
 
 
+def _rules_reminder(tier: str) -> str:
+    """Appended to EVERY retry feedback: a retry that names only the rule that failed let the rewrite break another one
+    (12.11: attempt 1 over the word ceiling, attempt 2 a newspaper name in Hebrew letters, topic dropped)."""
+    ceiling = WORD_CEILINGS[tier]
+    return (
+        " FULL REMINDER OF ALL RULES (every rule applies to the rewrite, not only the one that failed): "
+        "(1) newspaper names: only these exact Latin-script forms, verbatim inside Hebrew and German text, never in Hebrew letters or "
+        f"transliterated, also when the newspaper is itself the subject of the story: {_NEWSPAPER_NAME_LIST}; any other outlet keeps its "
+        "original Latin name too; "
+        f"(2) length: comparison_text_he, comparison_text_en and comparison_text_de must each be at most {ceiling} words, counted "
+        f"separately per language; aim for about {int(ceiling * 0.9)} words so you land under the limit; "
+        "(3) characters: Hebrew text only in Hebrew letters, other text in Latin letters; never a letter of any other writing system; "
+        "never a Latin letter inside a Hebrew word or a Hebrew letter inside a Latin word (a Hebrew prefix goes before a Latin name with "
+        "a hyphen, for example ב-The Guardian); "
+        "(4) fields: each field holds only its own plain text in its own language, with no markup, tags or field names; "
+        "(5) punctuation: no spaced hyphen, en dash or em dash as a separator in the Hebrew text; "
+        "(6) structure: conclusion first, 2-3 selected examples, at most one framing-difference sentence; absolute dates only; "
+        "Hebrew gender agreement; native German."
+    )
+
+
+# --- 3. rejected text goes to review_flags --------------------------------------------------------------------------------------
+REVIEW_FLAGS_DIR = PROJECT_ROOT / "data" / "processed" / "review_flags"
+BIWEEKLY_REJECTED: list[dict] = []   # every attempt whose text was thrown away, with the reasons (this process)
+
+
+def _record_rejected(topic: dict, attempt: int, outcome: str, reasons: list[str], result: dict | None) -> None:
+    try:
+        entry = {"topic": topic.get("topic_label_en", "?"), "attempt": attempt, "outcome": outcome, "reasons": reasons,
+                 "text": {f: (result or {}).get(f) for f in _BIWEEKLY_FIELDS} if result else None}
+        with _LOG_ONLY_LOCK:
+            BIWEEKLY_REJECTED.append(entry)
+    except Exception:  # noqa: BLE001 - recording must never fail a topic
+        pass
+
+
+def write_rejected_report(end: str) -> str:
+    """Saves the rejected attempts to data/processed/review_flags/<end>.biweekly_rejected.json and returns the one summary line
+    (attempts thrown away, topics dropped, reasons). Never raises; the summary is printed even when nothing was rejected."""
+    with _LOG_ONLY_LOCK:
+        entries = list(BIWEEKLY_REJECTED)
+    dropped = [e for e in entries if e["outcome"] == "dropped"]
+    reasons = sorted({r.split(":")[0] for e in dropped for r in e["reasons"]})
+    line = (f"Biweekly rejected text: {len(entries)} attempt(s) thrown away, {len(dropped)} topic(s) dropped"
+            + (f" (reasons: {', '.join(reasons)})" if reasons else "")
+            + (f"; saved to review_flags/{end}.biweekly_rejected.json" if entries else ""))
+    try:
+        if entries:
+            REVIEW_FLAGS_DIR.mkdir(parents=True, exist_ok=True)
+            (REVIEW_FLAGS_DIR / f"{end}.biweekly_rejected.json").write_text(
+                json.dumps({"period_end": end, "attempts": entries}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    except OSError as exc:
+        line += f" (could not write the file: {exc})"
+    return line
+
+
+# --- 4. checkpoint of finished topics ---------------------------------------------------------------------------------------------
+def _topic_checkpoint_path(period: tuple[str, str], topic: dict, days: list[dict]) -> Path:
+    key = _content_key(MODEL, BIWEEKLY_STAGE2_SYSTEM_PROMPT, BIWEEKLY_COMPARE_TOOL, topic["topic_label_en"],
+                       topic["n_distinct_days"], topic["n_sources"], DEPTH_INSTRUCTIONS[depth_tier(topic["n_distinct_days"])],
+                       format_topic_days(days))
+    return _checkpoint_path(period[0], period[1], "topic", key)
+
+
+def write_topic_checkpointed(client, topic: dict, days: list[dict], period: tuple[str, str] | None):
+    """write_biweekly_topic_with_retry with a per-topic checkpoint: a finished topic is saved to disk, and a later run of the same
+    period (after a crash, a failed DB write or a manual re-run) re-uses it instead of paying for it again. A dropped topic is never
+    checkpointed (a re-run tries it again). The key covers the model, the prompt, the tool schema, the tier text and the topic's
+    own input, so any change to them makes the checkpoint invisible. Same return value as the function it wraps."""
+    if period is None:
+        return write_biweekly_topic_with_retry(client, topic, days)
+    path = _topic_checkpoint_path(period, topic, days)
+    ck = load_checkpoint(path)
+    if ck:
+        print(f"  topic '{topic['topic_label_en']}': reusing checkpoint - no API call")
+        return ck["topics"][0], {"input_tokens": 0, "output_tokens": 0, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}, {}
+    result, usage, over = write_biweekly_topic_with_retry(client, topic, days)
+    if result is not None:
+        save_checkpoint(path, [result], usage, 0)
+    return result, usage, over
+
+
 _BIWEEKLY_FIELDS = ("topic_label_he", "topic_label_en", "topic_label_de",
                     "comparison_text_he", "comparison_text_en", "comparison_text_de")
 # Clean-up that never needs a retry (counted in the log): a Hebrew prefix glued to a Latin name gets its hyphen, and the
@@ -861,8 +958,13 @@ def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
             lang for lang in ("he", "en", "de")
             if _looks_suspicious(result[f"comparison_text_{lang}"])
         ]
-        over = over_ceiling_langs(result, tier)
+        over = over_ceiling_langs(result, tier, WORD_CEILING_TOLERANCE)
         last_over = over
+        tolerated = within_tolerance_langs(result, tier)
+        if tolerated:
+            print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1}: "
+                  + ", ".join(f"{lang}={n}w" for lang, n in tolerated.items())
+                  + f" over the {WORD_CEILINGS[tier]}-word ceiling but within the {int(WORD_CEILING_TOLERANCE * 100)}% tolerance - accepted, no retry.")
 
         he_fields = result["comparison_text_he"] + " " + result["topic_label_he"]
         newspaper_hits = hebrew_newspaper_name_tells(he_fields)
@@ -902,17 +1004,21 @@ def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
                 )
             if problems:
                 feedback_parts.append("Your previous attempt had a text defect: " + problems_feedback(problems) + ".")
-            feedback = " ".join(feedback_parts)
+            feedback = " ".join(feedback_parts) + _rules_reminder(tier)
+            _record_rejected(topic, attempt + 1, "retried", reasons, result)
             continue
 
         if suspicious_langs:
             print(f"  topic '{topic['topic_label_en']}' still suspicious after retry - dropping.")
+            _record_rejected(topic, attempt + 1, "dropped", [f"suspicious: {', '.join(suspicious_langs)}"], result)
             return None, usage_totals, {}
         if newspaper_hits:
             print(f"  topic '{topic['topic_label_en']}' still has a newspaper-name violation after retry - dropping.")
+            _record_rejected(topic, attempt + 1, "dropped", [f"newspaper_names: {', '.join(newspaper_hits)}"], result)
             return None, usage_totals, {}
         if problems:
             print(f"  topic '{topic['topic_label_en']}' still has a text defect after retry ({problem_kind(problems)}) - dropping.")
+            _record_rejected(topic, attempt + 1, "dropped", [f"{problem_kind(problems)}: " + "; ".join(f"{k}={list(v)}" for k, v in problems.items())], result)
             return None, usage_totals, {}
         if over:
             print(f"  topic '{topic['topic_label_en']}' still over ceiling after retry "
@@ -984,7 +1090,7 @@ def write_overview_checked(client, topics: list[dict]) -> tuple[dict, dict]:
     return overview, usage
 
 
-def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
+def run_stage2(client, conn, topics: list[dict], period: tuple[str, str] | None = None) -> tuple[dict, list[dict]]:
     for t in topics:
         t["_days"] = load_topic_days(conn, t)
 
@@ -997,10 +1103,11 @@ def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
     failed = []
     for key in BIWEEKLY_LOG_ONLY:
         BIWEEKLY_LOG_ONLY[key] = 0
+    BIWEEKLY_REJECTED.clear()
 
     first = topics[0]
     print(f"  cache-warming with: {first['topic_label_en']}")
-    result, usage, over = write_biweekly_topic_with_retry(client, first, first["_days"])
+    result, usage, over = write_topic_checkpointed(client, first, first["_days"], period)
     if result is None:
         failed.append(first["topic_label_en"])
     else:
@@ -1009,7 +1116,7 @@ def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
     remaining = topics[1:]
     with ThreadPoolExecutor(max_workers=CONCURRENCY) as executor:
         future_to_topic = {
-            executor.submit(write_biweekly_topic_with_retry, client, t, t["_days"]): t for t in remaining
+            executor.submit(write_topic_checkpointed, client, t, t["_days"], period): t for t in remaining
         }
         for future in as_completed(future_to_topic):
             t = future_to_topic[future]
@@ -1030,6 +1137,7 @@ def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
     overview, _ = write_overview_checked(client, kept_topics)
     print("Biweekly text fixes (no retry): prefix_hyphen=%d | name forms (counted, never checked): missing_the=%d abbreviations=%d"
           % (BIWEEKLY_LOG_ONLY["prefix_hyphen"], BIWEEKLY_LOG_ONLY["missing_the"], BIWEEKLY_LOG_ONLY["abbreviations"]))
+    print(write_rejected_report(period[1] if period else date.today().isoformat()))
     return overview, kept_topics
 
 
@@ -1165,7 +1273,7 @@ def main() -> int:
         conn.close()
         return EXIT_NO_TOPICS
 
-    overview, kept_topics = run_stage2(client, conn, topics)
+    overview, kept_topics = run_stage2(client, conn, topics, period=(start, end))
 
     period_id = write_period_to_db(conn, start, end, overview, kept_topics, args.force)
     print(f"Wrote biweekly period id={period_id} ({start}..{end}), {len(kept_topics)} topic(s), to tracker.db.")
