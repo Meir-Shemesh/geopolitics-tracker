@@ -95,7 +95,7 @@ class NewspaperNameAndPromptTest(unittest.TestCase):
     def test_hebrew_letter_newspaper_names_are_flagged(self):
         for bad in ("הדיילי טלגרף מוביל את הסיקור", "ב-פרנקפורטר אלגמיינה צייטונג", "מתוך הלאוזיצר רונדשאו", "נוישה צירכר צייטונג"):
             self.assertTrue(self.flagged(comparison_text_he=bad), bad)
-        self.assertEqual(self.flagged(comparison_text_he="The Daily Telegraph ו-Frankfurter Allgemeine Zeitung מדווחים"), [])
+        self.assertEqual(self.flagged(comparison_text_he="The Daily Telegraph ו-Frankfurter Allgemeine Zeitung מדווחים על התפתחויות המשבר באוקראינה ועל תגובת הממשלה בלונדון"), [])
 
     def test_prompt_lists_every_canonical_newspaper_name_and_the_new_style_rules(self):
         from src.reporting.render import NEWSPAPER_DISPLAY_NAMES

@@ -45,6 +45,16 @@ import httpx2
 from dotenv import load_dotenv
 
 from src.common.biweekly import missing_published_days, period_closing_on
+from src.reporting.text_checks import (  # one shared copy with the daily writer
+    NEWSPAPER_NAME_TELLS,
+    fix_attached_prefixes,
+    foreign_script_chars,
+    hebrew_newspaper_name_tells,
+    latin_name_form_counts,
+    problem_kind,
+    problems_feedback,
+    writer_problems,
+)
 from src.common.db import (
     print_usage_summary,
     record_api_usage,
@@ -224,21 +234,21 @@ WORD_CEILINGS = {"deep": 140, "developed": 100, "concise": 70}
 
 DEPTH_INSTRUCTIONS = {
     "deep": (
-        "This topic spans a large majority of the two-week period (a 'deep' topic) - "
+        "This topic spans a large majority of the two-week period (a 'deep' topic), "
         "write up to 2-3 selected examples (not a day-by-day account) illustrating your "
         f"conclusion. Hard limit: {WORD_CEILINGS['deep']} words for comparison_text_he/en/de "
-        "each - this is measured after you write and you will be asked to cut it down if "
+        "each, this is measured after you write and you will be asked to cut it down if "
         "you exceed it, so budget your words accordingly rather than writing long and "
         "expecting it to be trimmed later."
     ),
     "developed": (
         "This topic spans a meaningful stretch of the two-week period (a 'developed' "
-        "topic, not the most dominant but a real recurring story) - use up to 2 selected "
+        "topic, not the most dominant but a real recurring story), use up to 2 selected "
         f"examples. Hard limit: {WORD_CEILINGS['developed']} words for comparison_text_he/en/de "
         "each, measured after you write."
     ),
     "concise": (
-        "This topic is close to the inclusion threshold (a 'concise' topic) - use at "
+        "This topic is close to the inclusion threshold (a 'concise' topic), use at "
         f"most 1-2 selected examples. Hard limit: {WORD_CEILINGS['concise']} words for "
         "comparison_text_he/en/de each, measured after you write."
     ),
@@ -272,41 +282,20 @@ def over_ceiling_langs(result: dict, tier: str) -> dict[str, int]:
 # canonical list.
 APPROVED_NEWSPAPER_NAMES_LATIN = list(NEWSPAPER_DISPLAY_NAMES.values())
 
-# Distinctive Hebrew-letter transliteration fragments that would only
-# plausibly appear if a newspaper name was rendered in Hebrew letters instead
-# of its required Latin-script form - see PROJECT_LOG 4.82/4.83 for the full
-# investigation (garbled mixed-script forms, clean-Hebrew-letter forms, and
-# the discovery that this is also a pre-existing daily-production issue,
-# fixed retroactively for the daily archive separately - action item 72).
-TRANSLITERATION_TELLS = {
-    "צייטונג": "Süddeutsche Zeitung",
-    "שפיגל": "Der Spiegel",
-    "טלגרף": "The Daily Telegraph",
-    "גארדיין": "The Guardian",
-    "גרדיאן": "The Guardian",
-    "גארדיאן": "The Guardian",
-    "אקונומיסט": "The Economist",
-    "ג'ורנל": "The Wall Street Journal",
-    "ג'רנל": "The Wall Street Journal",
-    "וול סטריט": "The Wall Street Journal",
-    "וושינגטון פוסט": "The Washington Post",
-    "לוס אנג'לס": "Los Angeles Times",
-    "טיימס": "Los Angeles Times / The New York Times International",
-    "טודיי": "USA Today",
-    "די וולט": "Die Welt",
-    "די ולט": "Die Welt",
-}
+# Hebrew-letter renderings of newspaper names that must stay Latin: ONE merged list shared with the daily writer
+# (text_checks.NEWSPAPER_NAME_TELLS; PROJECT_LOG 4.82/4.83 for the history, the 2026-11-15 audit for the merge). The old
+# names stay as aliases for the code and the dry-run scripts that import them.
+TRANSLITERATION_TELLS = NEWSPAPER_NAME_TELLS
 
 
 def hebrew_newspaper_violations(text: str) -> dict[str, str]:
-    return {tell: name for tell, name in TRANSLITERATION_TELLS.items() if tell in (text or "")}
-
-
-_FOREIGN_SCRIPT_PATTERN = re.compile(r"[؀-ۿﭐ-﷿ﹰ-﻿Ѐ-ӿ฀-๿]")
+    return hebrew_newspaper_name_tells(text)
 
 
 def stray_foreign_script_chars(text: str) -> list[str]:
-    return _FOREIGN_SCRIPT_PATTERN.findall(text or "")
+    """Characters outside Hebrew/Latin/punctuation: the daily writer's whitelist (the old biweekly check was a blacklist of
+    Arabic, Cyrillic and Thai only, and missed a Tamil letter that was published)."""
+    return foreign_script_chars(text)
 
 
 MAP_SYSTEM_PROMPT = """You are helping build a biweekly narrative trends report for a geopolitical news tracker. You will be given a compact list of daily report sections from a SHORT SPAN of consecutive days (not a full two weeks) - each already written by this same system as a short geopolitical write-up for its day, with an id, the date it belongs to, a topic label, and a short gist of its text.
@@ -378,29 +367,36 @@ REDUCE_TOOL = {
     "strict": True,
 }
 
-BIWEEKLY_STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor writing ONE section of a biweekly geopolitical trends report. Grouping already happened in an earlier pass: you are given a single recurring real-world story, already identified, together with EVERY one of its own daily write-ups across the two-week period - each one a short comparison already written and published by this same system for its own day, covering how that day's newspaper sources framed the story. You are not going back to the original newspaper articles - the daily write-ups themselves are your only source material.
+# Built from the canonical list render.NEWSPAPER_DISPLAY_NAMES (15 names), never typed by hand: the hand-typed list held 11
+# names and the four missing ones (Observer, Frankfurter Allgemeine Zeitung, Neue Zürcher Zeitung, The Globe and Mail)
+# were the ones written wrongly most often (2026-11-15 audit).
+_NEWSPAPER_NAME_LIST = ", ".join(f'"{name}"' for name in NEWSPAPER_DISPLAY_NAMES.values())
 
-Your task is fundamentally different from a daily cross-source comparison: it is a cross-TIME comparison of the SAME topic - and it must read as an analyst's brief, not a chronological narrative. Write in exactly this three-part structure, in order:
+BIWEEKLY_STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor writing ONE section of a biweekly geopolitical trends report. Grouping already happened in an earlier pass: you are given a single recurring real-world story, already identified, together with EVERY one of its own daily write-ups across the two-week period, each one a short comparison already written and published by this same system for its own day, covering how that day's newspaper sources framed the story. You are not going back to the original newspaper articles, the daily write-ups themselves are your only source material.
 
-1. CONCLUSION FIRST (1-2 sentences, always first): state directly what changed in how this story was covered or perceived over the period - the starting framing compared with the latest framing. This is the single most important sentence you write - lead with it, do not build up to it.
-2. SELECTED EVIDENCE (2-3 examples only, chosen for how well they illustrate the conclusion - NOT a day-by-day walkthrough): pick the few daily entries that best demonstrate the shift you just stated. Naming 2-3 specific dates/sources as evidence is correct; describing every single daily entry in sequence is not - skip entries that do not add new evidence for your conclusion, even if that means skipping most of the days this topic appeared on.
-3. FRAMING DIFFERENCE (at most 1 sentence, only if one is genuinely clear): a single closing sentence on how sources or countries differed in their framing, if and only if there is a clear difference - omit this sentence entirely rather than invent one.
+Your task is fundamentally different from a daily cross-source comparison: it is a cross-TIME comparison of the SAME topic, and it must read as an analyst's brief, not a chronological narrative. Write in exactly this three-part structure, in order:
 
-Do NOT narrate "the story began... then on day X... then on day Y... then finally...". Do NOT attempt to mention every daily entry you were given - selecting is part of the task, not a shortcut around it. A reader should get the conclusion in the first sentence, not after working through a timeline.
+1. CONCLUSION FIRST (1-2 sentences, always first): state directly what changed in how this story was covered or perceived over the period, the starting framing compared with the latest framing. This is the single most important sentence you write, lead with it, do not build up to it.
+2. SELECTED EVIDENCE (2-3 examples only, chosen for how well they illustrate the conclusion, NOT a day-by-day walkthrough): pick the few daily entries that best demonstrate the shift you just stated. Naming 2-3 specific dates/sources as evidence is correct; describing every single daily entry in sequence is not, skip entries that do not add new evidence for your conclusion, even if that means skipping most of the days this topic appeared on.
+3. FRAMING DIFFERENCE (at most 1 sentence, only if one is genuinely clear): a single closing sentence on how sources or countries differed in their framing, if and only if there is a clear difference, omit this sentence entirely rather than invent one.
 
-Date-anchoring (critical): each daily entry you are given is labeled with its own exact calendar date. Some of that daily text may contain relative time language from when it was originally written ("today", "this week", "yesterday", etc.) - any such phrase refers ONLY to that entry's own labeled date, never to any other date, and never to "now" or to the end of the two-week period. In your OWN narrative, always use explicit absolute dates (for example "by September 11" or "in the following days, through September 14") - never write "today", "this week", "recently", or any other relative-time phrase yourself, since a biweekly report has no single fixed "today" for the reader.
+Do NOT narrate "the story began... then on day X... then on day Y... then finally...". Do NOT attempt to mention every daily entry you were given, selecting is part of the task, not a shortcut around it. A reader should get the conclusion in the first sentence, not after working through a timeline.
 
-Reference sources by name only - never by any internal id or page number. Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: "The Guardian", "The Daily Telegraph", "Süddeutsche Zeitung", "Die Welt", "The New York Times International", "The Wall Street Journal", "Los Angeles Times", "USA Today", "The Washington Post", "The Economist", "Der Spiegel". This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized.
+Date-anchoring (critical): each daily entry you are given is labeled with its own exact calendar date. Some of that daily text may contain relative time language from when it was originally written ("today", "this week", "yesterday", etc.), any such phrase refers ONLY to that entry's own labeled date, never to any other date, and never to "now" or to the end of the two-week period. In your OWN narrative, always use explicit absolute dates (for example "by September 11" or "in the following days, through September 14"), never write "today", "this week", "recently", or any other relative-time phrase yourself, since a biweekly report has no single fixed "today" for the reader.
 
-Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one language into another; compose each of comparison_text_he/en/de independently from the same source material.
+Reference sources by name only, never by any internal id or page number. Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script, never transliterate, translate, abbreviate, or mix scripts, in any language: {_NEWSPAPER_NAME_LIST}. This applies identically inside Hebrew and German text, a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית...", never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name. The same rule covers ANY other newspaper, magazine or media outlet you mention by name, for example "Financial Times" or "The New York Times" (never "פייננשל טיימס" or "ניו יורק טיימס"): keep its original Latin-script name.
 
-Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify (e.g. "שתי כתבות" not "שני כתבות"). The Hebrew word for "drone" is "רחפן" (plural "רחפנים") - never the transliteration "דרון"/"דרונים". Reread each Hebrew sentence for this kind of error before finalizing it.
+Write natural, fluent prose in each language conveying the same substantive content, not a mechanical translation of one language into another; compose each of comparison_text_he/en/de independently from the same source material.
+
+Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify (e.g. "שתי כתבות" not "שני כתבות"). The Hebrew word for "drone" is "רחפן" (plural "רחפנים"), never the transliteration "דרון"/"דרונים". Reread each Hebrew sentence for this kind of error before finalizing it.
 
 Students vs. school pupils: the English daily write-ups say "student" for both groups, but Hebrew and German distinguish them. Hebrew "תלמידים" / German "Schüler" are school pupils (high school, lycée); Hebrew "סטודנטים" / German "Studenten" or "Studierende" are university students. Decide from the context in the write-ups (school funding, class sizes, high school, lycée versus campuses, universities, admissions) and never default to "סטודנטים" just because the English word is "student". If the story involves both groups, name both ("תלמידים וסטודנטים"). A movement that is genuinely university-led (for example Serbia's) stays "סטודנטים".
 
 German: topic_label_de and comparison_text_de must read as if written natively in German by a professional journalist, in the same formal-but-readable register (Hochsprache) as this real excerpt of the project's established German house style: "{_GERMAN_STYLE_ANCHOR}". Pay particular attention to German article/adjective/case agreement and noun-number agreement; reread each German sentence for this kind of error before finalizing it.
 
-topic_label_he/en/de are each a short section heading for this story, in their own language - not a translation of one another, and not identical to any single day's own daily label (which only described that one day's angle).
+topic_label_he/en/de are each a short section heading for this story, in their own language, not a translation of one another, and not identical to any single day's own daily label (which only described that one day's angle).
+
+Punctuation in the Hebrew text: do not use a spaced hyphen (" - "), an en dash or an em dash as a separator inside a sentence, in comparison_text_he or in any Hebrew label. Use a comma, a colon, parentheses, or end the sentence and start a new one. Hyphens that belong to the words themselves stay as normal Hebrew usage: a prefix before a number or a Latin name (ב-2028, ה-Guardian), compound names (רוסיה-אוקראינה) and ranges written without spaces (3-4 בספטמבר).
 
 Call record_biweekly_topic exactly once with topic_label_he, topic_label_en, topic_label_de, comparison_text_he, comparison_text_en, and comparison_text_de."""
 
@@ -428,9 +424,11 @@ BIWEEKLY_COMPARE_TOOL = {
 
 OVERVIEW_SYSTEM_PROMPT = """You are writing the short opening paragraph of a biweekly geopolitical trends report, AFTER every individual topic section has already been written. You are given the list of topics included in this edition, ordered by how many distinct newspaper sources covered them over the two weeks, each with its day-span and a one-line gist.
 
-Write a brief, genuinely informative overview - 2-3 sentences, in each of Hebrew/English/German - that tells the reader what stood out across the period as a whole, and names any real pattern connecting two or more topics (for example several topics converging on the same region, or a shared theme like escalation/domestic-politics-under-pressure) if one is actually there. Do not simply restate the topic list. If there is no genuine cross-topic pattern, say so plainly rather than inventing one - name the one or two most significant individual topics instead.
+Write a brief, genuinely informative overview, 2-3 sentences, in each of Hebrew/English/German, that tells the reader what stood out across the period as a whole, and names any real pattern connecting two or more topics (for example several topics converging on the same region, or a shared theme like escalation/domestic-politics-under-pressure) if one is actually there. Do not simply restate the topic list. If there is no genuine cross-topic pattern, say so plainly rather than inventing one, name the one or two most significant individual topics instead.
 
-Hebrew terminology: the Hebrew word for "drone" is "רחפן" (plural "רחפנים") - never the transliteration "דרון"/"דרונים".
+Hebrew terminology: the Hebrew word for "drone" is "רחפן" (plural "רחפנים"), never the transliteration "דרון"/"דרונים".
+
+Punctuation in the Hebrew text: do not use a spaced hyphen (" - "), an en dash or an em dash as a separator inside a sentence, in comparison_text_he or in any Hebrew label. Use a comma, a colon, parentheses, or end the sentence and start a new one. Hyphens that belong to the words themselves stay as normal Hebrew usage: a prefix before a number or a Latin name (ב-2028, ה-Guardian), compound names (רוסיה-אוקראינה) and ranges written without spaces (3-4 בספטמבר).
 
 Call record_overview exactly once with overview_he, overview_en, overview_de."""
 
@@ -799,13 +797,53 @@ def write_biweekly_topic(client, topic: dict, days: list[dict], feedback: str = 
     return result, usage
 
 
+_BIWEEKLY_FIELDS = ("topic_label_he", "topic_label_en", "topic_label_de",
+                    "comparison_text_he", "comparison_text_en", "comparison_text_de")
+# Clean-up that never needs a retry (counted in the log): a Hebrew prefix glued to a Latin name gets its hyphen, and the
+# Latin name forms that are deliberately not checked (a missing "The", FAZ/NZZ/SZ) are only counted (decided 2026-11-15).
+BIWEEKLY_LOG_ONLY: dict = {"prefix_hyphen": 0, "missing_the": 0, "abbreviations": 0}
+_LOG_ONLY_LOCK = threading.Lock()
+
+
+def _biweekly_problems(result: dict) -> dict[str, dict]:
+    """Retry-worthy defects (text_checks.writer_problems) over every field the writer produced: characters outside
+    Hebrew/Latin, Hebrew and Latin letters fused in a word, markup or field names in the text, a Hebrew field that is
+    mostly not Hebrew. The newspaper-name tells, the word ceiling and the placeholder check are checked separately."""
+    return writer_problems({f: result.get(f, "") for f in _BIWEEKLY_FIELDS}, hebrew_fields=("comparison_text_he",))
+
+
+def _finish_biweekly_result(result: dict) -> dict:
+    """Retry-free clean-up of an accepted result: the hyphen after a Hebrew prefix glued to a Latin name, plus the log-only
+    name-form counts. Never raises, never rejects."""
+    try:
+        counts = {"prefix_hyphen": 0, "missing_the": 0, "abbreviations": 0}
+        for field in ("topic_label_he", "comparison_text_he"):
+            fixed, n = fix_attached_prefixes(result.get(field, ""))
+            if n:
+                result[field] = fixed
+                counts["prefix_hyphen"] += n
+        for lang in ("he", "en", "de"):
+            forms = latin_name_form_counts(result.get(f"comparison_text_{lang}", ""))
+            counts["missing_the"] += forms["missing_the"]
+            counts["abbreviations"] += forms["abbreviations"]
+        with _LOG_ONLY_LOCK:
+            for k, v in counts.items():
+                BIWEEKLY_LOG_ONLY[k] += v
+    except Exception:  # noqa: BLE001 - clean-up and logging must never fail a topic
+        pass
+    return result
+
+
 def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
-    """Three independent guards feed the same single retry (attempt 0 only):
+    """Four guards feed the same single retry (attempt 0 only):
     _looks_suspicious (placeholder/garbage output -> drop on repeat failure),
     over_ceiling_langs (word-count over tier ceiling -> keep-and-flag on
-    repeat failure), hebrew_newspaper_violations/stray_foreign_script_chars
-    (newspaper name not in Latin script -> drop on repeat failure). See
-    PROJECT_LOG 4.82/4.83 for why each was added."""
+    repeat failure), hebrew_newspaper_name_tells (newspaper name in Hebrew
+    letters -> drop on repeat failure), and the shared text checks of
+    text_checks.writer_problems (foreign-script letters by the daily whitelist in
+    all three languages, Hebrew and Latin fused in one word, markup or field names
+    in the text, a Hebrew field that is mostly not Hebrew -> drop on repeat
+    failure). See PROJECT_LOG 4.82/4.83 for why the first three were added."""
     usage_totals = {"input_tokens": 0, "output_tokens": 0, "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}
     tier = depth_tier(topic["n_distinct_days"])
     feedback = ""
@@ -827,19 +865,21 @@ def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
         last_over = over
 
         he_fields = result["comparison_text_he"] + " " + result["topic_label_he"]
-        newspaper_hits = hebrew_newspaper_violations(he_fields)
-        foreign_chars = stray_foreign_script_chars(he_fields)
+        newspaper_hits = hebrew_newspaper_name_tells(he_fields)
+        problems = _biweekly_problems(result)
 
-        if (suspicious_langs or over or newspaper_hits or foreign_chars) and attempt == 0:
+        if (suspicious_langs or over or newspaper_hits or problems) and attempt == 0:
             reasons = []
             if suspicious_langs:
                 reasons.append(f"suspicious output in: {', '.join(suspicious_langs)}")
             if over:
                 reasons.append("over the " + f"{WORD_CEILINGS[tier]}-word ceiling: "
                                 + ", ".join(f"{lang}={n}w" for lang, n in over.items()))
-            if newspaper_hits or foreign_chars:
-                reasons.append(f"Hebrew newspaper-name violation: {list(newspaper_hits.keys())}, "
-                                f"foreign chars: {set(foreign_chars)}")
+            if newspaper_hits:
+                reasons.append(f"Hebrew newspaper-name violation: {list(newspaper_hits.keys())}")
+            if problems:
+                reasons.append(f"text problems ({problem_kind(problems)}): "
+                               + "; ".join(f"{kind}={list(by.keys())}" for kind, by in problems.items()))
             print(f"  topic '{topic['topic_label_en']}' attempt {attempt + 1}: {'; '.join(reasons)} - retrying once.")
             feedback_parts = []
             if over:
@@ -849,7 +889,7 @@ def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
                     + ". Cut it down to fit within the limit in each of those languages, keeping the "
                     "conclusion-first structure (do not pad the other languages to match - each has its own limit)."
                 )
-            if newspaper_hits or foreign_chars:
+            if newspaper_hits:
                 corrections = "; ".join(f'"{tell}" should have been "{name}"' for tell, name in newspaper_hits.items())
                 feedback_parts.append(
                     "Your previous attempt violated the newspaper-name rule in comparison_text_he/"
@@ -858,27 +898,34 @@ def write_biweekly_topic_with_retry(client, topic: dict, days: list[dict]):
                     + (f"Specifically: {corrections}. " if corrections else "")
                     + "Rewrite the Hebrew text so every newspaper reference uses its exact Latin-script "
                     "name verbatim (e.g. \"Süddeutsche Zeitung\", \"The Wall Street Journal\") embedded "
-                    "directly inside the Hebrew sentence - never transliterated, never in Hebrew letters."
+                    "directly inside the Hebrew sentence, never transliterated, never in Hebrew letters."
                 )
+            if problems:
+                feedback_parts.append("Your previous attempt had a text defect: " + problems_feedback(problems) + ".")
             feedback = " ".join(feedback_parts)
             continue
 
         if suspicious_langs:
             print(f"  topic '{topic['topic_label_en']}' still suspicious after retry - dropping.")
             return None, usage_totals, {}
-        if newspaper_hits or foreign_chars:
+        if newspaper_hits:
             print(f"  topic '{topic['topic_label_en']}' still has a newspaper-name violation after retry - dropping.")
+            return None, usage_totals, {}
+        if problems:
+            print(f"  topic '{topic['topic_label_en']}' still has a text defect after retry ({problem_kind(problems)}) - dropping.")
             return None, usage_totals, {}
         if over:
             print(f"  topic '{topic['topic_label_en']}' still over ceiling after retry "
                   f"({', '.join(f'{lang}={n}w' for lang, n in over.items())}) - keeping anyway, flagged.")
-        return result, usage_totals, over
+        return _finish_biweekly_result(result), usage_totals, over
     return None, usage_totals, last_over
 
 
-def write_overview(client, topics: list[dict]) -> tuple[dict, dict]:
+def write_overview(client, topics: list[dict], feedback: str = "") -> tuple[dict, dict]:
     lines = [f"- {t['topic_label_en']} ({t['n_distinct_days']}d, {t['n_sources']} src)" for t in topics]
     user_content = "Topics in this edition, by source-breadth:\n\n" + "\n".join(lines)
+    if feedback:
+        user_content += "\n\n" + feedback
     response = call_with_retry("overview", lambda: client.messages.create(
         model=MODEL,
         max_tokens=2000,
@@ -894,6 +941,49 @@ def write_overview(client, topics: list[dict]) -> tuple[dict, dict]:
     return result, usage
 
 
+def _overview_problems(overview: dict) -> tuple[dict, dict, list[str]]:
+    """(text problems by kind, newspaper-name tells, suspicious languages) of an overview, by the same checks as a topic."""
+    fields = {f"overview_{lang}": overview.get(f"overview_{lang}", "") for lang in ("he", "en", "de")}
+    problems = writer_problems(fields, hebrew_fields=("overview_he",))
+    tells = hebrew_newspaper_name_tells(fields["overview_he"])
+    suspicious = [lang for lang in ("he", "en", "de") if _looks_suspicious(fields[f"overview_{lang}"])]
+    return problems, tells, suspicious
+
+
+def write_overview_checked(client, topics: list[dict]) -> tuple[dict, dict]:
+    """The overview used to be unchecked. Same guards as a topic (shared text checks, newspaper names in Hebrew letters,
+    placeholder output), one retry with feedback; a repeat failure keeps the overview (a report without one is worse) and
+    says so loudly in the log. The prefix hyphen is repaired deterministically."""
+    overview, usage = write_overview(client, topics)
+    problems, tells, suspicious = _overview_problems(overview)
+    if problems or tells or suspicious:
+        parts = []
+        if problems:
+            parts.append("Your previous attempt had a text defect: " + problems_feedback(problems) + ".")
+        if tells:
+            parts.append("Your previous attempt wrote newspaper names in Hebrew letters: "
+                         + "; ".join(f'"{t}" should have been "{n}"' for t, n in tells.items())
+                         + ". Use the exact Latin-script names, never transliterated.")
+        if suspicious:
+            parts.append(f"Your previous attempt produced empty or placeholder text in: {', '.join(suspicious)}.")
+        print(f"  overview needs a rewrite ({', '.join(list(problems) + (['newspaper_names'] if tells else []) + (['suspicious'] if suspicious else []))}) - retrying once.")
+        try:
+            retry, usage = write_overview(client, topics, feedback=" ".join(parts))
+            overview = retry
+        except Exception as exc:
+            print(f"  overview retry failed ({exc}) - keeping the first overview.")
+        problems, tells, suspicious = _overview_problems(overview)
+        if problems or tells or suspicious:
+            print("  *** WARNING: the overview still has a defect after the retry "
+                  f"({', '.join(list(problems) + (['newspaper_names'] if tells else []) + (['suspicious'] if suspicious else []))}) - kept, needs a human look.")
+    fixed, n = fix_attached_prefixes(overview.get("overview_he", ""))
+    if n:
+        overview["overview_he"] = fixed
+        with _LOG_ONLY_LOCK:
+            BIWEEKLY_LOG_ONLY["prefix_hyphen"] += n
+    return overview, usage
+
+
 def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
     for t in topics:
         t["_days"] = load_topic_days(conn, t)
@@ -905,6 +995,8 @@ def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
 
     results: dict[str, dict] = {}
     failed = []
+    for key in BIWEEKLY_LOG_ONLY:
+        BIWEEKLY_LOG_ONLY[key] = 0
 
     first = topics[0]
     print(f"  cache-warming with: {first['topic_label_en']}")
@@ -935,7 +1027,9 @@ def run_stage2(client, conn, topics: list[dict]) -> tuple[dict, list[dict]]:
         t["result"] = results[t["topic_label_en"]]
 
     print("  writing overview...")
-    overview, _ = write_overview(client, kept_topics)
+    overview, _ = write_overview_checked(client, kept_topics)
+    print("Biweekly text fixes (no retry): prefix_hyphen=%d | name forms (counted, never checked): missing_the=%d abbreviations=%d"
+          % (BIWEEKLY_LOG_ONLY["prefix_hyphen"], BIWEEKLY_LOG_ONLY["missing_the"], BIWEEKLY_LOG_ONLY["abbreviations"]))
     return overview, kept_topics
 
 

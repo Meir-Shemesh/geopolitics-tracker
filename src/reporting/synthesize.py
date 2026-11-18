@@ -34,6 +34,18 @@ from dotenv import load_dotenv
 from src.common import batch_runner
 from src.common.about_content import CONTENT
 from src.reporting.render import NEWSPAPER_COUNTRIES, NEWSPAPER_DISPLAY_NAMES
+from src.reporting.text_checks import (  # one shared copy for the daily and the biweekly writer
+    fix_attached_prefixes,
+    foreign_script_chars,
+    hebrew_newspaper_name_tells,
+    latin_name_form_counts,
+    low_hebrew_ratio,
+    mixed_script_words,
+    problem_kind,
+    problems_feedback,
+    tag_fragments,
+    writer_problems,
+)
 from src.common.db import (
     BATCH_STAGE_SUFFIX,
     close_api_batch,
@@ -280,31 +292,33 @@ _NEWSPAPER_COUNTRY_LIST = "; ".join(
     f"{NEWSPAPER_DISPLAY_NAMES[key]} = {country}" for key, country in NEWSPAPER_COUNTRIES.items() if key in NEWSPAPER_DISPLAY_NAMES
 )
 
-STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor for a geopolitical news-monitoring report, writing the cross-source comparison for ONE already-identified topic (grouping already happened in an earlier pass). You will be given every article assigned to this topic - each with an id, source newspaper, headline, an original per-article topic tag, a stance summary, and a key excerpt - plus that topic's already-decided English and Hebrew labels, for reference only.
+STAGE2_SYSTEM_PROMPT = f"""You are a synthesis editor for a geopolitical news-monitoring report, writing the cross-source comparison for ONE already-identified topic (grouping already happened in an earlier pass). You will be given every article assigned to this topic, each with an id, source newspaper, headline, an original per-article topic tag, a stance summary, and a key excerpt, plus that topic's already-decided English and Hebrew labels, for reference only.
 
-Your task: write a comparative analysis (a few sentences to a short paragraph) of how the sources covering this topic frame it differently - their differing emphasis, stance, or angle - not a neutral summary of "what happened." If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), treat them as ONE voice for that newspaper in your narrative - do not present that newspaper's position on the same event twice, even though you were given both ids. If only one source covers the topic, describe that source's stance/angle on its own.
+Your task: write a comparative analysis (a few sentences to a short paragraph) of how the sources covering this topic frame it differently, their differing emphasis, stance, or angle, not a neutral summary of "what happened." If two or more articles from the SAME newspaper describe the same specific event (for example, a front-page teaser and a fuller inside article about the same story), treat them as ONE voice for that newspaper in your narrative, do not present that newspaper's position on the same event twice, even though you were given both ids. If only one source covers the topic, describe that source's stance/angle on its own.
 
-Attribution: some articles carry an "author (byline)" line - this marks a named opinion columnist or a signed letter/op-ed, not straight institutional reporting. When an article has a named author, attribute its claim/stance to that PERSON, not to the newspaper as an institution - for example "In his column in The Los Angeles Times, Jonah Goldberg argues..." or "In a letter to The Guardian, Mergen Mongush writes...", never "The Los Angeles Times argues..." for that same piece. Reserve institutional phrasing ("The Guardian reports...", "Die Welt argues...") for articles with no author line - these are presumed to be unsigned reporting or an unsigned editorial position, where attributing the newspaper itself is correct. When a topic mixes both (a signed column alongside unsigned reporting from other sources), attribute each article according to its own author line - do not let one override the other.
+Attribution: some articles carry an "author (byline)" line, this marks a named opinion columnist or a signed letter/op-ed, not straight institutional reporting. When an article has a named author, attribute its claim/stance to that PERSON, not to the newspaper as an institution, for example "In his column in The Los Angeles Times, Jonah Goldberg argues..." or "In a letter to The Guardian, Mergen Mongush writes...", never "The Los Angeles Times argues..." for that same piece. Reserve institutional phrasing ("The Guardian reports...", "Die Welt argues...") for articles with no author line, these are presumed to be unsigned reporting or an unsigned editorial position, where attributing the newspaper itself is correct. When a topic mixes both (a signed column alongside unsigned reporting from other sources), attribute each article according to its own author line, do not let one override the other.
 
-Reference sources by name only - never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en/de, in any language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report..." - never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content - not a mechanical translation of one into the other (and not a translation of comparison_text_he or comparison_text_en into German either - compose comparison_text_de independently, from the same source articles).
+Reference sources by name only, never by article id or page number. Article id numbers must NEVER appear inside comparison_text_he/en/de, in any language, even in parentheses. For example, write "The Daily Telegraph and Die Welt report...", never "The Daily Telegraph (257, 265, 266) and Die Welt (284) report...". Write natural, fluent prose in each language conveying the same substantive content, not a mechanical translation of one into the other (and not a translation of comparison_text_he or comparison_text_en into German either, compose comparison_text_de independently, from the same source articles).
 
-Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script - never transliterate, translate, abbreviate, or mix scripts, in any language: {_NEWSPAPER_NAME_LIST}. This applies identically inside Hebrew and German text - a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית..." - never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name. The same rule covers ANY other newspaper, magazine or media outlet you mention by name - for example a regional paper that one of the sources quotes, such as "Lausitzer Rundschau" (never "הלאוזיצר רונדשאו"): keep its original Latin-script name.
+Newspaper names: whenever you refer to a source by name, you must use EXACTLY one of these forms, in their original Latin script, never transliterate, translate, abbreviate, or mix scripts, in any language: {_NEWSPAPER_NAME_LIST}. This applies identically inside Hebrew and German text, a Latin-script proper name is never rendered in Hebrew letters or Germanized. For example, a correct Hebrew sentence looks like: "The Daily Telegraph מדווח כי הממשלה הבריטית...", never "הדיילי טלגרף", "טלגרף", or any other transliteration or mangled rendering of the name. The same rule covers ANY other newspaper, magazine or media outlet you mention by name, for example a regional paper that one of the sources quotes, such as "Lausitzer Rundschau" (never "הלאוזיצר רונדשאו"): keep its original Latin-script name.
 
 Newspaper nationality: the home country of each newspaper is fixed: {_NEWSPAPER_COUNTRY_LIST}. (The Economist is treated as an international outlet, belonging to no single country; The Globe and Mail is Canadian; Neue Zürcher Zeitung is Swiss, German-language but not German.) A newspaper's country is NOT the country its article is about, and NOT the desk or edition that filed it: The Guardian is a British newspaper even when the piece comes from its Guardian US desk and is about American politics. Never group or label newspapers by nationality or language ("the American papers", "both British outlets", "the German-language press", "die amerikanischen Zeitungen", "העיתונים הבריטיים") unless EVERY newspaper you place in that group has that country in the list above. If in doubt, name the newspapers and do not label them by country.
 
-Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify - for example "שתי זוויות" not "שני זוויות" (זווית is feminine), "שלוש כתבות" not "שלושה כתבות" (כתבה is feminine). When attributing a claim to a named columnist, use exactly the form "בטור ב-{{שם המקור}}" (for example "בטור ב-Süddeutsche Zeitung", "בטור ב-The Guardian") - never insert an extra word between "בטור ב" and the source name (for example "בטור בזמן Die Welt" is wrong - no such word belongs in this phrase, regardless of which source it precedes). Also watch for part-of-speech mismatches between an adjective and the noun it modifies - an adjective like "מושחת" (corrupt) correctly describes a concrete entity (a regime, an administration, officials, an economy - e.g. "מערכת מושחתת", "פקידים מושחתים") but not an abstract concept such as a fear or concern (never "חששות מושחתות" - if the intended meaning involves corruption as a concept, phrase it with "שחיתות" itself as the noun, e.g. "חששות מפני שחיתות"). Reread each Hebrew sentence you write for all of these kinds of errors before finalizing it.
+Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify, for example "שתי זוויות" not "שני זוויות" (זווית is feminine), "שלוש כתבות" not "שלושה כתבות" (כתבה is feminine). When attributing a claim to a named columnist, use exactly the form "בטור ב-{{שם המקור}}" (for example "בטור ב-Süddeutsche Zeitung", "בטור ב-The Guardian"), never insert an extra word between "בטור ב" and the source name (for example "בטור בזמן Die Welt" is wrong, no such word belongs in this phrase, regardless of which source it precedes). Also watch for part-of-speech mismatches between an adjective and the noun it modifies, an adjective like "מושחת" (corrupt) correctly describes a concrete entity (a regime, an administration, officials, an economy, e.g. "מערכת מושחתת", "פקידים מושחתים") but not an abstract concept such as a fear or concern (never "חששות מושחתות", if the intended meaning involves corruption as a concept, phrase it with "שחיתות" itself as the noun, e.g. "חששות מפני שחיתות"). Reread each Hebrew sentence you write for all of these kinds of errors before finalizing it.
 
 Hebrew style rules (each one is a mistake observed in published reports, PROJECT_LOG 4.105):
 (1) Definite construct state (smichut): in a definite chain "X of Y" the definite article belongs to the SECOND noun (the dependent one), never to the first. Correct: "ושאלת ניגוד העניינים", "בנתוני דעת הקהל", "ניגוד העניינים". Incorrect: "ושאלת הניגוד עניינים", "בנתוני הדעת הקהל".
-(2) Terminology: write "בדלנות" / "בדלנים" / "בדלנית" for separatism / separatists / separatist - never "פרדתנות", "פרדתנים" or "פרדתנית" (a non-standard rendering of the word).
-(3) Direct quotations are translated into the language of the text you are writing. Keep a quotation in its original language only when translating it would lose something real - a pun, a coined word, or a distinctive turn of phrase whose exact wording is the point - and then give a short paraphrase in the text's own language next to it. Translate: Trump's plain statement "doesn't want to end this war, and probably never did" becomes "אינו רוצה לסיים את המלחמה, וכנראה מעולם לא רצה". Keep (with a paraphrase): a coinage like "Remoaners", whose meaning depends on the English wording.
-(4) Students vs. school pupils: English "student" covers both, Hebrew and German do not. Hebrew "תלמידים" / German "Schüler" are school pupils (high school, lycée); Hebrew "סטודנטים" / German "Studenten" or "Studierende" are university students. Decide from the evidence in the articles - the German-language sources ("Schüler" vs. "Student"), and cues such as high school, lycée, class sizes, school funding versus campuses, universities, admissions - and write the matching word in all three languages. Never default to "סטודנטים" just because the English word is "student". If the movement includes both groups, say so ("תלמידים וסטודנטים").
+(2) Terminology: write "בדלנות" / "בדלנים" / "בדלנית" for separatism / separatists / separatist, never "פרדתנות", "פרדתנים" or "פרדתנית" (a non-standard rendering of the word).
+(3) Direct quotations are translated into the language of the text you are writing. Keep a quotation in its original language only when translating it would lose something real, a pun, a coined word, or a distinctive turn of phrase whose exact wording is the point, and then give a short paraphrase in the text's own language next to it. Translate: Trump's plain statement "doesn't want to end this war, and probably never did" becomes "אינו רוצה לסיים את המלחמה, וכנראה מעולם לא רצה". Keep (with a paraphrase): a coinage like "Remoaners", whose meaning depends on the English wording.
+(4) Students vs. school pupils: English "student" covers both, Hebrew and German do not. Hebrew "תלמידים" / German "Schüler" are school pupils (high school, lycée); Hebrew "סטודנטים" / German "Studenten" or "Studierende" are university students. Decide from the evidence in the articles, the German-language sources ("Schüler" vs. "Student"), and cues such as high school, lycée, class sizes, school funding versus campuses, universities, admissions, and write the matching word in all three languages. Never default to "סטודנטים" just because the English word is "student". If the movement includes both groups, say so ("תלמידים וסטודנטים").
 
-Newspaper names always take grammatically MASCULINE agreement in Hebrew (verbs, possessive suffixes, relative pronouns), regardless of any grammatical gender implied by the source language or the English name's surface form - this applies even when a newspaper name is itself grammatically feminine in its own language, such as German "Die Welt" or "Die Zeit" ("die" is feminine in German), or sounds like it could be feminine in English. Correct: "Die Welt מציע", "Die Welt, המציג את העמדה". Incorrect: "Die Welt מציעה", "Die Welt, המציגה את העמדה". The agreement must survive a phrase placed between the newspaper name and the verb - in particular the name of an author of a different grammatical gender: correct "USA Today, בכתבתה של קריסטין פיליפס, מוסיף זווית"; incorrect "USA Today, בכתבתה של קריסטין פיליפס, מוסיפה זווית" (the verb wrongly agrees with the feminine author instead of the newspaper). The same applies to a compound subject: "Neue Zürcher Zeitung ו-Süddeutsche Zeitung נוקטים" not "נוקטות". This rule applies only when the newspaper name itself is the direct grammatical subject - a sentence whose real subject is a feminine Hebrew noun like "הכתבה" (the article) or "כתבה חתומה בידי X" (an article signed by X) correctly keeps feminine agreement with that noun even when the newspaper is named nearby (e.g. "הכתבה ב-Der Spiegel ממסגרת..." is correct - "הכתבה", not "Der Spiegel", is the subject there). Never introduce a Hebrew descriptor that misidentifies what kind of outlet a source is just to make the grammar work (e.g. calling Der Spiegel a "סוכנות ידיעות" - a news agency - is both factually wrong, it is a magazine, and forces incorrect feminine agreement since "סוכנות" is a feminine noun) - if a sentence's grammar would require that kind of workaround, restructure the sentence instead.
+Newspaper names always take grammatically MASCULINE agreement in Hebrew (verbs, possessive suffixes, relative pronouns), regardless of any grammatical gender implied by the source language or the English name's surface form, this applies even when a newspaper name is itself grammatically feminine in its own language, such as German "Die Welt" or "Die Zeit" ("die" is feminine in German), or sounds like it could be feminine in English. Correct: "Die Welt מציע", "Die Welt, המציג את העמדה". Incorrect: "Die Welt מציעה", "Die Welt, המציגה את העמדה". The agreement must survive a phrase placed between the newspaper name and the verb, in particular the name of an author of a different grammatical gender: correct "USA Today, בכתבתה של קריסטין פיליפס, מוסיף זווית"; incorrect "USA Today, בכתבתה של קריסטין פיליפס, מוסיפה זווית" (the verb wrongly agrees with the feminine author instead of the newspaper). The same applies to a compound subject: "Neue Zürcher Zeitung ו-Süddeutsche Zeitung נוקטים" not "נוקטות". This rule applies only when the newspaper name itself is the direct grammatical subject, a sentence whose real subject is a feminine Hebrew noun like "הכתבה" (the article) or "כתבה חתומה בידי X" (an article signed by X) correctly keeps feminine agreement with that noun even when the newspaper is named nearby (e.g. "הכתבה ב-Der Spiegel ממסגרת..." is correct, "הכתבה", not "Der Spiegel", is the subject there). Never introduce a Hebrew descriptor that misidentifies what kind of outlet a source is just to make the grammar work (e.g. calling Der Spiegel a "סוכנות ידיעות", a news agency, is both factually wrong, it is a magazine, and forces incorrect feminine agreement since "סוכנות" is a feminine noun), if a sentence's grammar would require that kind of workaround, restructure the sentence instead.
 
-German: topic_label_de and comparison_text_de must read as if written natively in German by a professional journalist, in the same formal-but-readable register (Hochsprache) as this real excerpt of the project's established German house style: "{_GERMAN_STYLE_ANCHOR}" - match that register and, where it fits naturally, its established terms (e.g. "Meinungsbeitrag(e)" for an opinion piece, "Vergleich" for the cross-source comparison, "Quelle"/"Zeitung" for a source). topic_label_de is a natural German label for this topic, not a translation of topic_label_en or topic_label_he - use those two only as context for what the topic is. Pay particular attention to German article/adjective/case agreement (der/die/das and declension) and noun-number agreement; reread each German sentence for this kind of agreement error before finalizing it.
+German: topic_label_de and comparison_text_de must read as if written natively in German by a professional journalist, in the same formal-but-readable register (Hochsprache) as this real excerpt of the project's established German house style: "{_GERMAN_STYLE_ANCHOR}", match that register and, where it fits naturally, its established terms (e.g. "Meinungsbeitrag(e)" for an opinion piece, "Vergleich" for the cross-source comparison, "Quelle"/"Zeitung" for a source). topic_label_de is a natural German label for this topic, not a translation of topic_label_en or topic_label_he, use those two only as context for what the topic is. Pay particular attention to German article/adjective/case agreement (der/die/das and declension) and noun-number agreement; reread each German sentence for this kind of agreement error before finalizing it.
 
-Character set: every output field may contain ONLY Hebrew letters (in Hebrew text), Latin letters (including accented ones such as ä ö ü ß é), digits and standard punctuation - never Cyrillic, Arabic, Devanagari, Thai, CJK or any other script, not even as a by-product of trying to phonetically transcribe a non-English name. When you are not certain of the exact Hebrew transliteration of a name (Russian names, German names with umlauts, etc.), keep the name in its original Latin spelling instead of transliterating it.
+Character set: every output field may contain ONLY Hebrew letters (in Hebrew text), Latin letters (including accented ones such as ä ö ü ß é), digits and standard punctuation, never Cyrillic, Arabic, Devanagari, Thai, CJK or any other script, not even as a by-product of trying to phonetically transcribe a non-English name. When you are not certain of the exact Hebrew transliteration of a name (Russian names, German names with umlauts, etc.), keep the name in its original Latin spelling instead of transliterating it.
+
+Punctuation in the Hebrew text: do not use a spaced hyphen (" - "), an en dash or an em dash as a separator inside a sentence, in comparison_text_he or in any Hebrew label. Use a comma, a colon, parentheses, or end the sentence and start a new one. Hyphens that belong to the words themselves stay as normal Hebrew usage: a prefix before a number or a Latin name (ב-2028, ה-Guardian), compound names (רוסיה-אוקראינה) and ranges written without spaces (3-4 בספטמבר).
 
 Call record_topic_comparison exactly once with topic_label_de, comparison_text_he, comparison_text_en, and comparison_text_de."""
 
@@ -423,18 +437,7 @@ def _looks_suspicious(text: str) -> bool:
 #   * audit_sections() then checks every field of the final sections - including
 #     the stage-1 labels that the retry gate cannot re-ask - and reports flags.
 # ---------------------------------------------------------------------------
-# Hebrew block, printable ASCII, Latin-1/Extended-A/B, IPA + spacing modifiers,
-# combining marks, general punctuation, currency, arrows, minus, bullet, bidi controls.
-# Calibrated against the full archive: every legitimate character in it is covered.
-_ALLOWED_TEXT_CHAR = re.compile(
-    r"[\u0590-\u05FF\u0020-\u007E\u00A0-\u024F\u0250-\u02FF\u0300-\u036F\u2000-\u206F"
-    r"\u20A0-\u20CF\u2190-\u21FF\u2212\u2022\u200E\u200F\u202A-\u202E\n\r\t]"
-)
-
-
-def foreign_script_chars(text: str) -> list[str]:
-    """Characters in text that are outside Hebrew/Latin/punctuation/digits (empty list = clean)."""
-    return sorted({ch for ch in (text or "") if not _ALLOWED_TEXT_CHAR.match(ch)})
+# (the allowed-character whitelist and foreign_script_chars() now live in text_checks.py, shared with the biweekly writer)
 
 
 # A digit 1 wedged between two names/words by a hyphen or space ("X-1 Y", "X 1-Y") - the
@@ -469,28 +472,7 @@ def claimed_newspaper_counts(text: str, lang: str) -> list[int]:
     return out
 
 
-# Hebrew-letter renderings of newspaper names that must stay Latin. The base list (the original sources)
-# is the biweekly writer's; the extras cover the sources added since and the regional-paper case.
-_EXTRA_NEWSPAPER_TELLS = {
-    "פרנקפורטר": "Frankfurter Allgemeine Zeitung",
-    "נוישה": "Neue Zürcher Zeitung",
-    "צירכר": "Neue Zürcher Zeitung",
-    "גלוב אנד מייל": "The Globe and Mail",
-    "אובזרבר": "The Observer",
-    "אובסרבר": "The Observer",
-    "רונדשאו": "(a newspaper named Rundschau)",
-}
-
-
-def hebrew_newspaper_name_tells(text: str) -> dict[str, str]:
-    from src.reporting.synthesize_biweekly import TRANSLITERATION_TELLS  # lazy: that module imports this one
-
-    tells = {**TRANSLITERATION_TELLS, **_EXTRA_NEWSPAPER_TELLS}
-    # "לוס אנג'לס" (the city) and "וול סטריט" (the market) are ordinary Hebrew place names; flagging them
-    # produced only false positives on the daily archive (checked 2026-10-20) - the biweekly writer keeps them.
-    for place in ("לוס אנג'לס", "וול סטריט"):
-        tells.pop(place, None)
-    return {tell: name for tell, name in tells.items() if tell in (text or "")}
+# (the Hebrew-letter newspaper-name tells and hebrew_newspaper_name_tells() now live in text_checks.py: one merged list)
 
 
 # --- Opening-sentence framing gate (PROJECT_LOG 4.112) ---------------------------------------------------------
@@ -605,14 +587,37 @@ def framing_retry_feedback(conflict: dict) -> str:
     )
 
 
+_WRITER_FIELDS = ("topic_label_de", "comparison_text_he", "comparison_text_en", "comparison_text_de")
+
+
+def _writer_problems(comparison: dict | None) -> dict[str, dict]:
+    """Retry-worthy defects of a freshly written comparison (text_checks.writer_problems): characters outside Hebrew/Latin,
+    Hebrew and Latin letters fused in one word, markup or field names inside the text, a Hebrew field that is mostly not
+    Hebrew. A Hebrew prefix glued to a Latin name is NOT one of them - it is repaired afterwards without a retry."""
+    c = comparison or {}
+    return writer_problems({f: c.get(f, "") for f in _WRITER_FIELDS}, hebrew_fields=("comparison_text_he",))
+
+
 def _suspicious_langs(comparison: dict) -> list[str]:
-    langs = [
-        lang for lang in ("he", "en", "de")
-        if _looks_suspicious(comparison[f"comparison_text_{lang}"]) or foreign_script_chars(comparison[f"comparison_text_{lang}"])
-    ]
-    if foreign_script_chars(comparison.get("topic_label_de", "")):
-        langs.append("label_de")
+    langs = [lang for lang in ("he", "en", "de") if _looks_suspicious(comparison[f"comparison_text_{lang}"])]
+    for by_field in _writer_problems(comparison).values():
+        for field in by_field:
+            tag = field.replace("comparison_text_", "") if field.startswith("comparison_text_") else "label_de"
+            if tag not in langs:
+                langs.append(tag)
     return langs
+
+
+def _suspicious_kind(comparison: dict | None) -> str:
+    """The most specific log reason for a suspicious comparison: foreign_script_chars, mixed_script, tag_fragment,
+    low_hebrew_ratio, else the generic suspicious (too short / bare number)."""
+    return problem_kind(_writer_problems(comparison))
+
+
+def _suspicious_retry_feedback(comparison: dict | None) -> str:
+    """Feedback for the one retry of a suspicious answer: names exactly what was found, or empty (blind retry as before)."""
+    found = problems_feedback(_writer_problems(comparison))
+    return ("FEEDBACK ON YOUR PREVIOUS ANSWER: " + found + ". Rewrite all the fields and keep everything else as it was.") if found else ""
 
 
 # --- Nationality-label audit (PROJECT_LOG 4.131) -------------------------------------------------------------------
@@ -715,6 +720,17 @@ def audit_sections(sections: list[dict], articles: list[dict]) -> list[str]:
             if tells:
                 flags.append(f"NEWSPAPER NAME IN HEBREW LETTERS in {field} of '{name}': "
                              + ", ".join(f"{t} (= {n})" for t, n in tells.items()))
+        for field in ("topic_label_he", "topic_label_en", "topic_label_de", "comparison_text_he", "comparison_text_en", "comparison_text_de"):
+            words = mixed_script_words(sec.get(field) or "")
+            if words:
+                flags.append(f"MIXED SCRIPT WORD in {field} of '{name}': " + ", ".join(words[:5]))
+            frags = tag_fragments(sec.get(field) or "")
+            if frags:
+                flags.append(f"MARKUP OR FIELD NAME IN TEXT in {field} of '{name}': " + ", ".join(frags[:5]))
+        if sec.get("category") != FALLBACK_CATEGORY:
+            ratio = low_hebrew_ratio(sec.get("comparison_text_he") or "")
+            if ratio is not None:
+                flags.append(f"LOW HEBREW SHARE in comparison_text_he of '{name}': {ratio:.0%} of its letters are Hebrew")
         if _VAV_AS_ONE.search(sec.get("comparison_text_he") or ""):
             flags.append(f"DIGIT-1 BETWEEN NAMES (possible garbled 'ו-') in comparison_text_he of '{name}'")
         real = len({newspaper_by_id[i] for i in sec.get("article_ids", []) if i in newspaper_by_id})
@@ -863,6 +879,44 @@ def write_stage2_events(report_date: str, events: list[dict]) -> None:
         print(f"  warning: could not write the stage-2 events file ({exc}) - continuing.")
 
 
+def _problem_summary(comparison: dict | None) -> str:
+    """Short, bounded description of the new text checks' findings for the event detail (words, tags, ratio)."""
+    try:
+        bits = []
+        for kind, by_field in _writer_problems(comparison).items():
+            if kind == "foreign_chars":
+                continue  # already shown as foreign_chars={...} by the failure line itself
+            for field, v in by_field.items():
+                bits.append(f"{kind}:{field.replace('comparison_text_', '')}=" + (",".join(v[:3]) if isinstance(v, list) else str(v)))
+        return (" | " + "; ".join(bits))[:200] if bits else ""
+    except Exception:  # noqa: BLE001 - logging only
+        return ""
+
+
+# Clean-up that never needs a retry and never rejects a topic (counted in the log): a Hebrew prefix glued to a Latin name
+# gets its hyphen ("בSüddeutsche" -> "ב-Süddeutsche"), and the Latin name forms we deliberately do not check (a missing
+# "The", FAZ/NZZ/SZ) are only counted, decided 2026-11-15.
+STAGE2_LOG_ONLY: Counter = Counter()
+
+
+def _finish_comparison(topic: dict, comparison: dict) -> dict:
+    try:
+        fixed, n = fix_attached_prefixes(comparison.get("comparison_text_he", ""))
+        if n:
+            comparison = {**comparison, "comparison_text_he": fixed}
+            print(f"  prefix hyphen added {n} time(s) in the Hebrew text of '{topic.get('topic_label_en', '?')}' (no retry)")
+        forms = Counter()
+        for lang in ("he", "en", "de"):
+            forms.update(latin_name_form_counts(comparison.get(f"comparison_text_{lang}", "")))
+        with _STAGE2_LOCK:
+            STAGE2_LOG_ONLY["prefix_hyphen"] += n
+            STAGE2_LOG_ONLY["missing_the"] += forms["missing_the"]
+            STAGE2_LOG_ONLY["abbreviations"] += forms["abbreviations"]
+    except Exception:  # noqa: BLE001 - clean-up and logging must never fail a topic
+        pass
+    return comparison
+
+
 def write_topic_comparison_with_retry(client, topic, topic_articles, first=None):
     """One quick retry on failure; returns None (not an exception) if both attempts fail -
     the caller treats that topic's articles as needing individual fallback, exactly like
@@ -877,10 +931,13 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
     other kind of stage-2 failure already uses, not a new failure path.
 
     `first` ((usage, comparison) from the Batches API, SYNTH_USE_BATCH) replaces only the first regular call."""
+    retry_feedback = ""
     for attempt in range(2):
         try:
             if attempt == 0 and first is not None:
                 usage, comparison = first  # the batch answer stands in for the first regular call; the rest is unchanged
+            elif retry_feedback:
+                usage, comparison = write_topic_comparison(client, topic, topic_articles, feedback=retry_feedback)
             else:
                 usage, comparison = write_topic_comparison(client, topic, topic_articles)
         except Exception as exc:
@@ -896,8 +953,9 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
                 f"  topic '{topic['topic_label_en']}' attempt {attempt + 1} produced suspicious "
                 f"output in: {', '.join(suspicious_langs)} - retrying once."
             )
-            _log_stage2_failure(topic, "foreign_script_chars" if _foreign_chars_by_field(comparison) else "suspicious",
-                                attempt + 1, detail="langs=" + ",".join(suspicious_langs), comparison=comparison)
+            _log_stage2_failure(topic, _suspicious_kind(comparison), attempt + 1,
+                                detail="langs=" + ",".join(suspicious_langs) + _problem_summary(comparison), comparison=comparison)
+            retry_feedback = _suspicious_retry_feedback(comparison)
             continue
         if suspicious_langs:
             print(
@@ -906,13 +964,14 @@ def write_topic_comparison_with_retry(client, topic, topic_articles, first=None)
             )
             _count_stage2_event("failed_topic")
             _close_stage2_events(topic, "fell_to_fallback")
-            _log_stage2_failure(topic, "foreign_script_chars" if _foreign_chars_by_field(comparison) else "suspicious",
-                                detail="langs=" + ",".join(suspicious_langs) + " (still bad after retry)",
+            _log_stage2_failure(topic, _suspicious_kind(comparison),
+                                detail="langs=" + ",".join(suspicious_langs) + _problem_summary(comparison) + " (still bad after retry)",
                                 comparison=comparison, final=True)
             return None
         _close_stage2_events(topic, "resolved_by_retry")  # open events here are the failed first attempt only
         usage, comparison = _retry_for_national_framing(client, topic, topic_articles, usage, comparison)
-        return _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison)
+        usage, comparison = _retry_for_hebrew_newspaper_names(client, topic, topic_articles, usage, comparison)
+        return usage, _finish_comparison(topic, comparison)
     _count_stage2_event("failed_topic")
     _close_stage2_events(topic, "fell_to_fallback")
     _log_stage2_failure(topic, "error", detail="no usable answer from either attempt", final=True)
@@ -1360,6 +1419,7 @@ def synthesize_day_two_stage(
     with _STAGE2_LOCK:
         STAGE2_EVENTS.clear()
         STAGE2_EVENT_LOG.clear()
+        STAGE2_LOG_ONLY.clear()
         STAGE2_RUN_INFO.clear()
         STAGE2_RUN_INFO.update(topics=0, batch_enabled=batch_conn is not None, answered=0, wait_seconds=0.0)
 
@@ -1709,6 +1769,9 @@ def print_stage2_summary(since: str, report_date: str | None = None) -> None:
     try:
         with _STAGE2_LOCK:
             events = [dict(e) for e in STAGE2_EVENT_LOG]
+            log_only = dict(STAGE2_LOG_ONLY)
+        print("Stage 2 text fixes (no retry): prefix_hyphen=%d | name forms (counted, never checked): missing_the=%d abbreviations=%d"
+              % (log_only.get("prefix_hyphen", 0), log_only.get("missing_the", 0), log_only.get("abbreviations", 0)))
         for line in format_stage2_events_block(events):
             print(line)
         if report_date:
