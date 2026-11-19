@@ -52,6 +52,7 @@ import shutil
 import smtplib
 import subprocess
 import sys
+import time
 from datetime import date, datetime
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -74,6 +75,7 @@ PAUSE_FLAG = PROJECT_ROOT / ".pause_automation"
 SCHEDULED_TASK_NAME = "GeopoliticsTrackerDailyAutorun"
 
 CONSECUTIVE_FAILURE_LIMIT = 2  # trips the kill-switch after this many failed days in a row
+UNITTEST_ATTEMPTS = 2  # the sanity gate runs the unchanged suite once more before the day is declared failed
 
 # Generous per-step ceilings - not tuned to the typical case, tuned to catch a
 # genuine hang (an actual WeasyPrint render.py hang was observed and manually
@@ -82,7 +84,10 @@ CONSECUTIVE_FAILURE_LIMIT = 2  # trips the kill-switch after this many failed da
 # an unattended run, so cutting it off and retrying tomorrow beats sitting on
 # it for the rest of the vacation).
 TIMEOUTS = {
-    "unittest": 5 * 60,
+    # Raised 5 -> 10 min on 2026-11-18: the 15:00 run on 18.11 hit the old ceiling (suite normally 37-71 s) while the disk
+    # was saturated (sampler: avg 310% busy, queue 3.2, vs <=56% on the 6 days before); the same suite passed in 37-45 s
+    # right after. A real hang still costs only 2 x 10 min (see UNITTEST_ATTEMPTS).
+    "unittest": 10 * 60,
     # Raised 90 -> 120 min on 2026-11-07 (PROJECT_LOG 4.130): fetch took 39-57 min on recent days; a heavy weekend
     # day should not sit within a few minutes of the old ceiling.
     "fetch": 120 * 60,
@@ -166,7 +171,21 @@ class StepResult:
         self.note = note
 
 
-def run_step(log, name: str, args: list[str], timeout_key: str | None = None) -> StepResult:
+def kill_process_tree(pid: int) -> None:
+    """Kills `pid` and every process it started (Windows: taskkill /T /F). subprocess's own timeout handling only kills the
+    direct child, so a suite that hangs inside a test's subprocess would leave that subprocess (and the files it holds)
+    alive into the next attempt. Never raises."""
+    try:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, timeout=30,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        else:
+            os.kill(pid, 9)
+    except Exception:  # noqa: BLE001 - best effort; the caller kills the direct child as well
+        pass
+
+
+def run_step(log, name: str, args: list[str], timeout_key: str | None = None, kill_tree: bool = False) -> StepResult:
     """Runs one `venv-python -m <module> <args>` step. Success is defined
     ONLY by exit code (0) - never by inspecting stdout text - per the
     deterministic-wrapper brief. `timeout_key` looks up TIMEOUTS; falls back
@@ -175,12 +194,26 @@ def run_step(log, name: str, args: list[str], timeout_key: str | None = None) ->
     cmd = [str(VENV_PYTHON), "-m", *args]
     log(f"START {name}: {' '.join(cmd)} (timeout {timeout}s)")
     try:
-        proc = subprocess.run(
-            cmd, cwd=str(PROJECT_ROOT), capture_output=True, text=True,
-            encoding="utf-8", errors="replace", timeout=timeout,
-        )
+        if kill_tree:
+            # Same capture and timeout as subprocess.run below, but with the process handle kept so a timeout can kill the
+            # WHOLE tree (not only the direct child) before the caller starts another attempt.
+            popen = subprocess.Popen(cmd, cwd=str(PROJECT_ROOT), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                     encoding="utf-8", errors="replace")
+            try:
+                out, err = popen.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired as exc:
+                kill_process_tree(popen.pid)
+                popen.kill()
+                out, err = popen.communicate()
+                raise subprocess.TimeoutExpired(cmd, timeout, output=out, stderr=err) from exc
+            proc = subprocess.CompletedProcess(cmd, popen.returncode, out, err)
+        else:
+            proc = subprocess.run(
+                cmd, cwd=str(PROJECT_ROOT), capture_output=True, text=True,
+                encoding="utf-8", errors="replace", timeout=timeout,
+            )
     except subprocess.TimeoutExpired as e:
-        log(f"TIMEOUT {name} after {timeout}s")
+        log(f"TIMEOUT {name} after {timeout}s" + (" (process tree killed)" if kill_tree else ""))
         # subprocess.run() already captured whatever reached the pipes before the kill -
         # log it exactly like the success path does, or a timeout leaves no trace of how
         # far the step actually got (see PROJECT_LOG 2026-10-10: a screen.py timeout looked
@@ -202,6 +235,32 @@ def run_step(log, name: str, args: list[str], timeout_key: str | None = None) ->
         summary = [line for line in proc.stderr.splitlines() if line.startswith(("Ran ", "OK", "FAILED"))]
         log("  unittest: " + " | ".join(summary))
     return StepResult(name, ok, proc.returncode, proc.stdout, proc.stderr)
+
+
+def run_unittest_gate(log, runner=None) -> StepResult:
+    """The sanity gate: the full, unchanged suite, at most UNITTEST_ATTEMPTS times. A failure or timeout of the first
+    attempt is logged in full (run_step already prints its output) and the suite is run once more before the day is
+    declared failed; the duration of every attempt is logged. No test is changed or skipped here - a suite that fails
+    on both attempts still fails the day. `runner` exists for the tests."""
+    runner = runner or run_step
+    first_failure = None
+    result = None
+    for attempt in range(1, UNITTEST_ATTEMPTS + 1):
+        started = time.monotonic()
+        result = runner(log, "unittest", ["unittest", "discover", "-b", "-s", "tests"], timeout_key="unittest",
+                        kill_tree=True)
+        log(f"  unittest attempt {attempt}/{UNITTEST_ATTEMPTS}: {'OK' if result.ok else 'FAILED'} "
+            f"in {time.monotonic() - started:.1f}s")
+        if result.ok:
+            if first_failure is not None:
+                result.note = f"passed on attempt {attempt}; attempt 1 failed ({first_failure.note or 'exit ' + str(first_failure.returncode)})"
+                log(f"  unittest: {result.note}")
+            return result
+        first_failure = first_failure or result
+        if attempt < UNITTEST_ATTEMPTS:
+            log(f"  unittest attempt {attempt} failed ({result.note or 'exit ' + str(result.returncode)}); running the suite once more")
+    result.note = f"failed on all {UNITTEST_ATTEMPTS} attempts" + (f" ({result.note})" if result.note else "")
+    return result
 
 
 def run_git(log, args: list[str]) -> StepResult:
@@ -484,7 +543,7 @@ def main() -> int:
         day_ok = True
 
         # --- sanity gate ---
-        r = run_step(log, "unittest", ["unittest", "discover", "-b", "-s", "tests"], timeout_key="unittest")
+        r = run_unittest_gate(log)
         results["unittest"] = r
         day_ok = r.ok
 
@@ -612,7 +671,7 @@ def main() -> int:
         lines = [f"Daily automation run for {today}", ""]
         for name, r in results.items():
             if isinstance(r, StepResult):
-                status = "OK" if r.ok else f"FAILED (exit={r.returncode}{', ' + r.note if r.note else ''})"
+                status = ("OK" + (f" ({r.note})" if r.note else "")) if r.ok else f"FAILED (exit={r.returncode}{', ' + r.note if r.note else ''})"
             else:
                 status = "?"
             lines.append(f"  {name}: {status}")

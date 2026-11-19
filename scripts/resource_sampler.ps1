@@ -17,7 +17,7 @@ $runLog = Join-Path $repo "automation_state\logs\$Date.log"
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $sys = Join-Path $OutDir "system_$Date.csv"
 $top = Join-Path $OutDir "top5_$Date.csv"
-if (-not (Test-Path $sys)) { 'time,cpu_total_pct,disk_pct_busy,disk_bytes_per_sec,disk_queue,onedrive_cpu_pct,onedrive_ws_mb,onedrive_io_bytes_per_sec,ac_line,pipeline_stage' | Set-Content $sys -Encoding utf8 }
+if (-not (Test-Path $sys)) { 'time,cpu_total_pct,disk_pct_busy,disk_bytes_per_sec,disk_queue,onedrive_cpu_pct,onedrive_ws_mb,onedrive_io_bytes_per_sec,ac_line,pipeline_stage,mem_available_mb,mem_committed_pct,pages_per_sec,pages_input_per_sec' | Set-Content $sys -Encoding utf8 }
 if (-not (Test-Path $top)) { 'time,rank,process,pid,cpu_pct_of_one_core' | Set-Content $top -Encoding utf8 }
 
 # Run state from today's run log. The log is appended to by every run of the day (a failed run can be followed by a rerun),
@@ -61,7 +61,14 @@ while ((Get-Date) -lt $deadline) {
         $ac = try { (Get-CimInstance Win32_Battery -ErrorAction Stop | Select-Object -First 1).BatteryStatus } catch { '' }
         $run = Get-RunState
         $stage = $run.Stage
-        "$t,$cpu,$($d.PercentDiskTime),$($d.DiskBytesPerSec),$($d.CurrentDiskQueueLength),$odCpu,$odWs,$odIo,$ac,$stage" | Add-Content $sys -Encoding utf8
+        # Memory (added 2026-11-18 after the 15:00 unittest stall: Memory Compression was busy and nothing recorded memory).
+        # Appended AFTER pipeline_stage so every existing column keeps its position; a failed read leaves the cells empty.
+        $m = try { Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory -ErrorAction Stop } catch { $null }
+        $memAvail = if ($m) { $m.AvailableMBytes } else { '' }
+        $memCommit = if ($m) { $m.PercentCommittedBytesInUse } else { '' }
+        $pagesSec = if ($m) { $m.PagesPersec } else { '' }
+        $pagesIn = if ($m) { $m.PagesInputPersec } else { '' }
+        "$t,$cpu,$($d.PercentDiskTime),$($d.DiskBytesPerSec),$($d.CurrentDiskQueueLength),$odCpu,$odWs,$odIo,$ac,$stage,$memAvail,$memCommit,$pagesSec,$pagesIn" | Add-Content $sys -Encoding utf8
         $rank = 0
         foreach ($p in ($procs | Sort-Object PercentProcessorTime -Descending | Select-Object -First 5)) {
             $rank++
