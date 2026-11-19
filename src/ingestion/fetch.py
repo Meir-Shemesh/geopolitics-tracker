@@ -113,12 +113,18 @@ def guess_newspaper(file_name: str) -> str | None:
         # any NYT edition at the source.
         return None
     if "wall street journal" in normalized or re.search(r"\bwsj\b", normalized):
+        if "magazine" in normalized:
+            # The quarterly lifestyle supplement ("WSJ Magazine - Fall 2026"), not the newspaper. Decided 2026-11-19.
+            return None
         return "Wall Street Journal"
     if "los angeles times" in normalized or re.search(r"\bla\s*times\b", normalized):
         # Must require "Los Angeles" (or "LA") explicitly - "The Times UK" also
         # contains "times" alone and must not match here.
         return "Los Angeles Times"
     if "usa today" in normalized:
+        if "sports weekly" in normalized:
+            # A sports weekly, not the daily paper (it never produced an article). Decided 2026-11-19.
+            return None
         return "USA Today"
     if "washington post" in normalized:
         # Requiring the full two-word phrase avoids any collision with other
@@ -139,7 +145,17 @@ def guess_newspaper(file_name: str) -> str | None:
         # matched here - the others are skipped at download time rather than
         # fetched and discarded afterward.
         return "Economist"
+    if normalized.startswith("dein spiegel") or " dein spiegel" in normalized:
+        # "Dein Spiegel" is the Spiegel group's CHILDREN's magazine, a different
+        # product from Der Spiegel (first seen 2026-11-17, file "Dein Spiegel -
+        # 12.2026.pdf"; its explainer pieces reached the 17.11 report as
+        # "Der Spiegel"). Not an MVP source.
+        return None
     if "spiegel" in normalized:
+        if "wissen" in normalized or "spezial" in normalized:
+            # Separate Spiegel-group titles ("Der Spiegel Wissen", "Der Spiegel - Spezial"), not the weekly Der Spiegel.
+            # Decided 2026-11-19 (files 617 and 224).
+            return None
         return "Der Spiegel"
     # Three sources added 2026-10-12 after a discovery scan + content-verification
     # round (see PROJECT_LOG) - all confirmed real, complete, readable issues via

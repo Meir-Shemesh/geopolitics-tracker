@@ -54,6 +54,38 @@ class NonMvpSiblingsStayUnrecognizedTest(unittest.TestCase):
         )
 
 
+class SpiegelVariantsTest(unittest.TestCase):
+    """Decided 2026-11-19: separate titles of a source's publisher (children's magazine, Spiegel Wissen/Spezial, WSJ Magazine,
+    USA Today Sports Weekly) are not the source itself. The file names below are the ones that reached the archive."""
+
+    def test_non_newspaper_titles_of_a_publisher_are_not_recognised(self):
+        for name in (
+            "Dein Spiegel - 12.2026.pdf",
+            "Dein_Spiegel_12.2026.pdf",
+            "Dein_Spiegel_11.26.pdf",
+            "Der Spiegel Wissen - Nr.2 2026.pdf",
+            "Der Spiegel - Spezial Nr.2 2026.pdf",
+            "The Wall Street Journal Magazine - Fall 2026.pdf",
+            "WSJ Magazine - The Men's Style Issue, Fall 2026.pdf",
+            "USA TODAY Sports Weekly_2608.pdf",
+            "USA Today Sports Weekly - 23 September 2026.pdf",
+            "USA Today Sports Weekly_3009.pdf",
+        ):
+            self.assertIsNone(guess_newspaper(name), name)
+
+    def test_the_real_papers_still_match(self):
+        for name, source in (
+            ("Der Spiegel - 13.11.2026.pdf", "Der Spiegel"),
+            ("Der_Spiegel_6.11.26.pdf", "Der Spiegel"),
+            ("Der Spiegel - 30 Oktober 2026.pdf", "Der Spiegel"),
+            ("Spiegel_2711.pdf", "Der Spiegel"),
+            ("USA Today - November 18, 2026.pdf", "USA Today"),
+            ("The Wall Street Journal - 23 October 2026.pdf", "Wall Street Journal"),
+            ("WSJ_2708.pdf", "Wall Street Journal"),
+        ):
+            self.assertEqual(guess_newspaper(name), source, name)
+
+
 class OtherSourcesUnchangedTest(unittest.TestCase):
     def test_wsj_is_still_identified_so_the_suspension_can_apply(self):
         self.assertEqual(guess_newspaper("The Wall Street Journal - 23 October 2026.pdf"), "Wall Street Journal")
