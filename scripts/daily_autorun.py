@@ -132,6 +132,56 @@ TIMEOUTS = {
     "git": 5 * 60,
 }
 
+# The fetch ceiling can be overridden without a code change (added 2026-11-21 after the 15:00 run hit 7,200 s with the Telegram
+# downloads 3-15x slower than on the day before): first the environment variable, then fetch_timeout_seconds in
+# automation_state/config.json, otherwise TIMEOUTS["fetch"] above. An invalid value is ignored (with a log line), a valid one
+# outside the limits is clamped to them (with a log line).
+FETCH_TIMEOUT_DEFAULT_SECONDS = TIMEOUTS["fetch"]   # captured here so a later override of TIMEOUTS["fetch"] cannot change the default
+FETCH_TIMEOUT_ENV = "GEO_FETCH_TIMEOUT_SECONDS"
+FETCH_TIMEOUT_CONFIG_KEY = "fetch_timeout_seconds"
+FETCH_TIMEOUT_MIN_SECONDS = 600
+FETCH_TIMEOUT_MAX_SECONDS = 28_800
+
+
+def _parse_fetch_timeout(raw) -> tuple[int | None, str | None]:
+    """(seconds, None) for a usable number, (None, reason) when it must be ignored. Not a number, empty, negative, zero, NaN
+    and infinity are all ignored; a bool is not a number here."""
+    if raw is None:
+        return None, None
+    if isinstance(raw, bool):
+        return None, "not a number"
+    if isinstance(raw, str):
+        raw = raw.strip()
+        if not raw:
+            return None, "empty"
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None, "not a number"
+    if value != value or value in (float("inf"), float("-inf")):
+        return None, "not a finite number"
+    if value <= 0:
+        return None, "not positive"
+    return int(value), None
+
+
+def resolve_fetch_timeout(env_value=None, config_value=None) -> tuple[int, str, list[str]]:
+    """(seconds, source, notes): the effective fetch ceiling, where it came from ("env GEO_FETCH_TIMEOUT_SECONDS",
+    "config.json fetch_timeout_seconds" or "default") and the log lines about ignored or clamped values. Pure."""
+    notes: list[str] = []
+    for label, raw in ((f"env {FETCH_TIMEOUT_ENV}", env_value), (f"config.json {FETCH_TIMEOUT_CONFIG_KEY}", config_value)):
+        seconds, problem = _parse_fetch_timeout(raw)
+        if problem:
+            notes.append(f"fetch timeout: ignoring {label}={raw!r} ({problem}).")
+        if seconds is None:
+            continue
+        clamped = min(max(seconds, FETCH_TIMEOUT_MIN_SECONDS), FETCH_TIMEOUT_MAX_SECONDS)
+        if clamped != seconds:
+            notes.append(f"fetch timeout: {label}={seconds}s is outside {FETCH_TIMEOUT_MIN_SECONDS}-{FETCH_TIMEOUT_MAX_SECONDS}s, "
+                         f"clamped to {clamped}s.")
+        return clamped, label, notes
+    return FETCH_TIMEOUT_DEFAULT_SECONDS, "default", notes
+
 
 def log_open(today: str):
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -549,6 +599,12 @@ def main() -> int:
 
         # --- ingestion + corruption pre-screen ---
         if day_ok:
+            fetch_timeout, fetch_timeout_source, fetch_timeout_notes = resolve_fetch_timeout(
+                os.environ.get(FETCH_TIMEOUT_ENV), config.get(FETCH_TIMEOUT_CONFIG_KEY))
+            for note in fetch_timeout_notes:
+                log(note)
+            TIMEOUTS["fetch"] = fetch_timeout
+            log(f"fetch timeout: {fetch_timeout}s (source: {fetch_timeout_source})")
             r = run_step(log, "fetch", ["src.ingestion.fetch"])
             results["fetch"] = r
             day_ok = r.ok
