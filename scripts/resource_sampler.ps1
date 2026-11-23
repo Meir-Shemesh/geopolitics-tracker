@@ -46,6 +46,19 @@ function Get-RunState {
     return $state
 }
 
+# Memory counters, created once. The first NextValue() of a rate counter is meaningless, so each is read once here to prime it.
+# If they cannot be created the four memory columns stay empty; nothing else is affected.
+$memCounters = $null
+try {
+    $memCounters = [pscustomobject]@{
+        Avail   = New-Object System.Diagnostics.PerformanceCounter('Memory', 'Available MBytes')
+        Commit  = New-Object System.Diagnostics.PerformanceCounter('Memory', '% Committed Bytes In Use')
+        Pages   = New-Object System.Diagnostics.PerformanceCounter('Memory', 'Pages/sec')
+        PagesIn = New-Object System.Diagnostics.PerformanceCounter('Memory', 'Pages Input/sec')
+    }
+    foreach ($c in $memCounters.PSObject.Properties) { $null = $c.Value.NextValue() }
+} catch { $memCounters = $null }
+
 $deadline = (Get-Date).AddHours($MaxHours)
 while ((Get-Date) -lt $deadline) {
     $t = Get-Date -Format 'yyyy-MM-ddTHH:mm:ss'
@@ -63,11 +76,19 @@ while ((Get-Date) -lt $deadline) {
         $stage = $run.Stage
         # Memory (added 2026-11-18 after the 15:00 unittest stall: Memory Compression was busy and nothing recorded memory).
         # Appended AFTER pipeline_stage so every existing column keeps its position; a failed read leaves the cells empty.
-        $m = try { Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory -ErrorAction Stop } catch { $null }
-        $memAvail = if ($m) { $m.AvailableMBytes } else { '' }
-        $memCommit = if ($m) { $m.PercentCommittedBytesInUse } else { '' }
-        $pagesSec = if ($m) { $m.PagesPersec } else { '' }
-        $pagesIn = if ($m) { $m.PagesInputPersec } else { '' }
+        # Read through four PerformanceCounter objects created once before the loop (about 3.5 ms for all four), not through
+        # Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory (about 740 ms per sample, the costliest query of the sampler, measured
+        # 2026-11-19: it kept WmiPrvSE busy on the day of the slow 15:00 run). Pages/sec is now the average rate since the previous
+        # sample (about 30 s), not a one-second WMI snapshot, so those two columns are smoother than the ones recorded on 19.11.
+        $memAvail = ''; $memCommit = ''; $pagesSec = ''; $pagesIn = ''
+        try {
+            if ($memCounters) {
+                $memAvail = [math]::Round($memCounters.Avail.NextValue())
+                $memCommit = [math]::Round($memCounters.Commit.NextValue())
+                $pagesSec = [math]::Round($memCounters.Pages.NextValue())
+                $pagesIn = [math]::Round($memCounters.PagesIn.NextValue())
+            }
+        } catch { $memAvail = ''; $memCommit = ''; $pagesSec = ''; $pagesIn = '' }
         "$t,$cpu,$($d.PercentDiskTime),$($d.DiskBytesPerSec),$($d.CurrentDiskQueueLength),$odCpu,$odWs,$odIo,$ac,$stage,$memAvail,$memCommit,$pagesSec,$pagesIn" | Add-Content $sys -Encoding utf8
         $rank = 0
         foreach ($p in ($procs | Sort-Object PercentProcessorTime -Descending | Select-Object -First 5)) {
