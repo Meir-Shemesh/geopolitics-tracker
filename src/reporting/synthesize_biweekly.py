@@ -405,6 +405,7 @@ Reference sources by name only, never by any internal id or page number. Newspap
 Write natural, fluent prose in each language conveying the same substantive content, not a mechanical translation of one language into another; compose each of comparison_text_he/en/de independently from the same source material.
 
 Hebrew grammar: comparison_text_he must be grammatically correct, standard Hebrew. Pay particular attention to gender agreement between numbers and the nouns they modify (e.g. "שתי כתבות" not "שני כתבות"). The Hebrew word for "drone" is "רחפן" (plural "רחפנים"), never the transliteration "דרון"/"דרונים". Reread each Hebrew sentence for this kind of error before finalizing it.
+Hebrew terminology: the Hebrew term for the US "midterm elections" is "בחירות האמצע".
 
 Students vs. school pupils: the English daily write-ups say "student" for both groups, but Hebrew and German distinguish them. Hebrew "תלמידים" / German "Schüler" are school pupils (high school, lycée); Hebrew "סטודנטים" / German "Studenten" or "Studierende" are university students. Decide from the context in the write-ups (school funding, class sizes, high school, lycée versus campuses, universities, admissions) and never default to "סטודנטים" just because the English word is "student". If the story involves both groups, name both ("תלמידים וסטודנטים"). A movement that is genuinely university-led (for example Serbia's) stays "סטודנטים".
 
@@ -443,6 +444,7 @@ OVERVIEW_SYSTEM_PROMPT = """You are writing the short opening paragraph of a biw
 Write a brief, genuinely informative overview, 2-3 sentences, in each of Hebrew/English/German, that tells the reader what stood out across the period as a whole, and names any real pattern connecting two or more topics (for example several topics converging on the same region, or a shared theme like escalation/domestic-politics-under-pressure) if one is actually there. Do not simply restate the topic list. If there is no genuine cross-topic pattern, say so plainly rather than inventing one, name the one or two most significant individual topics instead.
 
 Hebrew terminology: the Hebrew word for "drone" is "רחפן" (plural "רחפנים"), never the transliteration "דרון"/"דרונים".
+Hebrew terminology: the Hebrew term for the US "midterm elections" is "בחירות האמצע".
 
 Punctuation in the Hebrew text: do not use a spaced hyphen (" - "), an en dash or an em dash as a separator inside a sentence, in comparison_text_he or in any Hebrew label. Use a comma, a colon, parentheses, or end the sentence and start a new one. Hyphens that belong to the words themselves stay as normal Hebrew usage: a prefix before a number or a Latin name (ב-2028, ה-Guardian), compound names (רוסיה-אוקראינה) and ranges written without spaces (3-4 בספטמבר).
 
