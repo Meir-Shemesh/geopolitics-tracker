@@ -114,6 +114,22 @@ def fix_attached_prefixes(text: str) -> tuple[str, int]:
     return _LETTER_RUN.sub(repair, text or ""), count
 
 
+def attached_prefix_repairs(text: str, context: int = 25) -> list[tuple[str, str]]:
+    """What fix_attached_prefixes changes, as (before, after) snippets with `context` characters of the surrounding text, for
+    the log (one pair per repair). Read-only: the repair itself is unchanged and runs on the same text."""
+    repairs = []
+    for match in _LETTER_RUN.finditer(text or ""):
+        m = _PREFIX_PLUS_NAME.fullmatch(match.group(0))
+        if not m:
+            continue
+        fixed_run = m.group(1) + (" " if m.group(1) in _TWO_LETTER_WORDS else "-") + m.group(2)
+        lo, hi = max(0, match.start() - context), match.end() + context
+        before = text[lo:hi]
+        after = text[lo:match.start()] + fixed_run + text[match.end():hi]
+        repairs.append((before.replace("\n", " "), after.replace("\n", " ")))
+    return repairs
+
+
 # --- markup / field names inside the text ----------------------------------------------------------------------------
 _TAG_FRAGMENT = re.compile(
     r"</?[A-Za-z_][A-Za-z0-9_:-]*"                                  # "<tag", "</comparison_text_he"

@@ -47,6 +47,7 @@ from dotenv import load_dotenv
 from src.common.biweekly import missing_published_days, period_closing_on
 from src.reporting.text_checks import (  # one shared copy with the daily writer
     NEWSPAPER_NAME_TELLS,
+    attached_prefix_repairs,
     fix_attached_prefixes,
     foreign_script_chars,
     hebrew_newspaper_name_tells,
@@ -571,7 +572,10 @@ def run_map(client, window_idx, dates, rows_by_date):
     return topics, total_usage, retries
 
 
-def call_reduce_once(client, user_content):
+REDUCE_ATTEMPTS: list[dict] = []   # one record per reduce call of the current run (raw answer included), cleared by run_reduce
+
+
+def call_reduce_once(client, user_content, attempt: int = 1):
     def _call():
         with client.messages.stream(
             model=MODEL,
@@ -590,6 +594,16 @@ def call_reduce_once(client, user_content):
     tool_use = next((b for b in response.content if b.type == "tool_use"), None)
     topics = tool_use.input.get("topics", []) if tool_use else []
     usage = {"input_tokens": response.usage.input_tokens, "output_tokens": response.usage.output_tokens}
+    try:   # diagnostics only: a failure here must never fail the call or change what it returns
+        REDUCE_ATTEMPTS.append({
+            "attempt": attempt, "stop_reason": response.stop_reason, "input_tokens": usage["input_tokens"],
+            "output_tokens": usage["output_tokens"], "tool_use_block": tool_use is not None, "topics_returned": len(topics),
+            "tool_input": dict(tool_use.input) if tool_use is not None and isinstance(tool_use.input, dict) else None,
+        })
+        print(f"    [reduce call attempt {attempt}] stop_reason={response.stop_reason!r}, input_tokens={usage['input_tokens']}, "
+              f"output_tokens={usage['output_tokens']}, tool_use block={'yes' if tool_use else 'no'}, topics returned={len(topics)}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"    [reduce call attempt {attempt}] (diagnostics skipped: {exc!r})")
     if response.stop_reason != "tool_use":
         blocks = ", ".join(
             f"{b.type}:{len(getattr(b, 'thinking', None) or getattr(b, 'text', None) or json.dumps(getattr(b, 'input', ''), ensure_ascii=False))} chars"
@@ -619,6 +633,25 @@ def reduce_user_content(map_results, sections_by_id):
     return len(lines), f"Day-span groups to merge ({len(lines)} total):\n\n" + "\n\n".join(lines)
 
 
+def save_reduce_rejected(end_date, rejected_attempt: int, used_attempt: int, ratio: float, n_missing: int, n_duplicated: int) -> None:
+    """Keeps the reduce answer that was NOT used (the first one when the retry improved, the retry otherwise) with its stop_reason,
+    tokens and raw tool input, in data/processed/review_flags/<end>.biweekly_reduce_rejected.json (git-ignored). Diagnostic only:
+    never raises and never changes which grouping is used."""
+    try:
+        record = next((r for r in REDUCE_ATTEMPTS if r["attempt"] == rejected_attempt), None)
+        if record is None or not end_date:
+            return
+        payload = {"period_end": end_date, "rejected_attempt": rejected_attempt, "used_attempt": used_attempt,
+                   "problem_ratio": ratio, "missing_count": n_missing, "duplicated_count": n_duplicated,
+                   "threshold": BIWEEKLY_GROUPING_RATIO_THRESHOLD, **record}
+        REVIEW_FLAGS_DIR.mkdir(parents=True, exist_ok=True)
+        (REVIEW_FLAGS_DIR / f"{end_date}.biweekly_reduce_rejected.json").write_text(
+            json.dumps(payload, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        print(f"    [reduce] rejected attempt {rejected_attempt} saved to review_flags/{end_date}.biweekly_reduce_rejected.json")
+    except Exception as exc:  # noqa: BLE001 - diagnostics must never fail the reduce
+        print(f"    [reduce] could not save the rejected attempt: {exc!r}")
+
+
 def run_reduce(client, map_results, sections_by_id, period=None):
     n_lines, user_content = reduce_user_content(map_results, sections_by_id)
 
@@ -635,7 +668,8 @@ def run_reduce(client, map_results, sections_by_id, period=None):
             problem_ratio=ratio_, retry_threshold=BIWEEKLY_GROUPING_RATIO_THRESHOLD, retried=int(retried_),
             retry_used=int(retry_used_), input_tokens=tokens_in, output_tokens=tokens_out, stop_reason=stop)
 
-    topics, usage, stop_reason = call_reduce_once(client, user_content)
+    REDUCE_ATTEMPTS.clear()
+    topics, usage, stop_reason = call_reduce_once(client, user_content, attempt=1)
     if stop_reason == "max_tokens":
         log_run("truncated", 0, len(valid_ids), 0, 1.0, False, False, usage["input_tokens"], usage["output_tokens"], stop_reason)
         # A second identical request would be cut at the same place; fail now instead of paying for it.
@@ -652,15 +686,18 @@ def run_reduce(client, map_results, sections_by_id, period=None):
         retries += 1
         print(f"  [reduce] {len(missing)} missing + {len(duplicated)} duplicated ({ratio:.1%}) exceeds "
               f"{BIWEEKLY_GROUPING_RATIO_THRESHOLD:.0%} - retrying once.")
-        retry_topics, retry_usage, retry_stop = call_reduce_once(client, user_content)
+        first_ratio, first_missing, first_duplicated = ratio, len(missing), len(duplicated)
+        retry_topics, retry_usage, retry_stop = call_reduce_once(client, user_content, attempt=2)
         usages.append(retry_usage)
         retry_missing, retry_duplicated, retry_ratio = compute_stage1_problem_ratio(retry_topics, valid_ids, key="section_ids")
         if retry_stop != "max_tokens" and retry_ratio < ratio:
             topics, missing, duplicated, ratio = retry_topics, retry_missing, retry_duplicated, retry_ratio
             retry_used, final_stop = True, retry_stop
             print(f"    retry improved ({ratio:.1%}) - using the retry result.")
+            save_reduce_rejected(end_date, 1, 2, first_ratio, first_missing, first_duplicated)
         else:
             print(f"    retry did not improve - keeping the original grouping.")
+            save_reduce_rejected(end_date, 2, 1, retry_ratio, len(retry_missing), len(retry_duplicated))
 
     total_usage = {
         "input_tokens": sum(u["input_tokens"] for u in usages),
@@ -899,6 +936,7 @@ _BIWEEKLY_FIELDS = ("topic_label_he", "topic_label_en", "topic_label_de",
 # Clean-up that never needs a retry (counted in the log): a Hebrew prefix glued to a Latin name gets its hyphen, and the
 # Latin name forms that are deliberately not checked (a missing "The", FAZ/NZZ/SZ) are only counted (decided 2026-11-15).
 BIWEEKLY_LOG_ONLY: dict = {"prefix_hyphen": 0, "missing_the": 0, "abbreviations": 0}
+BIWEEKLY_PREFIX_FIXES: list[str] = []   # one "field: before -> after" line per hyphen repair, printed with the text-fix summary
 _LOG_ONLY_LOCK = threading.Lock()
 
 
@@ -909,16 +947,46 @@ def _biweekly_problems(result: dict) -> dict[str, dict]:
     return writer_problems({f: result.get(f, "") for f in _BIWEEKLY_FIELDS}, hebrew_fields=("comparison_text_he",))
 
 
+def _record_prefix_fix_snippets(label: str, original: str) -> None:
+    """Diagnostics only: remembers each before/after snippet of a hyphen repair. Never raises."""
+    try:
+        pairs = attached_prefix_repairs(original)
+        with _LOG_ONLY_LOCK:
+            for before, after in pairs:
+                BIWEEKLY_PREFIX_FIXES.append(f"{label}: \"{before}\" -> \"{after}\"")
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def print_prefix_fixes(end_date: str, max_lines: int = 10) -> None:
+    """First `max_lines` snippets in the log, all of them in review_flags/<end>.biweekly_prefix_fixes.json (git-ignored). Never raises."""
+    try:
+        with _LOG_ONLY_LOCK:
+            fixes = list(BIWEEKLY_PREFIX_FIXES)
+        for line in fixes[:max_lines]:
+            print(f"  prefix hyphen fix {line}")
+        if len(fixes) > max_lines:
+            print(f"  prefix hyphen fix: {len(fixes) - max_lines} more in review_flags/{end_date}.biweekly_prefix_fixes.json")
+        if fixes:
+            REVIEW_FLAGS_DIR.mkdir(parents=True, exist_ok=True)
+            (REVIEW_FLAGS_DIR / f"{end_date}.biweekly_prefix_fixes.json").write_text(
+                json.dumps({"period_end": end_date, "fixes": fixes}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001 - diagnostics must never fail the run
+        print(f"  (prefix hyphen snippets not saved: {exc!r})")
+
+
 def _finish_biweekly_result(result: dict) -> dict:
     """Retry-free clean-up of an accepted result: the hyphen after a Hebrew prefix glued to a Latin name, plus the log-only
     name-form counts. Never raises, never rejects."""
     try:
         counts = {"prefix_hyphen": 0, "missing_the": 0, "abbreviations": 0}
         for field in ("topic_label_he", "comparison_text_he"):
-            fixed, n = fix_attached_prefixes(result.get(field, ""))
+            original = result.get(field, "")
+            fixed, n = fix_attached_prefixes(original)
             if n:
                 result[field] = fixed
                 counts["prefix_hyphen"] += n
+                _record_prefix_fix_snippets(f"[{result.get('topic_label_en', '?')}] {field}", original)
         for lang in ("he", "en", "de"):
             forms = latin_name_form_counts(result.get(f"comparison_text_{lang}", ""))
             counts["missing_the"] += forms["missing_the"]
@@ -1082,11 +1150,13 @@ def write_overview_checked(client, topics: list[dict]) -> tuple[dict, dict]:
         if problems or tells or suspicious:
             print("  *** WARNING: the overview still has a defect after the retry "
                   f"({', '.join(list(problems) + (['newspaper_names'] if tells else []) + (['suspicious'] if suspicious else []))}) - kept, needs a human look.")
-    fixed, n = fix_attached_prefixes(overview.get("overview_he", ""))
+    original_overview = overview.get("overview_he", "")
+    fixed, n = fix_attached_prefixes(original_overview)
     if n:
         overview["overview_he"] = fixed
         with _LOG_ONLY_LOCK:
             BIWEEKLY_LOG_ONLY["prefix_hyphen"] += n
+        _record_prefix_fix_snippets("[overview] overview_he", original_overview)
     return overview, usage
 
 
@@ -1103,6 +1173,7 @@ def run_stage2(client, conn, topics: list[dict], period: tuple[str, str] | None 
     failed = []
     for key in BIWEEKLY_LOG_ONLY:
         BIWEEKLY_LOG_ONLY[key] = 0
+    BIWEEKLY_PREFIX_FIXES.clear()
     BIWEEKLY_REJECTED.clear()
 
     first = topics[0]
@@ -1137,6 +1208,7 @@ def run_stage2(client, conn, topics: list[dict], period: tuple[str, str] | None 
     overview, _ = write_overview_checked(client, kept_topics)
     print("Biweekly text fixes (no retry): prefix_hyphen=%d | name forms (counted, never checked): missing_the=%d abbreviations=%d"
           % (BIWEEKLY_LOG_ONLY["prefix_hyphen"], BIWEEKLY_LOG_ONLY["missing_the"], BIWEEKLY_LOG_ONLY["abbreviations"]))
+    print_prefix_fixes(period[1] if period else date.today().isoformat())
     print(write_rejected_report(period[1] if period else date.today().isoformat()))
     return overview, kept_topics
 

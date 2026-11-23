@@ -35,6 +35,7 @@ from src.common import batch_runner
 from src.common.about_content import CONTENT
 from src.reporting.render import NEWSPAPER_COUNTRIES, NEWSPAPER_DISPLAY_NAMES
 from src.reporting.text_checks import (  # one shared copy for the daily and the biweekly writer
+    attached_prefix_repairs,
     fix_attached_prefixes,
     foreign_script_chars,
     hebrew_newspaper_name_tells,
@@ -930,14 +931,23 @@ def _problem_summary(comparison: dict | None) -> str:
 # gets its hyphen ("בSüddeutsche" -> "ב-Süddeutsche"), and the Latin name forms we deliberately do not check (a missing
 # "The", FAZ/NZZ/SZ) are only counted, decided 2026-11-15.
 STAGE2_LOG_ONLY: Counter = Counter()
+REVIEW_FLAGS_DIR = PROJECT_ROOT / "data" / "processed" / "review_flags"   # (the older writers below still build this path inline)
+STAGE2_PREFIX_FIXES: list[str] = []   # one "before -> after" line per hyphen repair, printed in the stage 2 summary block
 
 
 def _finish_comparison(topic: dict, comparison: dict) -> dict:
     try:
-        fixed, n = fix_attached_prefixes(comparison.get("comparison_text_he", ""))
+        original_he = comparison.get("comparison_text_he", "")
+        fixed, n = fix_attached_prefixes(original_he)
         if n:
             comparison = {**comparison, "comparison_text_he": fixed}
             print(f"  prefix hyphen added {n} time(s) in the Hebrew text of '{topic.get('topic_label_en', '?')}' (no retry)")
+            try:   # diagnostics only: never affects the repair above or the clean-up below
+                with _STAGE2_LOCK:
+                    for before, after in attached_prefix_repairs(original_he):
+                        STAGE2_PREFIX_FIXES.append(f"[{topic.get('topic_label_en', '?')}] \"{before}\" -> \"{after}\"")
+            except Exception:  # noqa: BLE001
+                pass
         forms = Counter()
         for lang in ("he", "en", "de"):
             forms.update(latin_name_form_counts(comparison.get(f"comparison_text_{lang}", "")))
@@ -1454,6 +1464,7 @@ def synthesize_day_two_stage(
         STAGE2_EVENTS.clear()
         STAGE2_EVENT_LOG.clear()
         STAGE2_LOG_ONLY.clear()
+        STAGE2_PREFIX_FIXES.clear()
         STAGE2_RUN_INFO.clear()
         STAGE2_RUN_INFO.update(topics=0, batch_enabled=batch_conn is not None, answered=0, wait_seconds=0.0)
 
@@ -1797,6 +1808,24 @@ def _write_report(conn, report_date, sources, sections, articles, valid_ids, now
     )
 
 
+def print_prefix_fixes(report_date: str | None, max_lines: int = 10) -> None:
+    """Diagnostics for the hyphen repairs: the first `max_lines` before/after snippets in the log (the daily log keeps only its
+    last lines) and all of them in review_flags/<date>.prefix_fixes.json (git-ignored). Never raises."""
+    try:
+        with _STAGE2_LOCK:
+            fixes = list(STAGE2_PREFIX_FIXES)
+        for line in fixes[:max_lines]:
+            print(f"  prefix hyphen fix {line}")
+        if len(fixes) > max_lines:
+            print(f"  prefix hyphen fix: {len(fixes) - max_lines} more in review_flags/{report_date}.prefix_fixes.json")
+        if fixes and report_date:
+            REVIEW_FLAGS_DIR.mkdir(parents=True, exist_ok=True)
+            (REVIEW_FLAGS_DIR / f"{report_date}.prefix_fixes.json").write_text(
+                json.dumps({"report_date": report_date, "fixes": fixes}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    except Exception as exc:  # noqa: BLE001 - diagnostics must never fail the summary
+        print(f"  (prefix hyphen snippets not saved: {exc!r})", file=sys.stderr)
+
+
 def print_stage2_summary(since: str, report_date: str | None = None) -> None:
     """The stage-2 events block (also saved to <date>.stage2_events.json when report_date is given) and one summary
     line for the log and the verification script; never affects the run."""
@@ -1808,6 +1837,7 @@ def print_stage2_summary(since: str, report_date: str | None = None) -> None:
               % (log_only.get("prefix_hyphen", 0), log_only.get("missing_the", 0), log_only.get("abbreviations", 0)))
         for line in format_stage2_events_block(events):
             print(line)
+        print_prefix_fixes(report_date)
         if report_date:
             write_stage2_events(report_date, events)
     except Exception as exc:  # noqa: BLE001
