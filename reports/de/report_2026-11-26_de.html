@@ -1,0 +1,1523 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  (function () {
+    try {
+      var stored = localStorage.getItem("theme");
+      if (stored === "light" || stored === "dark") {
+        document.documentElement.setAttribute("data-theme", stored);
+      }
+    } catch (e) {}
+  })();
+  function __themeIsDark() {
+    var stored = document.documentElement.getAttribute("data-theme");
+    if (stored === "dark") return true;
+    if (stored === "light") return false;
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+  function __syncThemeToggles() {
+    document.querySelectorAll(".theme-toggle").forEach(function (btn) {
+      btn.setAttribute("aria-pressed", String(__themeIsDark()));
+    });
+  }
+  function __toggleTheme() {
+    try {
+      var next = __themeIsDark() ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+    } catch (e) {}
+    __syncThemeToggles();
+  }
+  document.addEventListener("DOMContentLoaded", __syncThemeToggles);
+</script>
+<script>
+  (function () {
+    try {
+      if (navigator.sendBeacon) {
+        var payload = JSON.stringify({ referrer: document.referrer });
+        navigator.sendBeacon("https://geopolitics-analytics.meirshemesh.workers.dev/collect", new Blob([payload], { type: "text/plain" }));
+      }
+    } catch (e) {}
+  })();
+</script>
+<title>Tagesbericht - Donnerstag, 26. November 2026</title>
+<link rel="icon" href="../assets/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/images/apple-touch-icon.png">
+<style>
+  @font-face {
+    font-family: "Assistant";
+    src: url("../assets/fonts/Assistant-Variable.ttf") format("truetype-variations");
+    font-weight: 200 800;
+  }
+
+  :root {
+  --tok-security_conflict-color: #8a3324;
+  --tok-security_conflict-bg: #f7e6e2;
+  --tok-diplomacy_international-color: #2a5b8a;
+  --tok-diplomacy_international-bg: #e3edf5;
+  --tok-trade_economics-color: #8a6114;
+  --tok-trade_economics-bg: #faf1dd;
+  --tok-domestic_politics-color: #5c3d82;
+  --tok-domestic_politics-bg: #f0e9f6;
+  --tok-migration_society-color: #1f6f76;
+  --tok-migration_society-bg: #e6f3f2;
+  --tok-society_culture-color: #a5457a;
+  --tok-society_culture-bg: #f8e8f0;
+  --tok-technology_media-color: #3d6b3d;
+  --tok-technology_media-bg: #e9f2e6;
+  --tok-energy_environment-color: #7a6a1a;
+  --tok-energy_environment-bg: #f5f0dd;
+  --tok-additional_coverage-color: #6b6560;
+  --tok-additional_coverage-bg: #efece6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+      --tok-security_conflict-color: #e0a08f;
+  --tok-security_conflict-bg: #3a2019;
+      --tok-diplomacy_international-color: #8fb8dd;
+  --tok-diplomacy_international-bg: #182a38;
+      --tok-trade_economics-color: #e0b859;
+  --tok-trade_economics-bg: #332a13;
+      --tok-domestic_politics-color: #c6a6ea;
+  --tok-domestic_politics-bg: #2c2138;
+      --tok-migration_society-color: #6fc9d0;
+  --tok-migration_society-bg: #12302f;
+      --tok-society_culture-color: #e2a0c6;
+  --tok-society_culture-bg: #381e2c;
+      --tok-technology_media-color: #8fc98f;
+  --tok-technology_media-bg: #1c2e1c;
+      --tok-energy_environment-color: #cdbb5c;
+  --tok-energy_environment-bg: #2e2913;
+      --tok-additional_coverage-color: #a89f91;
+  --tok-additional_coverage-bg: #2a2620;
+  }
+}
+:root[data-theme="dark"] {
+    --tok-security_conflict-color: #e0a08f;
+  --tok-security_conflict-bg: #3a2019;
+    --tok-diplomacy_international-color: #8fb8dd;
+  --tok-diplomacy_international-bg: #182a38;
+    --tok-trade_economics-color: #e0b859;
+  --tok-trade_economics-bg: #332a13;
+    --tok-domestic_politics-color: #c6a6ea;
+  --tok-domestic_politics-bg: #2c2138;
+    --tok-migration_society-color: #6fc9d0;
+  --tok-migration_society-bg: #12302f;
+    --tok-society_culture-color: #e2a0c6;
+  --tok-society_culture-bg: #381e2c;
+    --tok-technology_media-color: #8fc98f;
+  --tok-technology_media-bg: #1c2e1c;
+    --tok-energy_environment-color: #cdbb5c;
+  --tok-energy_environment-bg: #2e2913;
+    --tok-additional_coverage-color: #a89f91;
+  --tok-additional_coverage-bg: #2a2620;
+}
+[data-category="security_conflict"] { --cat-color: var(--tok-security_conflict-color); --cat-bg: var(--tok-security_conflict-bg); }
+[data-category="diplomacy_international"] { --cat-color: var(--tok-diplomacy_international-color); --cat-bg: var(--tok-diplomacy_international-bg); }
+[data-category="trade_economics"] { --cat-color: var(--tok-trade_economics-color); --cat-bg: var(--tok-trade_economics-bg); }
+[data-category="domestic_politics"] { --cat-color: var(--tok-domestic_politics-color); --cat-bg: var(--tok-domestic_politics-bg); }
+[data-category="migration_society"] { --cat-color: var(--tok-migration_society-color); --cat-bg: var(--tok-migration_society-bg); }
+[data-category="society_culture"] { --cat-color: var(--tok-society_culture-color); --cat-bg: var(--tok-society_culture-bg); }
+[data-category="technology_media"] { --cat-color: var(--tok-technology_media-color); --cat-bg: var(--tok-technology_media-bg); }
+[data-category="energy_environment"] { --cat-color: var(--tok-energy_environment-color); --cat-bg: var(--tok-energy_environment-bg); }
+[data-category="additional_coverage"] { --cat-color: var(--tok-additional_coverage-color); --cat-bg: var(--tok-additional_coverage-bg); }
+
+  :root {
+    --bg: #e8dfc9;
+    --bg-elevated: #fffbf2;
+    --text: #1c1712;
+    --text-muted: #5f5240;
+    --border: #cdb98d;
+    --masthead-accent: #8f2c22;
+    --accent2: #a8702f;
+    --pill-bg: #fffbf2;
+    --pill-text: #1c1712;
+    --pill-border: #cdb98d;
+    --chip-selected-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1b1815;
+      --bg-elevated: #242019;
+      --text: #f1ebe0;
+      --text-muted: #b6ac98;
+      --border: #3c3527;
+      --masthead-accent: #df6f5f;
+      --accent2: #dba75c;
+      --pill-bg: #242019;
+      --pill-text: #f1ebe0;
+      --pill-border: #3c3527;
+      --chip-selected-text: #2a1210;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1b1815;
+    --bg-elevated: #242019;
+    --text: #f1ebe0;
+    --text-muted: #b6ac98;
+    --border: #3c3527;
+    --masthead-accent: #df6f5f;
+    --accent2: #dba75c;
+    --pill-bg: #242019;
+    --pill-text: #f1ebe0;
+    --pill-border: #3c3527;
+    --chip-selected-text: #2a1210;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Assistant", system-ui, sans-serif;
+    line-height: 1.7;
+  }
+
+  
+  .top-nav {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-nav-logo-link { display: flex; align-items: center; }
+  .top-nav-logo { height: 56px; width: auto; display: block; }
+  .top-nav-links { display: flex; align-items: center; gap: 1.1rem; }
+  .top-nav-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .top-nav-link:hover {
+    color: var(--masthead-accent);
+    text-decoration: underline;
+  }
+
+  .category-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: .55rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+  /* Only the category pills scroll horizontally (flex:1 + min-width:0 lets
+     this shrink below its content width inside the flex row, which is what
+     actually makes overflow-x kick in) - .toggle-all-btn sits outside this
+     scrollable area as a fixed sibling, so it's always visible without
+     having to scroll the pill list first, even on a many-category day. */
+  .category-nav-links {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    min-width: 0;
+  }
+  .category-nav-link {
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    border: 1px solid var(--pill-border);
+  }
+  .category-nav-link:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+  .toggle-all-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--pill-border);
+    border-radius: 999px;
+    padding: .3rem .7rem;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toggle-all-btn:hover { color: var(--masthead-accent); border-color: var(--masthead-accent); }
+
+  .masthead {
+    background: var(--bg-elevated);
+    border-bottom: 3px solid var(--masthead-accent);
+    padding: 2.75rem 1.5rem 2.25rem;
+  }
+  .masthead-inner { max-width: 44rem; margin: 0 auto; }
+  .eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .85rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--masthead-accent);
+    text-transform: uppercase;
+  }
+  .report-title { margin: 0 0 1.5rem; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.01em; }
+  .revision-note { margin: -1rem 0 1.5rem; font-size: .85rem; color: var(--text-muted); font-style: italic; }
+  .sources-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+  .sources-label { font-size: .85rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+  .sources-pills { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; }
+  .sources-pills li {
+    background: var(--pill-bg);
+    border: 1px solid var(--pill-border);
+    color: var(--pill-text);
+    padding: .35rem .85rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 500;
+  }
+
+  .report-body {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 2.25rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .topic-section {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .9rem;
+    padding: 1.5rem 1.6rem 1.65rem;
+    border-inline-start: 5px solid var(--cat-color);
+  }
+  /* Subtle featured-item bleed for wide-reach topics (source_count>=3 or
+     language_count>=2) - the negative inline margin is symmetric (both
+     sides), so a prominent card stays centered under narrower neighbors
+     above/below it rather than shifting to one side; padding-inline is
+     bumped by the same amount pulled out by the margin, so the actual
+     text column still lines up with regular cards, not just the card box. */
+  .topic-section--prominent {
+    margin-inline: -.75rem;
+    padding-inline: 2.35rem;
+  }
+  .topic-section--prominent .section-title { font-size: 1.45rem; }
+
+  .section-header { cursor: pointer; }
+  .section-header:hover .section-title { color: var(--masthead-accent); }
+  .topic-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+  .category-dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--cat-color); flex-shrink: 0; }
+  .category-label {
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--cat-color);
+    background: var(--cat-bg);
+    padding: .2rem .6rem;
+    border-radius: 999px;
+  }
+  .coverage-badge { font-size: .72rem; color: var(--text-muted); }
+  .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .section-title { margin: 0; font-size: 1.3rem; font-weight: 700; line-height: 1.4; transition: color .15s ease; }
+  .expand-chevron {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    color: var(--text-muted);
+    /* Rotation is purely vertical (180deg <-> 0deg) - never left/right - so
+       it reads identically in RTL and LTR, unlike a sideways-pointing chevron. */
+    transform: rotate(180deg);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .section-header:hover .expand-chevron { background: var(--pill-bg); }
+  .section-header[aria-expanded="false"] .expand-chevron { transform: rotate(0deg); }
+  .section-body { margin-top: .75rem; }
+  .comparison-text { margin: 0 0 1rem; font-size: 1rem; color: var(--text); line-height: 1.85; }
+  .section-sources {
+    margin: 0;
+    font-size: .82rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: .75rem;
+  }
+  .section-sources b { color: var(--text); font-weight: 600; }
+
+  .section-actions { position: relative; margin-top: .6rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .share-link-btn {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .share-link-btn:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .citations-toggle {
+    background: none;
+    border: none;
+    padding: .2rem .3rem;
+    margin: 0;
+    font: inherit;
+    font-size: .78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    border-radius: .4rem;
+    transition: background .15s ease, color .15s ease;
+  }
+  .citations-toggle:hover { background: var(--pill-bg); color: var(--masthead-accent); }
+  .chevron-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border);
+    font-size: .65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+  .citations-toggle[aria-expanded="true"] .chevron-circle { transform: rotate(180deg); }
+  .citations-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-start: 0;
+    z-index: 10;
+    margin-top: .4rem;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(26rem, 100%);
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    padding: .6rem .8rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+  }
+  .citations-popup ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    /* Citation lines are almost entirely Latin/numeric (newspaper name, date,
+       page, headline) - only the page-label word is in the page's own script.
+       Forcing ltr here keeps each line in one predictable reading order
+       instead of letting the surrounding RTL page bidi-reorder the mixed
+       script segments (this is applied to the list, not .citations-popup
+       itself, so the popup's own inset-inline-start positioning still
+       follows the real page direction). */
+    direction: ltr;
+    text-align: left;
+  }
+  .citations-popup li { font-size: .8rem; color: var(--text); line-height: 1.5; }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 2cm 1.8cm;
+      @bottom-center { content: counter(page) " / " counter(pages); font-size: 9px; color: #888; }
+    }
+  :root {
+    --bg: #e8dfc9 !important;
+    --bg-elevated: #fffbf2 !important;
+    --text: #1c1712 !important;
+    --text-muted: #5f5240 !important;
+    --border: #cdb98d !important;
+    --masthead-accent: #8f2c22 !important;
+    --accent2: #a8702f !important;
+    --pill-bg: #fffbf2 !important;
+    --pill-text: #1c1712 !important;
+    --pill-border: #cdb98d !important;
+    --chip-selected-text: #ffffff !important;
+    --tok-security_conflict-color: #8a3324 !important;
+    --tok-security_conflict-bg: #f7e6e2 !important;
+    --tok-diplomacy_international-color: #2a5b8a !important;
+    --tok-diplomacy_international-bg: #e3edf5 !important;
+    --tok-trade_economics-color: #8a6114 !important;
+    --tok-trade_economics-bg: #faf1dd !important;
+    --tok-domestic_politics-color: #5c3d82 !important;
+    --tok-domestic_politics-bg: #f0e9f6 !important;
+    --tok-migration_society-color: #1f6f76 !important;
+    --tok-migration_society-bg: #e6f3f2 !important;
+    --tok-society_culture-color: #a5457a !important;
+    --tok-society_culture-bg: #f8e8f0 !important;
+    --tok-technology_media-color: #3d6b3d !important;
+    --tok-technology_media-bg: #e9f2e6 !important;
+    --tok-energy_environment-color: #7a6a1a !important;
+    --tok-energy_environment-bg: #f5f0dd !important;
+    --tok-additional_coverage-color: #6b6560 !important;
+    --tok-additional_coverage-bg: #efece6 !important;
+  }
+    body { background: #fff; }
+    .top-nav { display: none; }
+    .category-nav { display: none; }
+    /* The on-screen column of sections is a flex container (gap between cards). WeasyPrint lays a flex container
+       out again for every page it spans, so PDF time grew with the square of the number of sections (measured
+       2026-11-16: 50 sections took 209 s per language, 5 s with this rule). In print the sections are ordinary
+       blocks and the gap becomes a bottom margin. The screen layout is untouched. */
+    .report-body { display: block; }
+    .report-body > .topic-section { margin-bottom: 1.5rem; }
+    .report-body > .topic-section:last-child { margin-bottom: 0; }
+    /* .section-actions used to be display:none outright (it only ever held the
+       share-link button, meaningless on paper) - but it's also the citations
+       toggle+popup's containing element, so hiding it wholesale silently hid
+       the citations fix below too (caught via an actual PDF-text check, not
+       just reading the CSS - the popup's [hidden] override alone did nothing
+       while its ancestor stayed display:none). Now only the share button is
+       hidden; the container itself switches to a plain block flow so the
+       citations toggle-label and popup stack vertically under it. */
+    .section-actions { display: block; }
+    .share-link-btn { display: none; }
+    /* PDF is generated once from the default (all-expanded) HTML string, so
+       this only guards against someone printing the live page in a browser
+       after collapsing sections there - the body must never be hidden in print. */
+    .section-body[hidden] { display: block !important; }
+    .expand-chevron { display: none; }
+    .section-header { cursor: default; }
+    /* Same reasoning as .section-body above: the citations popup is only ever
+       un-hidden by the click-handler JS below, and WeasyPrint (which renders
+       the PDF from this same HTML string) never runs JS - so without this,
+       per-article citations would never appear in the PDF, only the plain
+       "Sources: X, Y, Z" line rendered elsewhere in the section. Forcing it
+       visible here does not touch the on-screen [hidden] toggle behavior,
+       since this rule only applies inside @media print. */
+    .citations-toggle { cursor: default; pointer-events: none; }
+    .citations-toggle .chevron-circle { display: none; }
+    .citations-popup[hidden] {
+      display: block !important;
+      position: static;
+      width: auto;
+      max-width: none;
+      max-height: none;
+      overflow: visible;
+      box-shadow: none;
+      border: none;
+      background: none;
+      margin: .3rem 0 0;
+      padding: 0;
+    }
+  }
+
+  
+  .site-footer {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    justify-content: center;
+    font-size: .8rem;
+  }
+  .footer-link { color: var(--text-muted); text-decoration: none; }
+  .footer-link:hover { color: var(--masthead-accent); text-decoration: underline; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--masthead-accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 1px solid var(--pill-border, var(--border));
+    background: var(--pill-bg, var(--bg-elevated));
+    color: var(--pill-text, var(--text));
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  /* border-color only, not the icon's `color` - measured contrast: --accent2
+     against the light pill background is 4.05:1, clearing the 3:1 minimum
+     for a non-text UI element (this border) but short of the 4.5:1 normal-
+     text minimum, so it's not used for the icon glyph itself (which stays
+     --masthead-accent, already verified safe everywhere, on hover too). */
+  .theme-toggle:hover { color: var(--masthead-accent); border-color: var(--accent2); }
+  .theme-toggle-icon { display: none; }
+  .theme-toggle .icon-moon { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: inline; }
+  }
+  :root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+  /* "Contact" dropdown (added 2026-10-08) - built on native <details>/
+     <summary> (see contact_menu_html()), styled here so every page type
+     that injects shared_chrome_css() gets it without a separate per-page
+     CSS edit (the exact kind of page this project has historically missed -
+     see CLAUDE.md on Contact/Advanced filter once forgotten on the
+     homepage/archive, which build their own nav/CSS separately). */
+  .contact-menu { position: relative; }
+  .contact-menu summary { list-style: none; cursor: pointer; }
+  .contact-menu summary::-webkit-details-marker { display: none; }
+  .contact-menu-popup {
+    position: absolute;
+    top: 100%;
+    inset-inline-end: 0;
+    margin-top: .4rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    padding: .4rem;
+    z-index: 50;
+  }
+  .contact-menu-popup a {
+    padding: .4rem .6rem;
+    border-radius: .35rem;
+    font-size: .82rem;
+    color: var(--text);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .contact-menu-popup a:hover { background: var(--bg); color: var(--masthead-accent); }
+  @media print {
+    .site-footer { display: none; }
+    .theme-toggle { display: none; }
+    .contact-menu { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="top-nav-logo-link" href="../index.html" aria-label="Tägliche Geopolitik - Startseite"><img class="top-nav-logo" src="../assets/images/MS_Logo.png" alt=""></a>
+    <div class="top-nav-links">
+      
+      <a class="top-nav-link" href="archive.html">← Alle Berichte</a>
+      <a class="top-nav-link" href="filter.html">Erweiterte Filterung</a>
+      <a class="top-nav-link" href="trends.html">Trends</a>
+      <a class="top-nav-link top-nav-lang-link" href="../he/report_2026-11-26_he.html">עברית</a>
+      <a class="top-nav-link top-nav-lang-link" href="../en/report_2026-11-26_en.html">English</a>
+      <a class="top-nav-link" href="report_2026-11-26_de.pdf">⬇ PDF herunterladen</a>
+      <details class="contact-menu">
+      <summary class="top-nav-link">Kontakt</summary>
+      <div class="contact-menu-popup" role="menu">
+        <a role="menuitem" href="mailto:meir@meirshemesh.com">E-Mail</a>
+        <a role="menuitem" href="https://meirshemesh.com" target="_blank" rel="noopener">Webseite</a>
+        <a role="menuitem" href="https://www.linkedin.com/in/meir-shemesh-a18633aa/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </details>
+    <script>
+      document.addEventListener("click", function (e) {
+        document.querySelectorAll("details.contact-menu[open]").forEach(function (d) {
+          if (!d.contains(e.target)) d.removeAttribute("open");
+        });
+      });
+    </script>
+      <button type="button" class="theme-toggle" onclick="__toggleTheme()" aria-label="Dunkelmodus" aria-pressed="false"><span class="theme-toggle-icon icon-sun" aria-hidden="true">☀</span><span class="theme-toggle-icon icon-moon" aria-hidden="true">☾</span></button>
+    </div>
+  </nav>
+
+  <nav class="category-nav">
+    <div class="category-nav-links"><a class="category-nav-link" href="#section-7867">Sicherheit &amp; Konflikte</a><a class="category-nav-link" href="#section-7866">Diplomatie &amp; internationale Beziehungen</a><a class="category-nav-link" href="#section-7882">Handel &amp; Wirtschaft</a><a class="category-nav-link" href="#section-7865">Innenpolitik</a><a class="category-nav-link" href="#section-7886">Migration &amp; Gesellschaft</a><a class="category-nav-link" href="#section-7878">Gesellschaft &amp; Kultur</a><a class="category-nav-link" href="#section-7885">Technologie &amp; Medien</a><a class="category-nav-link" href="#section-7883">Energie &amp; Umwelt</a></div>
+    <button class="toggle-all-btn" type="button">Alle aufklappen / einklappen</button>
+  </nav>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <p class="eyebrow">Tägliche Geopolitik</p>
+      <h1 class="report-title">Tagesbericht - Donnerstag, 26. November 2026</h1>
+      <div class="sources-row">
+        <span class="sources-label">Heutige Quellen:</span>
+        <ul class="sources-pills"><li>Die Welt</li><li>Los Angeles Times</li></ul>
+      </div>
+    </div>
+  </header>
+  <main class="report-body">
+
+      <section class="topic-section" id="section-7865" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7865">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Le Pens Forderung nach einem Ende des „deutschen Europas“</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7865">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine Quelle vor. Die Welt berichtet, unsigniert, über Marine Le Pens Forderung, das von ihr so bezeichnete „deutsche Europa&quot; zu beenden und durch ein „Europa der Nationen&quot; zu ersetzen. Der Artikel gibt ihre Position wieder, wonach die EU-Ordnung deutschen Interessen diene, und ihr Plädoyer für französische Souveränität, ohne dass die Zeitung selbst dazu Stellung bezieht.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7865" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7865">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7865" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7866" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7866">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomatie &amp; internationale Beziehungen</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Streit um den EU-Haushalt 2028-2034</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7866">
+          <p class="comparison-text">Dieses Thema wird nur von Die Welt behandelt, in einem Beitrag, der von Christoph B. Schiltz gezeichnet ist. Schiltz berichtet über den konfliktreichen EU-Sondergipfel zum von Ursula von der Leyen vorgeschlagenen mehrjährigen Finanzrahmen für 2028 bis 2034 und stellt ihn als Streitpunkt dar, der die Union spaltet: Deutschland und weitere &quot;sparsame&quot; Mitgliedstaaten fordern Kürzungen, während andere Länder und die Kommission selbst für ein größeres Haushaltsvolumen eintreten. Er zitiert die Kritik, wonach der vorliegende Vorschlag zwar &quot;ein erster Schritt&quot; sei, das Volumen aber weiterhin zu hoch bleibe, und hält fest, dass eine baldige Einigung nicht in Sicht ist. Da keine weitere Zeitung über den Vorgang berichtet, gibt es keinen Quellenvergleich, sondern lediglich die Perspektive von Die Welt auf eine festgefahrene und umstrittene Verhandlung, die stark aus Sicht der sparsamen Staaten geschildert wird.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7866" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7866">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7866" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 1</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7867" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7867">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Sicherheit &amp; Konflikte</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Baltische Sicherheit und russische Hybridkriegsführung</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7867">
+          <p class="comparison-text">Zu diesem Thema liegt im vorliegenden Material nur eine einzige Quelle vor. In einem Interview mit Die Welt argumentiert der lettische Ministerpräsident Andris Kulbergs, Russland führe gegen die baltischen Staaten und Europa insgesamt einen hybriden Krieg, der sich der Instrumente Migration, Sabotage, Cyberangriffe und Desinformation bediene. Er fordert ein geeintes europäisches Auftreten, höhere Verteidigungsausgaben, eine Schließung der Grenzen für russische Staatsbürger sowie Stärke statt Nachgiebigkeit gegenüber Moskau und stellt eine ungebrochene Unterstützung der Ukraine als untrennbar von der Verteidigung Europas selbst dar. Da kein weiteres Medium in diesem Korpus das Thema aufgreift, steht hier keine vergleichende Gegenüberstellung unterschiedlicher Sichtweisen im Vordergrund, sondern allein Kulbergs&#x27; eindringlicher, über das Interviewformat von Die Welt vermittelter Appell, die von ihm beschriebene eskalierende Bedrohung gemeinsam ernst zu nehmen.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7867" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7867">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7867" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 6</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7868" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7868">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Streit um Israel-Kurs in der Berliner Linken</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7868">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine Quelle vor. Die Welt berichtet in einem von Leander F. Badura und Cedric Looks gezeichneten Artikel über den Ausschluss der Berliner Linken-Politikerin Vanessa Emde wegen ihrer Verbindungen zu radikalen propalästinensischen Kreisen und ihres Eintretens für eine Einstaatenlösung, was Kritiker als Forderung nach einer Auslöschung Israels deuten. Der Beitrag zeichnet dabei die Spannung nach zwischen dieser Kritik und der Darstellung der Parteiführung, wonach der Ausschluss ihrem persönlichen Verhalten geschuldet sei und nicht ihrer Positionierung zur Palästina-Solidarität an sich, und rückt den Vorgang damit als Ausdruck eines innerparteilichen Konflikts über den Umgang mit Israel in den Mittelpunkt.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7868" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7868">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7868" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 2</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7869" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7869">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Parlamentswahl in Spanien</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7869">
+          <p class="comparison-text">Zur Parlamentswahl in Spanien liegt nur eine einzige Quelle vor. In einem namentlich gezeichneten Beitrag für Los Angeles Times gibt Joseph Wilson einen sachlichen Überblick über die zur Wahl antretenden Parteien und porträtiert Ministerpräsident Pedro Sánchez sowie seine konservativen und rechtsextremen Konkurrenten. Besonderes Gewicht legt der Beitrag auf die Außenpolitik Sánchez&#x27;, insbesondere auf dessen scharfe Positionierung gegen Präsident Trump, gegen den amerikanisch-israelischen Krieg gegen den Iran sowie gegen die israelischen Militäroperationen in Gaza, daneben wird die Koalitionsdynamik erläutert, die die nächste spanische Regierung bestimmen dürfte. Da keine weitere Zeitung über dieses Thema berichtet, gibt es keinen alternativen Blickwinkel oder Gegenerzählung, mit der sich dieser Beitrag vergleichen ließe.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7869" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7869">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7869" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 4</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7870" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7870">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Sicherheit &amp; Konflikte</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Russlands nukleare Weltraumwaffe</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7870">
+          <p class="comparison-text">Zu diesem Thema liegt lediglich ein Beitrag vor, verfasst von Gerhard Hegmann in Die Welt. Der Artikel stützt sich auf gemeinsame Recherchen von WDR, NDR und Süddeutscher Zeitung und berichtet, dass westliche Geheimdienste, darunter der BND und die Bundeswehr, davon ausgehen, Russland wolle noch in diesem Jahr einen Satelliten mit Nuklearsprengkopf in den Orbit bringen. Im Mittelpunkt steht die Erklärung der potenziell katastrophalen Folgen für die weltweite Satelliteninfrastruktur sowie die Einordnung des Vorhabens als Verstoß gegen den Weltraumvertrag, wobei auch die russischen Dementis erwähnt werden. Da kein weiteres Blatt in diesem Korpus das Thema aufgreift, gibt es keinen Vergleich unterschiedlicher Perspektiven, sondern nur diese detaillierte, geheimdienstlich gestützte Darstellung auf Basis einer gemeinsamen Recherche mehrerer deutscher Medien.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7870" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7870">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7870" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 9</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7871" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7871">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Sicherheit &amp; Konflikte</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Parlamentarische Kontrolle bei der Rüstungsbeschaffung</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7871">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor, ein Meinungsbeitrag von Christian Schweppe in Die Welt, sodass kein Vergleich zwischen mehreren Blickwinkeln möglich ist, sondern lediglich eine kritische Einzelperspektive vorliegt. Schweppe nimmt den Haushaltsausschuss des Bundestages in den Blick, den er als mächtigstes Gremium der Republik bezeichnet, und argumentiert, dass die Flut milliardenschwerer Rüstungsprojekte seit dem Ukraine-Krieg die parlamentarische Kontrolle überfordert habe. Das Verteidigungsministerium treibe Dutzende Beschaffungsvorhaben mit kaum ausreichender Transparenz und Prüfung voran, was sowohl die Verschwendung öffentlicher Mittel als auch ein Verfehlen tatsächlicher Sicherheit riskiere. Zwar räumt er ein, dass die Bedrohungslage es nachvollziehbar macht, dass der Staat zunächst nicht sparen will, doch zitiert er Experten, denen zufolge mittelfristig ein ausgewogenerer Mittelweg sinnvoller wäre als ein ungebremster Ausgabenkurs.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7871" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7871">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7871" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 5</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7872" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7872">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Reform des Mordparagrafen</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7872">
+          <p class="comparison-text">Dieses Thema wird ausschließlich von Die Welt behandelt, in einem Meinungsbeitrag von Fatina Keilani. Keilani kritisiert den von Justizministerin Hubig vorgelegten Entwurf zur Reform des Mordparagrafen, der geschlechtsspezifisch motivierte Tötungen künftig ausdrücklich als Mordmerkmal erfassen soll. Ihrer Ansicht nach wird diese Änderung voraussichtlich kein einziges reales Problem lösen und bedeutet auch keine echte Ausweitung des Tatbestands, während der eigentliche strukturelle Mangel, die starre Kopplung eines Mordmerkmals an die obligatorische lebenslange Freiheitsstrafe, unangetastet bleibt. Stattdessen führe die Reform ein vages, politisch motiviertes Kriterium ein. Da keine weitere Quelle zu diesem Thema vorliegt, gibt es hier keine konkurrierenden Perspektiven abzuwägen, sondern lediglich diese eine kritische, persönlich gezeichnete Einschätzung der Autorin.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7872" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7872">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7872" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 7</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7873" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7873">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Sicherheit &amp; Konflikte</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Weltweite Landminenopfer auf Fünfjahreshoch</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7873">
+          <p class="comparison-text">Dieses Thema wird nur von einer einzigen Quelle behandelt. In einem namentlich gezeichneten Beitrag berichtet David Rising für die Los Angeles Times, dass die weltweiten Opferzahlen durch Landminen und Blindgänger einen Fünfjahreshöchststand erreicht haben, wobei er den Bürgerkrieg in Myanmar als Hauptursache dieser Entwicklung benennt und Aktivisten zitiert, die Staaten zum Beitritt zum Minenverbotsvertrag sowie zu dessen Einhaltung aufrufen. Da keine weitere Zeitung über das Thema berichtet, lässt sich kein Vergleich unterschiedlicher Schwerpunkte oder Haltungen ziehen.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7873" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7873">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7873" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7874" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7874">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">DEA-Strategie und Fentanyl-Schmuggel in den USA</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7874">
+          <p class="comparison-text">Dieses Thema wird ausschließlich von der Los Angeles Times behandelt, in einem investigativen Beitrag von Jim Mustian und Joshua Goodman. Der Artikel stellt die Angelegenheit nicht als bloßes Versagen der Strafverfolgung dar, sondern als institutionellen Skandal: Die DEA habe zwischen August 2024 und April 2025 wissentlich zugelassen, dass mehr als 1,4 Millionen zusätzliche Fentanyl-Pillen in Umlauf gelangten, im Rahmen einer umstrittenen Überwachungsstrategie des &quot;Laufenlassens&quot; von Lieferungen, während die Behörde dies öffentlich bestritten habe. Da keine andere Quelle über das Thema berichtet, lässt sich kein Vergleich zwischen mehreren Zeitungen ziehen, doch die eigene Akzentsetzung des Artikels sticht hervor: Er präsentiert das Vorgehen der DEA als bewusste, verschleierte Entscheidung und verweist darauf, dass die Enthüllung bereits bundesstaatliche und föderale Untersuchungen sowie eine Klage in New Mexico ausgelöst hat.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7874" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7874">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7874" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 6</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7875" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7875">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomatie &amp; internationale Beziehungen</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Kanadisch-amerikanische Verteidigungsbeziehungen</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7875">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor. Die Los Angeles Times berichtet in einem Beitrag von Rob Gillies, wie der kanadische Verteidigungsminister auf Kritik des Pentagon reagiert, wonach Ottawa zu wenig für die Verteidigung ausgebe. Der Minister betont dabei demonstrativ die kanadische Souveränität: &quot;Kanada ist eine souveräne Nation... Wir sind den Vereinigten Staaten nicht rechenschaftspflichtig.&quot; Der Artikel ordnet diesen Schlagabtausch in die insgesamt angespannten Beziehungen zwischen Kanada und der Regierung Trump ein, zu denen auch Handelsstreitigkeiten und Äußerungen über eine mögliche Eingliederung Kanadas als amerikanischer Bundesstaat gehören, und deutet die Antwort des Ministers so als grundsätzliche Zurückweisung amerikanischer Bevormundung in Verteidigungsfragen.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7875" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7875">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7875" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7876" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7876">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomatie &amp; internationale Beziehungen</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Lukaschenkos Vorschlag für Friedensgespräche in Moskau</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7876">
+          <p class="comparison-text">Dieses Thema wird nur von Die Welt aufgegriffen, das ohne Autorenzeile über den Vorschlag des belarussischen Präsidenten Lukaschenko berichtet, gemeinsam mit Selenskyj zu Friedensgesprächen nach Moskau zu fliegen, ein Angebot, das Selenskyj ungehalten zurückwies. Die Zeitung zitiert Selenskyjs spöttische Frage &quot;Was bin ich für Lukaschenko, ein Koffer?&quot; und stellt den Vorschlag damit als unseriös und realitätsfern angesichts des andauernden Krieges dar, ohne eine Gegenposition einzubringen.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7876" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7876">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7876" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7877" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7877">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomatie &amp; internationale Beziehungen</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Konfrontationskurs zwischen Großbritannien und Israel wegen Siedlungspolitik</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7877">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine Quelle vor. In seinem Meinungsbeitrag in Die Welt beschreibt Nicholas Potter den sich zuspitzenden Konfrontationskurs zwischen Großbritannien und Israel als riskant und schildert die britischen Sanktionen gegen israelische Firmen und Einzelpersonen mit Verbindungen zur Siedlungspolitik im Westjordanland sowie die israelischen Gegenmaßnahmen. Er legt dar, dass die britische Regierung die Einschätzung teilt, in Teilen des Westjordanlands finde eine ethnische Säuberung von Palästinensern durch &quot;Siedlerterroristen&quot; statt, und zeichnet den diplomatischen Bruch als gefährliche Eskalation mit ungewissem Ausgang für beide Seiten.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7877" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7877">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7877" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 6</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7878" data-category="society_culture">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7878">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Gesellschaft &amp; Kultur</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Spaltung bei PEN America wegen Gaza</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7878">
+          <p class="comparison-text">Dieses Thema wird ausschließlich von der Los Angeles Times behandelt, in einem Bericht von Hillel Italie, der sachlich schildert, wie sich mehr als hundert Schriftsteller von PEN America abspalteten und ein neues Kapitel namens PEN Writes US gründeten. Der Beitrag stellt die Spaltung als unmittelbare Folge von Vorwürfen dar, PEN America habe palästinensische Schriftsteller nur unzureichend verteidigt und sich während des Gaza-Kriegs zu zurückhaltend gegenüber Kritik an Israel gezeigt, und zitiert die verbreitete Einschätzung, die Reaktion der Organisation sei &quot;unzureichend&quot; gewesen. Da keine weitere Quelle das Thema aufgreift, gibt es keinen Vergleichswinkel, doch der Artikel selbst rückt die Perspektive der abtrünnigen Gruppe in den Mittelpunkt und präsentiert deren Beschwerden als treibende Kraft hinter der Spaltung.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7878" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7878">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7878" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 8</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7879" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7879">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Sicherheit &amp; Konflikte</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Debatte um deutsche Rüstungsindustrie und Drohnentechnik</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7879">
+          <p class="comparison-text">Zu diesem Thema liegt hier nur eine einzige Quelle vor. In einem Meinungsbeitrag für Die Welt bezeichnet Nicholas Potter die Empörung der Berliner Clubszene über den Auftritt des Rüstungsunternehmens Helsing mit seiner KI-gestützten Drohnentechnologie in einem Technoclub als verlogen. Angesichts der russischen Aggression und des existenziellen Abwehrkampfs der Ukraine sei Pazifismus für Europa derzeit ein Luxus, den man sich nicht mehr leisten könne, argumentiert er, und militärische KI aus europäischer Produktion schütze letztlich genau jene liberalen Werte, die die Clubszene zu verteidigen vorgebe.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7879" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7879">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7879" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 2</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7880" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7880">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Haushaltsdebatte: Ringen um Merz&#x27; Kurs</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7880">
+          <p class="comparison-text">Alle drei Artikel zu diesem Thema stammen aus Die Welt, beleuchten die Haushaltsdebatte jedoch aus unterschiedlichen Perspektiven. In ihrem Meinungsbeitrag in Die Welt zeichnet Dorothea Siems das Bild eines politisch geschwächten Kanzlers Merz, der gegen die Blockade von Ausgabenkürzungen durch die SPD machtlos sei, sodass Deutschland trotz der historischen Verpflichtung der CDU zu ausgeglichenen Haushalten auf einen finanzpolitischen Abgrund zusteuere. In einem separaten Meinungsbeitrag in Die Welt richtet Nikolaus Doll den Blick dagegen auf Merz&#x27; überraschend versöhnlichen, selbstkritischen Ton während der Debatte, kontrastiert diesen aber mit der Rekordverschuldung des tatsächlichen Haushalts und den Bedenken der EU-Kommission hinsichtlich der Einhaltung der Defizitregeln. Der dritte, unsignierte Artikel liefert eine breitere institutionelle Berichterstattung über die parlamentarische Auseinandersetzung selbst: Er dokumentiert die Kritik am Etat 2027 aus dem gesamten politischen Spektrum der Opposition und zitiert die Forderung der EU-Kommission an Deutschland, Maßnahmen zu ergreifen, damit die Finanzpolitik 2027 mit den geforderten Zahlen übereinstimmt, während zugleich Merz&#x27; Verteidigung des Haushalts als notwendig angesichts lange vernachlässigter Verteidigungs- und Infrastrukturausgaben wiedergegeben wird. Während Siems ein eindeutiges Urteil über einen scheiternden Kanzler fällt, betont Doll die Diskrepanz zwischen versöhnlicher Rhetorik und harten Haushaltszahlen, und der unsignierte Bericht wahrt ein Gleichgewicht zwischen Oppositionskritik und der Rechtfertigung der Regierung.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7880" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7880">
+            Quellenangaben (3)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7880" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 1 — „Wie der Kanzler schrumpft“</li>
+            <li>Die Welt, 26.11.2026, S. 2 — „Der Kanzler ist wie verwandelt“</li>
+            <li>Die Welt, 26.11.2026, S. 3 — „Haushaltsdebatte 2027: Kritik an Merz&#x27; Etat“</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7881" data-category="security_conflict">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7881">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Sicherheit &amp; Konflikte</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Krieg zwischen Russland und der Ukraine: Lage an der Front</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7881">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor: der Bericht von Hanna Arhirova in der Los Angeles Times über einen russischen Gleitbombenangriff auf Saporischschja, bei dem zwei Menschen getötet und 48 verletzt wurden, ein Privathaus zerstört und ein fünfstöckiges Wohnhaus teilweise eingerissen wurde. Der Beitrag ordnet diesen konkreten Angriff in das größere Bild wachsender militärischer und ziviler Verluste sowie der sich zuspitzenden Drohnen- und Raketenangriffe zwischen Russland und der Ukraine ein. Da keine weitere Zeitung über dieses Ereignis berichtet, gibt es keinen Vergleich zwischen unterschiedlichen Blickwinkeln, der Artikel bietet eine nüchterne, faktenbasierte Darstellung, die ein lokales Ereignis in den Gesamtverlauf des Krieges einbettet.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7881" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7881">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7881" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7882" data-category="trade_economics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7882">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Handel &amp; Wirtschaft</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">EU-Handelspolitik und türkische Autoindustrie</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7882">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor. In Die Welt schildert Tom Schmidtgen die Warnung des türkischen Handelsministers vor dem geplanten &quot;Industrial Accelerator Act&quot; der EU, der mit &quot;Made in EU&quot;-Quoten die Türkei faktisch aus europäischen Lieferketten ausschließen könnte. Der Beitrag stellt dies als ernste Gefahr sowohl für die türkische als auch für die deutsche Autoindustrie dar, wobei der Minister vor dem Verlust Hunderttausender Arbeitsplätze warnt und Offenheit für den internationalen Wettbewerb als Voraussetzung für Wohlstand und stabile Verbraucherpreise anführt. Da keine weitere Zeitung über dieses Thema berichtet, lässt sich kein Vergleich unterschiedlicher Sichtweisen ziehen.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7882" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7882">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7882" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 10</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7883" data-category="energy_environment">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7883">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Energie &amp; Umwelt</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Bundesnetzagentur und Energiepolitik</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7883">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor. In seinem Kommentar in Die Welt kritisiert Daniel Wetzel den Präsidenten der Bundesnetzagentur, Klaus Müller, der mit Rückendeckung sowohl der CDU als auch der SPD wiederernannt wurde. Wetzel argumentiert, dass gerade dieser parteiübergreifende Rückhalt verdächtig sei: Statt als unabhängiger Wächter über die Versorgungssicherheit des Landes aufzutreten, habe Müller politisch heikle Energiefragen gemieden und es versäumt, Minister bei riskanten Plänen zu Kohleausstieg und Gasversorgung hinreichend herauszufordern, womit er seiner Rolle als unabhängiger Regulierer nicht gerecht werde.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7883" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7883">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7883" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 10</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7884" data-category="diplomacy_international">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7884">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Diplomatie &amp; internationale Beziehungen</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">EU-Sanktionen gegen Russland</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7884">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine Quelle vor, Die Welt, die über das sich formierende 22. Sanktionspaket der EU gegen Russland berichtet. Der unsignierte Beitrag setzt einen dezidiert deutschen, personenbezogenen Akzent: Eine neue Regel, die EU-Bürgern Führungspositionen in russischen Unternehmen untersagen würde, träfe demnach direkt den ehemaligen Bundeskanzler Gerhard Schröder wegen seiner Rolle bei Hyperglobus. Die Welt zitiert die offizielle Linie, wonach es in den Wirtschaftsbeziehungen mit Russland kein „Business as usual“ mehr geben könne, und rückt das Sanktionspaket damit weg von abstrakter Außenpolitik hin zu einer Maßnahme mit konkreten Folgen für eine prominente deutsche Figur.</p>
+          <p class="section-sources">Quellen: <b>Die Welt</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7884" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7884">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7884" hidden>
+            <ul>
+            <li>Die Welt, 26.11.2026, S. 3</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7885" data-category="technology_media">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7885">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Technologie &amp; Medien</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Nvidia-Affäre um Jensen Huang und US-Chinapolitik bei Chips</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7885">
+          <p class="comparison-text">Alle fünf Beiträge zu diesem Thema stammen aus der Los Angeles Times, beleuchten die Affäre um Jensen Huang und Nvidia aber aus unterschiedlichen Blickwinkeln. Michael Wilner beschreibt, wie Regierungsvertreter Trumps trotz wachsender öffentlicher Kritik weiter hinter Huang stehen, und warnt, dass bevorzugte Unternehmen wie Nvidia faktisch Immunität vor regulatorischer Aufsicht genießen könnten, obwohl Vorwürfe über Huangs angebliche Verbindungen zu einem chinesischen Spion und über den Schmuggel von KI-Chips nach China im Raum stehen. Ein zweiter Beitrag von Clara Harter und Ana Ceballos verlagert den Fokus auf den Kongress und zeigt, wie Abgeordnete beider Parteien Antworten verlangen, wobei ein Republikaner die Gegenwehr aus den eigenen Reihen als &quot;Unabhängigkeitserklärung&quot; gegenüber dem Präsidenten bezeichnet. Ein dritter, unsigniert veröffentlichter Artikel weitet den Blick auf den wachsenden Bruch zwischen Trump und republikanischen Abgeordneten aus und vergleicht pointiert den Export hochentwickelter Chips nach China mit dem Verkauf von Raketentriebwerken an die Sowjetunion während des Weltraumrennens, während er zugleich mögliche finanzielle Interessenkonflikte des Präsidenten selbst thematisiert. Ein vierter, ebenfalls unsignierter Artikel richtet den Blick auf die grundsätzlichere Frage unternehmerischer Straffreiheit, zitiert Nvidias eigene Ablehnung jeglicher &quot;globalistischen Regulierung&quot; der künstlichen Intelligenz und ordnet den Fall in eine breitere Erosion amerikanischer Aufsicht über die KI-Branche im Wettbewerb mit China ein. Am schärfsten urteilt schließlich Jonah Goldberg in einem Meinungsbeitrag für die Los Angeles Times: Er sieht in Huangs Rückkehr angesichts eines Sexskandals, Spionagevorwürfen und Ermittlungen wegen Chip-Schmuggels ein gefährliches moralisches Risiko und eine drohende Katastrophe und wirft Trump vor, sich weniger von nationalen Sicherheitsinteressen als von seiner &quot;Männerfreundschaft&quot; mit Chinas Machthaber und seiner Fixierung auf die Börse leiten zu lassen, weshalb er eine umfassende Untersuchung durch den Kongress fordert.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7885" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7885">
+            Quellenangaben (5)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7885" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 1 — „Trump officials dig in despite Nvidia…“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 1 — „Criticism over Nvidia moves has been…“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 9 — „Republican rift with Trump widens“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 9 — „Saga raises questions of corporate impunity“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 13 — „Jensen Huang&#x27;s return is a disaster…“</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7886" data-category="migration_society">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7886">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Migration &amp; Gesellschaft</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-Einwanderungsvollzug und ICE-Festnahmen</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7886">
+          <p class="comparison-text">Sämtliche vier Beiträge zu diesem Thema stammen aus der Los Angeles Times, beleuchten aber unterschiedliche Facetten derselben verschärften Einwanderungskontrolle. Zwei Artikel, einer von Ruben Vives und einer unsigniert, schildern denselben Vorfall in Oakland, bei dem Agenten Pfefferspray und Rauchmittel einsetzten und zwei US-Bürger festnahmen, und bilden damit faktisch eine einzige Stimme der Zeitung, die die öffentliche Empörung und die Verurteilung des Vorgehens durch lokale Amtsträger als &quot;gewalttätige Überreaktion&quot; in den Vordergrund stellt. Didi Tang lenkt den Blick auf einen ganz anderen Fall, die Festnahme einer chinesischen Doktorandin der Princeton University an einem Flughafen bei Washington, und zitiert Universitätsvertreter und Abgeordnete, die vor einem Vertrauensverlust bei internationalen Wissenschaftlern und vor der Missachtung rechtsstaatlicher Verfahren warnen. Suhauna Hussain wiederum behandelt die Inhaftierung eines afghanischen Journalisten und betont die Warnungen von Pressefreiheitsorganisationen, wonach eine Abschiebung ihn direkt den Taliban ausliefern würde. Während die Berichterstattung über Oakland die körperliche Gewalt gegen Bürger und Umstehende betont, rücken die Geschichten über die Doktorandin und den Journalisten institutionelle und humanitäre Aspekte wie akademische Freiheit und Pressefreiheit in den Mittelpunkt, sodass insgesamt ein Bild einer Zeitung entsteht, die das Vorgehen von ICE aus mehreren einander ergänzenden Blickwinkeln kritisch beleuchtet.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7886" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7886">
+            Quellenangaben (4)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7886" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 9 — „Scientist studying in U.S. detained“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 15 — „Video shows violent ICE episode“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 17 — „Press group calls for release of…“</li>
+            <li>Los Angeles Times, 25.11.2026, S. 19 — „ICE deploys smoke devices on Oakland…“</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7887" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7887">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Kritik an JD Vances Memoiren und Außenpolitik</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7887">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor. In seinem Meinungsbeitrag für die Los Angeles Times zieht Arellano scharf über JD Vances Memoiren &quot;Communion&quot; her und bezeichnet das Buch als &quot;Wortsalat, der sich als Abhandlung über den Glauben ausgibt&quot;. Er wirft Vance Heuchelei vor: Während das Buch vergangene imperiale Kriege verurteile, verschweige es, dass die Regierung, der Vance selbst angehört, ähnliche &quot;imperiale Spiele&quot; gegenüber dem Iran, Venezuela und anderen Ländern betreibe. Zudem kritisiert Arellano, dass Vance katholische Bildsprache verwende, während er zugleich eine als fremdenfeindlich beschriebene Abschiebepolitik unterstütze, was der Autor als &quot;grobe Nachlässigkeit oder vorsätzliche Heuchelei&quot; bezeichnet. Da keine weitere Zeitung über dieses Thema berichtet, lässt sich kein Vergleich zwischen verschiedenen Quellen ziehen.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7887" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7887">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7887" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 18</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7888" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7888">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">Neuer Rechtsweg zur Aufhebung von Trumps Schweigegeld-Verurteilung</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7888">
+          <p class="comparison-text">Dieses Thema wird ausschließlich von der Los Angeles Times behandelt, in einem Artikel von Michael R. Sisak. Der Beitrag berichtet sachlich über ein Urteil eines Bundesberufungsgerichts, das Trump einen neuen Weg eröffnet, seine strafrechtliche Verurteilung im Schweigegeld-Fall vor ein Bundesgericht zu bringen, wo er auf Abweisung unter Berufung auf präsidiale Immunität hoffen könnte. Sisak zitiert dabei auch den Vorbehalt des Gerichts, wonach die Zahlung von Schweigegeld an eine Darstellerin von Erwachsenenfilmen oder die Vertuschung einer peinlichen Angelegenheit nicht von der präsidialen Immunität gedeckt seien, was andeutet, dass der praktische Nutzen dieses juristischen Vorstoßes begrenzt bleiben könnte. Da keine weitere Quelle über diese Entwicklung berichtet, gibt es keine gegensätzlichen Einordnungen zu vergleichen, lediglich diesen einzelnen sachlichen Bericht über die rechtliche Entwicklung.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7888" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7888">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7888" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 14</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="topic-section" id="section-7889" data-category="domestic_politics">
+        <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="body-7889">
+          <div class="topic-meta">
+            <span class="category-dot"></span>
+            <span class="category-label">Innenpolitik</span>
+            <span class="coverage-badge">1 Quelle · 1 Sprache</span>
+          </div>
+          <div class="section-title-row">
+            <h2 class="section-title">US-Gesundheitspolitik und die MAHA-Bewegung</h2>
+            <span class="expand-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+        <div class="section-body" id="body-7889">
+          <p class="comparison-text">Zu diesem Thema liegt nur eine einzige Quelle vor. In seinem Meinungsbeitrag in der Los Angeles Times rät Richard Green davon ab, der Bewegung MAHA (Make America Healthy Again) nachzugeben oder sie politisch zu umwerben, und vertritt damit eine dezidiert ablehnende Haltung gegenüber Annäherungsversuchen an diese Bewegung. Da keine weitere Zeitung über das Thema berichtet, ergibt sich hier kein Vergleich unterschiedlicher Perspektiven.</p>
+          <p class="section-sources">Quellen: <b>Los Angeles Times</b></p>
+          <div class="section-actions">
+            <button class="share-link-btn" type="button" data-anchor="section-7889" data-copied-label="Kopiert!">🔗 Link kopieren</button>
+            
+          <button class="citations-toggle" type="button" aria-expanded="false" aria-controls="citations-7889">
+            Quellenangaben (1)
+            <span class="chevron-circle" aria-hidden="true">⌄</span>
+          </button>
+          <div class="citations-popup" id="citations-7889" hidden>
+            <ul>
+            <li>Los Angeles Times, 25.11.2026, S. 13</li>
+            </ul>
+          </div>
+          </div>
+        </div>
+      </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-link" href="accessibility.html">Barrierefreiheitserklärung</a>
+    <a class="footer-link" href="terms.html">Nutzungsbedingungen</a>
+    <a class="footer-link" href="privacy.html">Datenschutzerklärung</a>
+  </footer>
+  <script>
+    function toggleSection(header) {
+      var body = document.getElementById(header.getAttribute('aria-controls'));
+      var wasExpanded = header.getAttribute('aria-expanded') === 'true';
+      header.setAttribute('aria-expanded', String(!wasExpanded));
+      body.hidden = wasExpanded;
+    }
+
+    document.addEventListener('click', function (e) {
+      var shareBtn = e.target.closest('.share-link-btn');
+      if (shareBtn) {
+        var url = location.origin + location.pathname + '#' + shareBtn.getAttribute('data-anchor');
+        navigator.clipboard.writeText(url).then(function () {
+          if (!shareBtn.dataset.original) { shareBtn.dataset.original = shareBtn.textContent; }
+          shareBtn.textContent = shareBtn.getAttribute('data-copied-label');
+          clearTimeout(shareBtn._copyTimeout);
+          shareBtn._copyTimeout = setTimeout(function () {
+            shareBtn.textContent = shareBtn.dataset.original;
+          }, 1600);
+        });
+        return;
+      }
+
+      var header = e.target.closest('.section-header');
+      if (header) {
+        toggleSection(header);
+        return;
+      }
+
+      var toggleAll = e.target.closest('.toggle-all-btn');
+      if (toggleAll) {
+        var headers = document.querySelectorAll('.section-header');
+        var anyCollapsed = Array.prototype.some.call(headers, function (h) {
+          return h.getAttribute('aria-expanded') === 'false';
+        });
+        headers.forEach(function (h) {
+          var body = document.getElementById(h.getAttribute('aria-controls'));
+          h.setAttribute('aria-expanded', String(anyCollapsed));
+          body.hidden = !anyCollapsed;
+        });
+        return;
+      }
+
+      var toggle = e.target.closest('.citations-toggle');
+      document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+        if (!toggle || popup.id !== toggle.getAttribute('aria-controls')) {
+          popup.hidden = true;
+          var btn = document.querySelector('[aria-controls="' + popup.id + '"]');
+          if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (toggle) {
+        var popup = document.getElementById(toggle.getAttribute('aria-controls'));
+        var wasHidden = popup.hidden;
+        popup.hidden = !wasHidden;
+        toggle.setAttribute('aria-expanded', String(wasHidden));
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.citations-popup:not([hidden])').forEach(function (popup) {
+          popup.hidden = true;
+        });
+        return;
+      }
+      var header = e.target.closest('.section-header');
+      if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleSection(header);
+      }
+    });
+  </script>
+</body>
+</html>
